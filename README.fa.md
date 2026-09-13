@@ -223,7 +223,7 @@ rate=0.5; events=1; censored=1
 
 ## نویسنده و پروفایل‌های پژوهشی
 
-Veridist را [سید علی صادقی عقیلی](https://zil.ink/thedatascientist) نگهداری می‌کند.
+<p dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> را [سید علی صادقی عقیلی](https://zil.ink/thedatascientist) نگهداری می‌کند.</p>
 
 [![Google Scholar](https://img.shields.io/badge/Google%20Scholar-4285F4?logo=googlescholar&logoColor=white)](https://scholar.google.com/citations?user=BDD_JUIAAAAJ&hl=en&authuser=1)
 [![ResearchGate](https://img.shields.io/badge/ResearchGate-00CCBB?logo=researchgate&logoColor=white)](https://www.researchgate.net/profile/Seyed-Ali-Sadeghi-Aghili)
@@ -234,13 +234,11 @@ Veridist را [سید علی صادقی عقیلی](https://zil.ink/thedatascien
 
 در نخستین کاربرد هر اصطلاح، اندیس بالانویس به تعریف آن و معادل انگلیسی ارجاع می‌دهد.
 
-<ol>
-  <li id="fn-distribution-fitting"><bdi dir="ltr">Distribution Fitting</bdi> — انتخاب یک یا چند توزیع نامزد، برآورد پارامترهای آن‌ها و سنجش سازگاری‌شان با داده. <a href="#fnref-distribution-fitting">↩</a></li>
-  <li id="fn-likelihood"><bdi dir="ltr">Likelihood</bdi> — معیاری برای سنجش سازگاری یک مدل و پارامترهایش با مشاهدات ثبت‌شده. <a href="#fnref-likelihood">↩</a></li>
-  <li id="fn-right-censoring"><bdi dir="ltr">Right Censoring</bdi> — مشاهده‌ای که در آن زمان وقوع رویداد تا پایان بازهٔ مشاهده دیده نشده است. <a href="#fnref-right-censoring">↩</a></li>
-  <li id="fn-anomaly-detection"><bdi dir="ltr">Anomaly Detection</bdi> — شناسایی مشاهده‌هایی که با الگوی مرجع داده سازگاری کمی دارند. <a href="#fnref-anomaly-detection">↩</a></li>
-  <li id="fn-distribution-drift"><bdi dir="ltr">Distribution Drift</bdi> — تغییر معنادار در توزیع دادهٔ جدید نسبت به توزیع مرجع یا دادهٔ گذشته. <a href="#fnref-distribution-drift">↩</a></li>
-</ol>
+<p id="fn-distribution-fitting" dir="rtl" align="right"><strong>۱.</strong> <bdi dir="ltr">Distribution Fitting</bdi> — انتخاب یک یا چند توزیع نامزد، برآورد پارامترهای آن‌ها و سنجش سازگاری‌شان با داده. <a href="#fnref-distribution-fitting">↩</a></p>
+<p id="fn-likelihood" dir="rtl" align="right"><strong>۲.</strong> <bdi dir="ltr">Likelihood</bdi> — معیاری برای سنجش سازگاری یک مدل و پارامترهایش با مشاهدات ثبت‌شده. <a href="#fnref-likelihood">↩</a></p>
+<p id="fn-right-censoring" dir="rtl" align="right"><strong>۳.</strong> <bdi dir="ltr">Right Censoring</bdi> — مشاهده‌ای که در آن زمان وقوع رویداد تا پایان بازهٔ مشاهده دیده نشده است. <a href="#fnref-right-censoring">↩</a></p>
+<p id="fn-anomaly-detection" dir="rtl" align="right"><strong>۴.</strong> <bdi dir="ltr">Anomaly Detection</bdi> — شناسایی مشاهده‌هایی که با الگوی مرجع داده سازگاری کمی دارند. <a href="#fnref-anomaly-detection">↩</a></p>
+<p id="fn-distribution-drift" dir="rtl" align="right"><strong>۵.</strong> <bdi dir="ltr">Distribution Drift</bdi> — تغییر معنادار در توزیع دادهٔ جدید نسبت به توزیع مرجع یا دادهٔ گذشته. <a href="#fnref-distribution-drift">↩</a></p>
 
 ## مجوز
 
