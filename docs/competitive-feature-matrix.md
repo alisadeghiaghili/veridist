@@ -25,7 +25,7 @@ This is a project-status note, not a competitor claim and not a new
 checkpoint, and exponential-inference cells listed in the project capability
 matrix. It does not establish an external-memory, distributed, universal
 best-fit, or broad out-of-core claim. The complete project matrix is
-[capability-matrix.md](capability-matrix.md).
+[capability-guide.md](capability-guide.md).
 
 ## Python and Julia
 

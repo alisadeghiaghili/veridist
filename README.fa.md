@@ -5,9 +5,9 @@
 [English](README.md) | [فارسی](README.fa.md) | [Deutsch](README.de.md)
 
 [![PyPI](https://img.shields.io/pypi/v/veridist.svg)](https://pypi.org/project/veridist/)
-[![Python 3.11–3.14](https://img.shields.io/badge/Python-3.11%E2%80%933.14-3776AB)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md)
+[![Python 3.11–3.14](https://img.shields.io/badge/Python-3.11%E2%80%933.14-3776AB)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.fa.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/alisadeghiaghili/veridist/v1-ci.yml?branch=main&label=CI)](https://github.com/alisadeghiaghili/veridist/actions/workflows/v1-ci.yml)
-[![Coverage ≥95%](https://img.shields.io/badge/coverage%20requirement-%E2%89%A595%25-blue)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md)
+[![Coverage ≥95%](https://img.shields.io/badge/coverage%20requirement-%E2%89%A595%25-blue)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.fa.md)
 [![License](https://img.shields.io/badge/license-BUSL--1.1-purple)](https://github.com/alisadeghiaghili/veridist/blob/main/LICENSE)
 
 **از داده‌های طول عمر، به شناختی روشن‌تر از رفتار و قابلیت اطمینان برسید.**
@@ -25,7 +25,7 @@
 - برآورد، شمار مشاهده‌ها و فرض‌های محاسبه را بررسی کنید؛ و
 - محاسبهٔ درست‌نمایی<sup id="fnref-likelihood"><a href="#fn-likelihood">۲</a></sup> را در مسیرهای پشتیبانی‌شده به‌صورت مرحله‌ای و محلی ادامه دهید.
 
-مسیر فایل فعلی عمداً محدود است: CSV سخت‌گیرانهٔ UTF-8 فقط مدل نماییِ نرخ‌محور را برازش می‌دهد. برای وایبول و لگ‌نرمال از شیءهای دادهٔ طول عمر استفاده می‌شود. [راهنمای قابلیت‌ها](docs/capability-matrix.fa.md) مرز دقیق نسخه را ثبت می‌کند.
+مسیر فایل فعلی عمداً محدود است: CSV سخت‌گیرانهٔ UTF-8 فقط مدل نماییِ نرخ‌محور را برازش می‌دهد. برای وایبول و لگ‌نرمال از شیءهای دادهٔ طول عمر استفاده می‌شود. [راهنمای قابلیت‌ها](docs/capability-guide.fa.md) مرز دقیق نسخه را ثبت می‌کند.
 
 <h2 dir="rtl" align="right">با یک پرسش طول عمر شروع کنید</h2>
 
@@ -125,7 +125,7 @@ rate=0.5; events=1; censored=1
 
 برازش توزیع می‌تواند چند مدل نامزد را برازش دهد، پارامترهایشان را برآورد کند و سازگاری آن‌ها با داده را مقایسه کند. بهترین گزینهٔ رتبه‌بندی‌شده الزاماً توزیع واقعی داده نیست و ممکن است هیچ نامزدی کافی نباشد.
 
-رتبه‌بندی خودکار بین خانواده‌های فعلی Veridist از برنامه‌های آینده است. استنباط و انتخابِ مبتنی بر کفایت فعلی دامنهٔ محدودتری دارند: نمونه‌های نماییِ مثبت، متناهی و بدون سانسور. [راهنمای قابلیت‌ها](docs/capability-matrix.fa.md) قرارداد دقیق را ثبت می‌کند.
+رتبه‌بندی خودکار بین خانواده‌های فعلی Veridist از برنامه‌های آینده است. استنباط و انتخابِ مبتنی بر کفایت فعلی دامنهٔ محدودتری دارند: نمونه‌های نماییِ مثبت، متناهی و بدون سانسور. [راهنمای قابلیت‌ها](docs/capability-guide.fa.md) قرارداد دقیق را ثبت می‌کند.
 
 <h2 dir="rtl" align="right">با دادهٔ خودتان کار کنید</h2>
 
@@ -164,7 +164,7 @@ rate=0.5; events=1; censored=1
 </details>
 
 
-برای نمونه‌های مثبت، متناهی و بدون سانسور در مسیر نمایی، آزمون‌های Monte Carlo با برازش مجدد KS/AD/CvM، معیارهای AIC/BIC و انتخاب مشروط به کفایت مدل با مولد تصادفی کاربر وجود دارند. دامنهٔ استنباط محدودتر از برازش است؛ [راهنمای قابلیت‌ها](docs/capability-matrix.fa.md) جزئیات را ثبت می‌کند.
+برای نمونه‌های مثبت، متناهی و بدون سانسور در مسیر نمایی، آزمون‌های Monte Carlo با برازش مجدد KS/AD/CvM، معیارهای AIC/BIC و انتخاب مشروط به کفایت مدل با مولد تصادفی کاربر وجود دارند. دامنهٔ استنباط محدودتر از برازش است؛ [راهنمای قابلیت‌ها](docs/capability-guide.fa.md) جزئیات را ثبت می‌کند.
 
 <h2 dir="rtl" align="right">وقتی داده بیشتر می‌شود</h2>
 
@@ -202,7 +202,7 @@ rate=0.5; events=1; censored=1
 - **پردازش کارآمدتر داده‌های بزرگ:** ارزیابی و بهینه‌سازی زمان اجرا و حافظه با آزمایش‌های قابل‌بازتولید، همراه با توسعهٔ پردازش مرحله‌ای.
 - **آموزش‌های کاربردی بیشتر:** vignetteهایی از شناخت مسئله و داده تا تفسیر نتیجه؛ سپس نمونه‌های ویژگی‌های توزیعی برای تشخیص ناهنجاری، پایش drift و یادگیری ماشین.
 
-این موارد جهت توسعه‌اند، نه قابلیت فعلی یا تعهد به تاریخ انتشار. امکانات منتشرشده در [راهنمای قابلیت‌ها](docs/capability-matrix.fa.md) و تغییرات تحویل‌شده در [تاریخچهٔ تغییرات](python/CHANGELOG.md) ثبت می‌شوند.
+این موارد جهت توسعه‌اند، نه قابلیت فعلی یا تعهد به تاریخ انتشار. امکانات منتشرشده در [راهنمای قابلیت‌ها](docs/capability-guide.fa.md) و تغییرات تحویل‌شده در [تاریخچهٔ تغییرات](python/CHANGELOG.md) ثبت می‌شوند.
 
 <h2 dir="rtl" align="right">راهنما و مشارکت</h2>
 

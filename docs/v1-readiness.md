@@ -172,7 +172,7 @@ as a statement about uninspected current files.
 
 | Area | Required v1 evidence |
 | --- | --- |
-| Core | Keep the current immutable exponential result/capability facts; extend the [capability matrix](capability-matrix.md) only with cited conformance evidence |
+| Core | Keep the current immutable exponential result/capability facts; extend the [capability guide](capability-guide.md) only with cited conformance evidence |
 | First vertical | Exponential, Weibull-minimum, and Lognormal point-estimation cells exist; add portable process-memory and retained reliability/scale evidence before calling a broad reliability + big-data vertical complete |
 | Families | Preserve the tested scalar operations; any added family must pass support/CDF/PPF/log-density/reference tests with cited specifications |
 | Estimation | Retain MLE applicability, convergence/restart diagnostics, and visible failures; complete release evidence for the declared cells |

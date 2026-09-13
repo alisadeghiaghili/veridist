@@ -1,6 +1,6 @@
 <h1 dir="rtl" align="right">با <bdi dir="ltr">Veridist</bdi> چه کارهایی می‌توانید انجام دهید؟</h1>
 
-<p dir="rtl" align="right"><a href="capability-matrix.md">English</a> | <a href="capability-matrix.fa.md">فارسی</a> | <a href="capability-matrix.de.md">Deutsch</a></p>
+<p dir="rtl" align="right"><a href="capability-guide.md">English</a> | <a href="capability-guide.fa.md">فارسی</a> | <a href="capability-guide.de.md">Deutsch</a></p>
 
 <p dir="rtl" align="right">این راهنما دربارهٔ نسخهٔ ۱٫۰٫۱ است. کمک می‌کند بدانید چه داده‌ای می‌توانید به برنامه بدهید، چه نتیجه‌ای بگیرید و چه کارهایی هنوز پشتیبانی نمی‌شوند.</p>
 

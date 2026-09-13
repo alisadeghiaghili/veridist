@@ -48,4 +48,4 @@
 <p id="fn-bootstrap" dir="rtl" align="right"><strong>۶.</strong> بوت‌استرپ نمونه‌گیری تکراری از داده برای سنجش پایداری نتیجه است. <a href="#fnref-bootstrap">↩</a></p>
 <p id="fn-sqlite" dir="rtl" align="right"><strong>۷.</strong> SQLite پایگاه دادهٔ کوچک و فایل‌محور روی همان رایانه است؛ وضعیت اجرا در آن ذخیره می‌شود تا اجرای سازگار پس از وقفه ادامه یابد. <a href="#fnref-sqlite">↩</a></p>
 
-<p dir="rtl" align="right"><a href="../README.fa.md">بازگشت به راهنمای اصلی</a> | <a href="../docs/capability-matrix.fa.md">راهنمای قابلیت‌ها</a></p>
+<p dir="rtl" align="right"><a href="../README.fa.md">بازگشت به راهنمای اصلی</a> | <a href="../docs/capability-guide.fa.md">راهنمای قابلیت‌ها</a></p>

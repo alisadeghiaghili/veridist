@@ -10,7 +10,7 @@ from pathlib import Path
 PYTHON_ROOT = Path(__file__).resolve().parents[2]
 REPOSITORY_ROOT = PYTHON_ROOT.parent
 MANIFEST = PYTHON_ROOT / "quality" / "coverage-manifest.json"
-CAPABILITY_MATRIX = REPOSITORY_ROOT / "docs" / "capability-matrix.md"
+CAPABILITY_GUIDE = REPOSITORY_ROOT / "docs" / "capability-guide.md"
 READINESS = REPOSITORY_ROOT / "docs" / "v1-readiness.md"
 EVALUATED_FAMILY_ADR = REPOSITORY_ROOT / "docs" / "adr" / "ADR-0019-evaluated-family-kernel.md"
 CSV_ADAPTER_ADR = (
@@ -62,8 +62,8 @@ class RequiredQualityArtifactTests(unittest.TestCase):
             index,
         )
 
-    def test_capability_matrix_declares_the_release_cells_and_limits(self) -> None:
-        content = " ".join(CAPABILITY_MATRIX.read_text(encoding="utf-8").split())
+    def test_capability_guide_declares_the_release_scope_and_limits(self) -> None:
+        content = " ".join(CAPABILITY_GUIDE.read_text(encoding="utf-8").split())
         for required in (
             "1.0.1",
             "Exponential MLE",
