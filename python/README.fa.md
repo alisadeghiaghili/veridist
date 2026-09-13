@@ -1,4 +1,4 @@
-<div lang="fa" dir="rtl">
+<div lang="fa" dir="rtl" align="right">
 
 # Veridist
 
@@ -69,7 +69,7 @@
 python -m pip install veridist
 ```
 
-<div lang="fa" dir="rtl">
+<div lang="fa" dir="rtl" align="right">
 
 ### شناخت داده
 
@@ -118,7 +118,7 @@ print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}
 rate=0.5; events=1; censored=1
 ```
 
-<div lang="fa" dir="rtl">
+<div lang="fa" dir="rtl" align="right">
 
 ### تفسیر نتیجه
 

@@ -250,12 +250,21 @@ class PackageLandingContractTests(unittest.TestCase):
         for path in (REPOSITORY_ROOT / "README.fa.md", README_PATHS["fa"]):
             content = path.read_text(encoding="utf-8")
             with self.subTest(path=path, contract="wrapper"):
-                self.assertIn('<div lang="fa" dir="rtl">', content)
+                self.assertRegex(
+                    content,
+                    r'<div lang="fa" dir="rtl"(?: align="right")?>',
+                )
             for fence in re.finditer(r"```(?:console|python|text|mermaid)?", content):
                 prefix = content[: fence.start()]
                 with self.subTest(path=path, fence=fence.group(0), offset=fence.start()):
                     self.assertEqual(
-                        prefix.count('<div lang="fa" dir="rtl">'), prefix.count("</div>")
+                        len(
+                            re.findall(
+                                r'<div lang="fa" dir="rtl"(?: align="right")?>',
+                                prefix,
+                            )
+                        ),
+                        prefix.count("</div>"),
                     )
 
     def test_source_manifest_includes_all_package_landing_files(self) -> None:
