@@ -58,13 +58,16 @@ The 1.0 release does not support covariates such as temperature or pressure, ana
 
 Results are compared with independent references. Tests cover invalid input, boundary cases, interruption and resumption, and run on Python 3.11 through 3.14. The quality gate requires at least 95% global line and branch coverage, with stricter thresholds for numerical modules. Critical statistical code also has a fail-closed mutation gate. The coverage number is an acceptance requirement, not a claim about a current percentage; speed and memory evidence is valid only for the tested data, environment, and revision.
 
-## Technical details
+<details>
+<summary>Technical details for closer review</summary>
 
 All three fitting models use maximum-likelihood estimation with fixed location zero. Exponential estimates rate only; Weibull estimates shape and scale; Lognormal estimates log-location and log-scale. Frequency weights mean repeated observations and are supported by Weibull and Lognormal; they are distinct from analytic weights. A numerical failure or lack of convergence is reported with a stated reason.
 
 The Exponential evaluation reports requested, successful, and failed refits plus Monte Carlo uncertainty. You supply the random-number sequence; using the same seed reproduces the same experiment. The stream count has an explicit unsigned 64-bit limit. Tests cover interruption, replay, corruption, concurrent access, and cancellation.
 
 Measurements are valid only for the exact adapter, family, workload, platform, Python version, chunk limit, and candidate SHA that were tested. Unsupported combinations fail explicitly. The strict CSV example and rendered Persian RTL pages are executable CI contracts.
+
+</details>
 
 ## Technical terms
 

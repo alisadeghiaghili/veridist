@@ -123,6 +123,11 @@ class RequiredQualityArtifactTests(unittest.TestCase):
         contents = {
             locale: path.read_text(encoding="utf-8") for locale, path in guides.items()
         }
+        for locale, content in contents.items():
+            with self.subTest(locale=locale, contract="expandable-technical-details"):
+                self.assertEqual(content.count("<details"), 1)
+                self.assertEqual(content.count("<summary>"), 1)
+                self.assertEqual(content.count("</details>"), 1)
         self.assertEqual(contents["fa"].count('<p id="fn-'), 31)
         for locale in ("en", "de"):
             numbered_terms = tuple(

@@ -58,13 +58,16 @@ Die Version 1.0 unterstützt keine Kovariaten wie Temperatur oder Druck, analyti
 
 Ergebnisse werden mit unabhängigen Referenzen verglichen. Tests decken ungültige Eingaben, Grenzfälle, Unterbrechung und Wiederaufnahme ab und laufen auf Python 3.11 bis 3.14. Das Qualitäts-Gate verlangt mindestens 95 % globale Zeilen- und Zweigabdeckung sowie strengere Schwellen für numerische Module. Kritischer statistischer Code durchläuft zusätzlich ein fail-closed Mutation-Gate. Die Abdeckungszahl ist eine Annahmebedingung, keine Aussage über einen aktuellen Prozentsatz; Geschwindigkeits- und Speichernachweise gelten nur für die getesteten Daten, Umgebung und Revision.
 
-## Technische Details
+<details>
+<summary>Technische Details zur genaueren Prüfung</summary>
 
 Alle drei Fit-Modelle verwenden Maximum-Likelihood-Schätzung mit fester Lage null. Exponential schätzt nur die Rate; Weibull schätzt Form und Skala; Lognormal schätzt logarithmische Lage und Skala. Häufigkeitsgewichte bedeuten wiederholte Beobachtungen und werden von Weibull und Lognormal unterstützt; sie unterscheiden sich von analytischen Gewichten. Ein numerisches Scheitern oder fehlende Konvergenz wird mit einer benannten Ursache gemeldet.
 
 Die Exponentialauswertung berichtet angeforderte, erfolgreiche und fehlgeschlagene Neuanpassungen sowie Monte-Carlo-Unsicherheit. Sie bestimmen die Zufallszahlenfolge selbst; derselbe Seed reproduziert dasselbe Experiment. Die Stream-Anzahl hat eine explizite vorzeichenlose 64-Bit-Grenze. Tests decken Unterbrechung, Wiederholung, Beschädigung, konkurrierenden Zugriff und Abbruch ab.
 
 Messwerte gelten nur für Adapter, Familie, Arbeitslast, Plattform, Python-Version, Chunk-Grenze und Kandidaten-SHA, die tatsächlich getestet wurden. Nicht unterstützte Kombinationen scheitern ausdrücklich. Das strikte CSV-Beispiel und gerenderte persische RTL-Seiten sind ausführbare CI-Verträge.
+
+</details>
 
 ## Fachbegriffe
 
