@@ -66,4 +66,38 @@ The Exponential evaluation reports requested, successful, and failed refits plus
 
 Measurements are valid only for the exact adapter, family, workload, platform, Python version, chunk limit, and candidate SHA that were tested. Unsupported combinations fail explicitly. The strict CSV example and rendered Persian RTL pages are executable CI contracts.
 
+## Technical terms
+
+1. **Distribution fitting:** estimating a distribution model's parameters from data.
+2. **Right censoring:** the event was not observed before observation ended, so its final time is unknown.
+3. **Model adequacy:** whether a model's assumptions and shape are acceptable for the data and purpose.
+4. **Adequacy check:** the defined statistical check used to accept or reject a candidate model.
+5. **AIC:** compares models using fit quality and parameter count; lower is preferred only among the models compared.
+6. **Distribution families:** probability distributions with different shapes and uses; these families currently expose scalar operations.
+7. **Log density:** the logarithm of an observation's relative plausibility under a model, used for numerically stable calculations.
+8. **Quantile:** a threshold below which a specified share of the model probability lies.
+9. **Streaming reduction:** processing chunks in sequence without keeping the complete input in memory.
+10. **Compatible exponential calculation:** an exponential run with the same source, model, and reduction contract, which can resume saved state.
+11. **SQLite:** a small file-backed database stored on the same computer.
+12. **Source revision:** an identifier proving that the input has not changed since state was saved.
+13. **Checksum:** a value calculated from saved information to detect unintended changes or corruption.
+14. **Checkpoint generation:** the sequential version of saved state, used to prevent incompatible concurrent updates.
+15. **Processed ranges:** input positions that have already been calculated successfully.
+16. **Test coverage:** the share of executable lines and decision paths exercised by tests.
+17. **Maximum-likelihood estimation and fixed zero location:** parameters maximize observed-data likelihood, while the model cannot shift horizontally.
+18. **Model parameters:** Exponential uses rate; Weibull uses shape and scale; Lognormal uses log-location and log-scale.
+19. **Frequency weights:** the number of times an observation is repeated, distinct from analytic weights.
+20. **Numerical failure:** floating-point or convergence limits prevent a trustworthy result.
+21. **KS/AD/CvM:** three goodness-of-fit tests sensitive to different forms of disagreement between data and model.
+22. **BIC:** a model comparison criterion that penalizes additional parameters more strongly.
+23. **Seed:** the initial value that makes the same random-number sequence reproducible.
+24. **binary64:** the common 64-bit computer format for floating-point numbers.
+25. **Unsigned integer limit:** the largest observation count admitted by the contract, represented without negative values in 64 bits.
+26. **Left and interval censoring:** an event occurred before a time or within an interval, without an exact time.
+27. **Truncation:** inclusion of an observation depends on crossing a condition or threshold.
+28. **Covariates:** variables such as temperature or pressure that may be related to lifetime.
+29. **Analytic weights:** weights that alter an observation's importance or precision, rather than its repetition count.
+30. **Free location:** an estimated parameter that shifts a distribution along the time axis.
+31. **Bootstrap:** repeated resampling from the data to assess result stability.
+
 [Back to the main guide](../README.md)

@@ -66,4 +66,38 @@ Die Exponentialauswertung berichtet angeforderte, erfolgreiche und fehlgeschlage
 
 Messwerte gelten nur für Adapter, Familie, Arbeitslast, Plattform, Python-Version, Chunk-Grenze und Kandidaten-SHA, die tatsächlich getestet wurden. Nicht unterstützte Kombinationen scheitern ausdrücklich. Das strikte CSV-Beispiel und gerenderte persische RTL-Seiten sind ausführbare CI-Verträge.
 
+## Fachbegriffe
+
+1. **Verteilungsanpassung:** Schätzung der Parameter eines Verteilungsmodells aus Daten.
+2. **Rechtszensierung:** Das Ereignis wurde bis zum Beobachtungsende nicht gesehen; seine endgültige Zeit ist unbekannt.
+3. **Modellangemessenheit:** Ob Annahmen und Form eines Modells für Daten und Zweck akzeptabel sind.
+4. **Angemessenheitsprüfung:** Die festgelegte statistische Prüfung zur Annahme oder Ablehnung eines Kandidaten.
+5. **AIC:** Vergleicht Modelle anhand Anpassungsgüte und Parameterzahl; kleiner ist nur unter den verglichenen Modellen besser.
+6. **Verteilungsfamilien:** Wahrscheinlichkeitsverteilungen mit unterschiedlichen Formen und Anwendungen; derzeit mit skalaren Operationen.
+7. **Log-Dichte:** Logarithmus der relativen Plausibilität einer Beobachtung unter dem Modell für numerisch stabile Berechnungen.
+8. **Quantil:** Schwellenwert, unter dem ein festgelegter Anteil der Modellwahrscheinlichkeit liegt.
+9. **Streaming-Reduktion:** Verarbeitung aufeinanderfolgender Datenblöcke, ohne die gesamte Eingabe im Speicher zu halten.
+10. **Kompatible Exponentialberechnung:** Lauf mit demselben Quellen-, Modell- und Reduktionsvertrag, der gespeicherten Zustand fortsetzen kann.
+11. **SQLite:** Kleine dateibasierte Datenbank auf demselben Rechner.
+12. **Quellrevision:** Kennung, die zeigt, dass sich die Eingabe seit dem Speichern nicht geändert hat.
+13. **Prüfsumme:** Aus gespeicherten Informationen berechneter Wert zur Erkennung unbeabsichtigter Änderung oder Beschädigung.
+14. **Checkpoint-Generation:** Fortlaufende Version des gespeicherten Zustands, die unvereinbare gleichzeitige Aktualisierungen verhindert.
+15. **Verarbeitete Bereiche:** Eingabepositionen, die bereits erfolgreich berechnet wurden.
+16. **Testabdeckung:** Anteil ausführbarer Zeilen und Entscheidungspfade, die Tests ausführen.
+17. **Maximum-Likelihood-Schätzung und feste Lage null:** Parameter maximieren die Datenwahrscheinlichkeit; das Modell kann nicht horizontal verschoben werden.
+18. **Modellparameter:** Exponential verwendet Rate, Weibull Form und Skala, Lognormal logarithmische Lage und Skala.
+19. **Häufigkeitsgewichte:** Anzahl der Wiederholungen einer Beobachtung, verschieden von analytischen Gewichten.
+20. **Numerisches Scheitern:** Gleitkomma- oder Konvergenzgrenzen verhindern ein vertrauenswürdiges Ergebnis.
+21. **KS/AD/CvM:** Drei Anpassungstests, die auf unterschiedliche Abweichungen zwischen Daten und Modell reagieren.
+22. **BIC:** Modellvergleichskriterium, das zusätzliche Parameter stärker bestraft.
+23. **Seed:** Anfangswert, mit dem dieselbe Zufallszahlenfolge reproduzierbar wird.
+24. **binary64:** Übliches 64-Bit-Rechnerformat für Gleitkommazahlen.
+25. **Vorzeichenlose Ganzzahlgrenze:** Größte vom Vertrag erlaubte Beobachtungszahl, ohne negative Werte in 64 Bit dargestellt.
+26. **Links- und Intervallzensierung:** Ein Ereignis trat vor einem Zeitpunkt oder in einem Intervall auf, ohne genaue Zeit.
+27. **Trunkierung:** Aufnahme einer Beobachtung hängt vom Überschreiten einer Bedingung oder Schwelle ab.
+28. **Kovariaten:** Variablen wie Temperatur oder Druck, die mit der Lebensdauer zusammenhängen können.
+29. **Analytische Gewichte:** Gewichte, die Bedeutung oder Präzision einer Beobachtung ändern, nicht ihre Wiederholungszahl.
+30. **Freie Lage:** Geschätzter Parameter, der eine Verteilung entlang der Zeitachse verschiebt.
+31. **Bootstrap:** Wiederholtes Ziehen aus den Daten zur Beurteilung der Ergebnisstabilität.
+
 [Zurück zum Hauptleitfaden](../README.de.md)

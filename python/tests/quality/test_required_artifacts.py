@@ -120,6 +120,18 @@ class RequiredQualityArtifactTests(unittest.TestCase):
                 with self.subTest(locale=locale, topic=topic):
                     self.assertIn(topic, content)
 
+        contents = {
+            locale: path.read_text(encoding="utf-8") for locale, path in guides.items()
+        }
+        self.assertEqual(contents["fa"].count('<p id="fn-'), 31)
+        for locale in ("en", "de"):
+            numbered_terms = tuple(
+                line for line in contents[locale].splitlines()
+                if any(line.startswith(f"{number}. **") for number in range(1, 32))
+            )
+            with self.subTest(locale=locale, contract="technical-term-count"):
+                self.assertEqual(len(numbered_terms), 31)
+
     def test_coverage_manifest_exists_is_valid_and_is_not_gitignored(self) -> None:
         self.assertTrue(MANIFEST.is_file(), "required coverage manifest is missing")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
