@@ -5,9 +5,9 @@
 [English](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.md) | [فارسی](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.fa.md) | [Deutsch](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.de.md)
 
 [![PyPI](https://img.shields.io/pypi/v/veridist.svg)](https://pypi.org/project/veridist/)
-[![Python 3.11–3.14](https://img.shields.io/badge/Python-3.11%E2%80%933.14-3776AB)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md)
+[![Python 3.11–3.14](https://img.shields.io/badge/Python-3.11%E2%80%933.14-3776AB)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md)
 [![CI](https://img.shields.io/github/actions/workflow/status/alisadeghiaghili/veridist/v1-ci.yml?branch=main&label=CI)](https://github.com/alisadeghiaghili/veridist/actions/workflows/v1-ci.yml)
-[![Coverage ≥95%](https://img.shields.io/badge/coverage%20requirement-%E2%89%A595%25-blue)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md)
+[![Coverage ≥95%](https://img.shields.io/badge/coverage%20requirement-%E2%89%A595%25-blue)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md)
 [![License](https://img.shields.io/badge/license-BUSL--1.1-purple)](https://github.com/alisadeghiaghili/veridist/blob/main/LICENSE)
 
 **از داده‌های طول عمر، به شناختی روشن‌تر از رفتار و قابلیت اطمینان برسید.**
@@ -21,11 +21,11 @@
 اکنون می‌توانید:
 
 - مدل‌های عمر نمایی، وایبول و لگ‌نرمال را برازش دهید؛
-- مشاهده‌های **سانسورشده از راست**<sup id="fnref-right-censoring"><a href="#fn-right-censoring">۳</a></sup> را در تحلیل نگه دارید؛
+- مشاهده‌های **سانسورشده از راست**<sup id="fnref-right-censoring"><a href="#fn-right-censoring">۱</a></sup> را در تحلیل نگه دارید؛
 - برآورد، شمار مشاهده‌ها و فرض‌های محاسبه را بررسی کنید؛ و
 - محاسبهٔ درست‌نمایی<sup id="fnref-likelihood"><a href="#fn-likelihood">۲</a></sup> را در مسیرهای پشتیبانی‌شده به‌صورت مرحله‌ای و محلی ادامه دهید.
 
-مسیر فایل فعلی عمداً محدود است: CSV سخت‌گیرانهٔ UTF-8 فقط مدل نماییِ نرخ‌محور را برازش می‌دهد. برای وایبول و لگ‌نرمال از شیءهای دادهٔ طول عمر استفاده می‌شود. [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md) مرز دقیق نسخه را ثبت می‌کند.
+مسیر فایل فعلی عمداً محدود است: CSV سخت‌گیرانهٔ UTF-8 فقط مدل نماییِ نرخ‌محور را برازش می‌دهد. برای وایبول و لگ‌نرمال از شیءهای دادهٔ طول عمر استفاده می‌شود. [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md) مرز دقیق نسخه را ثبت می‌کند.
 
 <h2 dir="rtl" align="right">با یک پرسش طول عمر شروع کنید</h2>
 
@@ -36,7 +36,7 @@
 | در طول مطالعه خراب شده است | زمان خرابی مشخص است. |
 | در پایان مطالعه هنوز کار می‌کند | عمر واقعی آن از زمان مشاهده‌شده بیشتر است. |
 
-نوع دوم **مشاهدهٔ سانسورشده از راست**<sup id="fnref-right-censoring"><a href="#fn-right-censoring">۳</a></sup> است: مطالعه پیش از دیدن خرابی پایان یافته است. این مشاهدات هم اطلاعات دارند.
+نوع دوم **مشاهدهٔ سانسورشده از راست** است: مطالعه پیش از دیدن خرابی پایان یافته است. این مشاهدات هم اطلاعات دارند.
 
 مدل آماری توصیفی ساده‌شده از الگوی زمان‌هاست. Veridist مدل را برازش می‌دهد؛ بررسی سازگاری فرض‌های آن با رفتار واقعی سیستم بخشی از تحلیل شماست.
 
@@ -115,7 +115,7 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">چرا توزیع احتمال را مدل کنیم؟</h2>
 
-داده‌ها الگو، پراکندگی و رخدادهای نادر دارند. **برازش**<sup id="fnref-distribution-fitting"><a href="#fn-distribution-fitting">۱</a></sup> یک توزیع احتمال، توصیفی فشرده از این رفتار می‌دهد، محاسبهٔ احتمال را ممکن می‌کند و عدم‌قطعیت را آشکار نگه می‌دارد.
+داده‌ها الگو، پراکندگی و رخدادهای نادر دارند. **برازش**<sup id="fnref-distribution-fitting"><a href="#fn-distribution-fitting">۳</a></sup> یک توزیع احتمال، توصیفی فشرده از این رفتار می‌دهد، محاسبهٔ احتمال را ممکن می‌کند و عدم‌قطعیت را آشکار نگه می‌دارد.
 
 وقتی دادهٔ کافی برای آموزش و ارزیابی قابل‌اتکای مدل‌های پیچیده، مانند شبکه‌های عصبی عمیق، نداریم، مدل‌های آماری با پارامترهای کمتر می‌توانند مناسب باشند؛ اگر فرض‌هایشان با مسئله سازگار باشد. حجم داده تنها معیار انتخاب روش نیست: هدف تحلیل، ساختار داده و نیاز به توضیح‌پذیری نیز اهمیت دارند. مدل‌کردن توزیع روی داده‌های بزرگ هم کاربرد دارد.
 
@@ -125,7 +125,7 @@ rate=0.5; events=1; censored=1
 
 برازش توزیع می‌تواند چند مدل نامزد را برازش دهد، پارامترهایشان را برآورد کند و سازگاری آن‌ها با داده را مقایسه کند. بهترین گزینهٔ رتبه‌بندی‌شده الزاماً توزیع واقعی داده نیست و ممکن است هیچ نامزدی کافی نباشد.
 
-رتبه‌بندی خودکار بین خانواده‌های فعلی Veridist از برنامه‌های آینده است. استنباط و انتخابِ مبتنی بر کفایت فعلی دامنهٔ محدودتری دارند: نمونه‌های نماییِ مثبت، متناهی و بدون سانسور. [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md) قرارداد دقیق را ثبت می‌کند.
+رتبه‌بندی خودکار بین خانواده‌های فعلی Veridist از برنامه‌های آینده است. استنباط و انتخابِ مبتنی بر کفایت فعلی دامنهٔ محدودتری دارند: نمونه‌های نماییِ مثبت، متناهی و بدون سانسور. [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md) قرارداد دقیق را ثبت می‌کند.
 
 <h2 dir="rtl" align="right">با دادهٔ خودتان کار کنید</h2>
 
@@ -164,7 +164,7 @@ rate=0.5; events=1; censored=1
 </details>
 
 
-برای نمونه‌های مثبت، متناهی و بدون سانسور در مسیر نمایی، آزمون‌های Monte Carlo با برازش مجدد KS/AD/CvM، معیارهای AIC/BIC و انتخاب مشروط به کفایت مدل با مولد تصادفی کاربر وجود دارند. دامنهٔ استنباط محدودتر از برازش است؛ [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md) جزئیات را ثبت می‌کند.
+برای نمونه‌های مثبت، متناهی و بدون سانسور در مسیر نمایی، آزمون‌های Monte Carlo با برازش مجدد KS/AD/CvM، معیارهای AIC/BIC و انتخاب مشروط به کفایت مدل با مولد تصادفی کاربر وجود دارند. دامنهٔ استنباط محدودتر از برازش است؛ [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md) جزئیات را ثبت می‌کند.
 
 <h2 dir="rtl" align="right">وقتی داده بیشتر می‌شود</h2>
 
@@ -202,7 +202,7 @@ rate=0.5; events=1; censored=1
 - **پردازش کارآمدتر داده‌های بزرگ:** ارزیابی و بهینه‌سازی زمان اجرا و حافظه با آزمایش‌های قابل‌بازتولید، همراه با توسعهٔ پردازش مرحله‌ای.
 - **آموزش‌های کاربردی بیشتر:** vignetteهایی از شناخت مسئله و داده تا تفسیر نتیجه؛ سپس نمونه‌های ویژگی‌های توزیعی برای تشخیص ناهنجاری، پایش drift و یادگیری ماشین.
 
-این موارد جهت توسعه‌اند، نه قابلیت فعلی یا تعهد به تاریخ انتشار. امکانات منتشرشده در [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md) و تغییرات تحویل‌شده در [تاریخچهٔ تغییرات](https://github.com/alisadeghiaghili/veridist/blob/main/python/CHANGELOG.md) ثبت می‌شوند.
+این موارد جهت توسعه‌اند، نه قابلیت فعلی یا تعهد به تاریخ انتشار. امکانات منتشرشده در [ماتریس قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.fa.md) و تغییرات تحویل‌شده در [تاریخچهٔ تغییرات](https://github.com/alisadeghiaghili/veridist/blob/main/python/CHANGELOG.md) ثبت می‌شوند.
 
 <h2 dir="rtl" align="right">راهنما و مشارکت</h2>
 
@@ -233,9 +233,9 @@ rate=0.5; events=1; censored=1
 
 در نخستین کاربرد هر اصطلاح، اندیس بالانویس به تعریف آن و معادل انگلیسی ارجاع می‌دهد.
 
-<p id="fn-distribution-fitting" dir="rtl" align="right"><strong>۱.</strong> <bdi dir="ltr">Distribution Fitting</bdi> — انتخاب یک یا چند توزیع نامزد، برآورد پارامترهای آن‌ها و سنجش سازگاری‌شان با داده. <a href="#fnref-distribution-fitting">↩</a></p>
+<p id="fn-right-censoring" dir="rtl" align="right"><strong>۱.</strong> <bdi dir="ltr">Right Censoring</bdi> — مشاهده‌ای که در آن زمان وقوع رویداد تا پایان بازهٔ مشاهده دیده نشده است. <a href="#fnref-right-censoring">↩</a></p>
 <p id="fn-likelihood" dir="rtl" align="right"><strong>۲.</strong> <bdi dir="ltr">Likelihood</bdi> — معیاری برای سنجش سازگاری یک مدل و پارامترهایش با مشاهدات ثبت‌شده. <a href="#fnref-likelihood">↩</a></p>
-<p id="fn-right-censoring" dir="rtl" align="right"><strong>۳.</strong> <bdi dir="ltr">Right Censoring</bdi> — مشاهده‌ای که در آن زمان وقوع رویداد تا پایان بازهٔ مشاهده دیده نشده است. <a href="#fnref-right-censoring">↩</a></p>
+<p id="fn-distribution-fitting" dir="rtl" align="right"><strong>۳.</strong> <bdi dir="ltr">Distribution Fitting</bdi> — انتخاب یک یا چند توزیع نامزد، برآورد پارامترهای آن‌ها و سنجش سازگاری‌شان با داده. <a href="#fnref-distribution-fitting">↩</a></p>
 <p id="fn-anomaly-detection" dir="rtl" align="right"><strong>۴.</strong> <bdi dir="ltr">Anomaly Detection</bdi> — شناسایی مشاهده‌هایی که با الگوی مرجع داده سازگاری کمی دارند. <a href="#fnref-anomaly-detection">↩</a></p>
 <p id="fn-distribution-drift" dir="rtl" align="right"><strong>۵.</strong> <bdi dir="ltr">Distribution Drift</bdi> — تغییر معنادار در توزیع دادهٔ جدید نسبت به توزیع مرجع یا دادهٔ گذشته. <a href="#fnref-distribution-drift">↩</a></p>
 
