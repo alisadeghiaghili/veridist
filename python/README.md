@@ -1,6 +1,6 @@
 # Veridist
 
-**Understand lifetime patterns and reliability with inspectable statistical models.**
+**Evidence-first distribution fitting for inspectable statistical results and reproducible decisions.**
 
 [![PyPI](https://img.shields.io/pypi/v/veridist.svg)](https://pypi.org/project/veridist/)
 [![Python 3.11–3.14](https://img.shields.io/badge/Python-3.11%E2%80%933.14-3776AB)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md)
@@ -31,6 +31,8 @@ Veridist currently provides separate Exponential, Weibull-minimum, and Lognormal
 ## What Veridist helps you do
 
 Veridist is a Python library for **lifetime data and reliability analysis**. It helps engineers and researchers turn observations into estimates whose assumptions and execution facts can be inspected.
+
+The name **Veridist** combines *verified* and *distribution*: distribution fitting designed for verification.
 
 - Fit Exponential, Weibull-minimum, and Lognormal lifetime models.
 - Include observations that ended before the event occurred.

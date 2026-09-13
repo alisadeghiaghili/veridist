@@ -55,6 +55,8 @@ Zuverlässigkeitsanalyse**. Sie hilft Ingenieurinnen, Ingenieuren und Forschende
 Beobachtungen in Schätzungen zu überführen, deren Annahmen und
 Ausführungsinformationen überprüfbar sind.
 
+Der Name **Veridist** verbindet *verified* und *distribution*: Verteilungsanpassung, die auf Überprüfbarkeit ausgelegt ist.
+
 - Exponential-, Weibull-Minimum- und Lognormal-Lebensdauermodelle anpassen.
 - Beobachtungen einbeziehen, die vor dem Ereignis endeten.
 - Schätzungen, Beobachtungszahlen und Berechnungsannahmen prüfen.
