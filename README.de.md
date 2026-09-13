@@ -23,7 +23,7 @@ Veridist unterstützt heute:
 - prüfbare Schätzungen und deklarierte Annahmen; sowie
 - stückweise Likelihood-Reduktion und lokales Fortsetzen kompatibler Exponential-CSV-Läufe.
 
-Der CSV-Einstieg ist bewusst eng: Strenges UTF-8-CSV passt nur ein ratenbasiertes Exponentialmodell an. Weibull-Minimum und Lognormal verwenden typisierte Lebensdauerobjekte. Die [Fähigkeitsmatrix](docs/capability-matrix.de.md) beschreibt die Grenze der Release-Linie.
+Der CSV-Einstieg ist bewusst eng: Strenges UTF-8-CSV passt nur ein ratenbasiertes Exponentialmodell an. Weibull-Minimum und Lognormal verwenden typisierte Lebensdauerobjekte. Die [Funktionsleitfaden](docs/capability-matrix.de.md) beschreibt die Grenze der Release-Linie.
 
 ## Mit einer Lebensdauerfrage beginnen
 
@@ -125,7 +125,7 @@ Eine Referenzverteilung kann **Anomalieerkennung** und **Distribution-Drift-Übe
 
 Distribution Fitting kann Kandidaten anpassen, ihre Parameter schätzen und ihre Eignung vergleichen. Der beste Rang ist nicht automatisch die wahre datenerzeugende Verteilung; möglicherweise ist kein Kandidat ausreichend.
 
-Automatische Rangfolgen zwischen den aktuellen Fit-Familien sind ein Zukunftsziel. Die vorhandene Inferenz und angemessenheitsgesteuerte Auswahl gelten enger: für endliche, positive, unzensierte Exponentialstichproben. Die [Fähigkeitsmatrix](docs/capability-matrix.de.md) dokumentiert den genauen Vertrag.
+Automatische Rangfolgen zwischen den aktuellen Fit-Familien sind ein Zukunftsziel. Die vorhandene Inferenz und angemessenheitsgesteuerte Auswahl gelten enger: für endliche, positive, unzensierte Exponentialstichproben. Die [Funktionsleitfaden](docs/capability-matrix.de.md) dokumentiert den genauen Vertrag.
 
 ## Mit eigenen Daten arbeiten
 
@@ -168,7 +168,7 @@ nicht, dass eine Fit-API verfügbar ist. Siehe
 Endliche positive unzensierte Exponentialstichproben unterstützen Refit-Monte-
 Carlo-KS/AD/CvM, AIC/BIC und adequacy-gesteuerte Auswahl mit einem
 aufrufereigenen Generator. Inferenz ist enger als Fitting; die
-[Capability Matrix](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.de.md)
+[Capability Guide](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.de.md)
 dokumentiert den genauen Umfang.
 
 Das frühere Projekt enthielt 25 Verteilungen: 20 stetige und fünf diskrete.
@@ -237,7 +237,7 @@ und statistische Korrektheit:
 
 Dies sind Entwicklungsrichtungen, keine aktuell unterstützten Funktionen oder
 zugesagten Veröffentlichungstermine. Veröffentlichte Fähigkeiten stehen in der
-[Capability Matrix](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.de.md),
+[Capability Guide](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.de.md),
 gelieferte Änderungen im [Changelog](python/CHANGELOG.md).
 
 ## Leitfäden, Hilfe und Beiträge

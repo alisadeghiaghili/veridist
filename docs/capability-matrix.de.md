@@ -1,4 +1,4 @@
-# Veridist: Funktionsübersicht
+# Veridist: Funktionsleitfaden
 
 [English](capability-matrix.md) | [فارسی](capability-matrix.fa.md) | [Deutsch](capability-matrix.de.md)
 

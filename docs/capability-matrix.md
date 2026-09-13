@@ -1,4 +1,4 @@
-# veridist capability matrix
+# Veridist capability guide
 
 [English](capability-matrix.md) | [فارسی](capability-matrix.fa.md) | [Deutsch](capability-matrix.de.md)
 

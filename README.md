@@ -23,7 +23,7 @@ Use Veridist today when you need to:
 - inspect the estimate alongside the declared modelling assumptions; or
 - reduce supported likelihood calculations in chunks and resume a compatible local Exponential CSV run.
 
-The first file-based workflow is deliberately narrow: strict UTF-8 CSV fits a rate-only Exponential model. Weibull-minimum and Lognormal fitting use typed lifetime objects. See the [capability matrix](docs/capability-matrix.md) for the release boundary.
+The first file-based workflow is deliberately narrow: strict UTF-8 CSV fits a rate-only Exponential model. Weibull-minimum and Lognormal fitting use typed lifetime objects. See the [capability guide](docs/capability-matrix.md) for the release boundary.
 
 ## From an observation to a model
 
@@ -117,7 +117,7 @@ Distribution-derived parameters, quantiles, and threshold-exceedance probabiliti
 
 Distribution fitting can mean fitting several candidate models, estimating their parameters, and comparing how well they describe the observations. A multi-model workflow can return ranked candidates with evaluation measures. The best-ranked candidate is not necessarily the true data-generating distribution, and none may be adequate.
 
-Automatic ranking across the currently supported fitting families is a future direction for Veridist. Existing inference and adequacy-gated selection have a narrower scope: finite, positive, uncensored Exponential samples. The [capability matrix](docs/capability-matrix.md) records the exact contract.
+Automatic ranking across the currently supported fitting families is a future direction for Veridist. Existing inference and adequacy-gated selection have a narrower scope: finite, positive, uncensored Exponential samples. The [capability guide](docs/capability-matrix.md) records the exact contract.
 
 ## Use your own data
 
@@ -151,7 +151,7 @@ Scalar operations for Normal, Gamma, Weibull-minimum, Lognormal, and right-Gumbe
 The lower-level API exposes `FAMILY_REGISTRY`, `evaluate_log_density`, and `reduce_log_likelihood_chunks` for family lookup, scalar log-density, and chunked likelihood reduction.
 
 
-Finite positive uncensored Exponential samples support refit Monte Carlo KS/AD/CvM, AIC/BIC, and adequacy-gated selection with a caller-owned generator. Inference is narrower than fitting; the [capability matrix](docs/capability-matrix.md) records the exact scope.
+Finite positive uncensored Exponential samples support refit Monte Carlo KS/AD/CvM, AIC/BIC, and adequacy-gated selection with a caller-owned generator. Inference is narrower than fitting; the [capability guide](docs/capability-matrix.md) records the exact scope.
 
 ## When data grows
 
@@ -189,7 +189,7 @@ Development directions focus on broader model coverage, easier analysis, and sta
 - **More efficient large-data processing:** measure and improve runtime and memory with reproducible experiments, alongside chunked processing.
 - **More practical vignettes:** walk from a real question through data to interpretation, then explore distribution-derived features for anomaly detection, drift monitoring, and machine learning.
 
-These are development directions, not currently supported features or promised release dates. Published capabilities remain in the [capability matrix](docs/capability-matrix.md), and delivered changes in the [changelog](python/CHANGELOG.md).
+These are development directions, not currently supported features or promised release dates. Published capabilities remain in the [capability guide](docs/capability-matrix.md), and delivered changes in the [changelog](python/CHANGELOG.md).
 
 ## Guides, help, and contributions
 
