@@ -10,64 +10,22 @@
 
 [English](README.md) | [فارسی](README.fa.md) | [Deutsch](README.de.md)
 
-## Warum Wahrscheinlichkeitsverteilungen modellieren?
+## Was Veridist ist
 
-Daten enthalten Muster, typische Ergebnisse, Streuung und seltene Ereignisse.
-Das Anpassen einer Wahrscheinlichkeitsverteilung hilft, diese Muster zu
-beschreiben, Ereigniswahrscheinlichkeiten zu schätzen und Unsicherheit zu
-berücksichtigen.
+Veridist ist eine Python-Bibliothek für **Lebensdauerdaten und Zuverlässigkeitsanalyse**. Sie macht Annahmen, Beobachtungszahlen und Ausführungsinformationen einer Schätzung überprüfbar.
 
-Wenn es zu wenig Daten gibt, um komplexe Modelle wie tiefe neuronale Netze
-zuverlässig zu trainieren und zu bewerten, können statistische Modelle mit
-weniger Parametern sinnvoll sein — sofern ihre Annahmen zum Problem passen. Sie
-ermöglichen eine erklärbare Darstellung statistischen Verhaltens mit begrenzten
-Beobachtungen. Datenmenge allein entscheidet jedoch nicht über die Methode:
-Analyseziel, Datenstruktur und Erklärbarkeit zählen ebenfalls. Auch bei großen
-Daten bleibt Verteilungsmodellierung nützlich.
+Der Name **Veridist** verbindet *verified* und *distribution*: Verteilungsanpassung mit Überprüfbarkeit. Ein erfolgreich ausgeführter Fit erklärt ein Modell nicht automatisch für angemessen.
 
-Eine Referenzverteilung kann ungewöhnliche Beobachtungen oder Änderungen im
-Muster neuer Daten sichtbar machen. Das sind Grundlagen für
-**Anomalieerkennung** und **Distribution-Drift-Überwachung**. Verlässliche
-Anwendungen brauchen außerdem Modellvalidierung, Entscheidungsschwellen und die
-Kontrolle falscher Alarme.
+Veridist unterstützt heute:
 
-Verteilungsparameter, Quantile und Überschreitungswahrscheinlichkeiten können
-später auch Merkmale für Deep-Learning-Modelle sein. Ihr Nutzen muss auf
-separaten Auswertungsdaten geprüft werden; die Merkmale dürfen weder
-Zukunfts- noch Testinformationen verwenden, damit kein Datenleck entsteht.
+- Fits von Exponential-, Weibull-Minimum- und Lognormal-Lebensdauermodellen;
+- unabhängig rechtszensierte Beobachtungen;
+- prüfbare Schätzungen und deklarierte Annahmen; sowie
+- stückweise Likelihood-Reduktion und lokales Fortsetzen kompatibler Exponential-CSV-Läufe.
 
-## Wenn die Verteilung unbekannt ist
+Der CSV-Einstieg ist bewusst eng: Strenges UTF-8-CSV passt nur ein ratenbasiertes Exponentialmodell an. Weibull-Minimum und Lognormal verwenden typisierte Lebensdauerobjekte. Die [Fähigkeitsmatrix](docs/capability-matrix.md) beschreibt die Grenze der Release-Linie.
 
-Distribution Fitting kann mehrere Kandidaten an Daten anpassen, ihre Parameter
-schätzen und vergleichen, wie gut sie Beobachtungen beschreiben. Ein
-Mehrmodell-Workflow kann Rangfolgen mit Parametern und Bewertungsmaßen liefern.
-
-Der beste Rang ist nicht automatisch die wahre datenerzeugende Verteilung.
-Kandidatenmenge, Vergleichskriterium und Annahmen bestimmen die Aussagekraft;
-möglicherweise ist kein Kandidat ausreichend. Veridist bietet derzeit getrennte
-APIs für Exponential-, Weibull-Minimum- und Lognormal-Fits. Automatische
-Rangfolgen zwischen Familien sind ein Zukunftsziel, keine aktuelle Funktion.
-
-## Was Veridist leistet
-
-Veridist ist eine Python-Bibliothek für **Lebensdauerdaten und
-Zuverlässigkeitsanalyse**. Sie hilft Ingenieurinnen, Ingenieuren und Forschenden,
-Beobachtungen in Schätzungen zu überführen, deren Annahmen und
-Ausführungsinformationen überprüfbar sind.
-
-Der Name **Veridist** verbindet *verified* und *distribution*: Verteilungsanpassung, die auf Überprüfbarkeit ausgelegt ist.
-
-- Exponential-, Weibull-Minimum- und Lognormal-Lebensdauermodelle anpassen.
-- Beobachtungen einbeziehen, die vor dem Ereignis endeten.
-- Schätzungen, Beobachtungszahlen und Berechnungsannahmen prüfen.
-- Skalare Verteilungsoperationen und stückweise Likelihood-Reduktion nutzen.
-- Kompatible unterbrochene Berechnungen auf unterstützten lokalen Pfaden fortsetzen.
-
-Anomalieerkennung, Drift-Überwachung und Deep Learning sind weitergehende
-Anwendungen der Verteilungsmodellierung. Veridist liefert dafür derzeit keine
-fertigen Systeme.
-
-## Von der Beobachtung zum Modell
+## Mit einer Lebensdauerfrage beginnen
 
 Stellen Sie sich eine Flotte von Pumpen vor. Für jede Pumpe kennen Sie die
 Beobachtungszeit und wissen, ob sie ausgefallen ist.
@@ -154,6 +112,20 @@ Das Modell nimmt an, dass Zensierung von der unbeobachteten Ausfallzeit
 unabhängig ist. Ein erfolgreicher Fit bestätigt die Berechnung, nicht die
 Angemessenheit des Modells. Folgen Sie dem
 [Leitfaden zur Rechtszensierung](python/docs/source/exponential-right-censoring.md).
+
+## Warum Wahrscheinlichkeitsverteilungen modellieren?
+
+Daten enthalten Muster, Streuung und seltene Ereignisse. Eine angepasste Wahrscheinlichkeitsverteilung beschreibt dieses Verhalten kompakt, unterstützt Wahrscheinlichkeitsberechnungen und macht Unsicherheit sichtbar.
+
+Wenn Daten für das zuverlässige Trainieren und Bewerten komplexer Modelle wie tiefer neuronaler Netze nicht reichen, können statistische Modelle mit weniger Parametern sinnvoll sein, sofern ihre Annahmen passen. Datenmenge allein entscheidet nicht: Analyseziel, Datenstruktur und Erklärbarkeit zählen ebenso. Verteilungsmodellierung bleibt auch bei großen Daten nützlich.
+
+Eine Referenzverteilung kann **Anomalieerkennung** und **Distribution-Drift-Überwachung** unterstützen. Dafür bleiben Validierung, Entscheidungsschwellen und die Kontrolle falscher Alarme erforderlich. Parameter, Quantile und Überschreitungswahrscheinlichkeiten können später Merkmale für Deep-Learning-Modelle sein, wenn sie ohne Zukunfts- oder Testinformationen geschätzt werden.
+
+## Wenn die Verteilung unbekannt ist
+
+Distribution Fitting kann Kandidaten anpassen, ihre Parameter schätzen und ihre Eignung vergleichen. Der beste Rang ist nicht automatisch die wahre datenerzeugende Verteilung; möglicherweise ist kein Kandidat ausreichend.
+
+Automatische Rangfolgen zwischen den aktuellen Fit-Familien sind ein Zukunftsziel. Die vorhandene Inferenz und angemessenheitsgesteuerte Auswahl gelten enger: für endliche, positive, unzensierte Exponentialstichproben. Die [Fähigkeitsmatrix](docs/capability-matrix.md) dokumentiert den genauen Vertrag.
 
 ## Mit eigenen Daten arbeiten
 
@@ -290,12 +262,12 @@ ist der kanonische maschinenlesbare Eintrag.
 
 ## Autor- und Forschungsprofile
 
-Veridist wird von [Seyed Ali Sadeghi Aghili](https://zil.ink/thedatascientist) gepflegt.
+Veridist wird von [Seyed Ali Sadeghi Aghili](https://linktr.ee/aliaghili) gepflegt.
 
-- [Google Scholar](https://scholar.google.com/citations?user=BDD_JUIAAAAJ&hl=en&authuser=1)
-- [ResearchGate](https://www.researchgate.net/profile/Seyed-Ali-Sadeghi-Aghili)
-- [PeerJ](https://peerj.com/AliSadeghiAghili/)
-- [ORCID](https://orcid.org/0000-0002-5938-3291)
+[![Google Scholar](https://img.shields.io/badge/Google%20Scholar-4285F4?logo=googlescholar&logoColor=white)](https://scholar.google.com/citations?user=BDD_JUIAAAAJ&hl=en&authuser=1)
+[![ResearchGate](https://img.shields.io/badge/ResearchGate-00CCBB?logo=researchgate&logoColor=white)](https://www.researchgate.net/profile/Seyed-Ali-Sadeghi-Aghili)
+[![PeerJ](https://img.shields.io/badge/PeerJ-00A4A6?logo=peerj&logoColor=white)](https://peerj.com/AliSadeghiAghili/)
+[![ORCID](https://img.shields.io/badge/ORCID-A6CE39?logo=orcid&logoColor=white)](https://orcid.org/0000-0002-5938-3291)
 
 ## Fachbegriffe
 

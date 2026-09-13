@@ -10,37 +10,20 @@
 
 [English](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.md) | [فارسی](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.fa.md) | [Deutsch](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.de.md)
 
-## Why model a probability distribution?
+## What Veridist is
 
-Data contains patterns: typical outcomes, variation, and rare events. Fitting a probability distribution gives us a way to describe those patterns, estimate event probabilities, and reason about uncertainty.
+Veridist is a Python library for **lifetime data and reliability analysis**. It turns failure and survival observations into estimates whose assumptions, observation counts, and execution facts can be reviewed.
 
-When there is too little data to train and evaluate complex models such as deep neural networks reliably, statistical models with fewer parameters can be useful, provided their assumptions suit the problem. They can offer an interpretable account of statistical behaviour with limited observations. Data volume alone does not determine the right method: the analytical goal, data structure, and need for explanation matter too. Distribution modelling remains useful for large datasets.
+The name **Veridist** combines *verified* and *distribution*: distribution fitting designed for verification. It makes a calculation inspectable; it does not declare a model true simply because fitting completed.
 
-A reference distribution can also help identify unusual observations or changes in the pattern of new data. These ideas underpin **anomaly detection** and **distribution drift monitoring**. Reliable applications also need model validation, decision thresholds, and control of false alarms.
+Use Veridist today when you need to:
 
-Distribution models can later contribute to deep learning. Estimated parameters, quantiles, and threshold-exceedance probabilities can become input features alongside the original data. Evaluate whether these features help, and estimate them without future observations or test-set information to avoid leakage.
+- fit fixed-location Exponential, Weibull-minimum, or Lognormal lifetime models;
+- retain independent right-censored observations instead of discarding them;
+- inspect the estimate alongside the declared modelling assumptions; or
+- reduce supported likelihood calculations in chunks and resume a compatible local Exponential CSV run.
 
-## When you do not know the distribution
-
-Distribution fitting can involve fitting several candidate models, estimating their parameters, and comparing how well they describe the observations. A multi-model workflow can return ranked candidates with their parameters and evaluation measures.
-
-The best-ranked fit depends on the candidates, comparison criterion, and assumptions. It need not be the true data-generating distribution; none of the candidates may be adequate.
-
-Veridist currently provides separate Exponential, Weibull-minimum, and Lognormal fitting APIs. Automatic ranking across these three families is a future direction, not a current feature. Existing inference and selection have a narrower Exponential scope.
-
-## What Veridist helps you do
-
-Veridist is a Python library for **lifetime data and reliability analysis**. It helps engineers and researchers turn observations into estimates whose assumptions and execution facts can be inspected.
-
-The name **Veridist** combines *verified* and *distribution*: distribution fitting designed for verification.
-
-- Fit Exponential, Weibull-minimum, and Lognormal lifetime models.
-- Include observations that ended before the event occurred.
-- Inspect estimates, observation counts, and calculation assumptions.
-- Use scalar distribution operations and chunked likelihood reduction.
-- Resume compatible interrupted computations locally on supported paths.
-
-Anomaly detection, drift monitoring, and deep learning are broader applications of distribution modelling. Veridist does not currently supply ready-made systems for these tasks.
+The first file-based workflow is deliberately narrow: strict UTF-8 CSV fits a rate-only Exponential model. Weibull-minimum and Lognormal fitting use typed lifetime objects. See the [capability matrix](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md) for the release boundary.
 
 ## From an observation to a model
 
@@ -119,6 +102,22 @@ There is one failure across two observed time units, so the estimated rate is 1 
 The operating pump contributes one observed time unit without failure. The model assumes censoring is independent of the unobserved failure time. Removing pumps early because they appear likely to fail would require examining that assumption.
 
 A successful fit confirms the calculation completed; it does not prove model adequacy. Continue with the [right-censoring walkthrough](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/exponential-right-censoring.md).
+
+## Why model a probability distribution?
+
+Data has patterns: typical outcomes, variation, and rare events. A fitted probability distribution gives those patterns a compact statistical description, supports probability calculations, and makes uncertainty explicit.
+
+When there is too little data to train and evaluate complex models such as deep neural networks reliably, lower-parameter statistical models can be useful if their assumptions suit the problem. Data volume alone does not choose the method: the analytical goal, data structure, and need for explanation matter too. Distribution modelling remains useful for large datasets.
+
+A reference distribution can support **anomaly detection** and **distribution drift monitoring** by making unusual observations or changed patterns visible. These uses still require validation, decision thresholds, and control of false alarms.
+
+Distribution-derived parameters, quantiles, and threshold-exceedance probabilities can later become features for deep-learning models. Evaluate those features separately and estimate them without future or test-set information to avoid leakage.
+
+## When you do not know the distribution
+
+Distribution fitting can mean fitting several candidate models, estimating their parameters, and comparing how well they describe the observations. A multi-model workflow can return ranked candidates with evaluation measures. The best-ranked candidate is not necessarily the true data-generating distribution, and none may be adequate.
+
+Automatic ranking across the currently supported fitting families is a future direction for Veridist. Existing inference and adequacy-gated selection have a narrower scope: finite, positive, uncensored Exponential samples. The [capability matrix](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-matrix.md) records the exact contract.
 
 ## Use your own data
 
@@ -210,12 +209,12 @@ Cite the version that produced your result. The [citation guide](https://github.
 
 ## Author and research profiles
 
-Maintainer: [Seyed Ali Sadeghi Aghili](https://zil.ink/thedatascientist).
-See the [Google Scholar](https://scholar.google.com/citations?user=BDD_JUIAAAAJ&hl=en&authuser=1),
-[ResearchGate](https://www.researchgate.net/profile/Seyed-Ali-Sadeghi-Aghili), and
-[PeerJ](https://peerj.com/AliSadeghiAghili/) profiles.
-The author's [ORCID](https://orcid.org/0000-0002-5938-3291) is included in the
-machine-readable citation metadata.
+Maintainer: [Seyed Ali Sadeghi Aghili](https://linktr.ee/aliaghili).
+
+[![Google Scholar](https://img.shields.io/badge/Google%20Scholar-4285F4?logo=googlescholar&logoColor=white)](https://scholar.google.com/citations?user=BDD_JUIAAAAJ&hl=en&authuser=1)
+[![ResearchGate](https://img.shields.io/badge/ResearchGate-00CCBB?logo=researchgate&logoColor=white)](https://www.researchgate.net/profile/Seyed-Ali-Sadeghi-Aghili)
+[![PeerJ](https://img.shields.io/badge/PeerJ-00A4A6?logo=peerj&logoColor=white)](https://peerj.com/AliSadeghiAghili/)
+[![ORCID](https://img.shields.io/badge/ORCID-A6CE39?logo=orcid&logoColor=white)](https://orcid.org/0000-0002-5938-3291)
 
 ## Terminology
 
