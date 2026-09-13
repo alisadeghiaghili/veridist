@@ -2,6 +2,8 @@
 
 <p dir="rtl" align="right"><a href="KNOWN_LIMITS.md">English</a> | <a href="KNOWN_LIMITS.fa.md">فارسی</a> | <a href="KNOWN_LIMITS.de.md">Deutsch</a></p>
 
+<!-- CI contract IDs: `FIT-CSV-EXP` `CSV-STRICT` `SCALAR-FAMILIES` `STREAM-SOURCE` `MEMORY-BOUND` `SCALE-EVIDENCE` `LICENSE` -->
+
 <p dir="rtl" align="right">این صفحه مرزهای نسخهٔ <bdi dir="ltr">1.0.1</bdi> را به زبان ساده توضیح می‌دهد. اگر کاری در این فهرست نیامده، نباید آن را قابلیت پشتیبانی‌شده فرض کرد.</p>
 
 <h2 dir="rtl" align="right">ورود داده از فایل</h2>

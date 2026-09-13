@@ -32,6 +32,8 @@ class CiScopeClassifierTests(unittest.TestCase):
             "docs/adr/ADR-0015-retry-checkpoint-transactional-guarantees.md",
             "docs/evidence/scale-csv-exponential-v1.md",
             "docs/capability-matrix.md",
+            "docs/capability-matrix.fa.md",
+            "docs/capability-matrix.de.md",
             "docs/readme-design-policy.md",
             "docs/citing-veridist.md",
             "docs/v1-readiness.md",

@@ -27,6 +27,8 @@ _VERIDIST_PATHS = frozenset(
         ".github/workflows/pypi-publish.yml",
         "docs/adoption-and-reputation-strategy.md",
         "docs/capability-matrix.md",
+        "docs/capability-matrix.fa.md",
+        "docs/capability-matrix.de.md",
         "docs/competitive-evidence-policy.md",
         "docs/competitive-feature-matrix.csv",
         "docs/competitive-feature-matrix.md",
