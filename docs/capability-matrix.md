@@ -1,5 +1,7 @@
 # veridist capability matrix
 
+[English](capability-matrix.md) | [فارسی](capability-matrix.fa.md) | [Deutsch](capability-matrix.de.md)
+
 This matrix records the callable scope of `veridist` 1.0.1. A listed cell is
 supported only within its stated data and execution contracts. Historical
 evidence remains useful context, but release claims require checks on the exact

@@ -1,34 +1,49 @@
-# محدودیت‌های شناخته‌شدهٔ Veridist 1.0
+<h1 dir="rtl" align="right">محدودیت‌های شناخته‌شدهٔ <bdi dir="ltr">Veridist</bdi> ۱٫۰</h1>
 
-این سند مرز انتشار 1.0 برای نسخهٔ بستهٔ `1.0.1` را تعریف می‌کند.
+<p dir="rtl" align="right"><a href="KNOWN_LIMITS.md">English</a> | <a href="KNOWN_LIMITS.fa.md">فارسی</a> | <a href="KNOWN_LIMITS.de.md">Deutsch</a></p>
 
-- `FIT-CSV-EXP`: مسیر CSV فقط مدل نمایی با مکان ثابت و پارامتر نرخ را برای
-  طول‌عمرهای دقیق و مستقلِ راست‌سانسورشده برازش می‌دهد. برازش Weibull-minimum
-  و Lognormal با اشیای طول‌عمر نوع‌دار قابل‌فراخوانی است و API عمومی فایل نیست.
-  وزن تحلیلی، متغیر کمکی، truncation، چپ‌سانسوری، سانسور بازه‌ای و مکان آزاد
-  پشتیبانی نمی‌شوند.
-- `CSV-STRICT`: adapter فایل همراه بسته فقط CSV با UTF-8 و دقیقاً دو ستون
-  `time,event_observed` را می‌پذیرد؛ `1` رخداد دقیق و `0` راست‌سانسوری مستقل
-  است. این یک CSV reader یا spreadsheet reader عمومی نیست.
-- `SCALAR-FAMILIES`: خانواده‌های normal، gamma، Weibull-minimum، lognormal و
-  right-Gumbel عملیات اسکالر log-density، CDF، survival، quantile و sampling
-  دارند. ارزیابی array، API یکنواخت برازش و استنباط برای همهٔ خانواده‌ها ارائه
-  نمی‌شود.
-- `STREAM-SOURCE`: `IterableDataSource`، iterableهای chunk متعلق به فراخواننده
-  را سازگار می‌کند. adapter برای Parquet، Arrow، dataframe، database یا network
-  همراه بسته نیست. ادامهٔ پایدار به مسیر CSV طول‌عمر سخت‌گیرانه و SQLite محلی
-  محدود است و checkpoint توزیع‌شده نیست.
-- `INFERENCE-EXP`: آزمون‌های KS/AD/CvM با Monte Carlo و refit و انتخاب
-  adequacy-gated فقط برای نمونه‌های نمایی مثبت، متناهی و بدون سانسور هستند.
-  ثبات انتخاب bootstrap یا calibration بیرون از grid آزموده‌شده ادعا نمی‌شود.
-- `MEMORY-BOUND`: کران delivery، payload صف و lease فعال مصرف‌کننده را تا
-  release صریح محاسبه می‌کند. این کران منطقی payload نگه‌داری‌شده است، نه سقف
-  قابل‌حمل RSS.
-- `SCALE-EVIDENCE`: اندازه‌گیری فقط برای adapter، خانواده، workload، platform،
-  نسخهٔ Python، حد chunk و SHA همان candidate معتبر است. این شواهد throughput
-  همگانی، پشتیبانی generic big-data یا قابلیت گستردهٔ out-of-core را ثابت
-  نمی‌کنند.
-- `LICENSE`: مجوز بسته BUSL-1.1 با مجوز استفادهٔ اضافی Apache-2.0 مندرج در
-  `LICENSE` است و در 2030-09-05 به Apache-2.0 تغییر می‌کند.
+<p dir="rtl" align="right">این صفحه مرزهای نسخهٔ <bdi dir="ltr">1.0.1</bdi> را به زبان ساده توضیح می‌دهد. اگر کاری در این فهرست نیامده، نباید آن را قابلیت پشتیبانی‌شده فرض کرد.</p>
 
-[English](KNOWN_LIMITS.md) | [Deutsch](KNOWN_LIMITS.de.md)
+<h2 dir="rtl" align="right">ورود داده از فایل</h2>
+
+<ul dir="rtl" align="right">
+  <li><bdi dir="ltr">CSV</bdi> فقط برای مدل نمایی با <strong>مکان ثابت صفر و پارامتر نرخ</strong><sup id="fnref-location-rate"><a href="#fn-location-rate">۱</a></sup> است.</li>
+  <li>فایل باید <bdi dir="ltr">UTF-8</bdi> باشد و دقیقاً دو ستون <code dir="ltr">time,event_observed</code> داشته باشد.</li>
+  <li>عدد ۱ در ستون وضعیت یعنی خرابی دیده شده و عدد ۰ یعنی دستگاه تا پایان مشاهده هنوز خراب نشده است.</li>
+  <li><strong>وایبول کمینه و لگ‌نرمال</strong><sup id="fnref-families"><a href="#fn-families">۲</a></sup> با دادهٔ آماده‌شده در پایتون کار می‌کنند، نه با یک API عمومی برای فایل.</li>
+</ul>
+
+<h2 dir="rtl" align="right">چیزهایی که فعلاً پشتیبانی نمی‌شوند</h2>
+
+<ul dir="rtl" align="right">
+  <li><strong>سانسور چپ، سانسور فاصله‌ای و دادهٔ برش‌خورده</strong><sup id="fnref-censoring-truncation"><a href="#fn-censoring-truncation">۳</a></sup></li>
+  <li><strong>متغیرهای کمکی</strong><sup id="fnref-covariates"><a href="#fn-covariates">۴</a></sup> مانند دما و فشار</li>
+  <li><strong>وزن تحلیلی و پارامتر مکان آزاد</strong><sup id="fnref-weights-location"><a href="#fn-weights-location">۵</a></sup></li>
+  <li>ورودی آرایه‌ای، آداپتور آماده برای Parquet، Arrow، دیتافریم، پایگاه داده یا شبکه</li>
+  <li>ذخیرهٔ وضعیت میان چند رایانه</li>
+  <li>استنباط آماری برای همهٔ توزیع‌ها و سنجش پایداری انتخاب مدل با <strong>بوت‌استرپ</strong><sup id="fnref-bootstrap"><a href="#fn-bootstrap">۶</a></sup></li>
+</ul>
+
+<h2 dir="rtl" align="right">دادهٔ بزرگ و ادامهٔ اجرا</h2>
+
+<ul dir="rtl" align="right">
+  <li>پردازش مرحله‌ای داده به معنی تضمین سرعت یا سقف حافظه برای همهٔ رایانه‌ها نیست.</li>
+  <li>ادعای مقیاس فقط برای همان آداپتور، مدل، داده، محیط، نسخهٔ پایتون و کامیتی معتبر است که آزمایش شده‌اند.</li>
+  <li>ادامهٔ اجرا فقط برای مسیر CSV طول عمر و <bdi dir="ltr">SQLite</bdi><sup id="fnref-sqlite"><a href="#fn-sqlite">۷</a></sup> محلی پشتیبانی می‌شود.</li>
+</ul>
+
+<h2 dir="rtl" align="right">مجوز</h2>
+
+<p dir="rtl" align="right">بسته با <bdi dir="ltr">BUSL-1.1</bdi> منتشر می‌شود. شرایط استفادهٔ اضافی با <bdi dir="ltr">Apache-2.0</bdi> و تاریخ تغییر مجوز در <a href="../LICENSE"><bdi dir="ltr">LICENSE</bdi></a> آمده است؛ تاریخ تغییر مجوز <bdi dir="ltr">2030-09-05</bdi> است.</p>
+
+<h2 dir="rtl" align="right">پانویس اصطلاحات</h2>
+
+<p id="fn-location-rate" dir="rtl" align="right"><strong>۱.</strong> مکان ثابت صفر یعنی توزیع روی محور زمان جابه‌جا نمی‌شود. نرخ، سرعت رخداد در مدل نمایی است. <a href="#fnref-location-rate">↩</a></p>
+<p id="fn-families" dir="rtl" align="right"><strong>۲.</strong> وایبول کمینه می‌تواند نرخ خرابیِ کاهشی، ثابت یا افزایشی را توصیف کند؛ لگ‌نرمال برای زمان‌های مثبت با ساختار لگاریتمی به کار می‌رود. <a href="#fnref-families">↩</a></p>
+<p id="fn-censoring-truncation" dir="rtl" align="right"><strong>۳.</strong> در سانسور چپ فقط می‌دانیم رویداد پیش از زمانی رخ داده است؛ در سانسور فاصله‌ای می‌دانیم در یک بازه رخ داده؛ در برش داده، ورود مشاهده به داده به یک شرط وابسته بوده است. <a href="#fnref-censoring-truncation">↩</a></p>
+<p id="fn-covariates" dir="rtl" align="right"><strong>۴.</strong> متغیرهای کمکی اطلاعاتی مانند دما یا فشارند که ممکن است با عمر ارتباط داشته باشند. <a href="#fnref-covariates">↩</a></p>
+<p id="fn-weights-location" dir="rtl" align="right"><strong>۵.</strong> وزن تحلیلی اهمیت یا دقت مشاهده را تغییر می‌دهد؛ پارامتر مکان آزاد توزیع را روی محور زمان جابه‌جا می‌کند. <a href="#fnref-weights-location">↩</a></p>
+<p id="fn-bootstrap" dir="rtl" align="right"><strong>۶.</strong> بوت‌استرپ نمونه‌گیری تکراری از داده برای سنجش پایداری نتیجه است. <a href="#fnref-bootstrap">↩</a></p>
+<p id="fn-sqlite" dir="rtl" align="right"><strong>۷.</strong> SQLite پایگاه دادهٔ کوچک و فایل‌محور روی همان رایانه است؛ وضعیت اجرا در آن ذخیره می‌شود تا اجرای سازگار پس از وقفه ادامه یابد. <a href="#fnref-sqlite">↩</a></p>
+
+<p dir="rtl" align="right"><a href="../README.fa.md">بازگشت به راهنمای اصلی</a> | <a href="../docs/capability-matrix.fa.md">ماتریس قابلیت‌ها</a></p>
