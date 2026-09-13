@@ -79,6 +79,47 @@ class RequiredQualityArtifactTests(unittest.TestCase):
             with self.subTest(required=required):
                 self.assertIn(required, content)
 
+    def test_capability_guides_keep_the_same_release_topics_in_every_locale(self) -> None:
+        guides = {
+            "en": REPOSITORY_ROOT / "docs" / "capability-guide.md",
+            "fa": REPOSITORY_ROOT / "docs" / "capability-guide.fa.md",
+            "de": REPOSITORY_ROOT / "docs" / "capability-guide.de.md",
+        }
+        required_topics = {
+            "en": (
+                "lifetime of equipment",
+                "right-censoring",
+                "What result do I get?",
+                "large or a run is interrupted",
+                "not supported yet",
+                "code quality",
+                "Technical details",
+            ),
+            "fa": (
+                "عمر دستگاه‌ها",
+                "سانسورشده از راست",
+                "چه نتیجه‌ای می‌گیرم؟",
+                "داده زیاد باشد یا برنامه قطع شود",
+                "هنوز پشتیبانی نمی‌شوند",
+                "کیفیت کد ما",
+                "جزئیات فنی",
+            ),
+            "de": (
+                "Lebensdauer von Geräten",
+                "Rechtszensierung",
+                "Welches Ergebnis erhalte ich?",
+                "großen Daten oder einer Unterbrechung",
+                "noch nicht unterstützt",
+                "Codequalität",
+                "Technische Details",
+            ),
+        }
+        for locale, path in guides.items():
+            content = path.read_text(encoding="utf-8")
+            for topic in required_topics[locale]:
+                with self.subTest(locale=locale, topic=topic):
+                    self.assertIn(topic, content)
+
     def test_coverage_manifest_exists_is_valid_and_is_not_gitignored(self) -> None:
         self.assertTrue(MANIFEST.is_file(), "required coverage manifest is missing")
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))

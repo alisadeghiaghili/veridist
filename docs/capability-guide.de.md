@@ -6,17 +6,37 @@ Dieser Leitfaden beschreibt die praktische Grenze von **Veridist 1.0.1**: welche
 
 ## Ich möchte die Lebensdauer von Geräten analysieren
 
-Veridist passt eine statistische Verteilung an beobachtete Lebensdauern an. **Exponential-MLE**, **Weibull-Minimum-MLE** und **Lognormal-MLE** sind mit fester Lage `loc=0` für exakte und unabhängige Rechtszensierung verfügbar. Der strikte UTF-8-CSV-Weg ist enger: Er passt nur das ratenbasierte Exponentialmodell an und akzeptiert genau `time,event_observed`.
+Veridist passt eine statistische Verteilung an beobachtete Lebensdauern an. **Exponential-MLE**, **Weibull-Minimum-MLE** und **Lognormal-MLE** sind mit fester Lage `loc=0` für exakte und unabhängige Rechtszensierung verfügbar. Der strikte UTF-8-CSV-Weg ist enger: Er passt nur das ratenbasierte Exponentialmodell an.
 
-Weibull-Minimum und Lognormal verwenden typisierte Lebensdauerobjekte. Weibull akzeptiert Häufigkeitsgewichte und optional eine feste Form; Lognormal akzeptiert Häufigkeitsgewichte. Bei Erfolg gibt es eine endliche Schätzung, andernfalls einen typisierten statistischen oder Ausführungsfehler mit Ursache.
+| Modell | Beschriebenes Verhalten | Eingabe |
+| --- | --- | --- |
+| Exponential | Konstante Ausfallrate über die Zeit | Striktes CSV oder vorbereitete Python-Daten |
+| Weibull-Minimum | Sinkende, konstante oder steigende Ausfallrate, abhängig von der Form | Vorbereitete Python-Daten |
+| Lognormal | Positive Lebensdauern, deren Logarithmus einem Normalmodell folgt | Vorbereitete Python-Daten |
+
+Für den Einstieg über CSV steht nur das Exponentialmodell bereit. Die Datei muss UTF-8 sein und genau die zwei Spalten `time,event_observed` in dieser Reihenfolge enthalten. Die erste Spalte ist die Beobachtungsdauer. In der zweiten bedeutet `1`, dass der Ausfall beobachtet wurde, und `0`, dass bis zum Beobachtungsende kein Ausfall gesehen wurde. Veridist errät das Dateiformat nicht.
+
+Weibull-Minimum und Lognormal verwenden typisierte Lebensdauerobjekte. Weibull akzeptiert Häufigkeitsgewichte und optional eine feste Form; Lognormal akzeptiert Häufigkeitsgewichte. Bei Erfolg gibt es eine endliche Schätzung, andernfalls einen typisierten statistischen oder Ausführungsfehler mit Ursache. Fehler beim Lesen einer Datei werden getrennt von statistischen Fehlern gemeldet. Der Abschluss einer Berechnung beweist nicht, dass ein Modell für die Daten angemessen ist.
 
 ## Was ist, wenn einige Geräte noch nicht ausgefallen sind?
 
-Verwenden Sie `event_observed=0`, wenn ein Gerät beim Ende der Beobachtung noch nicht ausgefallen war. Das ist unabhängige Rechtszensierung: Die endgültige Lebensdauer ist unbekannt, aber sie ist länger als die beobachtete Zeit. Links- und Intervallzensierung sowie Trunkierung gehören nicht zum Umfang von 1.0.
+Verwenden Sie `event_observed=0`, wenn ein Gerät beim Ende der Beobachtung noch nicht ausgefallen war. Das ist unabhängige Rechtszensierung: Die endgültige Lebensdauer ist unbekannt, aber sie ist länger als die beobachtete Zeit. Das aktuelle Verfahren setzt voraus, dass das Ende der Beobachtung unabhängig von der noch nicht beobachteten Ausfallzeit ist. Pumpen wegen Anzeichen eines unmittelbar bevorstehenden Ausfalls aus einer Studie zu nehmen, kann diese Annahme verletzen; Veridist kann sie nicht aus den Daten beweisen.
+
+```mermaid
+timeline
+    title Zwei Beobachtungen der Pumpenlebensdauer
+    0 Stunden : Beobachtung beginnt
+    100 Stunden : Die erste Pumpe fiel aus
+    100 Stunden : Die Beobachtung der zweiten Pumpe endete; ihr Ausfall wurde nicht beobachtet
+```
+
+Im Diagramm ist die Ausfallzeit der ersten Pumpe bekannt. Bei der zweiten wissen wir nur, dass sie mindestens 100 Stunden lief. Diese Information bleibt erhalten und fließt in den Fit ein.
+
+Links- und Intervallzensierung sowie Trunkierung gehören nicht zum Umfang von 1.0.
 
 ## Welches Ergebnis erhalte ich?
 
-Ein Fit enthält geschätzte Parameter, Diagnosen und die Annahmen der Berechnung. Für endliche, positive und unzensierte Exponentialstichproben unterstützt Veridist außerdem **Monte-Carlo-KS/AD/CvM mit erneuter Anpassung**, AIC/BIC, eine Kalibrierungsübersicht und eine adequacy-gesteuerte Auswahl. Gewählt wird der Kandidat mit dem kleinsten AIC, der die definierte Angemessenheitsprüfung besteht; andernfalls lautet das Ergebnis `NONE_ADEQUATE`. Dies ist keine automatische Rangfolge aller Fit-Familien.
+Ein Fit enthält geschätzte Parameter, Diagnosen und die Annahmen der Berechnung. Für endliche, positive und unzensierte Exponentialstichproben unterstützt Veridist außerdem **Monte-Carlo-KS/AD/CvM mit erneuter Anpassung**, AIC/BIC, eine Kalibrierungsübersicht und eine adequacy-gesteuerte Auswahl. Gewählt wird der Kandidat mit dem kleinsten AIC, der die definierte Angemessenheitsprüfung besteht; andernfalls lautet das Ergebnis `NONE_ADEQUATE`. Dies ist keine automatische Rangfolge zwischen Exponential, Weibull und Lognormal.
 
 ## Was kann ich außer dem Fit berechnen?
 
@@ -36,9 +56,13 @@ Die Version 1.0 unterstützt keine Kovariaten wie Temperatur oder Druck, analyti
 
 ## Wie wird die Codequalität geprüft?
 
-Ergebnisse werden mit unabhängigen Referenzen verglichen. Tests decken ungültige Eingaben, Grenzfälle, Unterbrechung und Wiederaufnahme ab und laufen auf Python 3.11 bis 3.14. Das Qualitäts-Gate verlangt mindestens 95 % globale Zeilen- und Zweigabdeckung sowie strengere Schwellen für numerische Module. Kritischer statistischer Code durchläuft zusätzlich ein fail-closed Mutation-Gate.
+Ergebnisse werden mit unabhängigen Referenzen verglichen. Tests decken ungültige Eingaben, Grenzfälle, Unterbrechung und Wiederaufnahme ab und laufen auf Python 3.11 bis 3.14. Das Qualitäts-Gate verlangt mindestens 95 % globale Zeilen- und Zweigabdeckung sowie strengere Schwellen für numerische Module. Kritischer statistischer Code durchläuft zusätzlich ein fail-closed Mutation-Gate. Die Abdeckungszahl ist eine Annahmebedingung, keine Aussage über einen aktuellen Prozentsatz; Geschwindigkeits- und Speichernachweise gelten nur für die getesteten Daten, Umgebung und Revision.
 
 ## Technische Details
+
+Alle drei Fit-Modelle verwenden Maximum-Likelihood-Schätzung mit fester Lage null. Exponential schätzt nur die Rate; Weibull schätzt Form und Skala; Lognormal schätzt logarithmische Lage und Skala. Häufigkeitsgewichte bedeuten wiederholte Beobachtungen und werden von Weibull und Lognormal unterstützt; sie unterscheiden sich von analytischen Gewichten. Ein numerisches Scheitern oder fehlende Konvergenz wird mit einer benannten Ursache gemeldet.
+
+Die Exponentialauswertung berichtet angeforderte, erfolgreiche und fehlgeschlagene Neuanpassungen sowie Monte-Carlo-Unsicherheit. Sie bestimmen die Zufallszahlenfolge selbst; derselbe Seed reproduziert dasselbe Experiment. Die Stream-Anzahl hat eine explizite vorzeichenlose 64-Bit-Grenze. Tests decken Unterbrechung, Wiederholung, Beschädigung, konkurrierenden Zugriff und Abbruch ab.
 
 Messwerte gelten nur für Adapter, Familie, Arbeitslast, Plattform, Python-Version, Chunk-Grenze und Kandidaten-SHA, die tatsächlich getestet wurden. Nicht unterstützte Kombinationen scheitern ausdrücklich. Das strikte CSV-Beispiel und gerenderte persische RTL-Seiten sind ausführbare CI-Verträge.
 
