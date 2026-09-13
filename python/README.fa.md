@@ -222,7 +222,7 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">نویسنده و پروفایل‌های پژوهشی</h2>
 
-<p dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> را [سید علی صادقی عقیلی](https://zil.ink/thedatascientist) نگهداری می‌کند.</p>
+<p dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> را <a href="https://zil.ink/thedatascientist">سید علی صادقی عقیلی</a> نگهداری می‌کند.</p>
 
 [![Google Scholar](https://img.shields.io/badge/Google%20Scholar-4285F4?logo=googlescholar&logoColor=white)](https://scholar.google.com/citations?user=BDD_JUIAAAAJ&hl=en&authuser=1)
 [![ResearchGate](https://img.shields.io/badge/ResearchGate-00CCBB?logo=researchgate&logoColor=white)](https://www.researchgate.net/profile/Seyed-Ali-Sadeghi-Aghili)
