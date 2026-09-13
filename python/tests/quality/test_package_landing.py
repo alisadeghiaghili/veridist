@@ -210,7 +210,10 @@ class PackageLandingContractTests(unittest.TestCase):
         )
         for paths in readme_groups:
             heading_counts = {
-                path.name: len(re.findall(r"(?m)^## ", path.read_text(encoding="utf-8")))
+                path.name: len(
+                    re.findall(r"(?m)^## ", path.read_text(encoding="utf-8"))
+                )
+                + len(re.findall(r"(?mi)^<h2\b", path.read_text(encoding="utf-8")))
                 for path in paths
             }
             with self.subTest(paths=tuple(path.name for path in paths)):
