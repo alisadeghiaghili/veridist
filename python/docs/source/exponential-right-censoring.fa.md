@@ -1,0 +1,124 @@
+<a id="veridist-exponential-right-censoring-fa"></a>
+<h1 dir="rtl" align="right">آموزش سانسور از راست در مدل نمایی</h1>
+
+<p dir="rtl" align="right"><a href="exponential-right-censoring.md">انگلیسی</a> | <a href="exponential-right-censoring.fa.md">فارسی</a> | <a href="exponential-right-censoring.de.md">آلمانی</a></p>
+
+<p dir="rtl" align="right">این آموزش اولین مسیر تحلیل دادهٔ طول عمر در <bdi dir="ltr">Veridist</bdi> را نشان می‌دهد: برازش توزیع<sup id="fnref-fitting"><a href="#fn-fitting">۱</a></sup> نمایی وقتی بخشی از مشاهده‌ها سانسور از راست<sup id="fnref-right-censoring"><a href="#fn-right-censoring">۲</a></sup> هستند. از این مسیر زمانی استفاده کنید که هر سطر داده می‌گوید «رخداد در این زمان اتفاق افتاده» یا «تا این زمان هنوز رخداد دیده نشده است».</p>
+
+<h2 dir="rtl" align="right">ایدهٔ داده چیست؟</h2>
+
+<p dir="rtl" align="right">هر سطر طول عمر دو فیلد دارد:</p>
+
+<table class="docutils" dir="rtl" width="100%">
+  <thead>
+    <tr>
+      <th width="30%" align="center"><p align="center">فیلد CSV</p></th>
+      <th width="70%" align="center"><p align="center">معنا</p></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td dir="ltr" align="left"><code class="literal">time</code></td>
+      <td align="right">مقدار متناهی و نامنفی از زمان مشاهده‌شده.</td>
+    </tr>
+    <tr>
+      <td dir="ltr" align="left"><code class="literal">event_observed</code></td>
+      <td align="right"><code class="literal">1</code> یعنی رخداد در <code class="literal">time</code> اتفاق افتاده است؛ <code class="literal">0</code> یعنی تا <code class="literal">time</code> هنوز رخداد اتفاق نیفتاده است.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p dir="rtl" align="right">برای نمونه، سطر <bdi dir="ltr"><code>1,1</code></bdi> یعنی رخداد در زمان ۱ اتفاق افتاده است. سطر <bdi dir="ltr"><code>1,0</code></bdi> یعنی آن واحد تا زمان ۱ مشاهده شده و در آن لحظه هنوز زنده، سالم، فعال یا بدون رخداد بوده است. همین سطر دوم هم اطلاعات دارد: به مدل می‌گوید طول عمر واقعی بیشتر از ۱ است. این همان سانسور مستقل از راست است.</p>
+
+<h2 dir="rtl" align="right">نمونه را اجرا کنید</h2>
+
+<p dir="rtl" align="right">تعریف schema در کد زیر تنها جفت سرستون پذیرفته‌شده را مشخص می‌کند و شناسه‌های ماشین‌خوان را عمداً چپ‌به‌راست نگه می‌دارد.</p>
+
+```python
+from veridist import CsvLifetimeSchema
+
+schema = CsvLifetimeSchema("time", "event_observed")
+```
+
+<p dir="rtl" align="right">مثال کامل قابل اجرا همان schema را با یک فایل CSV کوچک به کار می‌برد.</p>
+
+```python
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from veridist import (
+    CsvLifetimeLimits,
+    CsvLifetimeSchema,
+    PublicSourceId,
+    fit_exponential_csv,
+)
+from veridist.families import ExponentialFitSuccess
+
+with TemporaryDirectory() as directory:
+    path = Path(directory) / "lifetimes.csv"
+    path.write_text("time,event_observed\n1,1\n1,0\n", encoding="utf-8")
+    result = fit_exponential_csv(
+        path,
+        schema=CsvLifetimeSchema("time", "event_observed"),
+        source_id=PublicSourceId("src_0123456789abcdef0123456789abcdef"),
+        limits=CsvLifetimeLimits(32768, 32768),
+    )
+
+fit = result.fit
+assert isinstance(fit, ExponentialFitSuccess)
+print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}")
+```
+
+```text
+rate=0.5; events=1; censored=1
+```
+
+<h2 dir="rtl" align="right">نتیجه را چطور بخوانید؟</h2>
+
+<p dir="rtl" align="right">این مثال یک رخداد مشاهده‌شده و دو واحد زمان مشاهده‌شده دارد: یک واحد از سطر رخداد قطعی، و یک واحد از سطر سانسورشده از راست. بنابراین برآورد بیشینهٔ درست‌نمایی<sup id="fnref-mle"><a href="#fn-mle">۳</a></sup> در مدل نمایی چنین است:</p>
+
+```{math}
+\widehat{rate} = r / \tau = 1 / 2 = 0.5
+```
+
+<p dir="rtl" align="right">نرخ<sup id="fnref-rate"><a href="#fn-rate">۴</a></sup> با واحد «رخداد در هر واحد زمان» خوانده می‌شود. این عدد احتمال ۵۰ درصدی رخداد نیست. اگر واحد زمان شما ساعت باشد، نرخ یعنی رخداد بر ساعت؛ اگر واحد زمان روز باشد، نرخ یعنی رخداد بر روز.</p>
+
+<h2 dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> چه فرضی می‌گیرد؟</h2>
+
+<p dir="rtl" align="right">مدل فرض می‌کند سانسور مستقل از زمان رخداد است. ساده‌تر بگوییم، علت پایان مشاهده نباید خودش اطلاعات پنهانی دربارهٔ زمان رخداد داشته باشد. <bdi dir="ltr">Veridist</bdi> این فرض را در نتیجه و مستندات روشن می‌کند؛ اما نمی‌تواند آن را از خود فایل CSV اثبات کند.</p>
+
+<p dir="rtl" align="right">مسیر عمومی فعلی، مدل نمایی با مکان ثابت را از CSV سخت‌گیرانهٔ UTF-8 برآورد می‌کند. نام ستون، جداکننده، کدگذاری، دادهٔ گمشده یا معنای صفر و یک را حدس نمی‌زند. اگر فایل با قرارداد مورد انتظار سازگار نباشد، آداپتور مسئله را گزارش می‌کند و داده را بی‌سروصدا بازنویسی نمی‌کند.</p>
+
+<h2 dir="rtl" align="right">حالت‌های شکست و محدودیت‌های فعلی</h2>
+
+<p dir="rtl" align="right">وقتی نمونه خالی باشد، هیچ رخدادی مشاهده نشده باشد، رخداد با مجموع زمان مشاهده‌شدهٔ صفر بیاید، یا سرریز عددی رخ دهد، برآورد آماری معتبر برگردانده نمی‌شود. این حالت‌ها خروجی‌های نوع‌دارِ بدون برآورد<sup id="fnref-non-estimate"><a href="#fn-non-estimate">۵</a></sup> می‌دهند تا نرم‌افزار فراخوان بتواند آن‌ها را از خطای خواندن فایل جدا کند.</p>
+
+<p dir="rtl" align="right">این مسیر امروز فاصلهٔ اطمینان ندارد و فعلاً فاصلهٔ اطمینان<sup id="fnref-confidence-interval"><a href="#fn-confidence-interval">۶</a></sup>، آزمون مناسب‌بودن مدل<sup id="fnref-goodness-of-fit"><a href="#fn-goodness-of-fit">۷</a></sup>، برش داده<sup id="fnref-truncation"><a href="#fn-truncation">۸</a></sup>، سانسور چپ<sup id="fnref-left-censoring"><a href="#fn-left-censoring">۹</a></sup>، سانسور فاصله‌ای<sup id="fnref-interval-censoring"><a href="#fn-interval-censoring">۱۰</a></sup>، وزن<sup id="fnref-weight"><a href="#fn-weight">۱۱</a></sup>، متغیر کمکی<sup id="fnref-covariate"><a href="#fn-covariate">۱۲</a></sup>، پارامتر مکان آزاد<sup id="fnref-free-location"><a href="#fn-free-location">۱۳</a></sup> یا انتخاب خودکار مدل ندارد.</p>
+
+<details dir="rtl" align="right">
+<summary>یادداشت‌های فنی دربارهٔ مقیاس و شواهد</summary>
+
+<p dir="rtl" align="right">آداپتور CSV یک گذر از iterator مصرف می‌کند. بودجهٔ بایتی بخش‌ها کران منطقی payload نگه‌داشته‌شده است؛ سقف قابل‌حمل حافظهٔ فرایند یا RSS نیست و ادعای سرعت اجرا هم نیست.</p>
+
+<p dir="rtl" align="right">شاهد تاریخی <bdi dir="ltr"><code>SCALE-CSV-EXP-01</code></bdi> یک snapshot از ۱۰ هزار، ۱۰۰ هزار و ۱ میلیون سطر با اندازه‌بخش‌های ۳۲ KiB، ۶۴ KiB و ۱۲۸ KiB را فقط برای همین آداپتور سخت‌گیرانه و همین برآوردگر نگه می‌دارد. آن schema قدیمی منشأ<sup id="fnref-provenance"><a href="#fn-provenance">۱۴</a></sup> کافی ندارد که ادعای عملکرد فعلی را پشتیبانی کند. ادعای عملکرد فعلی به اجرای تمیز متصل به نسخهٔ منبع بررسی‌شده و محیط مستند نیاز دارد.</p>
+
+<p dir="rtl" align="right">آن snapshot تاریخی پشتیبانی عمومی از دادهٔ بزرگ، آداپتور دیگر، لغو، تلاش دوباره یا checkpointing را اثبات نمی‌کند. برای ذخیره و ادامهٔ اجرا، راهنمای API و مثال اختصاصی checkpoint را ببینید.</p>
+
+</details>
+
+<h2 dir="rtl" align="right">اصطلاحات این آموزش</h2>
+
+<p id="fn-fitting" dir="rtl" align="right"><strong>۱.</strong> <bdi dir="ltr">Distribution fitting</bdi> — برآورد پارامترهای یک توزیع از روی داده و بررسی اینکه آیا آن توزیع توصیف قابل‌دفاعی از مشاهده‌ها هست یا نه. <a href="#fnref-fitting" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-right-censoring" dir="rtl" align="right"><strong>۲.</strong> <bdi dir="ltr">Right censoring</bdi> — مشاهده‌ای که در آن رخداد تا آخرین زمان مشاهده‌شده اتفاق نیفتاده و فقط می‌دانیم طول عمر واقعی از آن زمان بیشتر است. <a href="#fnref-right-censoring" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-mle" dir="rtl" align="right"><strong>۳.</strong> <bdi dir="ltr">Maximum-likelihood estimate</bdi> — مقدار پارامتری که دادهٔ مشاهده‌شده را با مدل آماری انتخاب‌شده سازگارتر می‌کند. <a href="#fnref-mle" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-rate" dir="rtl" align="right"><strong>۴.</strong> <bdi dir="ltr">Rate</bdi> — تعداد مورد انتظار رخداد در هر واحد زمان؛ نرخ همان احتمال رخداد نیست. <a href="#fnref-rate" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-non-estimate" dir="rtl" align="right"><strong>۵.</strong> <bdi dir="ltr">Typed non-estimate</bdi> — خروجی ساختاریافته‌ای که می‌گوید ورودی پردازش شد، اما داده اجازهٔ برآورد آماری معتبر نداد. <a href="#fnref-non-estimate" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-confidence-interval" dir="rtl" align="right"><strong>۶.</strong> <bdi dir="ltr">Confidence interval</bdi> — بازه‌ای که عدم‌قطعیت پیرامون یک برآورد را طبق یک روش آماری مشخص نشان می‌دهد. <a href="#fnref-confidence-interval" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-goodness-of-fit" dir="rtl" align="right"><strong>۷.</strong> <bdi dir="ltr">Goodness-of-fit test</bdi> — بررسی آماری برای اینکه شکل توزیع انتخاب‌شده چقدر با داده سازگار است. <a href="#fnref-goodness-of-fit" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-truncation" dir="rtl" align="right"><strong>۸.</strong> <bdi dir="ltr">Truncation</bdi> — فرایند نمونه‌گیری‌ای که در آن بخشی از جامعه اصلاً وارد نمونهٔ مشاهده‌شده نمی‌شود. <a href="#fnref-truncation" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-left-censoring" dir="rtl" align="right"><strong>۹.</strong> <bdi dir="ltr">Left censoring</bdi> — حالتی که فقط می‌دانیم رخداد پیش از یک زمان مشخص اتفاق افتاده است. <a href="#fnref-left-censoring" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-interval-censoring" dir="rtl" align="right"><strong>۱۰.</strong> <bdi dir="ltr">Interval censoring</bdi> — حالتی که فقط می‌دانیم رخداد بین دو زمان اتفاق افتاده است. <a href="#fnref-interval-censoring" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-weight" dir="rtl" align="right"><strong>۱۱.</strong> <bdi dir="ltr">Weight</bdi> — عددی که سهم یک مشاهده را در محاسبه بیشتر یا کمتر می‌کند. <a href="#fnref-weight" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-covariate" dir="rtl" align="right"><strong>۱۲.</strong> <bdi dir="ltr">Covariate</bdi> — متغیر اضافه‌ای مثل دما یا فشار که ممکن است به توضیح طول عمر کمک کند. <a href="#fnref-covariate" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-free-location" dir="rtl" align="right"><strong>۱۳.</strong> <bdi dir="ltr">Free location parameter</bdi> — پارامتر جابه‌جایی که به‌جای ثابت‌بودن، از داده برآورد می‌شود. <a href="#fnref-free-location" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-provenance" dir="rtl" align="right"><strong>۱۴.</strong> <bdi dir="ltr">Provenance</bdi> — اطلاعات ثبت‌شده دربارهٔ نسخهٔ منبع، محیط و اجرا تا یک ادعا بعداً قابل بررسی باشد. <a href="#fnref-provenance" aria-label="بازگشت به متن">↩</a></p>

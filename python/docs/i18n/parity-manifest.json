@@ -215,94 +215,119 @@
       "source": "Terms Used On This Page"
     },
     {
-      "id": "DOC-MSG-TUTORIAL-TITLE",
+      "id": "DOC-MSG-EXP-01",
       "page": "exponential-right-censoring.md",
       "source": "Exponential right-censoring tutorial"
     },
     {
-      "id": "DOC-MSG-MODEL-TITLE",
+      "id": "DOC-MSG-EXP-02",
       "page": "exponential-right-censoring.md",
-      "source": "Model and estimate"
+      "source": "<a href=\"exponential-right-censoring.md\">English</a> | <a href=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-right-censoring.de.md\">Deutsch</a>"
     },
     {
-      "id": "DOC-MSG-MODEL-BODY",
+      "id": "DOC-MSG-EXP-03",
       "page": "exponential-right-censoring.md",
-      "source": "For exact-event count `r` and total time on test `tau`, this vertical uses `r*log(rate)-rate*tau` and returns `rate=r/tau` only when both values permit a finite estimate. It accepts exact lifetimes and independent right censoring. Independent right censoring is an assumption visible in the result; it cannot be established from the observations by this library."
+      "source": "This tutorial shows the first lifetime-data path in Veridist: fitting an exponential distribution<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">1</a></sup> when some observations are right censored<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">2</a></sup>. Use it when each row says either “the event happened at this time” or “the event had not happened yet by this time”."
     },
     {
-      "id": "DOC-MSG-CSV-TITLE",
+      "id": "DOC-MSG-EXP-04",
       "page": "exponential-right-censoring.md",
-      "source": "Strict CSV input"
+      "source": "The data idea"
     },
     {
-      "id": "DOC-MSG-CSV-BODY",
+      "id": "DOC-MSG-EXP-05",
       "page": "exponential-right-censoring.md",
-      "source": "The public adapter accepts UTF-8 CSV with exactly `time,event_observed` in that order. Each data row is one finite non-negative time and token `1` (event) or `0` (right censored). A caller supplies a non-secret `PublicSourceId` instead of relying on a local path in returned facts. The adapter never guesses columns, headers, encodings, delimiters, missing values, or censoring conventions."
+      "source": "A lifetime row has two fields:"
     },
     {
-      "id": "DOC-MSG-CODE-BODY",
+      "id": "DOC-MSG-EXP-06",
       "page": "exponential-right-censoring.md",
-      "source": "The schema declaration below is executable Python. It names the only accepted header pair and intentionally keeps machine-readable identifiers left to right."
+      "source": "For example, a row `1,1` means the event happened at time 1. A row `1,0` means the unit was observed until time 1 and was still alive, working, or event-free at that point. That second row is still useful: it tells the model the lifetime is longer than 1. This is independent right censoring."
     },
     {
-      "id": "DOC-MSG-TABLE-HEAD",
+      "id": "DOC-MSG-EXP-07",
       "page": "exponential-right-censoring.md",
-      "source": "CSV field"
+      "source": "Run the example"
     },
     {
-      "id": "DOC-MSG-TABLE-MEANING",
+      "id": "DOC-MSG-EXP-08",
       "page": "exponential-right-censoring.md",
-      "source": "Meaning"
+      "source": "The schema declaration below names the only accepted header pair and keeps machine-readable identifiers left to right."
     },
     {
-      "id": "DOC-MSG-TABLE-TIME-NAME",
+      "id": "DOC-MSG-EXP-09",
       "page": "exponential-right-censoring.md",
-      "source": "`time`"
+      "source": "The complete runnable example uses that schema with a small CSV file."
     },
     {
-      "id": "DOC-MSG-TABLE-TIME",
+      "id": "DOC-MSG-EXP-10",
       "page": "exponential-right-censoring.md",
-      "source": "finite non-negative lifetime"
+      "source": "Interpret the result"
     },
     {
-      "id": "DOC-MSG-TABLE-EVENT-NAME",
+      "id": "DOC-MSG-EXP-11",
       "page": "exponential-right-censoring.md",
-      "source": "`event_observed`"
+      "source": "The example has one observed event and two total units of observed time: one unit from the exact event row, and one unit from the right-censored row. The exponential maximum-likelihood estimate<sup id=\"fnref-mle\"><a href=\"#fn-mle\">3</a></sup> is therefore:"
     },
     {
-      "id": "DOC-MSG-TABLE-EVENT",
+      "id": "DOC-MSG-EXP-12",
       "page": "exponential-right-censoring.md",
-      "source": "`1` for an exact event; `0` for independent right censoring"
+      "source": "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5"
     },
     {
-      "id": "DOC-MSG-MATH-BODY",
+      "id": "DOC-MSG-EXP-13",
       "page": "exponential-right-censoring.md",
-      "source": "The displayed equation fixes the model parameterization used throughout this vertical."
+      "source": "The rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">4</a></sup> is measured in events per unit of time. It is not a 50 percent event probability. If your time unit is hours, the rate is events per hour; if your time unit is days, it is events per day."
     },
     {
-      "id": "DOC-MSG-MATH-RATE",
+      "id": "DOC-MSG-EXP-14",
       "page": "exponential-right-censoring.md",
-      "source": "\\widehat{rate} = r / tau"
+      "source": "What Veridist assumes"
     },
     {
-      "id": "DOC-MSG-FAILURE-TITLE",
+      "id": "DOC-MSG-EXP-15",
       "page": "exponential-right-censoring.md",
-      "source": "Failure cases and limits"
+      "source": "The model assumes that censoring is independent of the event time. In plain language, the reason observation stopped should not itself reveal hidden information about when the event would happen. Veridist records and documents this assumption; it cannot prove it from the CSV file."
     },
     {
-      "id": "DOC-MSG-FAILURE-BODY",
+      "id": "DOC-MSG-EXP-16",
       "page": "exponential-right-censoring.md",
-      "source": "An empty sample, no observed events, zero total time with an event, and numeric overflow produce typed non-estimates. There is no confidence interval, goodness-of-fit test, truncation, left or interval censoring, weights, covariates, or free location parameter in this vertical."
+      "source": "The current public path estimates a fixed-location exponential model from strict UTF-8 CSV. It does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract, the adapter reports the problem instead of silently rewriting the data."
     },
     {
-      "id": "DOC-MSG-STREAM-TITLE",
+      "id": "DOC-MSG-EXP-17",
       "page": "exponential-right-censoring.md",
-      "source": "One-pass and scale scope"
+      "source": "Failure cases and current limits"
     },
     {
-      "id": "DOC-MSG-STREAM-BODY",
+      "id": "DOC-MSG-EXP-18",
       "page": "exponential-right-censoring.md",
-      "source": "The CSV adapter consumes one iterator pass. Its declared chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit. `SCALE-CSV-EXP-01` preserves a historical 10k/100k/1m by 32KiB/64KiB/128KiB snapshot for this strict adapter and estimator only. Its schema-v1 timing lacks valid provenance and cannot support a current candidate, payload-bound, or performance claim. A current claim requires a clean schema-v2 run bound to the reviewed candidate. The historical snapshot does not establish throughput, generic big-data support, another adapter, cancellation, retry, or checkpointing."
+      "source": "A valid statistical estimate is not returned when the sample is empty, no event is observed, an event appears with zero total observed time, or numeric overflow occurs. These cases return typed non-estimates<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">5</a></sup> so calling software can distinguish them from file-reading failures."
+    },
+    {
+      "id": "DOC-MSG-EXP-19",
+      "page": "exponential-right-censoring.md",
+      "source": "This path has no confidence interval today and does not currently provide confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">6</a></sup>, goodness-of-fit tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">7</a></sup>, truncation<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">8</a></sup>, left censoring<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">9</a></sup>, interval censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">10</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-weight\">11</a></sup>, covariates<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">12</a></sup>, a free location parameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">13</a></sup>, or automatic model selection."
+    },
+    {
+      "id": "DOC-MSG-EXP-20",
+      "page": "exponential-right-censoring.md",
+      "source": "The CSV adapter consumes one iterator pass. Its chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit and not a throughput claim."
+    },
+    {
+      "id": "DOC-MSG-EXP-21",
+      "page": "exponential-right-censoring.md",
+      "source": "The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this strict adapter and estimator only. That older schema does not have enough provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">14</a></sup> to support a current performance claim. A current performance claim needs a clean run tied to the reviewed source revision and documented environment."
+    },
+    {
+      "id": "DOC-MSG-EXP-22",
+      "page": "exponential-right-censoring.md",
+      "source": "The historical snapshot does not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example."
+    },
+    {
+      "id": "DOC-MSG-EXP-23",
+      "page": "exponential-right-censoring.md",
+      "source": "Terms used in this tutorial"
     },
     {
       "id": "DOC-MSG-FAM-LL-TITLE",

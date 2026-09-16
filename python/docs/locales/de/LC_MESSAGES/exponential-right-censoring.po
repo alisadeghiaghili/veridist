@@ -2,63 +2,101 @@ msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
-"PO-Revision-Date: 2026-09-01 21:55+0330\n"
+"PO-Revision-Date: 2026-09-16 18:52+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: de\n"
 "Language-Team: German documentation <alisadeghiaghili@gmail.com>\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: 3dff511279684882a92e9d8fdc4d6e9c
 msgid "Exponential right-censoring tutorial"
 msgstr "Tutorial zur exponentiellen Rechtszensierung"
 
-msgid "Model and estimate"
-msgstr "Modell und Schätzung"
+#: 7dacfbbd90f0426d80b3d4f563810445
+msgid "<a href=\"exponential-right-censoring.md\">English</a> | <a href=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-right-censoring.de.md\">Deutsch</a>"
+msgstr "<a href=\"exponential-right-censoring.md\">Englisch</a> | <a href=\"exponential-right-censoring.fa.md\">Persisch</a> | <a href=\"exponential-right-censoring.de.md\">Deutsch</a>"
 
-msgid "For exact-event count `r` and total time on test `tau`, this vertical uses `r*log(rate)-rate*tau` and returns `rate=r/tau` only when both values permit a finite estimate. It accepts exact lifetimes and independent right censoring. Independent right censoring is an assumption visible in the result; it cannot be established from the observations by this library."
-msgstr "Für die Anzahl exakter Ereignisse `r` und die gesamte Versuchszeit `tau` verwendet diese Funktionseinheit `r*log(rate)-rate*tau` und gibt `rate=r/tau` nur zurück, wenn beide Werte eine endliche Schätzung zulassen. Sie akzeptiert exakte Lebensdauern und unabhängige Rechtszensierung. Die unabhängige Rechtszensierung ist eine im Ergebnis sichtbare Annahme; diese Bibliothek kann sie nicht aus Beobachtungen belegen."
+#: 6899320c60414252bd08457942a31f90
+msgid "This tutorial shows the first lifetime-data path in Veridist: fitting an exponential distribution<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">1</a></sup> when some observations are right censored<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">2</a></sup>. Use it when each row says either “the event happened at this time” or “the event had not happened yet by this time”."
+msgstr "Dieses Tutorial zeigt den ersten Pfad für Lebensdauerdaten in Veridist: die Anpassung einer Exponentialverteilung<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">1</a></sup>, wenn einige Beobachtungen rechtszensiert<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">2</a></sup> sind. Nutzen Sie ihn, wenn jede Zeile entweder sagt: „Das Ereignis ist zu diesem Zeitpunkt eingetreten“ oder „Bis zu diesem Zeitpunkt wurde das Ereignis noch nicht gesehen“."
 
-msgid "Strict CSV input"
-msgstr "Strikte CSV-Eingabe"
+#: 4aeef76d81234c728410d6e178498f72
+msgid "The data idea"
+msgstr "Die Datenidee"
 
-msgid "The public adapter accepts UTF-8 CSV with exactly `time,event_observed` in that order. Each data row is one finite non-negative time and token `1` (event) or `0` (right censored). A caller supplies a non-secret `PublicSourceId` instead of relying on a local path in returned facts. The adapter never guesses columns, headers, encodings, delimiters, missing values, or censoring conventions."
-msgstr "Der öffentliche Adapter akzeptiert UTF-8-CSV mit exakt `time,event_observed` in dieser Reihenfolge. Jede Datenzeile enthält eine endliche nichtnegative Zeit und Token `1` (Ereignis) oder `0` (rechtszensiert). Ein Aufrufer liefert eine nicht geheime `PublicSourceId`, statt sich bei zurückgegebenen Fakten auf einen lokalen Pfad zu stützen. Der Adapter errät niemals Spalten, Kopfzeilen, Kodierungen, Trennzeichen, fehlende Werte oder Zensierungskonventionen."
+#: 3ab343f29e984f5790421e7d7cc433dc
+msgid "A lifetime row has two fields:"
+msgstr "Eine Lebensdauerzeile hat zwei Felder:"
 
-msgid "The schema declaration below is executable Python. It names the only accepted header pair and intentionally keeps machine-readable identifiers left to right."
-msgstr "Die folgende Schema-Deklaration ist ausführbares Python. Sie benennt das einzige akzeptierte Kopfzeilenpaar und hält maschinenlesbare Bezeichner absichtlich von links nach rechts."
+#: e36b8480bd89446ebe98672f50f0956b
+msgid "For example, a row `1,1` means the event happened at time 1. A row `1,0` means the unit was observed until time 1 and was still alive, working, or event-free at that point. That second row is still useful: it tells the model the lifetime is longer than 1. This is independent right censoring."
+msgstr "Zum Beispiel bedeutet eine Zeile `1,1`, dass das Ereignis zum Zeitpunkt 1 eingetreten ist. Eine Zeile `1,0` bedeutet, dass die Einheit bis zum Zeitpunkt 1 beobachtet wurde und zu diesem Zeitpunkt noch lebte, funktionierte oder ereignisfrei war. Auch diese zweite Zeile ist nützlich: Sie sagt dem Modell, dass die Lebensdauer länger als 1 ist. Das ist unabhängige Rechtszensierung."
 
-msgid "CSV field"
-msgstr "CSV-Feld"
+#: 05cff81f5d5b435dbdfdc98937ccf1c5
+msgid "Run the example"
+msgstr "Beispiel ausführen"
 
-msgid "Meaning"
-msgstr "Bedeutung"
+#: d0985e1589934ba4a756f91c55e8a3d8
+msgid "The schema declaration below names the only accepted header pair and keeps machine-readable identifiers left to right."
+msgstr "Die Schema-Deklaration unten benennt das einzige akzeptierte Kopfzeilenpaar und hält maschinenlesbare Bezeichner von links nach rechts."
 
-msgid "finite non-negative lifetime"
-msgstr "endliche nichtnegative Lebensdauer"
+#: 8beb7ed69ffc4f39adfe6d317345defe
+msgid "The complete runnable example uses that schema with a small CSV file."
+msgstr "Das vollständige ausführbare Beispiel verwendet dieses Schema mit einer kleinen CSV-Datei."
 
-msgid "`1` for an exact event; `0` for independent right censoring"
-msgstr "`1` für ein exaktes Ereignis; `0` für unabhängige Rechtszensierung"
+#: 70c29d115ed3406699c8b42413753f44
+msgid "Interpret the result"
+msgstr "Ergebnis interpretieren"
 
-msgid "`time`"
-msgstr "`time` (Zeit)"
+#: 3c0d64e01fe1438dbae515a5847870a2
+msgid "The example has one observed event and two total units of observed time: one unit from the exact event row, and one unit from the right-censored row. The exponential maximum-likelihood estimate<sup id=\"fnref-mle\"><a href=\"#fn-mle\">3</a></sup> is therefore:"
+msgstr "Das Beispiel hat ein beobachtetes Ereignis und zwei gesamte beobachtete Zeiteinheiten: eine Einheit aus der exakten Ereigniszeile und eine Einheit aus der rechtszensierten Zeile. Die Maximum-Likelihood-Schätzung<sup id=\"fnref-mle\"><a href=\"#fn-mle\">3</a></sup> im Exponentialmodell ist daher:"
 
-msgid "`event_observed`"
-msgstr "`event_observed` (beobachtetes Ereignis)"
+#: 61c3553ceff04b21ab264f61b23ccb77
+msgid "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5"
+msgstr "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5{}"
 
-msgid "The displayed equation fixes the model parameterization used throughout this vertical."
-msgstr "Die dargestellte Gleichung legt die in dieser Funktionseinheit verwendete Modellparametrisierung fest."
+#: 03c8aff06169464385cd075baa0bc28b
+msgid "The rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">4</a></sup> is measured in events per unit of time. It is not a 50 percent event probability. If your time unit is hours, the rate is events per hour; if your time unit is days, it is events per day."
+msgstr "Die Rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">4</a></sup> wird in Ereignissen pro Zeiteinheit gelesen. Sie ist keine Ereigniswahrscheinlichkeit von 50 Prozent. Wenn Ihre Zeiteinheit Stunden sind, ist die Rate Ereignisse pro Stunde; wenn Ihre Zeiteinheit Tage sind, ist sie Ereignisse pro Tag."
 
-msgid "\\widehat{rate} = r / tau"
-msgstr "\\widehat{rate} = r / tau{}"
+#: e474ac4e8f374f03ab074f6ef7893256
+msgid "What Veridist assumes"
+msgstr "Was Veridist annimmt"
 
-msgid "Failure cases and limits"
-msgstr "Fehlerfälle und Grenzen"
+#: 2d8f83222cb54a638c60d253774b682e
+msgid "The model assumes that censoring is independent of the event time. In plain language, the reason observation stopped should not itself reveal hidden information about when the event would happen. Veridist records and documents this assumption; it cannot prove it from the CSV file."
+msgstr "Das Modell nimmt an, dass die Zensierung unabhängig von der Ereigniszeit ist. Einfach gesagt: Der Grund, warum die Beobachtung endet, sollte nicht selbst verborgene Information darüber enthalten, wann das Ereignis eintreten würde. Veridist dokumentiert diese Annahme; es kann sie aber nicht aus der CSV-Datei beweisen."
 
-msgid "An empty sample, no observed events, zero total time with an event, and numeric overflow produce typed non-estimates. There is no confidence interval, goodness-of-fit test, truncation, left or interval censoring, weights, covariates, or free location parameter in this vertical."
-msgstr "Eine leere Stichprobe, keine beobachteten Ereignisse, eine Gesamtzeit von null bei einem Ereignis sowie numerischer Überlauf erzeugen typisierte Nicht-Schätzergebnisse. Diese Funktionseinheit enthält weder Konfidenzintervall noch Anpassungsgütetest, Trunkierung, Links- oder Intervallzensierung, Gewichte, Kovariaten oder einen freien Lageparameter."
+#: dea1f3764645499d9b916c02322dc88f
+msgid "The current public path estimates a fixed-location exponential model from strict UTF-8 CSV. It does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract, the adapter reports the problem instead of silently rewriting the data."
+msgstr "Der aktuelle öffentliche Pfad schätzt ein Exponentialmodell mit festem Lageparameter aus striktem UTF-8-CSV. Er errät keine Spaltennamen, Trennzeichen, Kodierung, fehlenden Daten oder die Bedeutung von Null und Eins. Wenn die Datei nicht zum erwarteten Vertrag passt, meldet der Adapter das Problem, statt die Daten stillschweigend umzuschreiben."
 
-msgid "One-pass and scale scope"
-msgstr "Umfang von Einzeldurchlauf und Skalierung"
+#: d88d3afb18214718955ddd5027b545d3
+msgid "Failure cases and current limits"
+msgstr "Fehlerfälle und aktuelle Grenzen"
 
-msgid "The CSV adapter consumes one iterator pass. Its declared chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit. `SCALE-CSV-EXP-01` preserves a historical 10k/100k/1m by 32KiB/64KiB/128KiB snapshot for this strict adapter and estimator only. Its schema-v1 timing lacks valid provenance and cannot support a current candidate, payload-bound, or performance claim. A current claim requires a clean schema-v2 run bound to the reviewed candidate. The historical snapshot does not establish throughput, generic big-data support, another adapter, cancellation, retry, or checkpointing."
-msgstr "Der CSV-Adapter verarbeitet einen Iterator-Durchlauf. Sein deklariertes Byte-Budget pro Chunk ist eine logische Grenze für behaltene Nutzlast, keine portable Grenze für Prozessspeicher oder RSS. `SCALE-CSV-EXP-01` bewahrt nur einen historischen Snapshot 10k/100k/1m mal 32KiB/64KiB/128KiB für diesen strikten Adapter und Schätzer. Dessen schema-v1-Zeitmessung hat keine gültige Provenienz und kann keine aktuelle Kandidaten-, Nutzlastgrenzen- oder Leistungsbehauptung tragen. Eine aktuelle Behauptung erfordert einen sauberen schema-v2-Lauf, der an den geprüften Kandidaten gebunden ist. Der historische Snapshot belegt weder Durchsatz noch allgemeine Großdatenunterstützung, einen anderen Adapter, Abbruch, Wiederholung oder Checkpointing."
+#: ba92ad5456aa42819ce49b8521c59bf9
+msgid "A valid statistical estimate is not returned when the sample is empty, no event is observed, an event appears with zero total observed time, or numeric overflow occurs. These cases return typed non-estimates<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">5</a></sup> so calling software can distinguish them from file-reading failures."
+msgstr "Eine gültige statistische Schätzung wird nicht zurückgegeben, wenn die Stichprobe leer ist, kein Ereignis beobachtet wurde, ein Ereignis bei gesamter beobachteter Zeit null erscheint oder numerischer Überlauf auftritt. Diese Fälle geben typisierte Nicht-Schätzungen<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">5</a></sup> zurück, damit aufrufende Software sie von Dateilesefehlern unterscheiden kann."
+
+#: 36236d0664a7491c964668b413c1d1d5
+msgid "This path has no confidence interval today and does not currently provide confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">6</a></sup>, goodness-of-fit tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">7</a></sup>, truncation<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">8</a></sup>, left censoring<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">9</a></sup>, interval censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">10</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-weight\">11</a></sup>, covariates<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">12</a></sup>, a free location parameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">13</a></sup>, or automatic model selection."
+msgstr "Dieser Pfad hat derzeit kein Konfidenzintervall und bietet derzeit keine Konfidenzintervalle<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">6</a></sup>, Anpassungsgütetests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">7</a></sup>, Trunkierung<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">8</a></sup>, Linkszensierung<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">9</a></sup>, Intervallzensierung<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">10</a></sup>, Gewichte<sup id=\"fnref-weight\"><a href=\"#fn-weight\">11</a></sup>, Kovariaten<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">12</a></sup>, einen freien Lageparameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">13</a></sup> oder automatische Modellauswahl."
+
+#: e91bb7df6a9741b8bed9eaf3df8656cd
+msgid "The CSV adapter consumes one iterator pass. Its chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit and not a throughput claim."
+msgstr "Der CSV-Adapter verbraucht einen Iterator-Durchlauf. Sein Byte-Budget für Datenabschnitte ist eine logische Grenze für gehaltene Nutzlast; es ist keine portable Grenze für Prozessspeicher oder RSS und keine Durchsatzbehauptung."
+
+#: dc4d87f5791c4e2ebc866fe58de06aa3
+msgid "The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this strict adapter and estimator only. That older schema does not have enough provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">14</a></sup> to support a current performance claim. A current performance claim needs a clean run tied to the reviewed source revision and documented environment."
+msgstr "Die historische Evidenz `SCALE-CSV-EXP-01` bewahrt einen Snapshot mit 10k, 100k und 1m Zeilen sowie Abschnittsgrößen von 32 KiB, 64 KiB und 128 KiB nur für diesen strikten Adapter und diesen Schätzer. Das ältere Schema hat nicht genug Provenienz<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">14</a></sup>, um eine aktuelle Leistungsbehauptung zu stützen. Eine aktuelle Leistungsbehauptung benötigt einen sauberen Lauf, der an die geprüfte Quellrevision und eine dokumentierte Umgebung gebunden ist."
+
+#: aec6517080d4436baeee026f9941c76b
+msgid "The historical snapshot does not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example."
+msgstr "Der historische Snapshot belegt keine allgemeine Unterstützung für große Daten, keinen anderen Adapter, keinen Abbruch, keinen Wiederholungsversuch und kein Checkpointing. Für Speichern und Fortsetzen verwenden Sie den API-Leitfaden und das spezielle Checkpoint-Beispiel."
+
+#: c51c1b037e5d4caebb05fac27611c42c
+msgid "Terms used in this tutorial"
+msgstr "Begriffe in diesem Tutorial"
