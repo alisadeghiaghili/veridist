@@ -8,7 +8,7 @@ from math import isfinite
 
 
 def _finite_non_negative_time(value: float | Decimal | int) -> float:
-    if isinstance(value, bool) or not isinstance(value, (float, Decimal, int)):
+    if isinstance(value, bool) or not isinstance(value, float | Decimal | int):
         raise TypeError("time must be a finite numeric value")
     try:
         numeric = float(value)

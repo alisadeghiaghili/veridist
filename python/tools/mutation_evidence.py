@@ -153,7 +153,7 @@ def mutation_manifest(project_root: Path) -> dict[str, Any]:
     score = value["minimum_score"]
     if (
         isinstance(score, bool)
-        or not isinstance(score, (int, float))
+        or not isinstance(score, int | float)
         or not math.isfinite(score)
         or score != 0.8
     ):

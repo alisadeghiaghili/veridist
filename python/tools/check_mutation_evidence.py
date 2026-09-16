@@ -67,7 +67,7 @@ def integer(value: object, label: str) -> int:
 
 
 def finite(value: object, label: str) -> float:
-    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+    if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value):
         fail(f"{label} must be finite non-boolean number")
     return float(cast(float, value))
 
