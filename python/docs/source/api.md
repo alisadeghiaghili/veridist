@@ -1,6 +1,8 @@
 (veridist-api)=
 # Veridist API Guide
 
+<a href="api.md">English</a> | <a href="api.fa.md">فارسی</a> | <a href="api.de.md">Deutsch</a>
+
 This guide explains the current public API in Veridist. For fitting an exponential distribution<sup id="fnref-fitting"><a href="#fn-fitting">1</a></sup> to lifetime data, the usual path is to pass one CSV file to the main function and read the returned result. If a calculation is long and may be interrupted, you can save progress and continue later. Scalar tools<sup id="fnref-scalar"><a href="#fn-scalar">2</a></sup> and data streams managed by the caller<sup id="fnref-caller"><a href="#fn-caller">3</a></sup> are also available for more technical use.
 
 ## Choose an execution path
@@ -91,7 +93,7 @@ Veridist does not guess column names, delimiters, encoding, missing data, or the
 
 If reading or processing the file fails, `result.fit` is `None`. In that case, `result.execution` is a typed outcome<sup id="fnref-typed-outcome"><a href="#fn-typed-outcome">10</a></sup> that records the stage and reason for the failure. Check the result type before using model parameters.
 
-The current model keeps the location parameter fixed at zero. This path does not yet provide confidence intervals<sup id="fnref-confidence-interval"><a href="#fn-confidence-interval">11</a></sup>, goodness-of-fit tests<sup id="fnref-goodness-of-fit"><a href="#fn-goodness-of-fit">12</a></sup>, weights<sup id="fnref-weight"><a href="#fn-weight">13</a></sup>, covariates<sup id="fnref-covariate"><a href="#fn-covariate">14</a></sup>, data truncation<sup id="fnref-truncation"><a href="#fn-truncation">15</a></sup>, left censoring<sup id="fnref-left-censoring"><a href="#fn-left-censoring">16</a></sup>, interval censoring<sup id="fnref-interval-censoring"><a href="#fn-interval-censoring">17</a></sup>, a free location parameter<sup id="fnref-free-location"><a href="#fn-free-location">18</a></sup>, or automatic model selection. The statistical assumption and non-estimate cases are explained in the [right-censoring tutorial](exponential-right-censoring.md).
+The current model keeps the location parameter fixed at zero. This path does not yet provide confidence intervals<sup id="fnref-confidence-interval"><a href="#fn-confidence-interval">11</a></sup>, goodness-of-fit tests<sup id="fnref-goodness-of-fit"><a href="#fn-goodness-of-fit">12</a></sup>, weights<sup id="fnref-weight"><a href="#fn-weight">13</a></sup>, covariates<sup id="fnref-covariate"><a href="#fn-covariate">14</a></sup>, data truncation<sup id="fnref-truncation"><a href="#fn-truncation">15</a></sup>, left censoring<sup id="fnref-left-censoring"><a href="#fn-left-censoring">16</a></sup>, interval censoring<sup id="fnref-interval-censoring"><a href="#fn-interval-censoring">17</a></sup>, a free location parameter<sup id="fnref-free-location"><a href="#fn-free-location">18</a></sup>, or automatic model selection. The statistical assumption and non-estimate cases are explained in <a href="exponential-right-censoring.md">the right-censoring tutorial</a>.
 
 ## Saving progress and continuing a calculation
 
@@ -103,9 +105,9 @@ The data file and its revision identifier must remain stable between runs. The c
 
 ## Low-level tools<sup id="fnref-low-level-tools"><a href="#fn-low-level-tools">21</a></sup> for prepared data
 
-If your own program generates or chunks the data, `IterableDataSource` accepts those chunks with source metadata. In `SINGLE_PASS` mode, the data is read once. In `REPLAYABLE` mode, you must provide a function that creates a fresh traversal of the data each time. `CHECKPOINT_REPLAYABLE` is not implemented in this adapter yet; using it raises `CHECKPOINT_REQUIRED`.
+If your own program generates or chunks the data, `IterableDataSource` accepts those chunks with immutable `DataSourceMetadata` and an explicit `Replayability` declaration. In `SINGLE_PASS` mode, the data is read once. In `REPLAYABLE` mode, you must provide a function that creates a fresh traversal of the data each time. `CHECKPOINT_REPLAYABLE` is not implemented in this adapter yet; using it raises `CHECKPOINT_REQUIRED`.
 
-`FAMILY_REGISTRY` and `FamilyId` hold the metadata for the five evaluated statistical families. `evaluate_log_density` calculates the log density of one value with supplied parameters. `reduce_log_likelihood_chunks` sums the same calculation across several data chunks and returns a result that does not depend on how the data was chunked. These functions do not estimate model parameters, rank distributions, or build likelihoods for censored data. Their exact contract is documented in [evaluated families and log likelihood](families-log-density-likelihood.md).
+`FAMILY_REGISTRY` and `FamilyId` hold the metadata for the five evaluated statistical families. `evaluate_log_density` calculates the log density of one value with supplied parameters. `reduce_log_likelihood_chunks` sums the same calculation across several data chunks and returns a result that does not depend on how the data was chunked. These functions do not estimate model parameters, rank distributions, or build likelihoods for censored data. Their exact contract is documented in <a href="families-log-density-likelihood.md">evaluated families and log likelihood</a>.
 
 <details>
 <summary>Technical details and limits of the current version</summary>

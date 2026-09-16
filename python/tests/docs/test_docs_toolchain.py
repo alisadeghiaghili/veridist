@@ -51,7 +51,7 @@ def load_toolchain():
 class DocsToolchainContractTests(unittest.TestCase):
     def test_generic_stream_api_documents_its_public_contract(self) -> None:
         page = (SOURCE_ROOT / "api.md").read_text(encoding="utf-8")
-        self.assertIn("Generic stream source API", page)
+        self.assertIn("Low-level tools", page)
         for expected in (
             "DataSourceMetadata",
             "Replayability",

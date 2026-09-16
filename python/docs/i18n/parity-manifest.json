@@ -1,80 +1,437 @@
 {
   "schema_version": 1,
   "canonical_locale": "en",
-  "required_locales": ["en", "fa", "de"],
+  "required_locales": [
+    "en",
+    "fa",
+    "de"
+  ],
   "pages": [
-    {"id":"DOC-PAGE-HOME","source":"index.md","anchor":"veridist-home"},
-    {"id":"DOC-PAGE-API","source":"api.md","anchor":"veridist-api"},
-    {"id":"DOC-PAGE-EXPONENTIAL","source":"exponential-right-censoring.md","anchor":"veridist-exponential-right-censoring"},
-    {"id":"DOC-PAGE-FAMILIES-LL","source":"families-log-density-likelihood.md","anchor":"veridist-families-log-density-likelihood"}
+    {
+      "id": "DOC-PAGE-HOME",
+      "source": "index.md",
+      "anchor": "veridist-home"
+    },
+    {
+      "id": "DOC-PAGE-API",
+      "source": "api.md",
+      "anchor": "veridist-api"
+    },
+    {
+      "id": "DOC-PAGE-EXPONENTIAL",
+      "source": "exponential-right-censoring.md",
+      "anchor": "veridist-exponential-right-censoring"
+    },
+    {
+      "id": "DOC-PAGE-FAMILIES-LL",
+      "source": "families-log-density-likelihood.md",
+      "anchor": "veridist-families-log-density-likelihood"
+    }
   ],
   "messages": [
-    {"id":"DOC-MSG-HOME-TITLE","page":"index.md","source":"Veridist documentation"},
-    {"id":"DOC-MSG-HOME-LEAD","page":"index.md","source":"Evidence-first, deliberately narrow distribution primitives."},
-    {"id":"DOC-MSG-VERTICAL-TITLE","page":"index.md","source":"First CSV vertical"},
-    {"id":"DOC-MSG-VERTICAL-BODY","page":"index.md","source":"The first public vertical fits a fixed-location exponential lifetime model from a strict UTF-8 CSV source. Its canonical parameter is a positive rate; the reported mean is derived as its reciprocal."},
-    {"id":"DOC-MSG-LIMITS-TITLE","page":"index.md","source":"Limits"},
-    {"id":"DOC-MSG-LIMITS-BODY","page":"index.md","source":"The CSV schema is exactly `time,event_observed`; event `1` is exact and `0` is independent right censoring. The adapter makes one iterator pass and retains at most its declared logical payload budget. `inference=not_provided` means no confidence interval, goodness-of-fit result, truncation, weights, covariates, or free location parameter is supplied."},
-    {"id":"DOC-MSG-EXAMPLE-TITLE","page":"index.md","source":"Executable example"},
-    {"id":"DOC-MSG-EXAMPLE-BODY","page":"index.md","source":"The example below has one canonical executable source and reports only stable machine facts. Use an opaque public source identifier; file paths are not part of the returned provenance."},
-    {"id":"DOC-MSG-TRANSLATION-STATUS","page":"index.md","source":"Translations for this vertical are owner-reviewed provisional text; no external native-speaker review is claimed."},
-    {"id":"DOC-MSG-EXAMPLE-CAPTION","page":"index.md","source":"Canonical executable example"},
-    {"id":"DOC-MSG-HOME-FAMILIES-TITLE","page":"index.md","source":"Five evaluated scalar families"},
-    {"id":"DOC-MSG-HOME-FAMILIES-BODY","page":"index.md","source":"The public kernel also has an immutable five-family registry, finite scalar log-density evaluation, and an exact-state streaming log-likelihood reducer. These are distinct from the CSV exponential MLE: they do not provide generic fitting, inference, goodness-of-fit, ranking, arrays, or censoring support."},
-    {"id":"DOC-MSG-HOME-STREAM-TITLE","page":"index.md","source":"Generic stream sources and delivery leases"},
-    {"id":"DOC-MSG-HOME-STREAM-BODY","page":"index.md","source":"`IterableDataSource` adapts caller-owned chunk iterables with immutable source metadata. A `single_pass` source is acquired once and a second acquisition raises a typed pass-budget failure; replayable declarations require an explicit iterator factory. The strict CSV lifetime adapter remains the only bundled file adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a consumer, until `BufferedChunk.release()`; consumers must release received chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-core claim."},
-    {"id":"DOC-MSG-API-TITLE","page":"api.md","source":"CSV exponential API"},
-    {"id":"DOC-MSG-API-BODY","page":"api.md","source":"`fit_exponential_csv(path, *, schema, source_id, limits)` is the public source entry point. `CsvLifetimeSchema(\"time\", \"event_observed\")` selects the only accepted header; `PublicSourceId` is an opaque identifier safe for returned provenance; and `CsvLifetimeLimits` supplies positive byte budgets. The result is always an `ExponentialSourceFitResult`: a finite rate-only estimate, a typed statistical non-estimate, or a typed execution failure."},
-    {"id":"DOC-MSG-API-INPUT","page":"api.md","source":"Times must be finite and non-negative. Event token `1` denotes an exact event; token `0` denotes independent right censoring. The CSV contract is deliberately strict rather than a permissive spreadsheet reader: wrong encoding, headers, tokens, fields, budgets, or source access produce typed failures."},
-    {"id":"DOC-MSG-API-LIMIT","page":"api.md","source":"The vertical fixes `location=0`, has no confidence interval or goodness-of-fit claim, and supplies no weights, covariates, truncation, left/interval censoring, free location, model selection, retry, checkpointing, or cancellation."},
-    {"id":"DOC-MSG-API-SCALAR-TITLE","page":"api.md","source":"Evaluated scalar primitives"},
-    {"id":"DOC-MSG-API-SCALAR-BODY","page":"api.md","source":"`veridist.families.registry` exports immutable `FAMILY_REGISTRY` metadata and `FamilyId` for five evaluated families. `veridist.statistics.log_density` exports scalar `evaluate_log_density`; `veridist.statistics.log_likelihood` exports `LogLikelihoodState` and `reduce_log_likelihood_chunks`. These are separate, finite scalar contracts: they are not generic fitting, inference, goodness-of-fit, ranking, array, or censoring APIs."},
-    {"id":"DOC-MSG-API-STREAM-TITLE","page":"api.md","source":"Generic stream source API"},
-    {"id":"DOC-MSG-API-STREAM-BODY","page":"api.md","source":"`DataSourceMetadata`, `Replayability`, `IterableDataSource`, `FamilyId`, and `reduce_log_likelihood_chunks` are public so a caller can construct and consume a generic in-memory or caller-owned stream. A `SINGLE_PASS` source receives an iterable and is acquired once; `REPLAYABLE` requires a zero-argument iterator factory. `CHECKPOINT_REPLAYABLE` is not yet implemented by this adapter and fails immediately with typed `CHECKPOINT_REQUIRED`; do not treat it as a promise of checkpoint recovery."},
-    {"id":"DOC-MSG-TUTORIAL-TITLE","page":"exponential-right-censoring.md","source":"Exponential right-censoring tutorial"},
-    {"id":"DOC-MSG-MODEL-TITLE","page":"exponential-right-censoring.md","source":"Model and estimate"},
-    {"id":"DOC-MSG-MODEL-BODY","page":"exponential-right-censoring.md","source":"For exact-event count `r` and total time on test `tau`, this vertical uses `r*log(rate)-rate*tau` and returns `rate=r/tau` only when both values permit a finite estimate. It accepts exact lifetimes and independent right censoring. Independent right censoring is an assumption visible in the result; it cannot be established from the observations by this library."},
-    {"id":"DOC-MSG-CSV-TITLE","page":"exponential-right-censoring.md","source":"Strict CSV input"},
-    {"id":"DOC-MSG-CSV-BODY","page":"exponential-right-censoring.md","source":"The public adapter accepts UTF-8 CSV with exactly `time,event_observed` in that order. Each data row is one finite non-negative time and token `1` (event) or `0` (right censored). A caller supplies a non-secret `PublicSourceId` instead of relying on a local path in returned facts. The adapter never guesses columns, headers, encodings, delimiters, missing values, or censoring conventions."},
-    {"id":"DOC-MSG-CODE-BODY","page":"exponential-right-censoring.md","source":"The schema declaration below is executable Python. It names the only accepted header pair and intentionally keeps machine-readable identifiers left to right."},
-    {"id":"DOC-MSG-TABLE-HEAD","page":"exponential-right-censoring.md","source":"CSV field"},
-    {"id":"DOC-MSG-TABLE-MEANING","page":"exponential-right-censoring.md","source":"Meaning"},
-    {"id":"DOC-MSG-TABLE-TIME","page":"exponential-right-censoring.md","source":"finite non-negative lifetime"},
-    {"id":"DOC-MSG-TABLE-EVENT","page":"exponential-right-censoring.md","source":"`1` for an exact event; `0` for independent right censoring"},
-    {"id":"DOC-MSG-TABLE-TIME-NAME","page":"exponential-right-censoring.md","source":"`time`"},
-    {"id":"DOC-MSG-TABLE-EVENT-NAME","page":"exponential-right-censoring.md","source":"`event_observed`"},
-    {"id":"DOC-MSG-MATH-RATE","page":"exponential-right-censoring.md","source":"\\widehat{rate} = r / tau"},
-    {"id":"DOC-MSG-MATH-BODY","page":"exponential-right-censoring.md","source":"The displayed equation fixes the model parameterization used throughout this vertical."},
-    {"id":"DOC-MSG-FAILURE-TITLE","page":"exponential-right-censoring.md","source":"Failure cases and limits"},
-    {"id":"DOC-MSG-FAILURE-BODY","page":"exponential-right-censoring.md","source":"An empty sample, no observed events, zero total time with an event, and numeric overflow produce typed non-estimates. There is no confidence interval, goodness-of-fit test, truncation, left or interval censoring, weights, covariates, or free location parameter in this vertical."},
-    {"id":"DOC-MSG-STREAM-TITLE","page":"exponential-right-censoring.md","source":"One-pass and scale scope"},
-    {"id":"DOC-MSG-STREAM-BODY","page":"exponential-right-censoring.md","source":"The CSV adapter consumes one iterator pass. Its declared chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit. `SCALE-CSV-EXP-01` preserves a historical 10k/100k/1m by 32KiB/64KiB/128KiB snapshot for this strict adapter and estimator only. Its schema-v1 timing lacks valid provenance and cannot support a current candidate, payload-bound, or performance claim. A current claim requires a clean schema-v2 run bound to the reviewed candidate. The historical snapshot does not establish throughput, generic big-data support, another adapter, cancellation, retry, or checkpointing."},
-    {"id":"DOC-MSG-FAM-LL-TITLE","page":"families-log-density-likelihood.md","source":"Evaluated families, scalar log density, and streaming log likelihood"},
-    {"id":"DOC-MSG-FAM-REGISTRY-TITLE","page":"families-log-density-likelihood.md","source":"Closed five-family registry"},
-    {"id":"DOC-MSG-FAM-REGISTRY-BODY","page":"families-log-density-likelihood.md","source":"`FAMILY_REGISTRY` is immutable metadata for exactly five evaluated families: `normal`, `gamma`, `weibull_min`, `lognormal`, and `gumbel_right`. It fixes canonical names, aliases, parameter names, validation roles, and the currently available scalar `logpdf` operation. It is neither a generic distribution registry nor a fitting, inference, goodness-of-fit, or ranking interface."},
-    {"id":"DOC-MSG-FAM-API-LINK","page":"families-log-density-likelihood.md","source":"For the contract-level API surface, see <a class=\"veridist-api-url\" href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."},
-    {"id":"DOC-MSG-FAM-TABLE-HEAD","page":"families-log-density-likelihood.md","source":"Family"},
-    {"id":"DOC-MSG-FAM-TABLE-PARAMS","page":"families-log-density-likelihood.md","source":"Canonical parameters"},
-    {"id":"DOC-MSG-FAM-NORMAL","page":"families-log-density-likelihood.md","source":"`normal`"},
-    {"id":"DOC-MSG-FAM-NORMAL-PARAMS","page":"families-log-density-likelihood.md","source":"`mu`, `sigma > 0`"},
-    {"id":"DOC-MSG-FAM-GAMMA","page":"families-log-density-likelihood.md","source":"`gamma`"},
-    {"id":"DOC-MSG-FAM-SHAPE-SCALE","page":"families-log-density-likelihood.md","source":"`shape > 0`, `scale > 0`"},
-    {"id":"DOC-MSG-FAM-WEIBULL","page":"families-log-density-likelihood.md","source":"`weibull_min`"},
-    {"id":"DOC-MSG-FAM-LOGNORMAL","page":"families-log-density-likelihood.md","source":"`lognormal`"},
-    {"id":"DOC-MSG-FAM-LOGNORMAL-PARAMS","page":"families-log-density-likelihood.md","source":"`mu_log`, `sigma_log > 0`"},
-    {"id":"DOC-MSG-FAM-GUMBEL","page":"families-log-density-likelihood.md","source":"`gumbel_right`"},
-    {"id":"DOC-MSG-FAM-GUMBEL-PARAMS","page":"families-log-density-likelihood.md","source":"`location`, `scale > 0`"},
-    {"id":"DOC-MSG-FAM-DENSITY-TITLE","page":"families-log-density-likelihood.md","source":"Scalar log-density evaluation"},
-    {"id":"DOC-MSG-FAM-DENSITY-BODY","page":"families-log-density-likelihood.md","source":"`evaluate_log_density` evaluates one built-in finite scalar observation after canonical parameter validation. A successful result contains a finite binary64 log-density. Data-domain failures are closed values: `nonfinite_observation`, `support_violation`, `nonfinite_log_density`, or `numerical_overflow`. Programmer misuse of a family identity or parameter set raises rather than being converted into a data result. This is not an array API, a CDF/PPF API, censoring likelihood, fit, inference, goodness-of-fit test, or model ranking."},
-    {"id":"DOC-MSG-FAM-LL-SECTION","page":"families-log-density-likelihood.md","source":"Exact-state streaming log likelihood"},
-    {"id":"DOC-MSG-FAM-LL-BODY","page":"families-log-density-likelihood.md","source":"`reduce_log_likelihood_chunks` consumes an iterable of ragged observation chunks once. It evaluates each scalar through the same closed evaluator and accumulates each successful binary64 result as an exact integer number of subnormal units. The final sum is rounded to binary64 once, at finalization; it is not a chunk-wise floating-point sum."},
-    {"id":"DOC-MSG-FAM-LL-MATH","page":"families-log-density-likelihood.md","source":"\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log f(x_i)\\right)"},
-    {"id":"DOC-MSG-FAM-LL-STATE","page":"families-log-density-likelihood.md","source":"The immutable `LogLikelihoodState` supports compatible exact-state merging. One state has an explicit unsigned-64 observation limit (`2^64 - 1`); its maximum absolute exact integer total has a documented 2162-bit bound. A scalar failure stops reduction and reports only the number of successful observations before it. An empty chunk sequence succeeds with count zero and total `0.0`."},
-    {"id":"DOC-MSG-FAM-EVIDENCE-TITLE","page":"families-log-density-likelihood.md","source":"Evidence and limits"},
-    {"id":"DOC-MSG-FAM-EVIDENCE-BODY","page":"families-log-density-likelihood.md","source":"`LLR-06` preserves a historical generated-stream snapshot for normal-zero scalar reduction at 10k/100k/1m observations and three chunk sizes. Its schema-v2 artifact lacks candidate binding and the public source-route fact, so it cannot support a current candidate claim. A current schema-v3 run must use the public `IterableDataSource` single-pass route, bind the reviewed candidate SHA, record one outer acquisition and every yielded observation, and agree bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. Elapsed time and `tracemalloc` values remain descriptive only."},
-    {"id":"DOC-MSG-FAM-EVIDENCE-LIMIT","page":"families-log-density-likelihood.md","source":"This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."}
+    {
+      "id": "DOC-MSG-HOME-TITLE",
+      "page": "index.md",
+      "source": "Veridist documentation"
+    },
+    {
+      "id": "DOC-MSG-HOME-LEAD",
+      "page": "index.md",
+      "source": "Evidence-first, deliberately narrow distribution primitives."
+    },
+    {
+      "id": "DOC-MSG-VERTICAL-TITLE",
+      "page": "index.md",
+      "source": "First CSV vertical"
+    },
+    {
+      "id": "DOC-MSG-VERTICAL-BODY",
+      "page": "index.md",
+      "source": "The first public vertical fits a fixed-location exponential lifetime model from a strict UTF-8 CSV source. Its canonical parameter is a positive rate; the reported mean is derived as its reciprocal."
+    },
+    {
+      "id": "DOC-MSG-LIMITS-TITLE",
+      "page": "index.md",
+      "source": "Limits"
+    },
+    {
+      "id": "DOC-MSG-LIMITS-BODY",
+      "page": "index.md",
+      "source": "The CSV schema is exactly `time,event_observed`; event `1` is exact and `0` is independent right censoring. The adapter makes one iterator pass and retains at most its declared logical payload budget. `inference=not_provided` means no confidence interval, goodness-of-fit result, truncation, weights, covariates, or free location parameter is supplied."
+    },
+    {
+      "id": "DOC-MSG-EXAMPLE-TITLE",
+      "page": "index.md",
+      "source": "Executable example"
+    },
+    {
+      "id": "DOC-MSG-EXAMPLE-BODY",
+      "page": "index.md",
+      "source": "The example below has one canonical executable source and reports only stable machine facts. Use an opaque public source identifier; file paths are not part of the returned provenance."
+    },
+    {
+      "id": "DOC-MSG-TRANSLATION-STATUS",
+      "page": "index.md",
+      "source": "Translations for this vertical are owner-reviewed provisional text; no external native-speaker review is claimed."
+    },
+    {
+      "id": "DOC-MSG-HOME-FAMILIES-TITLE",
+      "page": "index.md",
+      "source": "Five evaluated scalar families"
+    },
+    {
+      "id": "DOC-MSG-HOME-FAMILIES-BODY",
+      "page": "index.md",
+      "source": "The public kernel also has an immutable five-family registry, finite scalar log-density evaluation, and an exact-state streaming log-likelihood reducer. These are distinct from the CSV exponential MLE: they do not provide generic fitting, inference, goodness-of-fit, ranking, arrays, or censoring support."
+    },
+    {
+      "id": "DOC-MSG-HOME-STREAM-TITLE",
+      "page": "index.md",
+      "source": "Generic stream sources and delivery leases"
+    },
+    {
+      "id": "DOC-MSG-HOME-STREAM-BODY",
+      "page": "index.md",
+      "source": "`IterableDataSource` adapts caller-owned chunk iterables with immutable source metadata. A `single_pass` source is acquired once and a second acquisition raises a typed pass-budget failure; replayable declarations require an explicit iterator factory. The strict CSV lifetime adapter remains the only bundled file adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a consumer, until `BufferedChunk.release()`; consumers must release received chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-core claim."
+    },
+    {
+      "id": "DOC-MSG-EXAMPLE-CAPTION",
+      "page": "index.md",
+      "source": "Canonical executable example"
+    },
+    {
+      "id": "DOC-MSG-API-02",
+      "page": "api.md",
+      "source": "Veridist API Guide"
+    },
+    {
+      "id": "DOC-MSG-API-03",
+      "page": "api.md",
+      "source": "<a href=\"api.md\">English</a> | <a href=\"api.fa.md\">فارسی</a> | <a href=\"api.de.md\">Deutsch</a>"
+    },
+    {
+      "id": "DOC-MSG-API-04",
+      "page": "api.md",
+      "source": "This guide explains the current public API in Veridist. For fitting an exponential distribution<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">1</a></sup> to lifetime data, the usual path is to pass one CSV file to the main function and read the returned result. If a calculation is long and may be interrupted, you can save progress and continue later. Scalar tools<sup id=\"fnref-scalar\"><a href=\"#fn-scalar\">2</a></sup> and data streams managed by the caller<sup id=\"fnref-caller\"><a href=\"#fn-caller\">3</a></sup> are also available for more technical use."
+    },
+    {
+      "id": "DOC-MSG-API-05",
+      "page": "api.md",
+      "source": "Choose an execution path"
+    },
+    {
+      "id": "DOC-MSG-API-06",
+      "page": "api.md",
+      "source": "Run the complete example below for the usual path:"
+    },
+    {
+      "id": "DOC-MSG-API-07",
+      "page": "api.md",
+      "source": "This example has two observations. In the first observation, the event happens at time 1. In the second observation, no event has been observed by time 1, so all we know is that the real lifetime is greater than 1. That gives one observed event and 2 total units of observed time. The estimated rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">5</a></sup> is `1 / 2 = 0.5` events per unit of time. This is not a 50 percent event probability; its unit depends on the unit of the `time` column."
+    },
+    {
+      "id": "DOC-MSG-API-08",
+      "page": "api.md",
+      "source": "What should the CSV file look like?"
+    },
+    {
+      "id": "DOC-MSG-API-09",
+      "page": "api.md",
+      "source": "`fit_exponential_csv(path, *, schema, source_id, limits)` accepts a UTF-8 file with two columns, `time,event_observed`, in exactly that order. `time` must be a finite non-negative number. In `event_observed`, `1` means the event happened at the recorded time; `0` means the event had not yet been observed by the recorded time. The second case is independent right censoring<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">6</a></sup>."
+    },
+    {
+      "id": "DOC-MSG-API-10",
+      "page": "api.md",
+      "source": "`CsvLifetimeSchema` names the two expected columns. `PublicSourceId` is a public, non-secret identifier for recording data provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">7</a></sup>; the local file path is not placed in the returned result. `CsvLifetimeLimits` sets the maximum size of each data chunk and the maximum amount of data kept in the processing queue at the same time<sup id=\"fnref-byte-limits\"><a href=\"#fn-byte-limits\">8</a></sup>. Both values must be positive."
+    },
+    {
+      "id": "DOC-MSG-API-11",
+      "page": "api.md",
+      "source": "Veridist does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract above, it reports the problem explicitly and does not silently rewrite the data."
+    },
+    {
+      "id": "DOC-MSG-API-12",
+      "page": "api.md",
+      "source": "How should you read the result?"
+    },
+    {
+      "id": "DOC-MSG-API-13",
+      "page": "api.md",
+      "source": "`fit_exponential_csv` always returns an `ExponentialSourceFitResult`. If the file is processed successfully and the data is sufficient to estimate a rate, the fitted result is stored in `result.fit`. If the file is processed correctly but a statistically valid rate cannot be estimated, for example because the file is empty or no event was observed, the same field returns a typed statistical non-estimate<sup id=\"fnref-typed-non-estimate\"><a href=\"#fn-typed-non-estimate\">9</a></sup> so the reason remains explicit."
+    },
+    {
+      "id": "DOC-MSG-API-14",
+      "page": "api.md",
+      "source": "If reading or processing the file fails, `result.fit` is `None`. In that case, `result.execution` is a typed outcome<sup id=\"fnref-typed-outcome\"><a href=\"#fn-typed-outcome\">10</a></sup> that records the stage and reason for the failure. Check the result type before using model parameters."
+    },
+    {
+      "id": "DOC-MSG-API-15",
+      "page": "api.md",
+      "source": "The current model keeps the location parameter fixed at zero. This path does not yet provide confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">11</a></sup>, goodness-of-fit tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">12</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-weight\">13</a></sup>, covariates<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">14</a></sup>, data truncation<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">15</a></sup>, left censoring<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">16</a></sup>, interval censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">17</a></sup>, a free location parameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">18</a></sup>, or automatic model selection. The statistical assumption and non-estimate cases are explained in <a href=\"exponential-right-censoring.md\">the right-censoring tutorial</a>."
+    },
+    {
+      "id": "DOC-MSG-API-16",
+      "page": "api.md",
+      "source": "Saving progress and continuing a calculation"
+    },
+    {
+      "id": "DOC-MSG-API-17",
+      "page": "api.md",
+      "source": "For data that your program has already split into small JSON chunks, import `fit_exponential_checkpointed_chunks` from the `veridist` package. The function processes each chunk separately and stores the sufficient statistics<sup id=\"fnref-sufficient-statistics\"><a href=\"#fn-sufficient-statistics\">19</a></sup> needed to continue the calculation; it does not store a copy of the original data rows in the state file."
+    },
+    {
+      "id": "DOC-MSG-API-18",
+      "page": "api.md",
+      "source": "For CSV files, `veridist.execution.fit_exponential_checkpointed_csv` does the same work with cancellation support. You provide the file, the column definition, the size limits, the state storage location, the data revision identifier, and, if needed, a `cancel(cursor)` callback. If the run is cancelled, the completed part is saved first; the next run can continue from the last recorded row."
+    },
+    {
+      "id": "DOC-MSG-API-19",
+      "page": "api.md",
+      "source": "The data file and its revision identifier must remain stable between runs. The checkpoint mechanism<sup id=\"fnref-checkpoint\"><a href=\"#fn-checkpoint\">20</a></sup> is designed to continue a calculation on the same machine. The current implementation uses local SQLite, but it does not copy raw CSV rows into that store. The file is not automatically encrypted or authenticated, so keep it in a safe location like other working files. The [save-and-resume example](../../examples/checkpoint_resume.py) shows the two-step flow."
+    },
+    {
+      "id": "DOC-MSG-API-20",
+      "page": "api.md",
+      "source": "Low-level tools<sup id=\"fnref-low-level-tools\"><a href=\"#fn-low-level-tools\">21</a></sup> for prepared data"
+    },
+    {
+      "id": "DOC-MSG-API-21",
+      "page": "api.md",
+      "source": "If your own program generates or chunks the data, `IterableDataSource` accepts those chunks with immutable `DataSourceMetadata` and an explicit `Replayability` declaration. In `SINGLE_PASS` mode, the data is read once. In `REPLAYABLE` mode, you must provide a function that creates a fresh traversal of the data each time. `CHECKPOINT_REPLAYABLE` is not implemented in this adapter yet; using it raises `CHECKPOINT_REQUIRED`."
+    },
+    {
+      "id": "DOC-MSG-API-22",
+      "page": "api.md",
+      "source": "`FAMILY_REGISTRY` and `FamilyId` hold the metadata for the five evaluated statistical families. `evaluate_log_density` calculates the log density of one value with supplied parameters. `reduce_log_likelihood_chunks` sums the same calculation across several data chunks and returns a result that does not depend on how the data was chunked. These functions do not estimate model parameters, rank distributions, or build likelihoods for censored data. Their exact contract is documented in <a href=\"families-log-density-likelihood.md\">evaluated families and log likelihood</a>."
+    },
+    {
+      "id": "DOC-MSG-API-23",
+      "page": "api.md",
+      "source": "The CSV file is read in one pass. The size limits only control the volume of data chunks retained by the adapter itself; they are not a ceiling on total process memory or execution speed. General support for all data sources, distributed execution, and recovery across multiple machines is not available in the current version; planned items and exact boundaries are recorded in <a href=\"../../KNOWN_LIMITS.md\">known limits</a>. A successful calculation also does not prove that the exponential distribution is appropriate for the data."
+    },
+    {
+      "id": "DOC-MSG-API-24",
+      "page": "api.md",
+      "source": "Terms Used On This Page"
+    },
+    {
+      "id": "DOC-MSG-TUTORIAL-TITLE",
+      "page": "exponential-right-censoring.md",
+      "source": "Exponential right-censoring tutorial"
+    },
+    {
+      "id": "DOC-MSG-MODEL-TITLE",
+      "page": "exponential-right-censoring.md",
+      "source": "Model and estimate"
+    },
+    {
+      "id": "DOC-MSG-MODEL-BODY",
+      "page": "exponential-right-censoring.md",
+      "source": "For exact-event count `r` and total time on test `tau`, this vertical uses `r*log(rate)-rate*tau` and returns `rate=r/tau` only when both values permit a finite estimate. It accepts exact lifetimes and independent right censoring. Independent right censoring is an assumption visible in the result; it cannot be established from the observations by this library."
+    },
+    {
+      "id": "DOC-MSG-CSV-TITLE",
+      "page": "exponential-right-censoring.md",
+      "source": "Strict CSV input"
+    },
+    {
+      "id": "DOC-MSG-CSV-BODY",
+      "page": "exponential-right-censoring.md",
+      "source": "The public adapter accepts UTF-8 CSV with exactly `time,event_observed` in that order. Each data row is one finite non-negative time and token `1` (event) or `0` (right censored). A caller supplies a non-secret `PublicSourceId` instead of relying on a local path in returned facts. The adapter never guesses columns, headers, encodings, delimiters, missing values, or censoring conventions."
+    },
+    {
+      "id": "DOC-MSG-CODE-BODY",
+      "page": "exponential-right-censoring.md",
+      "source": "The schema declaration below is executable Python. It names the only accepted header pair and intentionally keeps machine-readable identifiers left to right."
+    },
+    {
+      "id": "DOC-MSG-TABLE-HEAD",
+      "page": "exponential-right-censoring.md",
+      "source": "CSV field"
+    },
+    {
+      "id": "DOC-MSG-TABLE-MEANING",
+      "page": "exponential-right-censoring.md",
+      "source": "Meaning"
+    },
+    {
+      "id": "DOC-MSG-TABLE-TIME-NAME",
+      "page": "exponential-right-censoring.md",
+      "source": "`time`"
+    },
+    {
+      "id": "DOC-MSG-TABLE-TIME",
+      "page": "exponential-right-censoring.md",
+      "source": "finite non-negative lifetime"
+    },
+    {
+      "id": "DOC-MSG-TABLE-EVENT-NAME",
+      "page": "exponential-right-censoring.md",
+      "source": "`event_observed`"
+    },
+    {
+      "id": "DOC-MSG-TABLE-EVENT",
+      "page": "exponential-right-censoring.md",
+      "source": "`1` for an exact event; `0` for independent right censoring"
+    },
+    {
+      "id": "DOC-MSG-MATH-BODY",
+      "page": "exponential-right-censoring.md",
+      "source": "The displayed equation fixes the model parameterization used throughout this vertical."
+    },
+    {
+      "id": "DOC-MSG-MATH-RATE",
+      "page": "exponential-right-censoring.md",
+      "source": "\\widehat{rate} = r / tau"
+    },
+    {
+      "id": "DOC-MSG-FAILURE-TITLE",
+      "page": "exponential-right-censoring.md",
+      "source": "Failure cases and limits"
+    },
+    {
+      "id": "DOC-MSG-FAILURE-BODY",
+      "page": "exponential-right-censoring.md",
+      "source": "An empty sample, no observed events, zero total time with an event, and numeric overflow produce typed non-estimates. There is no confidence interval, goodness-of-fit test, truncation, left or interval censoring, weights, covariates, or free location parameter in this vertical."
+    },
+    {
+      "id": "DOC-MSG-STREAM-TITLE",
+      "page": "exponential-right-censoring.md",
+      "source": "One-pass and scale scope"
+    },
+    {
+      "id": "DOC-MSG-STREAM-BODY",
+      "page": "exponential-right-censoring.md",
+      "source": "The CSV adapter consumes one iterator pass. Its declared chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit. `SCALE-CSV-EXP-01` preserves a historical 10k/100k/1m by 32KiB/64KiB/128KiB snapshot for this strict adapter and estimator only. Its schema-v1 timing lacks valid provenance and cannot support a current candidate, payload-bound, or performance claim. A current claim requires a clean schema-v2 run bound to the reviewed candidate. The historical snapshot does not establish throughput, generic big-data support, another adapter, cancellation, retry, or checkpointing."
+    },
+    {
+      "id": "DOC-MSG-FAM-LL-TITLE",
+      "page": "families-log-density-likelihood.md",
+      "source": "Evaluated families, scalar log density, and streaming log likelihood"
+    },
+    {
+      "id": "DOC-MSG-FAM-REGISTRY-TITLE",
+      "page": "families-log-density-likelihood.md",
+      "source": "Closed five-family registry"
+    },
+    {
+      "id": "DOC-MSG-FAM-REGISTRY-BODY",
+      "page": "families-log-density-likelihood.md",
+      "source": "`FAMILY_REGISTRY` is immutable metadata for exactly five evaluated families: `normal`, `gamma`, `weibull_min`, `lognormal`, and `gumbel_right`. It fixes canonical names, aliases, parameter names, validation roles, and the currently available scalar `logpdf` operation. It is neither a generic distribution registry nor a fitting, inference, goodness-of-fit, or ranking interface."
+    },
+    {
+      "id": "DOC-MSG-FAM-API-LINK",
+      "page": "families-log-density-likelihood.md",
+      "source": "For the contract-level API surface, see <a class=\"veridist-api-url\" href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."
+    },
+    {
+      "id": "DOC-MSG-FAM-TABLE-HEAD",
+      "page": "families-log-density-likelihood.md",
+      "source": "Family"
+    },
+    {
+      "id": "DOC-MSG-FAM-TABLE-PARAMS",
+      "page": "families-log-density-likelihood.md",
+      "source": "Canonical parameters"
+    },
+    {
+      "id": "DOC-MSG-FAM-NORMAL",
+      "page": "families-log-density-likelihood.md",
+      "source": "`normal`"
+    },
+    {
+      "id": "DOC-MSG-FAM-NORMAL-PARAMS",
+      "page": "families-log-density-likelihood.md",
+      "source": "`mu`, `sigma > 0`"
+    },
+    {
+      "id": "DOC-MSG-FAM-GAMMA",
+      "page": "families-log-density-likelihood.md",
+      "source": "`gamma`"
+    },
+    {
+      "id": "DOC-MSG-FAM-SHAPE-SCALE",
+      "page": "families-log-density-likelihood.md",
+      "source": "`shape > 0`, `scale > 0`"
+    },
+    {
+      "id": "DOC-MSG-FAM-WEIBULL",
+      "page": "families-log-density-likelihood.md",
+      "source": "`weibull_min`"
+    },
+    {
+      "id": "DOC-MSG-FAM-LOGNORMAL",
+      "page": "families-log-density-likelihood.md",
+      "source": "`lognormal`"
+    },
+    {
+      "id": "DOC-MSG-FAM-LOGNORMAL-PARAMS",
+      "page": "families-log-density-likelihood.md",
+      "source": "`mu_log`, `sigma_log > 0`"
+    },
+    {
+      "id": "DOC-MSG-FAM-GUMBEL",
+      "page": "families-log-density-likelihood.md",
+      "source": "`gumbel_right`"
+    },
+    {
+      "id": "DOC-MSG-FAM-GUMBEL-PARAMS",
+      "page": "families-log-density-likelihood.md",
+      "source": "`location`, `scale > 0`"
+    },
+    {
+      "id": "DOC-MSG-FAM-DENSITY-TITLE",
+      "page": "families-log-density-likelihood.md",
+      "source": "Scalar log-density evaluation"
+    },
+    {
+      "id": "DOC-MSG-FAM-DENSITY-BODY",
+      "page": "families-log-density-likelihood.md",
+      "source": "`evaluate_log_density` evaluates one built-in finite scalar observation after canonical parameter validation. A successful result contains a finite binary64 log-density. Data-domain failures are closed values: `nonfinite_observation`, `support_violation`, `nonfinite_log_density`, or `numerical_overflow`. Programmer misuse of a family identity or parameter set raises rather than being converted into a data result. This is not an array API, a CDF/PPF API, censoring likelihood, fit, inference, goodness-of-fit test, or model ranking."
+    },
+    {
+      "id": "DOC-MSG-FAM-LL-SECTION",
+      "page": "families-log-density-likelihood.md",
+      "source": "Exact-state streaming log likelihood"
+    },
+    {
+      "id": "DOC-MSG-FAM-LL-BODY",
+      "page": "families-log-density-likelihood.md",
+      "source": "`reduce_log_likelihood_chunks` consumes an iterable of ragged observation chunks once. It evaluates each scalar through the same closed evaluator and accumulates each successful binary64 result as an exact integer number of subnormal units. The final sum is rounded to binary64 once, at finalization; it is not a chunk-wise floating-point sum."
+    },
+    {
+      "id": "DOC-MSG-FAM-LL-MATH",
+      "page": "families-log-density-likelihood.md",
+      "source": "\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log f(x_i)\\right)"
+    },
+    {
+      "id": "DOC-MSG-FAM-LL-STATE",
+      "page": "families-log-density-likelihood.md",
+      "source": "The immutable `LogLikelihoodState` supports compatible exact-state merging. One state has an explicit unsigned-64 observation limit (`2^64 - 1`); its maximum absolute exact integer total has a documented 2162-bit bound. A scalar failure stops reduction and reports only the number of successful observations before it. An empty chunk sequence succeeds with count zero and total `0.0`."
+    },
+    {
+      "id": "DOC-MSG-FAM-EVIDENCE-TITLE",
+      "page": "families-log-density-likelihood.md",
+      "source": "Evidence and limits"
+    },
+    {
+      "id": "DOC-MSG-FAM-EVIDENCE-BODY",
+      "page": "families-log-density-likelihood.md",
+      "source": "`LLR-06` preserves a historical generated-stream snapshot for normal-zero scalar reduction at 10k/100k/1m observations and three chunk sizes. Its schema-v2 artifact lacks candidate binding and the public source-route fact, so it cannot support a current candidate claim. A current schema-v3 run must use the public `IterableDataSource` single-pass route, bind the reviewed candidate SHA, record one outer acquisition and every yielded observation, and agree bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. Elapsed time and `tracemalloc` values remain descriptive only."
+    },
+    {
+      "id": "DOC-MSG-FAM-EVIDENCE-LIMIT",
+      "page": "families-log-density-likelihood.md",
+      "source": "This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."
+    }
   ],
   "examples": [
-    {"id":"DOC-EX-QUICKSTART","source":"examples/quickstart.py","pages":["index.md"]}
+    {
+      "id": "DOC-EX-QUICKSTART",
+      "source": "examples/quickstart.py",
+      "pages": [
+        "index.md"
+      ]
+    }
   ]
 }

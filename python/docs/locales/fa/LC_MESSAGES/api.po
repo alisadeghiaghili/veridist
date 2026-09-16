@@ -1,10 +1,9 @@
-
 msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
-"POT-Creation-Date: 2026-09-01 21:24+0330\n"
-"PO-Revision-Date: 2026-09-01 21:55+0330\n"
+"POT-Creation-Date: 2026-09-16 16:10+0330\n"
+"PO-Revision-Date: 2026-09-16 16:10+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: fa\n"
 "Language-Team: Persian documentation <alisadeghiaghili@gmail.com>\n"
@@ -14,77 +13,71 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: ../../../py-distfit-pro/python/docs/source/api.md:2
-#: 80ba3d5a4d1840c3bfcf90fb0a3b30e4
-msgid "CSV exponential API"
-msgstr "رابط برنامه‌نویسی نمایی CSV"
+msgid "Veridist API Guide"
+msgstr "راهنمای API در <bdi dir=\"ltr\">Veridist</bdi>"
 
-#: ../../../py-distfit-pro/python/docs/source/api.md:4
-#: a805ace4a33f4d74b2773c79b8e2d634
-msgid ""
-"`fit_exponential_csv(path, *, schema, source_id, limits)` is the public "
-"source entry point. `CsvLifetimeSchema(\"time\", \"event_observed\")` "
-"selects the only accepted header; `PublicSourceId` is an opaque "
-"identifier safe for returned provenance; and `CsvLifetimeLimits` supplies"
-" positive byte budgets. The result is always an "
-"`ExponentialSourceFitResult`: a finite rate-only estimate, a typed "
-"statistical non-estimate, or a typed execution failure."
-msgstr ""
-"`fit_exponential_csv(path, *, schema, source_id, limits)` نقطهٔ ورود "
-"عمومی منبع است. `CsvLifetimeSchema(\"time\", \"event_observed\")` تنها "
-"سرستون پذیرفته‌شده را انتخاب می‌کند؛ `PublicSourceId` شناسه‌ای مبهم و امن"
-" برای منشأ بازگردانده‌شده است؛ و `CsvLifetimeLimits` بودجه‌های مثبت بر "
-"حسب بایت را می‌دهد. نتیجه همیشه یک `ExponentialSourceFitResult` است: "
-"برآورد متناهی فقط برای نرخ، عدم‌برآورد آماری نوع‌دار، یا شکست اجرایی "
-"نوع‌دار."
+msgid "<a href=\"api.md\">English</a> | <a href=\"api.fa.md\">فارسی</a> | <a href=\"api.de.md\">Deutsch</a>"
+msgstr "<a href=\"api.md\">انگلیسی</a> | <a href=\"api.fa.md\">فارسی</a> | <a href=\"api.de.md\">آلمانی</a>"
 
-#: ../../../py-distfit-pro/python/docs/source/api.md:11
-#: 1833a5c123e242f6b9de30e121f3a23b
-msgid ""
-"Times must be finite and non-negative. Event token `1` denotes an exact "
-"event; token `0` denotes independent right censoring. The CSV contract is"
-" deliberately strict rather than a permissive spreadsheet reader: wrong "
-"encoding, headers, tokens, fields, budgets, or source access produce "
-"typed failures."
-msgstr ""
-"زمان‌ها باید متناهی و نامنفی باشند. توکن رخداد `1` رخداد دقیق و توکن `0` "
-"سانسور مستقل از راست را نشان می‌دهد. قرارداد CSV عامدانه سخت‌گیرانه است، "
-"نه خوانندهٔ سهل‌گیر صفحه‌گسترده: کدگذاری، سرستون، توکن، فیلد، بودجه یا "
-"دسترسی نادرست به منبع شکست‌های نوع‌دار تولید می‌کند."
+msgid "This guide explains the current public API in Veridist. For fitting an exponential distribution<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">1</a></sup> to lifetime data, the usual path is to pass one CSV file to the main function and read the returned result. If a calculation is long and may be interrupted, you can save progress and continue later. Scalar tools<sup id=\"fnref-scalar\"><a href=\"#fn-scalar\">2</a></sup> and data streams managed by the caller<sup id=\"fnref-caller\"><a href=\"#fn-caller\">3</a></sup> are also available for more technical use."
+msgstr "این راهنما API عمومیِ فعلی <bdi dir=\"ltr\">Veridist</bdi> را توضیح می‌دهد. برای برازش توزیع<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">۱</a></sup> نمایی روی داده‌های طول عمر، معمولاً یک فایل CSV را به تابع اصلی می‌دهید و نتیجه را دریافت می‌کنید. اگر محاسبه طولانی است و ممکن است متوقف شود، می‌توانید پیشرفت آن را ذخیره کنید و بعداً ادامه دهید. ابزارهای اسکالر<sup id=\"fnref-scalar\"><a href=\"#fn-scalar\">۲</a></sup> و جریان‌های داده‌ای که مدیریتشان با فراخواننده<sup id=\"fnref-caller\"><a href=\"#fn-caller\">۳</a></sup> است نیز برای استفاده‌های فنی‌تر در دسترس‌اند."
 
-#: ../../../py-distfit-pro/python/docs/source/api.md:16
-#: 1478a9ccaff744f2a753a40cb5ecfca0
-msgid ""
-"The vertical fixes `location=0`, has no confidence interval or goodness-"
-"of-fit claim, and supplies no weights, covariates, truncation, "
-"left/interval censoring, free location, model selection, retry, "
-"checkpointing, or cancellation."
-msgstr ""
-"این قابلیت `location=0` را ثابت می‌کند، هیچ ادعایی دربارهٔ فاصلهٔ اطمینان"
-" یا نیکویی برازش ندارد و وزن، متغیر کمکی، برش، سانسور چپ/فاصله‌ای، مکان "
-"آزاد، انتخاب مدل، تلاش‌مجدد، checkpoint یا لغو ارائه نمی‌کند."
+msgid "Choose an execution path"
+msgstr "مسیر اجرا را انتخاب کنید"
 
-#: ../../../py-distfit-pro/python/docs/source/api.md:20
-#: 4d989cbd91c84534b9514957d2feaf0f
-msgid "Evaluated scalar primitives"
-msgstr "بدوی‌های اسکالرِ ارزیابی‌شده"
+msgid "Run the complete example below for the usual path:"
+msgstr "برای حالت معمول، نمونهٔ کامل زیر را اجرا کنید:"
 
-#: ../../../py-distfit-pro/python/docs/source/api.md:22
-#: 30115293c8af496789227b02d4463447
-msgid ""
-"`veridist.families.registry` exports immutable `FAMILY_REGISTRY` metadata"
-" and `FamilyId` for five evaluated families. "
-"`veridist.statistics.log_density` exports scalar `evaluate_log_density`; "
-"`veridist.statistics.log_likelihood` exports `LogLikelihoodState` and "
-"`reduce_log_likelihood_chunks`. These are separate, finite scalar "
-"contracts: they are not generic fitting, inference, goodness-of-fit, "
-"ranking, array, or censoring APIs."
-msgstr "`veridist.families.registry` فرادادهٔ تغییرناپذیر `FAMILY_REGISTRY` و `FamilyId` را برای پنج خانوادهٔ ارزیابی‌شده صادر می‌کند. `veridist.statistics.log_density` تابع اسکالر `evaluate_log_density` و `veridist.statistics.log_likelihood` مقادیر `LogLikelihoodState` و `reduce_log_likelihood_chunks` را صادر می‌کنند. این‌ها قراردادهای مجزای اسکالرِ متناهی‌اند و API عمومی برازش، استنباط، نیکویی برازش، رتبه‌بندی، آرایه یا سانسور نیستند."
+msgid "This example has two observations. In the first observation, the event happens at time 1. In the second observation, no event has been observed by time 1, so all we know is that the real lifetime is greater than 1. That gives one observed event and 2 total units of observed time. The estimated rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">5</a></sup> is `1 / 2 = 0.5` events per unit of time. This is not a 50 percent event probability; its unit depends on the unit of the `time` column."
+msgstr "در این مثال دو مشاهده داریم. در مشاهدهٔ اول، رویداد در زمان ۱ رخ داده است. در مشاهدهٔ دوم، تا زمان ۱ رویدادی ندیده‌ایم و فقط می‌دانیم عمر واقعی از ۱ بیشتر است. بنابراین یک رخداد ثبت‌شده و مجموعاً ۲ واحد زمانِ تحت مشاهده داریم. نرخ<sup id=\"fnref-rate\"><a href=\"#fn-rate\">۵</a></sup> برآوردشده برابر <code dir=\"ltr\">1 / 2 = 0.5</code> رخداد در هر واحد زمان است. این عدد احتمال ۵۰ درصدی رخداد نیست؛ واحد آن به واحد ستون <code dir=\"ltr\">time</code> وابسته است."
 
-#: DOC-MSG-API-STREAM-TITLE
-msgid "Generic stream source API"
-msgstr "رابط API منبع جریان عمومی"
+msgid "What should the CSV file look like?"
+msgstr "فایل CSV باید چه شکلی باشد؟"
 
-#: DOC-MSG-API-STREAM-BODY
-msgid "`DataSourceMetadata`, `Replayability`, `IterableDataSource`, `FamilyId`, and `reduce_log_likelihood_chunks` are public so a caller can construct and consume a generic in-memory or caller-owned stream. A `SINGLE_PASS` source receives an iterable and is acquired once; `REPLAYABLE` requires a zero-argument iterator factory. `CHECKPOINT_REPLAYABLE` is not yet implemented by this adapter and fails immediately with typed `CHECKPOINT_REQUIRED`; do not treat it as a promise of checkpoint recovery."
-msgstr "`DataSourceMetadata`، `Replayability`، `IterableDataSource`، `FamilyId` و `reduce_log_likelihood_chunks` عمومی هستند تا فراخواننده بتواند یک جریان عمومی درون‌حافظه‌ای یا متعلق به خود را بسازد و مصرف کند. منبع `SINGLE_PASS` یک iterable می‌گیرد و فقط یک‌بار دریافت می‌شود؛ `REPLAYABLE` به یک iterator factory بدون آرگومان نیاز دارد. `CHECKPOINT_REPLAYABLE` هنوز توسط این adapter پیاده‌سازی نشده و بلافاصله با `CHECKPOINT_REQUIRED` نوع‌دار شکست می‌خورد؛ آن را وعدهٔ بازیابی checkpoint تلقی نکنید."
+msgid "`fit_exponential_csv(path, *, schema, source_id, limits)` accepts a UTF-8 file with two columns, `time,event_observed`, in exactly that order. `time` must be a finite non-negative number. In `event_observed`, `1` means the event happened at the recorded time; `0` means the event had not yet been observed by the recorded time. The second case is independent right censoring<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">6</a></sup>."
+msgstr "تابع <code dir=\"ltr\">fit_exponential_csv(path, *, schema, source_id, limits)</code> یک فایل UTF-8 با دو ستون <code dir=\"ltr\">time,event_observed</code> و دقیقاً همین ترتیب می‌پذیرد. مقدار <code dir=\"ltr\">time</code> باید عددی متناهی و نامنفی باشد. در ستون <code dir=\"ltr\">event_observed</code> مقدار <code dir=\"ltr\">1</code> یعنی رویداد در زمان ثبت‌شده رخ داده است؛ مقدار <code dir=\"ltr\">0</code> یعنی تا پایان زمان ثبت‌شده هنوز رویداد را ندیده‌ایم. حالت دوم سانسور راست مستقل<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">۶</a></sup> نام دارد."
+
+msgid "`CsvLifetimeSchema` names the two expected columns. `PublicSourceId` is a public, non-secret identifier for recording data provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">7</a></sup>; the local file path is not placed in the returned result. `CsvLifetimeLimits` sets the maximum size of each data chunk and the maximum amount of data kept in the processing queue at the same time<sup id=\"fnref-byte-limits\"><a href=\"#fn-byte-limits\">8</a></sup>. Both values must be positive."
+msgstr "<code dir=\"ltr\">CsvLifetimeSchema</code> نام دو ستون مورد انتظار را مشخص می‌کند. <code dir=\"ltr\">PublicSourceId</code> یک شناسهٔ عمومی و غیرمحرمانه برای ثبت منشأ<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">۷</a></sup> داده است؛ مسیر محلی فایل در گزارش نتیجه قرار نمی‌گیرد. <code dir=\"ltr\">CsvLifetimeLimits</code> سقف اندازهٔ هر بخش از داده و حداکثر حجم داده‌ای را که هم‌زمان در صف پردازش نگه داشته می‌شود تعیین می‌کند<sup id=\"fnref-byte-limits\"><a href=\"#fn-byte-limits\">۸</a></sup>. هر دو مقدار باید مثبت باشند."
+
+msgid "Veridist does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract above, it reports the problem explicitly and does not silently rewrite the data."
+msgstr "<bdi dir=\"ltr\">Veridist</bdi> نام ستون‌ها، جداکننده، کدگذاری، دادهٔ گمشده یا معنی صفر و یک را حدس نمی‌زند. اگر فایل با قرارداد بالا سازگار نباشد، مشکل را صریح گزارش می‌کند و داده را پنهانی تغییر نمی‌دهد."
+
+msgid "How should you read the result?"
+msgstr "نتیجه را چگونه بخوانید؟"
+
+msgid "`fit_exponential_csv` always returns an `ExponentialSourceFitResult`. If the file is processed successfully and the data is sufficient to estimate a rate, the fitted result is stored in `result.fit`. If the file is processed correctly but a statistically valid rate cannot be estimated, for example because the file is empty or no event was observed, the same field returns a typed statistical non-estimate<sup id=\"fnref-typed-non-estimate\"><a href=\"#fn-typed-non-estimate\">9</a></sup> so the reason remains explicit."
+msgstr "تابع <code dir=\"ltr\">fit_exponential_csv</code> همیشه یک شیء از نوع <code dir=\"ltr\">ExponentialSourceFitResult</code> برمی‌گرداند. اگر فایل با موفقیت پردازش شود و داده برای برآورد نرخ کافی باشد، نتیجهٔ برازش در <code dir=\"ltr\">result.fit</code> قرار می‌گیرد. اگر فایل درست پردازش شود ولی از نظر آماری نتوان نرخ معتبری برآورد کرد—برای مثال فایل خالی باشد یا هیچ رخدادی مشاهده نشده باشد—همان فیلد یک عدم‌برآورد آماری نوع‌دار<sup id=\"fnref-typed-non-estimate\"><a href=\"#fn-typed-non-estimate\">۹</a></sup> برمی‌گرداند تا دلیل مشخص بماند."
+
+msgid "If reading or processing the file fails, `result.fit` is `None`. In that case, `result.execution` is a typed outcome<sup id=\"fnref-typed-outcome\"><a href=\"#fn-typed-outcome\">10</a></sup> that records the stage and reason for the failure. Check the result type before using model parameters."
+msgstr "اگر خواندن یا پردازش فایل شکست بخورد، <code dir=\"ltr\">result.fit</code> برابر <code dir=\"ltr\">None</code> است. در این حالت <code dir=\"ltr\">result.execution</code> یک خروجی نوع‌دار<sup id=\"fnref-typed-outcome\"><a href=\"#fn-typed-outcome\">۱۰</a></sup> شامل مرحله و دلیل شکست دارد. پیش از استفاده از پارامترهای مدل، ابتدا نوع نتیجه را بررسی کنید."
+
+msgid "The current model keeps the location parameter fixed at zero. This path does not yet provide confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">11</a></sup>, goodness-of-fit tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">12</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-weight\">13</a></sup>, covariates<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">14</a></sup>, data truncation<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">15</a></sup>, left censoring<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">16</a></sup>, interval censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">17</a></sup>, a free location parameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">18</a></sup>, or automatic model selection. The statistical assumption and non-estimate cases are explained in <a href=\"exponential-right-censoring.md\">the right-censoring tutorial</a>."
+msgstr "مدل فعلی پارامتر مکان را روی صفر ثابت نگه می‌دارد. این مسیر هنوز فاصلهٔ اطمینان<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">۱۱</a></sup>، آزمون مناسب‌بودن مدل<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">۱۲</a></sup>، وزن<sup id=\"fnref-weight\"><a href=\"#fn-weight\">۱۳</a></sup>، متغیر کمکی<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">۱۴</a></sup>، برش داده<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">۱۵</a></sup>، سانسور چپ<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">۱۶</a></sup>، سانسور فاصله‌ای<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">۱۷</a></sup>، پارامتر مکان آزاد<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">۱۸</a></sup> یا انتخاب خودکار مدل را ارائه نمی‌کند. جزئیات فرض آماری و حالت‌های ناموفق در <a href=\"exponential-right-censoring.md\">آموزش سانسور راست</a> آمده است."
+
+msgid "Saving progress and continuing a calculation"
+msgstr "ذخیرهٔ پیشرفت و ادامهٔ محاسبه"
+
+msgid "For data that your program has already split into small JSON chunks, import `fit_exponential_checkpointed_chunks` from the `veridist` package. The function processes each chunk separately and stores the sufficient statistics<sup id=\"fnref-sufficient-statistics\"><a href=\"#fn-sufficient-statistics\">19</a></sup> needed to continue the calculation; it does not store a copy of the original data rows in the state file."
+msgstr "برای داده‌ای که برنامهٔ شما از قبل به بخش‌های کوچک JSON تقسیم کرده است، تابع <code dir=\"ltr\">fit_exponential_checkpointed_chunks</code> را از پکیج <code dir=\"ltr\">veridist</code> وارد کنید. این تابع هر بخش را جداگانه پردازش می‌کند و آمار کافی<sup id=\"fnref-sufficient-statistics\"><a href=\"#fn-sufficient-statistics\">۱۹</a></sup> لازم برای ادامهٔ محاسبه را ذخیره می‌کند؛ نسخه‌ای از سطرهای اصلی داده را در فایل وضعیت نگه نمی‌دارد."
+
+msgid "For CSV files, `veridist.execution.fit_exponential_checkpointed_csv` does the same work with cancellation support. You provide the file, the column definition, the size limits, the state storage location, the data revision identifier, and, if needed, a `cancel(cursor)` callback. If the run is cancelled, the completed part is saved first; the next run can continue from the last recorded row."
+msgstr "برای فایل CSV، تابع <code dir=\"ltr\">veridist.execution.fit_exponential_checkpointed_csv</code> همین کار را همراه با امکان لغو انجام می‌دهد. شما فایل، تعریف ستون‌ها، محدودیت اندازه، محل ذخیرهٔ وضعیت، شناسهٔ نسخهٔ داده و در صورت نیاز تابع <code dir=\"ltr\">cancel(cursor)</code> را می‌دهید. اگر اجرا لغو شود، بخش کامل‌شده ابتدا ذخیره می‌شود؛ اجرای بعدی می‌تواند از آخرین سطر ثبت‌شده ادامه دهد."
+
+msgid "The data file and its revision identifier must remain stable between runs. The checkpoint mechanism<sup id=\"fnref-checkpoint\"><a href=\"#fn-checkpoint\">20</a></sup> is designed to continue a calculation on the same machine. The current implementation uses local SQLite, but it does not copy raw CSV rows into that store. The file is not automatically encrypted or authenticated, so keep it in a safe location like other working files. The [save-and-resume example](../../examples/checkpoint_resume.py) shows the two-step flow."
+msgstr "فایل داده و شناسهٔ نسخهٔ آن باید بین دو اجرا ثابت بمانند. سازوکار ذخیرهٔ وضعیت<sup id=\"fnref-checkpoint\"><a href=\"#fn-checkpoint\">۲۰</a></sup> برای ادامهٔ محاسبه روی همان رایانه طراحی شده است. پیاده‌سازی فعلی از SQLite محلی استفاده می‌کند، اما سطرهای خام CSV را در آن کپی نمی‌کند. این فایل به‌صورت خودکار رمزگذاری یا احراز هویت نمی‌شود؛ بنابراین باید آن را مانند سایر فایل‌های کاری در محل امن نگه دارید. <a href=\"../../examples/checkpoint_resume.py\">مثال ذخیره و ادامهٔ اجرا</a> روند دو مرحله‌ای را نشان می‌دهد."
+
+msgid "Low-level tools<sup id=\"fnref-low-level-tools\"><a href=\"#fn-low-level-tools\">21</a></sup> for prepared data"
+msgstr "ابزارهای سطح پایین<sup id=\"fnref-low-level-tools\"><a href=\"#fn-low-level-tools\">۲۱</a></sup> برای داده‌های آماده"
+
+msgid "If your own program generates or chunks the data, `IterableDataSource` accepts those chunks with immutable `DataSourceMetadata` and an explicit `Replayability` declaration. In `SINGLE_PASS` mode, the data is read once. In `REPLAYABLE` mode, you must provide a function that creates a fresh traversal of the data each time. `CHECKPOINT_REPLAYABLE` is not implemented in this adapter yet; using it raises `CHECKPOINT_REQUIRED`."
+msgstr "اگر داده را خود برنامهٔ شما تولید یا بخش‌بندی می‌کند، <code dir=\"ltr\">IterableDataSource</code> آن بخش‌ها را همراه با <code dir=\"ltr\">DataSourceMetadata</code> تغییرناپذیر و اعلام صریح <code dir=\"ltr\">Replayability</code> دریافت می‌کند. در حالت <code dir=\"ltr\">SINGLE_PASS</code> داده فقط یک‌بار خوانده می‌شود. در حالت <code dir=\"ltr\">REPLAYABLE</code> باید تابعی بدهید که هر بار یک پیمایش تازه از داده بسازد. حالت <code dir=\"ltr\">CHECKPOINT_REPLAYABLE</code> در این adapter هنوز پیاده نشده است؛ استفاده از آن خطای <code dir=\"ltr\">CHECKPOINT_REQUIRED</code> می‌دهد."
+
+msgid "`FAMILY_REGISTRY` and `FamilyId` hold the metadata for the five evaluated statistical families. `evaluate_log_density` calculates the log density of one value with supplied parameters. `reduce_log_likelihood_chunks` sums the same calculation across several data chunks and returns a result that does not depend on how the data was chunked. These functions do not estimate model parameters, rank distributions, or build likelihoods for censored data. Their exact contract is documented in <a href=\"families-log-density-likelihood.md\">evaluated families and log likelihood</a>."
+msgstr "<code dir=\"ltr\">FAMILY_REGISTRY</code> و <code dir=\"ltr\">FamilyId</code> مشخصات پنج خانوادهٔ آماری ارزیابی‌شده را نگه می‌دارند. <code dir=\"ltr\">evaluate_log_density</code> چگالی لگاریتمی یک مقدار را با پارامترهای داده‌شده محاسبه می‌کند. <code dir=\"ltr\">reduce_log_likelihood_chunks</code> همین محاسبه را برای بخش‌های متعدد داده جمع می‌کند و نتیجه‌ای مستقل از نحوهٔ بخش‌بندی می‌سازد. این توابع پارامترهای مدل را تخمین نمی‌زنند، توزیع‌ها را رتبه‌بندی نمی‌کنند و برای دادهٔ سانسورشده درست‌نمایی نمی‌سازند. قرارداد دقیق آن‌ها در <a href=\"families-log-density-likelihood.md\">راهنمای خانواده‌ها و درست‌نمایی لگاریتمی</a> آمده است."
+
+msgid "The CSV file is read in one pass. The size limits only control the volume of data chunks retained by the adapter itself; they are not a ceiling on total process memory or execution speed. General support for all data sources, distributed execution, and recovery across multiple machines is not available in the current version; planned items and exact boundaries are recorded in <a href=\"../../KNOWN_LIMITS.md\">known limits</a>. A successful calculation also does not prove that the exponential distribution is appropriate for the data."
+msgstr "خواندن فایل CSV در یک پیمایش انجام می‌شود. محدودیت‌های اندازه فقط حجم بخش‌های داده‌ای را که خود adapter نگه می‌دارد کنترل می‌کنند و سقف کل حافظهٔ فرایند یا سرعت اجرا نیستند. پشتیبانی عمومی از همهٔ منابع داده، اجرای توزیع‌شده و بازیابی بین چند رایانه در نسخهٔ فعلی وجود ندارد؛ موارد برنامه‌ریزی‌شده و مرزهای دقیق در <a href=\"../../KNOWN_LIMITS.fa.md\">محدودیت‌های شناخته‌شده</a> ثبت شده‌اند. موفق‌بودن محاسبه نیز به‌تنهایی ثابت نمی‌کند که توزیع نمایی برای داده مناسب است."
+
+msgid "Terms Used On This Page"
+msgstr "اصطلاحات این صفحه"

@@ -1,6 +1,8 @@
 <a id="veridist-api-fa"></a>
 <h1 dir="rtl" align="right">راهنمای API در <bdi dir="ltr">Veridist</bdi></h1>
 
+<p dir="rtl" align="right"><a href="api.md">انگلیسی</a> | <a href="api.fa.md">فارسی</a> | <a href="api.de.md">آلمانی</a></p>
+
 <p dir="rtl" align="right">این راهنما API عمومیِ فعلی <bdi dir="ltr">Veridist</bdi> را توضیح می‌دهد. برای برازش توزیع<sup id="fnref-fitting"><a href="#fn-fitting">۱</a></sup> نمایی روی داده‌های طول عمر، معمولاً یک فایل CSV را به تابع اصلی می‌دهید و نتیجه را دریافت می‌کنید. اگر محاسبه طولانی است و ممکن است متوقف شود، می‌توانید پیشرفت آن را ذخیره کنید و بعداً ادامه دهید. ابزارهای اسکالر<sup id="fnref-scalar"><a href="#fn-scalar">۲</a></sup> و جریان‌های داده‌ای که مدیریتشان با فراخواننده<sup id="fnref-caller"><a href="#fn-caller">۳</a></sup> است نیز برای استفاده‌های فنی‌تر در دسترس‌اند.</p>
 
 <h2 dir="rtl" align="right">مسیر اجرا را انتخاب کنید</h2>
@@ -103,7 +105,7 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">ابزارهای سطح پایین<sup id="fnref-low-level-tools"><a href="#fn-low-level-tools">۲۱</a></sup> برای داده‌های آماده</h2>
 
-<p dir="rtl" align="right">اگر داده را خود برنامهٔ شما تولید یا بخش‌بندی می‌کند، <code dir="ltr">IterableDataSource</code> آن بخش‌ها را همراه با مشخصات منبع دریافت می‌کند. در حالت <code dir="ltr">SINGLE_PASS</code> داده فقط یک‌بار خوانده می‌شود. در حالت <code dir="ltr">REPLAYABLE</code> باید تابعی بدهید که هر بار یک پیمایش تازه از داده بسازد. حالت <code dir="ltr">CHECKPOINT_REPLAYABLE</code> در این adapter هنوز پیاده نشده است؛ استفاده از آن خطای <code dir="ltr">CHECKPOINT_REQUIRED</code> می‌دهد.</p>
+<p dir="rtl" align="right">اگر داده را خود برنامهٔ شما تولید یا بخش‌بندی می‌کند، <code dir="ltr">IterableDataSource</code> آن بخش‌ها را همراه با <code dir="ltr">DataSourceMetadata</code> تغییرناپذیر و اعلام صریح <code dir="ltr">Replayability</code> دریافت می‌کند. در حالت <code dir="ltr">SINGLE_PASS</code> داده فقط یک‌بار خوانده می‌شود. در حالت <code dir="ltr">REPLAYABLE</code> باید تابعی بدهید که هر بار یک پیمایش تازه از داده بسازد. حالت <code dir="ltr">CHECKPOINT_REPLAYABLE</code> در این adapter هنوز پیاده نشده است؛ استفاده از آن خطای <code dir="ltr">CHECKPOINT_REQUIRED</code> می‌دهد.</p>
 
 <p dir="rtl" align="right"><code dir="ltr">FAMILY_REGISTRY</code> و <code dir="ltr">FamilyId</code> مشخصات پنج خانوادهٔ آماری ارزیابی‌شده را نگه می‌دارند. <code dir="ltr">evaluate_log_density</code> چگالی لگاریتمی یک مقدار را با پارامترهای داده‌شده محاسبه می‌کند. <code dir="ltr">reduce_log_likelihood_chunks</code> همین محاسبه را برای بخش‌های متعدد داده جمع می‌کند و نتیجه‌ای مستقل از نحوهٔ بخش‌بندی می‌سازد. این توابع پارامترهای مدل را تخمین نمی‌زنند، توزیع‌ها را رتبه‌بندی نمی‌کنند و برای دادهٔ سانسورشده درست‌نمایی نمی‌سازند. قرارداد دقیق آن‌ها در <a href="families-log-density-likelihood.md">راهنمای خانواده‌ها و درست‌نمایی لگاریتمی</a> آمده است.</p>
 
