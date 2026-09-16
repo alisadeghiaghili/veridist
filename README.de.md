@@ -138,7 +138,7 @@ nur für Exponential und akzeptiert striktes UTF-8-Lebensdauer-CSV.
 | `PublicSourceId` | Liefert eine nicht geheime Quellkennung in der Ausführungsprovenienz. |
 | `CsvLifetimeLimits` | Deklariert Eingabe-Bytebudgets. |
 
-Die [API-Referenz](python/docs/source/api.md) erklärt zulässige Eingaben, Ergebnistypen und
+Die [API-Referenz](python/docs/source/api.de.md) erklärt zulässige Eingaben, Ergebnistypen und
 typisierte Fehler.
 
 ## Modelle und Werkzeuge heute
@@ -246,7 +246,7 @@ gelieferte Änderungen im [Changelog](python/CHANGELOG.md).
 | --- | --- |
 | Eigenständigen Paketleitfaden lesen | [Package README](python/README.de.md) |
 | Zensierungsbeispiel lernen | [Exponential-Leitfaden](python/docs/source/exponential-right-censoring.md) |
-| Eingaben, Ergebnisse und Fehler prüfen | [API-Referenz](python/docs/source/api.md) |
+| Eingaben, Ergebnisse und Fehler prüfen | [API-Referenz](python/docs/source/api.de.md) |
 | Reproduzierbaren Defekt melden | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
 | Beitragen | [Beitragsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) und [Engineering-Konventionen](https://github.com/alisadeghiaghili/veridist/blob/main/docs/conventions.md) |
 | Sicherheitsproblem melden | [Sicherheitsrichtlinie](https://github.com/alisadeghiaghili/veridist/blob/main/SECURITY.md) |

@@ -137,7 +137,7 @@ rate=0.5; events=1; censored=1
 | <bdi dir="ltr">PublicSourceId</bdi> | شناسهٔ عمومی و غیرمحرمانهٔ منبع در اطلاعات اجرا |
 | <bdi dir="ltr">CsvLifetimeLimits</bdi> | محدودیت‌های اندازهٔ ورودی برحسب بایت |
 
-[مرجع API](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.md) ورودی، نوع نتیجه و خطاها را توضیح می‌دهد.
+[مرجع API](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.fa.md) ورودی، نوع نتیجه و خطاها را توضیح می‌دهد.
 
 <h2 dir="rtl" align="right">مدل‌ها و ابزارهای در دسترس</h2>
 
@@ -210,7 +210,7 @@ rate=0.5; events=1; censored=1
 | --- | --- |
 | راهنمای مستقل بسته | [README بسته](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.fa.md) |
 | یادگیری مثال سانسورشدگی | [آموزش نمایی](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/exponential-right-censoring.md) |
-| بررسی ورودی و خروجی | [مرجع API](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.md) |
+| بررسی ورودی و خروجی | [مرجع API](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.fa.md) |
 | گزارش مشکل قابل‌بازتولید | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
 | مشارکت | [راهنمای مشارکت](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) و [قراردادهای مهندسی](https://github.com/alisadeghiaghili/veridist/blob/main/docs/conventions.md) |
 | گزارش آسیب‌پذیری | [سیاست امنیت](https://github.com/alisadeghiaghili/veridist/blob/main/SECURITY.md) |

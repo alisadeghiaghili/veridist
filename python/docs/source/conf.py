@@ -23,7 +23,7 @@ gettext_uuid = True
 gettext_location = True
 
 nitpicky = True
-exclude_patterns = []
+exclude_patterns = ["api.fa.md", "api.de.md"]
 templates_path = []
 html_theme = "alabaster"
 html_static_path = ["_static"]
