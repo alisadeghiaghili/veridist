@@ -18,27 +18,27 @@ This guide explains the current public API in Veridist. For fitting an exponenti
   <tbody>
     <tr>
       <td>Read a CSV file and fit one exponential model in one run</td>
-      <td><code>fit_exponential_csv</code></td>
+      <td><code class="literal">fit_exponential_csv</code></td>
       <td>It does not provide resume, cancellation, or automatic model selection.</td>
     </tr>
     <tr>
       <td>Continue a calculation from chunked JSON data</td>
-      <td><code>fit_exponential_checkpointed_chunks</code></td>
+      <td><code class="literal">fit_exponential_checkpointed_chunks</code></td>
       <td>Your program must prepare and read the data chunks.</td>
     </tr>
     <tr>
       <td>Process a CSV file with cancellation and resume from the last saved row</td>
-      <td><code>fit_exponential_checkpointed_csv</code></td>
+      <td><code class="literal">fit_exponential_checkpointed_csv</code></td>
       <td>It is only for a local file on one machine; it does not provide distributed recovery<sup id="fnref-distributed-recovery"><a href="#fn-distributed-recovery">4</a></sup>.</td>
     </tr>
     <tr>
       <td>Calculate log density for one value</td>
-      <td><code>evaluate_log_density</code></td>
+      <td><code class="literal">evaluate_log_density</code></td>
       <td>It does not fit parameters.</td>
     </tr>
     <tr>
       <td>Calculate likelihood for several data chunks</td>
-      <td><code>reduce_log_likelihood_chunks</code></td>
+      <td><code class="literal">reduce_log_likelihood_chunks</code></td>
       <td>It does not choose the best distribution.</td>
     </tr>
   </tbody>

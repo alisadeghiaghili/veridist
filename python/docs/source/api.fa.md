@@ -18,27 +18,27 @@
   <tbody>
     <tr>
       <td align="right">خواندن فایل CSV و برازش مدل نمایی در یک اجرا</td>
-      <td dir="ltr" align="left"><code>fit_exponential_csv</code></td>
+      <td dir="ltr" align="left"><code class="literal">fit_exponential_csv</code></td>
       <td align="right">امکان توقف و ادامه، لغو اجرا یا انتخاب خودکار مدل را ندارد.</td>
     </tr>
     <tr>
       <td align="right">ادامهٔ محاسبه با داده‌های JSON بخش‌بندی‌شده</td>
-      <td dir="ltr" align="left"><code>fit_exponential_checkpointed_chunks</code></td>
+      <td dir="ltr" align="left"><code class="literal">fit_exponential_checkpointed_chunks</code></td>
       <td align="right">آماده‌کردن و خواندن بخش‌های داده با برنامهٔ شماست.</td>
     </tr>
     <tr>
       <td align="right">پردازش فایل CSV با امکان لغو و ادامه از آخرین سطر ذخیره‌شده</td>
-      <td dir="ltr" align="left"><code>fit_exponential_checkpointed_csv</code></td>
+      <td dir="ltr" align="left"><code class="literal">fit_exponential_checkpointed_csv</code></td>
       <td align="right">فقط برای فایل محلی روی یک رایانه است؛ بازیابی توزیع‌شده<sup id="fnref-distributed-recovery"><a href="#fn-distributed-recovery">۴</a></sup> ندارد.</td>
     </tr>
     <tr>
       <td align="right">محاسبهٔ چگالی لگاریتمی برای یک مقدار</td>
-      <td dir="ltr" align="left"><code>evaluate_log_density</code></td>
+      <td dir="ltr" align="left"><code class="literal">evaluate_log_density</code></td>
       <td align="right">پارامترها را برازش نمی‌کند.</td>
     </tr>
     <tr>
       <td align="right">محاسبهٔ درست‌نمایی برای چند بخش داده</td>
-      <td dir="ltr" align="left"><code>reduce_log_likelihood_chunks</code></td>
+      <td dir="ltr" align="left"><code class="literal">reduce_log_likelihood_chunks</code></td>
       <td align="right">بهترین توزیع را انتخاب نمی‌کند.</td>
     </tr>
   </tbody>

@@ -18,27 +18,27 @@ Dieser Leitfaden erklärt die aktuelle öffentliche API in Veridist. Für die An
   <tbody>
     <tr>
       <td>Eine CSV-Datei lesen und ein Exponentialmodell in einem Lauf anpassen</td>
-      <td><code>fit_exponential_csv</code></td>
+      <td><code class="literal">fit_exponential_csv</code></td>
       <td>Bietet kein Fortsetzen, keinen Abbruch und keine automatische Modellauswahl.</td>
     </tr>
     <tr>
       <td>Eine Berechnung mit segmentierten JSON-Daten fortsetzen</td>
-      <td><code>fit_exponential_checkpointed_chunks</code></td>
+      <td><code class="literal">fit_exponential_checkpointed_chunks</code></td>
       <td>Ihr Programm muss die Datenabschnitte vorbereiten und lesen.</td>
     </tr>
     <tr>
       <td>Eine CSV-Datei mit Abbruchmöglichkeit verarbeiten und ab der letzten gespeicherten Zeile fortsetzen</td>
-      <td><code>fit_exponential_checkpointed_csv</code></td>
+      <td><code class="literal">fit_exponential_checkpointed_csv</code></td>
       <td>Nur für eine lokale Datei auf einem Rechner; verteilte Wiederherstellung<sup id="fnref-distributed-recovery"><a href="#fn-distributed-recovery">4</a></sup> wird nicht unterstützt.</td>
     </tr>
     <tr>
       <td>Log-Dichte für einen Wert berechnen</td>
-      <td><code>evaluate_log_density</code></td>
+      <td><code class="literal">evaluate_log_density</code></td>
       <td>Passt keine Parameter an.</td>
     </tr>
     <tr>
       <td>Likelihood für mehrere Datenabschnitte berechnen</td>
-      <td><code>reduce_log_likelihood_chunks</code></td>
+      <td><code class="literal">reduce_log_likelihood_chunks</code></td>
       <td>Wählt nicht die beste Verteilung aus.</td>
     </tr>
   </tbody>
