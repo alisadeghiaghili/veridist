@@ -47,7 +47,7 @@
     {
       "id": "DOC-MSG-VERTICAL-BODY",
       "page": "index.md",
-      "source": "The first public vertical fits a fixed-location exponential lifetime model from a strict UTF-8 CSV source. Its canonical parameter is a positive rate; the reported mean is derived as its reciprocal."
+      "source": "The first public vertical fits a fixed-location exponential lifetime model from a UTF-8 CSV source with an explicit input format. Its canonical parameter is a positive rate; the reported mean is derived as its reciprocal."
     },
     {
       "id": "DOC-MSG-LIMITS-TITLE",
@@ -92,7 +92,7 @@
     {
       "id": "DOC-MSG-HOME-STREAM-BODY",
       "page": "index.md",
-      "source": "`IterableDataSource` adapts caller-owned chunk iterables with immutable source metadata. A `single_pass` source is acquired once and a second acquisition raises a typed pass-budget failure; replayable declarations require an explicit iterator factory. The strict CSV lifetime adapter remains the only bundled file adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a consumer, until `BufferedChunk.release()`; consumers must release received chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-core claim."
+      "source": "`IterableDataSource` adapts caller-owned chunk iterables with immutable source metadata. A `single_pass` source is acquired once and a second acquisition raises a typed pass-budget failure; replayable declarations require an explicit iterator factory. The CSV lifetime adapter with the documented input format remains the only bundled file adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a consumer, until `BufferedChunk.release()`; consumers must release received chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-core claim."
     },
     {
       "id": "DOC-MSG-EXAMPLE-CAPTION",
@@ -127,7 +127,7 @@
     {
       "id": "DOC-MSG-API-07",
       "page": "api.md",
-      "source": "This example has two observations. In the first observation, the event happens at time 1. In the second observation, no event has been observed by time 1, so all we know is that the real lifetime is greater than 1. That gives one observed event and 2 total units of observed time. The estimated rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">5</a></sup> is `1 / 2 = 0.5` events per unit of time. This is not a 50 percent event probability; its unit depends on the unit of the `time` column."
+      "source": "This example has two observations. In the first observation, the event happens at time 1. In the second observation, no event has been observed by time 1, so all we know is that the real lifetime is greater than 1. That gives one observed event and 2 total units of observed time. The estimated rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">5</a></sup> is `1 / 2 = 0.5` events per unit of time. This means that the model estimates, on average, half an event per unit of observed time across comparable units. Calculating an event probability also requires a specified time interval."
     },
     {
       "id": "DOC-MSG-API-08",
@@ -147,7 +147,7 @@
     {
       "id": "DOC-MSG-API-11",
       "page": "api.md",
-      "source": "Veridist does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract above, it reports the problem explicitly and does not silently rewrite the data."
+      "source": "Veridist does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not follow the format above, processing stops with a clear error; Veridist does not automatically change questionable values."
     },
     {
       "id": "DOC-MSG-API-12",
@@ -272,60 +272,55 @@
     {
       "id": "DOC-MSG-EXP-12",
       "page": "exponential-right-censoring.md",
-      "source": "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5"
+      "source": "Here, `λ̂` is the estimated rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">4</a></sup>. The value `0.5` means that the model estimates, on average, half an event per unit of observed time across comparable units. It does not give the probability of an event within an unspecified period. If time is measured in hours, the rate is events per hour; if it is measured in days, the rate is events per day."
     },
     {
       "id": "DOC-MSG-EXP-13",
       "page": "exponential-right-censoring.md",
-      "source": "The rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">4</a></sup> is measured in events per unit of time. It is not a 50 percent event probability. If your time unit is hours, the rate is events per hour; if your time unit is days, it is events per day."
+      "source": "What Veridist assumes"
     },
     {
       "id": "DOC-MSG-EXP-14",
       "page": "exponential-right-censoring.md",
-      "source": "What Veridist assumes"
+      "source": "The model assumes that censoring is independent of the event time. In plain language, the reason observation stopped should not itself reveal hidden information about when the event would happen. Veridist records and documents this assumption; it cannot prove it from the CSV file."
     },
     {
       "id": "DOC-MSG-EXP-15",
       "page": "exponential-right-censoring.md",
-      "source": "The model assumes that censoring is independent of the event time. In plain language, the reason observation stopped should not itself reveal hidden information about when the event would happen. Veridist records and documents this assumption; it cannot prove it from the CSV file."
+      "source": "The current public path estimates a fixed-location exponential model from a UTF-8 CSV file with an explicit input format. It does not guess column names, delimiters, encoding, missing values, or the meaning of zero and one. If the file does not follow that format, processing stops with a clear error; Veridist does not automatically change questionable values."
     },
     {
       "id": "DOC-MSG-EXP-16",
       "page": "exponential-right-censoring.md",
-      "source": "The current public path estimates a fixed-location exponential model from strict UTF-8 CSV. It does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract, the adapter reports the problem instead of silently rewriting the data."
+      "source": "Failure cases and current limits"
     },
     {
       "id": "DOC-MSG-EXP-17",
       "page": "exponential-right-censoring.md",
-      "source": "Failure cases and current limits"
+      "source": "A valid statistical estimate is not returned when the sample is empty, no event is observed, an event appears with zero total observed time, or numeric overflow<sup id=\"fnref-numeric-overflow\"><a href=\"#fn-numeric-overflow\">5</a></sup> occurs. These cases return typed non-estimates<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">6</a></sup> so calling software can distinguish them from file-reading failures."
     },
     {
       "id": "DOC-MSG-EXP-18",
       "page": "exponential-right-censoring.md",
-      "source": "A valid statistical estimate is not returned when the sample is empty, no event is observed, an event appears with zero total observed time, or numeric overflow occurs. These cases return typed non-estimates<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">5</a></sup> so calling software can distinguish them from file-reading failures."
+      "source": "This path has no confidence interval today and does not currently provide confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">7</a></sup>, goodness-of-fit tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">8</a></sup>, truncation<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">9</a></sup>, left censoring<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">10</a></sup>, interval censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">11</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-weight\">12</a></sup>, covariates<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">13</a></sup>, a free location parameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">14</a></sup>, or automatic model selection."
     },
     {
       "id": "DOC-MSG-EXP-19",
       "page": "exponential-right-censoring.md",
-      "source": "This path has no confidence interval today and does not currently provide confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">6</a></sup>, goodness-of-fit tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">7</a></sup>, truncation<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">8</a></sup>, left censoring<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">9</a></sup>, interval censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">10</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-weight\">11</a></sup>, covariates<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">12</a></sup>, a free location parameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">13</a></sup>, or automatic model selection."
+      "source": "Veridist reads the CSV rows once and processes them in sections instead of loading the entire file as one object. The configured byte limits restrict how much parsed CSV content this reader keeps at one time. They do not cap all memory used by Python or the operating system, and they do not guarantee a particular processing speed."
     },
     {
       "id": "DOC-MSG-EXP-20",
       "page": "exponential-right-censoring.md",
-      "source": "The CSV adapter consumes one iterator pass. Its chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit and not a throughput claim."
+      "source": "The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this CSV input path and estimator only. That older schema does not have enough provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">15</a></sup> to support a current performance claim. A current performance claim needs a clean run tied to the reviewed source revision and documented environment."
     },
     {
       "id": "DOC-MSG-EXP-21",
       "page": "exponential-right-censoring.md",
-      "source": "The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this strict adapter and estimator only. That older schema does not have enough provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">14</a></sup> to support a current performance claim. A current performance claim needs a clean run tied to the reviewed source revision and documented environment."
-    },
-    {
-      "id": "DOC-MSG-EXP-22",
-      "page": "exponential-right-censoring.md",
       "source": "The historical snapshot does not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example."
     },
     {
-      "id": "DOC-MSG-EXP-23",
+      "id": "DOC-MSG-EXP-22",
       "page": "exponential-right-censoring.md",
       "source": "Terms used in this tutorial"
     },

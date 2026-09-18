@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
-"POT-Creation-Date: 2026-09-01 21:24+0330\n"
+"POT-Creation-Date: 2026-09-18 21:43+0330\n"
 "PO-Revision-Date: 2026-09-01 21:55+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: de\n"
@@ -12,42 +12,34 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.18.0\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:2
-#: cb537ba9f9f142b59df27bdb8e378b7b
+#: ../../source/index.md:2 a4d417fdde0c4e2ca8a4c00654674315
 msgid "Veridist documentation"
 msgstr "Veridist-Dokumentation"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:4
-#: b1fddf2826ed4a2fbc11fad3ed29d638
+#: ../../source/index.md:4 4d1671c215aa4995acb1ad5e8c001e3d
 msgid "Evidence-first, deliberately narrow distribution primitives."
 msgstr "Evidenzorientierte, bewusst eng abgegrenzte Verteilungsgrundbausteine."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:6
-#: 9814c9aa49bf427f895e987889c33855
+#: ../../source/index.md:6 ab744d0b87ec4d51a75c8f4e5eb1f9e8
 msgid "First CSV vertical"
 msgstr "Erste CSV-Funktionseinheit"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:8
-#: 974ef3222be24fc59e77a5b997da1471
+#: ../../source/index.md:8 c4e283232e894fc69470db02d7a1d148
 msgid ""
 "The first public vertical fits a fixed-location exponential lifetime "
-"model from a strict UTF-8 CSV source. Its canonical parameter is a "
-"positive rate; the reported mean is derived as its reciprocal."
+"model from a UTF-8 CSV source with an explicit input format. Its "
+"canonical parameter is a positive rate; the reported mean is derived as "
+"its reciprocal."
 msgstr ""
-"Die erste öffentliche Funktionseinheit passt ein Exponential-"
-"Lebensdauermodell mit festem Lageparameter aus einer strikten UTF-8-CSV-"
-"Quelle an. Ihr kanonischer Parameter ist eine positive Rate; der "
-"gemeldete Mittelwert wird als Kehrwert abgeleitet."
+"Der erste öffentliche Pfad passt ein exponentielles Lebensdauermodell mit festem Lageparameter aus einer UTF-8-CSV-Quelle mit ausdrücklich festgelegtem Eingabeformat an. Sein maßgeblicher Parameter ist eine positive Rate; der ausgegebene Mittelwert wird als ihr Kehrwert abgeleitet."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:12
-#: 10fc80a5e3384ff694eb2dd747bc88c0
+#: ../../source/index.md:12 38408e49d34b4179ad1937245328e0ef
 msgid "Limits"
 msgstr "Grenzen"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:14
-#: 1c3f255525d44f659fe222b386471f21
+#: ../../source/index.md:14 3508d31767e2458c9fcd84aef184965c
 msgid ""
 "The CSV schema is exactly `time,event_observed`; event `1` is exact and "
 "`0` is independent right censoring. The adapter makes one iterator pass "
@@ -63,13 +55,11 @@ msgstr ""
 "noch Anpassungsgüte-Ergebnis, Trunkierung, Gewichte, Kovariaten oder ein "
 "freier Lageparameter bereitgestellt werden."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:20
-#: 55660965401b473f94253f22d61684cc
+#: ../../source/index.md:20 4cd93436b77c469ab70b48b87286f97f
 msgid "Executable example"
 msgstr "Ausführbares Beispiel"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:22
-#: 5b677a524a32446f99f69a1879109c6d
+#: ../../source/index.md:22 654e7ed6dccd40a088db4d9a3eb287c5
 msgid ""
 "The example below has one canonical executable source and reports only "
 "stable machine facts. Use an opaque public source identifier; file paths "
@@ -80,8 +70,7 @@ msgstr ""
 "öffentliche Quellkennung; Dateipfade gehören nicht zur zurückgegebenen "
 "Provenienz."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:26
-#: 57e4a484a7c34870b89f4eba99a5a98e
+#: ../../source/index.md:26 b050e6c8fc084c338d5cc6861dd89cb1
 msgid ""
 "Translations for this vertical are owner-reviewed provisional text; no "
 "external native-speaker review is claimed."
@@ -90,48 +79,44 @@ msgstr ""
 "Projekteigentümer geprüfte Texte; eine externe Prüfung durch "
 "Muttersprachler wird nicht behauptet."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:29
-#: 5d78177bb3c043b68ef4ddf1951377b4
+#: ../../source/index.md:29 07bb108a833e416a99dd3f1721d6a069
 msgid "Five evaluated scalar families"
 msgstr "Fünf ausgewertete skalare Familien"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:31
-#: 45310ee685004bfd9ba6b06e5555e86d
+#: ../../source/index.md:31 1d3f52c04cd147688a6af5cdc9d073ac
 msgid ""
 "The public kernel also has an immutable five-family registry, finite "
 "scalar log-density evaluation, and an exact-state streaming log-"
 "likelihood reducer. These are distinct from the CSV exponential MLE: they"
 " do not provide generic fitting, inference, goodness-of-fit, ranking, "
 "arrays, or censoring support."
-msgstr "Der öffentliche Kern enthält außerdem ein unveränderliches Register mit fünf Familien, die Auswertung endlicher skalarer Log-Dichten und einen gestreamten Log-Likelihood-Reduzierer mit exaktem Zustand. Sie sind vom exponentiellen CSV-MLE getrennt: Sie stellen keine allgemeine Anpassung, Inferenz, Anpassungsgüte, Rankings, Arrays oder Unterstützung für Zensierung bereit."
+msgstr ""
+"Der öffentliche Kern enthält außerdem ein unveränderliches Register mit "
+"fünf Familien, die Auswertung endlicher skalarer Log-Dichten und einen "
+"gestreamten Log-Likelihood-Reduzierer mit exaktem Zustand. Sie sind vom "
+"exponentiellen CSV-MLE getrennt: Sie stellen keine allgemeine Anpassung, "
+"Inferenz, Anpassungsgüte, Rankings, Arrays oder Unterstützung für "
+"Zensierung bereit."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:36
+#: ../../source/index.md:36 6d9f8e0827c64887bb6e3c3deb39463b
 msgid "Generic stream sources and delivery leases"
 msgstr "Allgemeine Stream-Quellen und Delivery-Leases"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:38
+#: ../../source/index.md:38 0c4b8bf6f1334ac9b6a0d1009330c39e
 msgid ""
-"`IterableDataSource` adapts caller-owned chunk iterables with immutable source "
-"metadata. A `single_pass` source is acquired once and a second acquisition "
-"raises a typed pass-budget failure; replayable declarations require an explicit "
-"iterator factory. The strict CSV lifetime adapter remains the only bundled file "
-"adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a "
-"consumer, until `BufferedChunk.release()`; consumers must release received "
-"chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow, "
-"dataframe, database, RSS, throughput, or broad out-of-core claim."
+"`IterableDataSource` adapts caller-owned chunk iterables with immutable "
+"source metadata. A `single_pass` source is acquired once and a second "
+"acquisition raises a typed pass-budget failure; replayable declarations "
+"require an explicit iterator factory. The CSV lifetime adapter with the "
+"documented input format remains the only bundled file adapter. "
+"`BoundedChunkBuffer` charges a chunk while queued and while held by a "
+"consumer, until `BufferedChunk.release()`; consumers must release "
+"received chunks, normally in `finally`. This is not a generic CSV, "
+"Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-"
+"core claim."
 msgstr ""
-"`IterableDataSource` passt aufruferseitige Chunk-Iterables mit unveränderlichen "
-"Quellmetadaten an. Eine `single_pass`-Quelle wird einmal akquiriert; eine zweite "
-"Akquisition löst einen typisierten Pass-Budget-Fehler aus. Wiederholbare "
-"Deklarationen benötigen eine explizite Iterator-Factory. Der strikte CSV-"
-"Lebensdauer-Adapter bleibt der einzige ausgelieferte Datei-Adapter. "
-"`BoundedChunkBuffer` berechnet einen Chunk in der Warteschlange und während ihn "
-"ein Consumer hält bis `BufferedChunk.release()`; Consumer müssen erhaltene Chunks, "
-"gewöhnlich in `finally`, freigeben. Dies ist keine Behauptung über allgemeines "
-"CSV, Parquet, Arrow, Dataframes, Datenbanken, RSS, Durchsatz oder breite Out-of-"
-"Core-Unterstützung."
+"`IterableDataSource` passt abschnittsweise Iterables aus dem aufrufenden Programm mit unveränderlichen Quellmetadaten an. Eine `single_pass`-Quelle wird einmal bezogen; ein zweiter Bezug führt zu einem typisierten Fehler wegen Überschreitung des Durchlaufbudgets. Wiederholbare Deklarationen benötigen eine ausdrückliche Iterator-Factory. Der CSV-Lebensdaueradapter mit dem dokumentierten Eingabeformat bleibt der einzige mitgelieferte Dateiadapter. `BoundedChunkBuffer` rechnet einen Abschnitt an, solange er in der Warteschlange oder bei einem Verbraucher liegt, bis `BufferedChunk.release()` aufgerufen wird; Verbraucher müssen empfangene Abschnitte normalerweise in `finally` freigeben. Dies ist keine Zusage für allgemeines CSV, Parquet, Arrow, Dataframes, Datenbanken, eine RSS-Grenze, Durchsatz oder umfassende Out-of-Core-Verarbeitung."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:36
-#: 00a24412b2a54f208c18eaa92e87a5cf
+#: ../../source/index.md:47 8ab71a5d2ade44dda34ca08662cb99a2
 msgid "Canonical executable example"
 msgstr "Kanonisches ausführbares Beispiel"

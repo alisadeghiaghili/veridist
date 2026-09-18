@@ -77,7 +77,7 @@ print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}
 rate=0.5; events=1; censored=1
 ```
 
-This example has two observations. In the first observation, the event happens at time 1. In the second observation, no event has been observed by time 1, so all we know is that the real lifetime is greater than 1. That gives one observed event and 2 total units of observed time. The estimated rate<sup id="fnref-rate"><a href="#fn-rate">5</a></sup> is `1 / 2 = 0.5` events per unit of time. This is not a 50 percent event probability; its unit depends on the unit of the `time` column.
+This example has two observations. In the first observation, the event happens at time 1. In the second observation, no event has been observed by time 1, so all we know is that the real lifetime is greater than 1. That gives one observed event and 2 total units of observed time. The estimated rate<sup id="fnref-rate"><a href="#fn-rate">5</a></sup> is `1 / 2 = 0.5` events per unit of time. This means that the model estimates, on average, half an event per unit of observed time across comparable units. Calculating an event probability also requires a specified time interval.
 
 ## What should the CSV file look like?
 
@@ -85,7 +85,7 @@ This example has two observations. In the first observation, the event happens a
 
 `CsvLifetimeSchema` names the two expected columns. `PublicSourceId` is a public, non-secret identifier for recording data provenance<sup id="fnref-provenance"><a href="#fn-provenance">7</a></sup>; the local file path is not placed in the returned result. `CsvLifetimeLimits` sets the maximum size of each data chunk and the maximum amount of data kept in the processing queue at the same time<sup id="fnref-byte-limits"><a href="#fn-byte-limits">8</a></sup>. Both values must be positive.
 
-Veridist does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract above, it reports the problem explicitly and does not silently rewrite the data.
+Veridist does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not follow the format above, processing stops with a clear error; Veridist does not automatically change questionable values.
 
 ## How should you read the result?
 

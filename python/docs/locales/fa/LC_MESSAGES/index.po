@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
-"POT-Creation-Date: 2026-09-01 21:24+0330\n"
+"POT-Creation-Date: 2026-09-18 21:43+0330\n"
 "PO-Revision-Date: 2026-09-01 21:55+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: fa\n"
@@ -12,41 +12,34 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.18.0\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:2
-#: cb537ba9f9f142b59df27bdb8e378b7b
+#: ../../source/index.md:2 a4d417fdde0c4e2ca8a4c00654674315
 msgid "Veridist documentation"
 msgstr "مستندات وریدیست"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:4
-#: b1fddf2826ed4a2fbc11fad3ed29d638
+#: ../../source/index.md:4 4d1671c215aa4995acb1ad5e8c001e3d
 msgid "Evidence-first, deliberately narrow distribution primitives."
 msgstr "اجزای پایهٔ توزیع با اولویت شواهد و دامنهٔ عمداً محدود."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:6
-#: 9814c9aa49bf427f895e987889c33855
+#: ../../source/index.md:6 ab744d0b87ec4d51a75c8f4e5eb1f9e8
 msgid "First CSV vertical"
 msgstr "نخستین قابلیت CSV"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:8
-#: 974ef3222be24fc59e77a5b997da1471
+#: ../../source/index.md:8 c4e283232e894fc69470db02d7a1d148
 msgid ""
 "The first public vertical fits a fixed-location exponential lifetime "
-"model from a strict UTF-8 CSV source. Its canonical parameter is a "
-"positive rate; the reported mean is derived as its reciprocal."
+"model from a UTF-8 CSV source with an explicit input format. Its "
+"canonical parameter is a positive rate; the reported mean is derived as "
+"its reciprocal."
 msgstr ""
-"نخستین قابلیت عمومی، مدل نمایی زمان‌عمر با مکان ثابت را از یک منبع CSV "
-"سخت‌گیرانه با UTF-8 برازش می‌دهد. پارامتر مرجع آن نرخ مثبت است و میانگین "
-"گزارش‌شده از معکوس آن به دست می‌آید."
+"اولین مسیر عمومی، مدل نماییِ طول عمر با مکان ثابت را از یک فایل CSV با کدگذاری UTF-8 و قالب ورودی مشخص برازش می‌دهد. پارامتر اصلی مدل نرخ مثبت است و میانگین گزارش‌شده از معکوس آن به دست می‌آید."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:12
-#: 10fc80a5e3384ff694eb2dd747bc88c0
+#: ../../source/index.md:12 38408e49d34b4179ad1937245328e0ef
 msgid "Limits"
 msgstr "محدودیت‌ها"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:14
-#: 1c3f255525d44f659fe222b386471f21
+#: ../../source/index.md:14 3508d31767e2458c9fcd84aef184965c
 msgid ""
 "The CSV schema is exactly `time,event_observed`; event `1` is exact and "
 "`0` is independent right censoring. The adapter makes one iterator pass "
@@ -61,13 +54,11 @@ msgstr ""
 "اطمینان، نتیجهٔ نیکویی برازش، برش، وزن، متغیر کمکی یا پارامتر مکان آزاد "
 "عرضه نمی‌شود."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:20
-#: 55660965401b473f94253f22d61684cc
+#: ../../source/index.md:20 4cd93436b77c469ab70b48b87286f97f
 msgid "Executable example"
 msgstr "مثال اجرایی"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:22
-#: 5b677a524a32446f99f69a1879109c6d
+#: ../../source/index.md:22 654e7ed6dccd40a088db4d9a3eb287c5
 msgid ""
 "The example below has one canonical executable source and reports only "
 "stable machine facts. Use an opaque public source identifier; file paths "
@@ -77,8 +68,7 @@ msgstr ""
 " می‌کند. از شناسهٔ عمومیِ مبهمِ منبع استفاده کنید؛ مسیر فایل بخشی از منشأ"
 " بازگردانده‌شده نیست."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:26
-#: 57e4a484a7c34870b89f4eba99a5a98e
+#: ../../source/index.md:26 b050e6c8fc084c338d5cc6861dd89cb1
 msgid ""
 "Translations for this vertical are owner-reviewed provisional text; no "
 "external native-speaker review is claimed."
@@ -86,46 +76,42 @@ msgstr ""
 "ترجمه‌های این قابلیت متن موقتی بازبینی‌شده توسط مالک پروژه‌اند؛ هیچ "
 "ادعایی دربارهٔ بازبینی بیرونی توسط گویشور بومی وجود ندارد."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:29
-#: 5d78177bb3c043b68ef4ddf1951377b4
+#: ../../source/index.md:29 07bb108a833e416a99dd3f1721d6a069
 msgid "Five evaluated scalar families"
 msgstr "پنج خانوادهٔ اسکالرِ ارزیابی‌شده"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:31
-#: 45310ee685004bfd9ba6b06e5555e86d
+#: ../../source/index.md:31 1d3f52c04cd147688a6af5cdc9d073ac
 msgid ""
 "The public kernel also has an immutable five-family registry, finite "
 "scalar log-density evaluation, and an exact-state streaming log-"
 "likelihood reducer. These are distinct from the CSV exponential MLE: they"
 " do not provide generic fitting, inference, goodness-of-fit, ranking, "
 "arrays, or censoring support."
-msgstr "هستهٔ عمومی همچنین رجیستری تغییرناپذیر پنج‌خانواده‌ای، ارزیابی چگالی لگاریتمی اسکالرِ متناهی و کاهندهٔ درست‌نمایی لگاریتمی جریانی با حالت دقیق دارد. این‌ها از MLE نمایی CSV جدا هستند: برازش عمومی، استنباط، نیکویی برازش، رتبه‌بندی، آرایه‌ها یا پشتیبانی از سانسور را فراهم نمی‌کنند."
+msgstr ""
+"هستهٔ عمومی همچنین رجیستری تغییرناپذیر پنج‌خانواده‌ای، ارزیابی چگالی "
+"لگاریتمی اسکالرِ متناهی و کاهندهٔ درست‌نمایی لگاریتمی جریانی با حالت دقیق"
+" دارد. این‌ها از MLE نمایی CSV جدا هستند: برازش عمومی، استنباط، نیکویی "
+"برازش، رتبه‌بندی، آرایه‌ها یا پشتیبانی از سانسور را فراهم نمی‌کنند."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:36
+#: ../../source/index.md:36 6d9f8e0827c64887bb6e3c3deb39463b
 msgid "Generic stream sources and delivery leases"
 msgstr "منابع جریان عمومی و اجاره‌های تحویل"
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:38
+#: ../../source/index.md:38 0c4b8bf6f1334ac9b6a0d1009330c39e
 msgid ""
-"`IterableDataSource` adapts caller-owned chunk iterables with immutable source "
-"metadata. A `single_pass` source is acquired once and a second acquisition "
-"raises a typed pass-budget failure; replayable declarations require an explicit "
-"iterator factory. The strict CSV lifetime adapter remains the only bundled file "
-"adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a "
-"consumer, until `BufferedChunk.release()`; consumers must release received "
-"chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow, "
-"dataframe, database, RSS, throughput, or broad out-of-core claim."
+"`IterableDataSource` adapts caller-owned chunk iterables with immutable "
+"source metadata. A `single_pass` source is acquired once and a second "
+"acquisition raises a typed pass-budget failure; replayable declarations "
+"require an explicit iterator factory. The CSV lifetime adapter with the "
+"documented input format remains the only bundled file adapter. "
+"`BoundedChunkBuffer` charges a chunk while queued and while held by a "
+"consumer, until `BufferedChunk.release()`; consumers must release "
+"received chunks, normally in `finally`. This is not a generic CSV, "
+"Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-"
+"core claim."
 msgstr ""
-"`IterableDataSource` iterableهای chunk متعلق به فراخواننده را با فرادادهٔ "
-"تغییرناپذیر منبع سازگار می‌کند. منبع `single_pass` یک‌بار دریافت می‌شود و "
-"دریافت دوم با شکست نوع‌دار بودجهٔ گذر مواجه می‌شود؛ اعلان‌های بازپخش‌پذیر به "
-"iterator factory صریح نیاز دارند. آداپتور سخت‌گیرانهٔ طول‌عمر CSV تنها آداپتور "
-"فایلِ همراه است. `BoundedChunkBuffer` یک chunk را هنگام صف‌شدن و در اختیار "
-"مصرف‌کننده بودن تا `BufferedChunk.release()` حساب می‌کند؛ مصرف‌کننده باید chunk "
-"دریافت‌شده را، معمولاً در `finally`، آزاد کند. این ادعای CSV عمومی، Parquet، "
-"Arrow، dataframe، پایگاه‌داده، RSS، توان عملیاتی یا out-of-core گسترده نیست."
+"`IterableDataSource` بخش‌های داده‌ای را که برنامهٔ شما تولید می‌کند همراه با اطلاعات ثابت منبع می‌پذیرد. منبع `single_pass` فقط یک بار خوانده می‌شود و تلاش دوم یک خطای نوع‌دار برای عبور بیش از حد مجاز ایجاد می‌کند؛ منبع قابل‌بازخوانی به تابعی صریح برای ساخت پیمایش تازه نیاز دارد. آداپتور طول عمر CSV با قالب ورودی مستندشده همچنان تنها آداپتور فایل همراه پکیج است. `BoundedChunkBuffer` تا وقتی یک بخش در صف یا در اختیار مصرف‌کننده است، آن را در بودجه حساب می‌کند؛ مصرف‌کننده باید بخش دریافت‌شده را، معمولاً در `finally`، با `BufferedChunk.release()` آزاد کند. این قابلیت به معنای پشتیبانی عمومی از همهٔ فایل‌های CSV، Parquet، Arrow، دیتافریم، پایگاه داده، تضمین سقف کل حافظه، سرعت پردازش یا پردازش عمومی داده‌های بزرگ‌تر از حافظه نیست."
 
-#: ../../../py-distfit-pro/python/docs/source/index.md:36
-#: 00a24412b2a54f208c18eaa92e87a5cf
+#: ../../source/index.md:47 8ab71a5d2ade44dda34ca08662cb99a2
 msgid "Canonical executable example"
 msgstr "مثال اجرایی مرجع"

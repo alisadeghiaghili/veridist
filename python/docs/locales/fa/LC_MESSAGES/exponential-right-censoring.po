@@ -1,102 +1,291 @@
+
 msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
+"POT-Creation-Date: 2026-09-18 22:05+0330\n"
 "PO-Revision-Date: 2026-09-16 18:52+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: fa\n"
 "Language-Team: Persian documentation <alisadeghiaghili@gmail.com>\n"
-"Content-Type: text/plain; charset=UTF-8\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
 
+#: ../../source/exponential-right-censoring.md:2
 #: 3dff511279684882a92e9d8fdc4d6e9c
 msgid "Exponential right-censoring tutorial"
-msgstr "آموزش سانسور از راست در مدل نمایی"
+msgstr "آموزش داده‌های سانسورشده از راست در مدل نمایی"
 
+#: ../../source/exponential-right-censoring.md:4
 #: 7dacfbbd90f0426d80b3d4f563810445
-msgid "<a href=\"exponential-right-censoring.md\">English</a> | <a href=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-right-censoring.de.md\">Deutsch</a>"
-msgstr "<a href=\"exponential-right-censoring.md\">انگلیسی</a> | <a href=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-right-censoring.de.md\">آلمانی</a>"
+msgid ""
+"<a href=\"exponential-right-censoring.md\">English</a> | <a href"
+"=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-"
+"right-censoring.de.md\">Deutsch</a>"
+msgstr ""
+"<a href=\"exponential-right-censoring.md\">انگلیسی</a> | <a href"
+"=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-"
+"right-censoring.de.md\">آلمانی</a>"
 
+#: ../../source/exponential-right-censoring.md:6
 #: 6899320c60414252bd08457942a31f90
-msgid "This tutorial shows the first lifetime-data path in Veridist: fitting an exponential distribution<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">1</a></sup> when some observations are right censored<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">2</a></sup>. Use it when each row says either “the event happened at this time” or “the event had not happened yet by this time”."
-msgstr "این آموزش اولین مسیر تحلیل دادهٔ طول عمر در Veridist را نشان می‌دهد: برازش توزیع<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">۱</a></sup> نمایی وقتی بخشی از مشاهده‌ها سانسور از راست<sup id=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">۲</a></sup> هستند. از این مسیر زمانی استفاده کنید که هر سطر داده می‌گوید «رخداد در این زمان اتفاق افتاده» یا «تا این زمان هنوز رخداد دیده نشده است»."
+msgid ""
+"This tutorial shows the first lifetime-data path in Veridist: fitting an "
+"exponential distribution<sup id=\"fnref-fitting\"><a href=\"#fn-"
+"fitting\">1</a></sup> when some observations are right censored<sup id"
+"=\"fnref-right-censoring\"><a href=\"#fn-right-censoring\">2</a></sup>. "
+"Use it when each row says either “the event happened at this time” or "
+"“the event had not happened yet by this time”."
+msgstr ""
+"این آموزش اولین مسیر تحلیل دادهٔ طول عمر در Veridist را نشان می‌دهد: "
+"برازش توزیع<sup id=\"fnref-fitting\"><a href=\"#fn-fitting\">۱</a></sup> "
+"نمایی وقتی بخشی از مشاهده‌ها سانسور از راست<sup id=\"fnref-right-"
+"censoring\"><a href=\"#fn-right-censoring\">۲</a></sup> هستند. از این "
+"مسیر زمانی استفاده کنید که هر سطر داده می‌گوید «رخداد در این زمان اتفاق "
+"افتاده» یا «تا این زمان هنوز رخداد دیده نشده است»."
 
+#: ../../source/exponential-right-censoring.md:8
 #: 4aeef76d81234c728410d6e178498f72
 msgid "The data idea"
 msgstr "ایدهٔ داده چیست؟"
 
+#: ../../source/exponential-right-censoring.md:10
 #: 3ab343f29e984f5790421e7d7cc433dc
 msgid "A lifetime row has two fields:"
 msgstr "هر سطر طول عمر دو فیلد دارد:"
 
+#: ../../source/exponential-right-censoring.md:33
 #: e36b8480bd89446ebe98672f50f0956b
-msgid "For example, a row `1,1` means the event happened at time 1. A row `1,0` means the unit was observed until time 1 and was still alive, working, or event-free at that point. That second row is still useful: it tells the model the lifetime is longer than 1. This is independent right censoring."
-msgstr "برای نمونه، سطر `1,1` یعنی رخداد در زمان ۱ اتفاق افتاده است. سطر `1,0` یعنی آن واحد تا زمان ۱ مشاهده شده و در آن لحظه هنوز زنده، سالم، فعال یا بدون رخداد بوده است. همین سطر دوم هم اطلاعات دارد: به مدل می‌گوید طول عمر واقعی بیشتر از ۱ است. این همان سانسور مستقل از راست است."
+msgid ""
+"For example, a row `1,1` means the event happened at time 1. A row `1,0` "
+"means the unit was observed until time 1 and was still alive, working, or"
+" event-free at that point. That second row is still useful: it tells the "
+"model the lifetime is longer than 1. This is independent right censoring."
+msgstr ""
+"برای نمونه، سطر `1,1` یعنی رخداد در زمان ۱ اتفاق افتاده است. سطر `1,0` "
+"یعنی آن واحد تا زمان ۱ مشاهده شده و در آن لحظه هنوز زنده، سالم، فعال یا "
+"بدون رخداد بوده است. همین سطر دوم هم اطلاعات دارد: به مدل می‌گوید طول عمر"
+" واقعی بیشتر از ۱ است. این همان سانسور مستقل از راست است."
 
+#: ../../source/exponential-right-censoring.md:35
 #: 05cff81f5d5b435dbdfdc98937ccf1c5
 msgid "Run the example"
 msgstr "نمونه را اجرا کنید"
 
+#: ../../source/exponential-right-censoring.md:37
 #: d0985e1589934ba4a756f91c55e8a3d8
-msgid "The schema declaration below names the only accepted header pair and keeps machine-readable identifiers left to right."
-msgstr "تعریف schema در کد زیر تنها جفت سرستون پذیرفته‌شده را مشخص می‌کند و شناسه‌های ماشین‌خوان را عمداً چپ‌به‌راست نگه می‌دارد."
+msgid ""
+"The schema declaration below names the only accepted header pair and "
+"keeps machine-readable identifiers left to right."
+msgstr ""
+"تعریف schema در کد زیر تنها جفت سرستون پذیرفته‌شده را مشخص می‌کند و "
+"شناسه‌های ماشین‌خوان را عمداً چپ‌به‌راست نگه می‌دارد."
 
+#: ../../source/exponential-right-censoring.md:45
 #: 8beb7ed69ffc4f39adfe6d317345defe
 msgid "The complete runnable example uses that schema with a small CSV file."
 msgstr "مثال کامل قابل اجرا همان schema را با یک فایل CSV کوچک به کار می‌برد."
 
+#: ../../source/exponential-right-censoring.md:78
 #: 70c29d115ed3406699c8b42413753f44
 msgid "Interpret the result"
 msgstr "نتیجه را چطور بخوانید؟"
 
+#: ../../source/exponential-right-censoring.md:80
 #: 3c0d64e01fe1438dbae515a5847870a2
-msgid "The example has one observed event and two total units of observed time: one unit from the exact event row, and one unit from the right-censored row. The exponential maximum-likelihood estimate<sup id=\"fnref-mle\"><a href=\"#fn-mle\">3</a></sup> is therefore:"
-msgstr "این مثال یک رخداد مشاهده‌شده و دو واحد زمان مشاهده‌شده دارد: یک واحد از سطر رخداد قطعی، و یک واحد از سطر سانسورشده از راست. بنابراین برآورد بیشینهٔ درست‌نمایی<sup id=\"fnref-mle\"><a href=\"#fn-mle\">۳</a></sup> در مدل نمایی چنین است:"
+msgid ""
+"The example has one observed event and two total units of observed time: "
+"one unit from the exact event row, and one unit from the right-censored "
+"row. The exponential maximum-likelihood estimate<sup id=\"fnref-mle\"><a "
+"href=\"#fn-mle\">3</a></sup> is therefore:"
+msgstr ""
+"این مثال یک رخداد مشاهده‌شده و دو واحد زمان مشاهده‌شده دارد: یک واحد از "
+"سطر رخداد قطعی، و یک واحد از سطر سانسورشده از راست. بنابراین برآورد "
+"بیشینهٔ درست‌نمایی<sup id=\"fnref-mle\"><a href=\"#fn-mle\">۳</a></sup> "
+"در مدل نمایی چنین است:"
 
-#: 61c3553ceff04b21ab264f61b23ccb77
-msgid "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5"
-msgstr "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5{}"
+#: ../../source/exponential-right-censoring.md:84
+#: b2c5a8bb48184f0583e4ac37825ba0dd
+msgid ""
+"Here, `λ̂` is the estimated rate<sup id=\"fnref-rate\"><a href=\"#fn-"
+"rate\">4</a></sup>. The value `0.5` means that the model estimates, on "
+"average, half an event per unit of observed time across comparable units."
+" It does not give the probability of an event within an unspecified "
+"period. If time is measured in hours, the rate is events per hour; if it "
+"is measured in days, the rate is events per day."
+msgstr ""
+"در این فرمول، <code dir=\"ltr\">λ̂</code> نرخ<sup id=\"fnref-rate\"><a "
+"href=\"#fn-rate\">۴</a></sup> برآوردشده است. مقدار <code "
+"dir=\"ltr\">0.5</code> یعنی مدل برآورد می‌کند که در واحدهای مشابه، به‌طور"
+" میانگین به ازای هر واحد زمان مشاهده‌شده نیم رخداد روی می‌دهد. برای تبدیل"
+" نرخ به احتمال، باید یک بازهٔ زمانی مشخص داشته باشیم. اگر زمان با ساعت "
+"ثبت شده باشد، واحد نرخ «رخداد بر ساعت» است؛ اگر با روز ثبت شده باشد، واحد"
+" آن «رخداد بر روز» است."
 
-#: 03c8aff06169464385cd075baa0bc28b
-msgid "The rate<sup id=\"fnref-rate\"><a href=\"#fn-rate\">4</a></sup> is measured in events per unit of time. It is not a 50 percent event probability. If your time unit is hours, the rate is events per hour; if your time unit is days, it is events per day."
-msgstr "نرخ<sup id=\"fnref-rate\"><a href=\"#fn-rate\">۴</a></sup> با واحد «رخداد در هر واحد زمان» خوانده می‌شود. این عدد احتمال ۵۰ درصدی رخداد نیست. اگر واحد زمان شما ساعت باشد، نرخ یعنی رخداد بر ساعت؛ اگر واحد زمان روز باشد، نرخ یعنی رخداد بر روز."
-
+#: ../../source/exponential-right-censoring.md:86
 #: e474ac4e8f374f03ab074f6ef7893256
 msgid "What Veridist assumes"
 msgstr "Veridist چه فرضی می‌گیرد؟"
 
+#: ../../source/exponential-right-censoring.md:88
 #: 2d8f83222cb54a638c60d253774b682e
-msgid "The model assumes that censoring is independent of the event time. In plain language, the reason observation stopped should not itself reveal hidden information about when the event would happen. Veridist records and documents this assumption; it cannot prove it from the CSV file."
-msgstr "مدل فرض می‌کند سانسور مستقل از زمان رخداد است. ساده‌تر بگوییم، علت پایان مشاهده نباید خودش اطلاعات پنهانی دربارهٔ زمان رخداد داشته باشد. Veridist این فرض را در نتیجه و مستندات روشن می‌کند؛ اما نمی‌تواند آن را از خود فایل CSV اثبات کند."
+msgid ""
+"The model assumes that censoring is independent of the event time. In "
+"plain language, the reason observation stopped should not itself reveal "
+"hidden information about when the event would happen. Veridist records "
+"and documents this assumption; it cannot prove it from the CSV file."
+msgstr ""
+"مدل فرض می‌کند سانسور مستقل از زمان رخداد است. ساده‌تر بگوییم، علت پایان "
+"مشاهده نباید خودش اطلاعات پنهانی دربارهٔ زمان رخداد داشته باشد. Veridist "
+"این فرض را در نتیجه و مستندات روشن می‌کند؛ اما نمی‌تواند آن را از خود "
+"فایل CSV اثبات کند."
 
+#: ../../source/exponential-right-censoring.md:90
 #: dea1f3764645499d9b916c02322dc88f
-msgid "The current public path estimates a fixed-location exponential model from strict UTF-8 CSV. It does not guess column names, delimiters, encoding, missing data, or the meaning of zero and one. If the file does not match the contract, the adapter reports the problem instead of silently rewriting the data."
-msgstr "مسیر عمومی فعلی، مدل نمایی با مکان ثابت را از CSV سخت‌گیرانهٔ UTF-8 برآورد می‌کند. نام ستون، جداکننده، کدگذاری، دادهٔ گمشده یا معنای صفر و یک را حدس نمی‌زند. اگر فایل با قرارداد مورد انتظار سازگار نباشد، آداپتور مسئله را گزارش می‌کند و داده را بی‌سروصدا بازنویسی نمی‌کند."
+msgid ""
+"The current public path estimates a fixed-location exponential model from"
+" a UTF-8 CSV file with an explicit input format. It does not guess column"
+" names, delimiters, encoding, missing values, or the meaning of zero and "
+"one. If the file does not follow that format, processing stops with a "
+"clear error; Veridist does not automatically change questionable values."
+msgstr ""
+"در مسیر عمومی فعلی، فایل CSV باید با کدگذاری UTF-8 و دقیقاً مطابق قالب "
+"ورودی توضیح‌داده‌شده در بالا باشد. Veridist نام ستون‌ها، جداکننده، "
+"کدگذاری، مقدارهای گمشده یا معنای صفر و یک را حدس نمی‌زند. اگر فایل با این"
+" قالب سازگار نباشد، پردازش متوقف می‌شود و خطا به‌روشنی گزارش می‌شود؛ "
+"برنامه مقدارهای مشکوک را خودکار تغییر نمی‌دهد."
 
+#: ../../source/exponential-right-censoring.md:92
 #: d88d3afb18214718955ddd5027b545d3
 msgid "Failure cases and current limits"
 msgstr "حالت‌های شکست و محدودیت‌های فعلی"
 
+#: ../../source/exponential-right-censoring.md:94
 #: ba92ad5456aa42819ce49b8521c59bf9
-msgid "A valid statistical estimate is not returned when the sample is empty, no event is observed, an event appears with zero total observed time, or numeric overflow occurs. These cases return typed non-estimates<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">5</a></sup> so calling software can distinguish them from file-reading failures."
-msgstr "وقتی نمونه خالی باشد، هیچ رخدادی مشاهده نشده باشد، رخداد با مجموع زمان مشاهده‌شدهٔ صفر بیاید، یا سرریز عددی رخ دهد، برآورد آماری معتبر برگردانده نمی‌شود. این حالت‌ها خروجی‌های نوع‌دارِ بدون برآورد<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">۵</a></sup> می‌دهند تا نرم‌افزار فراخوان بتواند آن‌ها را از خطای خواندن فایل جدا کند."
+msgid ""
+"A valid statistical estimate is not returned when the sample is empty, no"
+" event is observed, an event appears with zero total observed time, or "
+"numeric overflow<sup id=\"fnref-numeric-overflow\"><a href=\"#fn-numeric-"
+"overflow\">5</a></sup> occurs. These cases return typed non-estimates<sup"
+" id=\"fnref-non-estimate\"><a href=\"#fn-non-estimate\">6</a></sup> so "
+"calling software can distinguish them from file-reading failures."
+msgstr ""
+"وقتی نمونه خالی باشد، هیچ رخدادی مشاهده نشده باشد، مجموع زمان مشاهده‌شده "
+"برای یک رخداد صفر باشد، یا سرریز عددی<sup id=\"fnref-numeric-"
+"overflow\"><a href=\"#fn-numeric-overflow\">۵</a></sup> رخ دهد، برآورد "
+"آماری معتبر برگردانده نمی‌شود. در این حالت‌ها، خروجی نوع‌دارِ بدون "
+"برآورد<sup id=\"fnref-non-estimate\"><a href=\"#fn-non-"
+"estimate\">۶</a></sup> علت را مشخص می‌کند تا برنامه بتواند آن را از خطای "
+"خواندن فایل تشخیص دهد."
 
+#: ../../source/exponential-right-censoring.md:96
 #: 36236d0664a7491c964668b413c1d1d5
-msgid "This path has no confidence interval today and does not currently provide confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">6</a></sup>, goodness-of-fit tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">7</a></sup>, truncation<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">8</a></sup>, left censoring<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">9</a></sup>, interval censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">10</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-weight\">11</a></sup>, covariates<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">12</a></sup>, a free location parameter<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">13</a></sup>, or automatic model selection."
-msgstr "این مسیر امروز فاصلهٔ اطمینان ندارد و فعلاً فاصلهٔ اطمینان<sup id=\"fnref-confidence-interval\"><a href=\"#fn-confidence-interval\">۶</a></sup>، آزمون مناسب‌بودن مدل<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">۷</a></sup>، برش داده<sup id=\"fnref-truncation\"><a href=\"#fn-truncation\">۸</a></sup>، سانسور چپ<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-censoring\">۹</a></sup>، سانسور فاصله‌ای<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-censoring\">۱۰</a></sup>، وزن<sup id=\"fnref-weight\"><a href=\"#fn-weight\">۱۱</a></sup>، متغیر کمکی<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">۱۲</a></sup>، پارامتر مکان آزاد<sup id=\"fnref-free-location\"><a href=\"#fn-free-location\">۱۳</a></sup> یا انتخاب خودکار مدل ندارد."
+msgid ""
+"This path has no confidence interval today and does not currently provide"
+" confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-"
+"confidence-interval\">7</a></sup>, goodness-of-fit tests<sup id=\"fnref-"
+"goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">8</a></sup>, "
+"truncation<sup id=\"fnref-truncation\"><a href=\"#fn-"
+"truncation\">9</a></sup>, left censoring<sup id=\"fnref-left-"
+"censoring\"><a href=\"#fn-left-censoring\">10</a></sup>, interval "
+"censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-"
+"censoring\">11</a></sup>, weights<sup id=\"fnref-weight\"><a href=\"#fn-"
+"weight\">12</a></sup>, covariates<sup id=\"fnref-covariate\"><a href"
+"=\"#fn-covariate\">13</a></sup>, a free location parameter<sup id"
+"=\"fnref-free-location\"><a href=\"#fn-free-location\">14</a></sup>, or "
+"automatic model selection."
+msgstr ""
+"این مسیر امروز فاصلهٔ اطمینان ندارد و فعلاً فاصلهٔ اطمینان<sup id"
+"=\"fnref-confidence-interval\"><a href=\"#fn-confidence-"
+"interval\">۷</a></sup>، آزمون مناسب‌بودن مدل<sup id=\"fnref-goodness-of-"
+"fit\"><a href=\"#fn-goodness-of-fit\">۸</a></sup>، برش داده<sup id"
+"=\"fnref-truncation\"><a href=\"#fn-truncation\">۹</a></sup>، سانسور "
+"چپ<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-"
+"censoring\">۱۰</a></sup>، سانسور فاصله‌ای<sup id=\"fnref-interval-"
+"censoring\"><a href=\"#fn-interval-censoring\">۱۱</a></sup>، وزن<sup id"
+"=\"fnref-weight\"><a href=\"#fn-weight\">۱۲</a></sup>، متغیر کمکی<sup id"
+"=\"fnref-covariate\"><a href=\"#fn-covariate\">۱۳</a></sup>، پارامتر مکان"
+" آزاد<sup id=\"fnref-free-location\"><a href=\"#fn-free-"
+"location\">۱۴</a></sup> یا انتخاب خودکار مدل ندارد."
 
-#: e91bb7df6a9741b8bed9eaf3df8656cd
-msgid "The CSV adapter consumes one iterator pass. Its chunk byte budget is a logical bound on retained payload, not a portable process-memory or RSS limit and not a throughput claim."
-msgstr "آداپتور CSV یک گذر از iterator مصرف می‌کند. بودجهٔ بایتی بخش‌ها کران منطقی payload نگه‌داشته‌شده است؛ سقف قابل‌حمل حافظهٔ فرایند یا RSS نیست و ادعای سرعت اجرا هم نیست."
+#: ../../source/exponential-right-censoring.md:101
+#: 78498cc8373a43949fab9c9ef1b7b097
+msgid ""
+"Veridist reads the CSV rows once and processes them in sections instead "
+"of loading the entire file as one object. The configured byte limits restrict how much parsed"
+" CSV content this reader keeps at one time. They do not cap all memory "
+"used by Python or the operating system, and they do not guarantee a "
+"particular processing speed."
+msgstr "Veridist سطرهای فایل CSV را یک بار می‌خواند و آن‌ها را بخش‌به‌بخش پردازش می‌کند؛ بنابراین لازم نیست کل فایل را یکجا به‌صورت یک شیء در حافظه بارگذاری کند. محدودیت‌های بایتی فقط حجم محتوای پردازش‌شده‌ای را کنترل می‌کنند که این بخش از برنامه هم‌زمان نگه می‌دارد. این تنظیمات سقف کل حافظهٔ مصرفی پایتون یا سیستم‌عامل نیستند و سرعت مشخصی را نیز تضمین نمی‌کنند."
 
+#: ../../source/exponential-right-censoring.md:103
 #: dc4d87f5791c4e2ebc866fe58de06aa3
-msgid "The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this strict adapter and estimator only. That older schema does not have enough provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">14</a></sup> to support a current performance claim. A current performance claim needs a clean run tied to the reviewed source revision and documented environment."
-msgstr "شاهد تاریخی `SCALE-CSV-EXP-01` یک snapshot از ۱۰ هزار، ۱۰۰ هزار و ۱ میلیون سطر با اندازه‌بخش‌های ۳۲ KiB، ۶۴ KiB و ۱۲۸ KiB را فقط برای همین آداپتور سخت‌گیرانه و همین برآوردگر نگه می‌دارد. آن schema قدیمی منشأ<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">۱۴</a></sup> کافی ندارد که ادعای عملکرد فعلی را پشتیبانی کند. ادعای عملکرد فعلی به اجرای تمیز متصل به نسخهٔ منبع بررسی‌شده و محیط مستند نیاز دارد."
+msgid ""
+"The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row "
+"snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this CSV input "
+"path and estimator only. That older schema does not have enough "
+"provenance<sup id=\"fnref-provenance\"><a href=\"#fn-"
+"provenance\">15</a></sup> to support a current performance claim. A "
+"current performance claim needs a clean run tied to the reviewed source "
+"revision and documented environment."
+msgstr ""
+"شاهد تاریخی `SCALE-CSV-EXP-01` نتیجهٔ اجرای همین مسیر ورودی CSV و همین "
+"برآوردگر را روی ۱۰ هزار، ۱۰۰ هزار و ۱ میلیون سطر، با اندازه‌بخش‌های ۳۲، "
+"۶۴ و ۱۲۸ KiB ثبت کرده است. اطلاعات منشأ<sup id=\"fnref-provenance\"><a "
+"href=\"#fn-provenance\">۱۵</a></sup> در قالب قدیمی این گزارش برای اثبات "
+"عملکرد نسخهٔ فعلی کافی نیست. هر ادعای تازه دربارهٔ عملکرد باید با اجرای "
+"جدید، نسخهٔ دقیق کد و مشخصات محیط آزمایش همراه باشد."
 
+#: ../../source/exponential-right-censoring.md:105
 #: aec6517080d4436baeee026f9941c76b
-msgid "The historical snapshot does not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example."
-msgstr "آن snapshot تاریخی پشتیبانی عمومی از دادهٔ بزرگ، آداپتور دیگر، لغو، تلاش دوباره یا checkpointing را اثبات نمی‌کند. برای ذخیره و ادامهٔ اجرا، راهنمای API و مثال اختصاصی checkpoint را ببینید."
+msgid ""
+"The historical snapshot does not establish general big-data support, "
+"another adapter, cancellation, retry, or checkpointing. For save-and-"
+"resume behavior, use the API guide and the dedicated checkpoint example."
+msgstr ""
+"آن snapshot تاریخی پشتیبانی عمومی از دادهٔ بزرگ، آداپتور دیگر، لغو، تلاش "
+"دوباره یا checkpointing را اثبات نمی‌کند. برای ذخیره و ادامهٔ اجرا، "
+"راهنمای API و مثال اختصاصی checkpoint را ببینید."
 
+#: ../../source/exponential-right-censoring.md:109
 #: c51c1b037e5d4caebb05fac27611c42c
 msgid "Terms used in this tutorial"
 msgstr "اصطلاحات این آموزش"
+
+#~ msgid "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5"
+#~ msgstr "\\widehat{rate} = r / \\tau = 1 / 2 = 0.5{}"
+
+#~ msgid ""
+#~ "The rate<sup id=\"fnref-rate\"><a href"
+#~ "=\"#fn-rate\">4</a></sup> is measured in "
+#~ "events per unit of time. It is "
+#~ "not a 50 percent event probability. "
+#~ "If your time unit is hours, the"
+#~ " rate is events per hour; if "
+#~ "your time unit is days, it is "
+#~ "events per day."
+#~ msgstr ""
+#~ "نرخ<sup id=\"fnref-rate\"><a href=\"#fn-"
+#~ "rate\">۴</a></sup> با واحد «رخداد در هر"
+#~ " واحد زمان» خوانده می‌شود. این عدد"
+#~ " احتمال ۵۰ درصدی رخداد نیست. اگر "
+#~ "واحد زمان شما ساعت باشد، نرخ یعنی"
+#~ " رخداد بر ساعت؛ اگر واحد زمان "
+#~ "روز باشد، نرخ یعنی رخداد بر روز."
+
+#~ msgid ""
+#~ "The CSV adapter consumes one iterator"
+#~ " pass. Its chunk byte budget is "
+#~ "a logical bound on retained payload, "
+#~ "not a portable process-memory or "
+#~ "RSS limit and not a throughput "
+#~ "claim."
+#~ msgstr ""
+#~ "آداپتور CSV یک گذر از iterator "
+#~ "مصرف می‌کند. بودجهٔ بایتی بخش‌ها کران"
+#~ " منطقی payload نگه‌داشته‌شده است؛ سقف "
+#~ "قابل‌حمل حافظهٔ فرایند یا RSS نیست "
+#~ "و ادعای سرعت اجرا هم نیست."

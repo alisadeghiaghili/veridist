@@ -77,7 +77,7 @@ print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}
 rate=0.5; events=1; censored=1
 ```
 
-Dieses Beispiel hat zwei Beobachtungen. In der ersten Beobachtung tritt das Ereignis zum Zeitpunkt 1 ein. In der zweiten Beobachtung wurde bis zum Zeitpunkt 1 kein Ereignis beobachtet; wir wissen also nur, dass die tatsächliche Lebensdauer größer als 1 ist. Damit haben wir ein beobachtetes Ereignis und insgesamt 2 Zeiteinheiten unter Beobachtung. Die geschätzte Rate<sup id="fnref-rate"><a href="#fn-rate">5</a></sup> beträgt `1 / 2 = 0.5` Ereignisse pro Zeiteinheit. Das ist keine Ereigniswahrscheinlichkeit von 50 Prozent; die Einheit hängt von der Einheit der Spalte `time` ab.
+Dieses Beispiel hat zwei Beobachtungen. In der ersten Beobachtung tritt das Ereignis zum Zeitpunkt 1 ein. In der zweiten Beobachtung wurde bis zum Zeitpunkt 1 kein Ereignis beobachtet; wir wissen also nur, dass die tatsächliche Lebensdauer größer als 1 ist. Damit haben wir ein beobachtetes Ereignis und insgesamt 2 Zeiteinheiten unter Beobachtung. Die geschätzte Rate<sup id="fnref-rate"><a href="#fn-rate">5</a></sup> beträgt `1 / 2 = 0.5` Ereignisse pro Zeiteinheit. Das bedeutet, dass das Modell für vergleichbare Einheiten im Mittel ein halbes Ereignis pro beobachteter Zeiteinheit schätzt. Zur Berechnung einer Ereigniswahrscheinlichkeit muss außerdem ein bestimmtes Zeitintervall festgelegt werden.
 
 ## Wie sollte die CSV-Datei aussehen?
 
@@ -85,7 +85,7 @@ Dieses Beispiel hat zwei Beobachtungen. In der ersten Beobachtung tritt das Erei
 
 `CsvLifetimeSchema` benennt die beiden erwarteten Spalten. `PublicSourceId` ist eine öffentliche, nicht geheime Kennung zur Aufzeichnung der Datenprovenienz<sup id="fnref-provenance"><a href="#fn-provenance">7</a></sup>; der lokale Dateipfad wird nicht in das zurückgegebene Ergebnis geschrieben. `CsvLifetimeLimits` legt die maximale Größe jedes Datenabschnitts und die maximale Datenmenge fest, die gleichzeitig in der Verarbeitungsschlange gehalten wird<sup id="fnref-byte-limits"><a href="#fn-byte-limits">8</a></sup>. Beide Werte müssen positiv sein.
 
-Veridist errät keine Spaltennamen, Trennzeichen, Kodierung, fehlenden Daten oder die Bedeutung von Null und Eins. Wenn die Datei nicht zum Vertrag oben passt, meldet es das Problem ausdrücklich und verändert die Daten nicht stillschweigend.
+Veridist errät keine Spaltennamen, Trennzeichen, Kodierung, fehlenden Daten oder die Bedeutung von Null und Eins. Wenn die Datei dem Format oben nicht entspricht, wird die Verarbeitung mit einer klaren Fehlermeldung beendet; Veridist verändert fragliche Werte nicht automatisch.
 
 ## Wie sollten Sie das Ergebnis lesen?
 

@@ -6,7 +6,7 @@ Evidence-first, deliberately narrow distribution primitives.
 ## First CSV vertical
 
 The first public vertical fits a fixed-location exponential lifetime model from
-a strict UTF-8 CSV source. Its canonical parameter is a positive rate; the
+a UTF-8 CSV source with an explicit input format. Its canonical parameter is a positive rate; the
 reported mean is derived as its reciprocal.
 
 ## Limits
@@ -38,7 +38,7 @@ fitting, inference, goodness-of-fit, ranking, arrays, or censoring support.
 `IterableDataSource` adapts caller-owned chunk iterables with immutable source
 metadata. A `single_pass` source is acquired once and a second acquisition
 raises a typed pass-budget failure; replayable declarations require an explicit
-iterator factory. The strict CSV lifetime adapter remains the only bundled file
+iterator factory. The CSV lifetime adapter with the documented input format remains the only bundled file
 adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a
 consumer, until `BufferedChunk.release()`; consumers must release received
 chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow,

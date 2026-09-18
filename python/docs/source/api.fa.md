@@ -77,7 +77,7 @@ print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}
 rate=0.5; events=1; censored=1
 ```
 
-<p dir="rtl" align="right">در این مثال دو مشاهده داریم. در مشاهدهٔ اول، رویداد در زمان ۱ رخ داده است. در مشاهدهٔ دوم، تا زمان ۱ رویدادی ندیده‌ایم و فقط می‌دانیم عمر واقعی از ۱ بیشتر است. بنابراین یک رخداد ثبت‌شده و مجموعاً ۲ واحد زمانِ تحت مشاهده داریم. نرخ<sup id="fnref-rate"><a href="#fn-rate">۵</a></sup> برآوردشده برابر <code dir="ltr">1 / 2 = 0.5</code> رخداد در هر واحد زمان است. این عدد احتمال ۵۰ درصدی رخداد نیست؛ واحد آن به واحد ستون <code dir="ltr">time</code> وابسته است.</p>
+<p dir="rtl" align="right">در این مثال دو مشاهده داریم. در مشاهدهٔ اول، رویداد در زمان ۱ رخ داده است. در مشاهدهٔ دوم، تا زمان ۱ رویدادی ندیده‌ایم و فقط می‌دانیم عمر واقعی از ۱ بیشتر است. بنابراین یک رخداد ثبت‌شده و مجموعاً ۲ واحد زمانِ تحت مشاهده داریم. نرخ<sup id="fnref-rate"><a href="#fn-rate">۵</a></sup> برآوردشده برابر <code dir="ltr">1 / 2 = 0.5</code> رخداد در هر واحد زمان است. یعنی مدل برآورد می‌کند که در واحدهای مشابه، به‌طور میانگین به ازای هر واحد زمان مشاهده‌شده نیم رخداد روی می‌دهد. برای محاسبهٔ احتمال رخداد، باید بازهٔ زمانی مشخصی هم تعیین شود.</p>
 
 <h2 dir="rtl" align="right">فایل CSV باید چه شکلی باشد؟</h2>
 
@@ -85,7 +85,7 @@ rate=0.5; events=1; censored=1
 
 <p dir="rtl" align="right"><code dir="ltr">CsvLifetimeSchema</code> نام دو ستون مورد انتظار را مشخص می‌کند. <code dir="ltr">PublicSourceId</code> یک شناسهٔ عمومی و غیرمحرمانه برای ثبت منشأ<sup id="fnref-provenance"><a href="#fn-provenance">۷</a></sup> داده است؛ مسیر محلی فایل در گزارش نتیجه قرار نمی‌گیرد. <code dir="ltr">CsvLifetimeLimits</code> سقف اندازهٔ هر بخش از داده و حداکثر حجم داده‌ای را که هم‌زمان در صف پردازش نگه داشته می‌شود تعیین می‌کند<sup id="fnref-byte-limits"><a href="#fn-byte-limits">۸</a></sup>. هر دو مقدار باید مثبت باشند.</p>
 
-<p dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> نام ستون‌ها، جداکننده، کدگذاری، دادهٔ گمشده یا معنی صفر و یک را حدس نمی‌زند. اگر فایل با قرارداد بالا سازگار نباشد، مشکل را صریح گزارش می‌کند و داده را پنهانی تغییر نمی‌دهد.</p>
+<p dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> نام ستون‌ها، جداکننده، کدگذاری، دادهٔ گمشده یا معنی صفر و یک را حدس نمی‌زند. اگر فایل با قالب بالا سازگار نباشد، پردازش متوقف می‌شود و خطا به‌روشنی گزارش می‌شود؛ برنامه مقدارهای مشکوک را خودکار تغییر نمی‌دهد.</p>
 
 <h2 dir="rtl" align="right">نتیجه را چگونه بخوانید؟</h2>
 
@@ -93,7 +93,7 @@ rate=0.5; events=1; censored=1
 
 <p dir="rtl" align="right">اگر خواندن یا پردازش فایل شکست بخورد، <code dir="ltr">result.fit</code> برابر <code dir="ltr">None</code> است. در این حالت <code dir="ltr">result.execution</code> یک خروجی نوع‌دار<sup id="fnref-typed-outcome"><a href="#fn-typed-outcome">۱۰</a></sup> شامل مرحله و دلیل شکست دارد. پیش از استفاده از پارامترهای مدل، ابتدا نوع نتیجه را بررسی کنید.</p>
 
-<p dir="rtl" align="right">مدل فعلی پارامتر مکان را روی صفر ثابت نگه می‌دارد. این مسیر هنوز فاصلهٔ اطمینان<sup id="fnref-confidence-interval"><a href="#fn-confidence-interval">۱۱</a></sup>، آزمون مناسب‌بودن مدل<sup id="fnref-goodness-of-fit"><a href="#fn-goodness-of-fit">۱۲</a></sup>، وزن<sup id="fnref-weight"><a href="#fn-weight">۱۳</a></sup>، متغیر کمکی<sup id="fnref-covariate"><a href="#fn-covariate">۱۴</a></sup>، برش داده<sup id="fnref-truncation"><a href="#fn-truncation">۱۵</a></sup>، سانسور چپ<sup id="fnref-left-censoring"><a href="#fn-left-censoring">۱۶</a></sup>، سانسور فاصله‌ای<sup id="fnref-interval-censoring"><a href="#fn-interval-censoring">۱۷</a></sup>، پارامتر مکان آزاد<sup id="fnref-free-location"><a href="#fn-free-location">۱۸</a></sup> یا انتخاب خودکار مدل را ارائه نمی‌کند. جزئیات فرض آماری و حالت‌های ناموفق در <a href="exponential-right-censoring.fa.md">آموزش سانسور راست</a> آمده است.</p>
+<p dir="rtl" align="right">مدل فعلی پارامتر مکان را روی صفر ثابت نگه می‌دارد. این مسیر هنوز فاصلهٔ اطمینان<sup id="fnref-confidence-interval"><a href="#fn-confidence-interval">۱۱</a></sup>، آزمون مناسب‌بودن مدل<sup id="fnref-goodness-of-fit"><a href="#fn-goodness-of-fit">۱۲</a></sup>، وزن<sup id="fnref-weight"><a href="#fn-weight">۱۳</a></sup>، متغیر کمکی<sup id="fnref-covariate"><a href="#fn-covariate">۱۴</a></sup>، برش داده<sup id="fnref-truncation"><a href="#fn-truncation">۱۵</a></sup>، سانسور چپ<sup id="fnref-left-censoring"><a href="#fn-left-censoring">۱۶</a></sup>، سانسور فاصله‌ای<sup id="fnref-interval-censoring"><a href="#fn-interval-censoring">۱۷</a></sup>، پارامتر مکان آزاد<sup id="fnref-free-location"><a href="#fn-free-location">۱۸</a></sup> یا انتخاب خودکار مدل را ارائه نمی‌کند. جزئیات فرض آماری و حالت‌های ناموفق در <a href="exponential-right-censoring.fa.md">آموزش داده‌های سانسورشده از راست</a> آمده است.</p>
 
 <h2 dir="rtl" align="right">ذخیرهٔ پیشرفت و ادامهٔ محاسبه</h2>
 

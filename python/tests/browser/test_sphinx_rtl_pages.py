@@ -61,7 +61,12 @@ class SphinxRtlBrowserContracts(unittest.TestCase):
                     page = browser.new_page()
                     page_contracts = {
                         "api.html": ("code", "pre"),
-                        "exponential-right-censoring.html": ("code", "pre", "table", "math"),
+                        "exponential-right-censoring.html": (
+                            "code",
+                            "pre",
+                            "table",
+                            "formula",
+                        ),
                         "families-log-density-likelihood.html": ("code", "pre", "table", "math"),
                         "index.html": ("code", "pre"),
                     }
@@ -81,6 +86,7 @@ class SphinxRtlBrowserContracts(unittest.TestCase):
                         ['pre', '.highlight pre'],
                         ['table', 'table.docutils'],
                         ['math', '.math'],
+                        ['formula', 'p[dir="ltr"][align="center"]'],
                       ].filter(([name]) => requiredExemplars.includes(name))
                         .map(([name, selector]) => {
                         const element = document.querySelector(selector);
@@ -134,6 +140,7 @@ class SphinxRtlBrowserContracts(unittest.TestCase):
                       exemplars: Object.fromEntries([
                         ['code', 'code.literal'], ['pre', '.highlight pre'],
                         ['table', 'table.docutils'], ['math', '.math'],
+                        ['formula', 'p[dir="ltr"][align="center"]'],
                       ].filter(([name]) => requiredExemplars.includes(name))
                         .map(([name, selector]) => {
                         const element = document.querySelector(selector);
