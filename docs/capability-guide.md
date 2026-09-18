@@ -4,9 +4,21 @@
 
 This guide is the practical boundary of **Veridist 1.0.1**: what you can give the package, what it returns, and where its support ends. A supported feature is supported only under the stated data and execution conditions.
 
-## I want to analyse the lifetime of equipment
+## I want to analyse time until an event
 
-Veridist fits a statistical distribution to observed lifetimes. **Exponential MLE**, **Weibull-minimum MLE**, and **Lognormal MLE** are available with fixed `loc=0` for exact and independent right-censoring. The strict UTF-8 CSV workflow is deliberately narrower: it fits the rate-only Exponential model.
+Lifetime analysis is not limited to equipment. The same data structure can describe time until failure, relapse, default, a first insurance claim, customer churn, conversion, or another clearly defined event. A record is right-censored when the event has not happened by the observation cutoff.
+
+| Field | Exact event example | Right-censored example |
+| --- | --- | --- |
+| Reliability and manufacturing | A bearing failed after 400 hours | A bearing was still operating after 400 hours |
+| Health and survival research | Readmission occurred after 30 days | No readmission had occurred by day 30 |
+| Credit and insurance | Default or a first claim occurred during follow-up | No default or claim had occurred by the study end |
+| Digital products | A customer churned or converted | The customer remained active without the event at the cutoff |
+| Operations | A repair, delivery, or service process completed | The process was still open when data collection ended |
+
+Veridist fits a statistical distribution to these observed times when the current model assumptions and input contract apply. **Exponential MLE**, **Weibull-minimum MLE**, and **Lognormal MLE** are available with fixed `loc=0` for exact and independent right-censoring. The UTF-8 CSV workflow is deliberately narrower: it fits the rate-only Exponential model from a documented two-column format.
+
+Fraud detection and cybersecurity often ask a different question: whether an amount, time gap, or latency is unusual under a reference distribution. Veridist can supply scalar log density, tail probability, and quantile calculations for supported families when defensible parameters are already available. Those values can be signals in a separately validated detector; the package does not train or operate an end-to-end fraud classifier.
 
 | Model | Behaviour described | Input |
 | --- | --- | --- |

@@ -20,6 +20,21 @@ For the contract-level API surface, see
 | `lognormal` | `mu_log`, `sigma_log > 0` |
 | `gumbel_right` | `location`, `scale > 0` |
 
+## Where these calculations can help
+
+These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters and they do not turn a low-density value into a business decision.
+
+| Application area | Example value | Defensible use of this API |
+| --- | --- | --- |
+| Finance and insurance example | A return, loss amount, or claim size | Evaluate log density under an already justified reference model or combine log likelihood across chunks. |
+| Fraud and cybersecurity example | A transaction amount, time gap, or login latency | Produce one anomaly signal under a reference model; low density is not itself a probability of fraud. |
+| Manufacturing-quality example | A dimension, load, or cycle measurement | Compare measurements with a validated process model and identify values that need review. |
+| Operations and supply-chain example | A delivery, repair, waiting, or service duration | Accumulate likelihood for a specified duration model without keeping every value in one array. |
+| Environmental-risk example | A high load, loss, or extreme measurement | Evaluate the right-Gumbel log density when that family and its parameters have been justified independently. |
+| Machine-learning example | A distribution-based feature | Supply a model feature only when its parameters are estimated without future or test-set information. |
+
+Different fields have different sampling rules, costs, thresholds, and regulatory requirements. Validate the reference model and the downstream decision process in the field where they will be used.
+
 ## Scalar log-density evaluation
 
 `evaluate_log_density` evaluates one built-in finite scalar observation after

@@ -443,6 +443,376 @@
       "id": "DOC-MSG-FAM-EVIDENCE-LIMIT",
       "page": "families-log-density-likelihood.md",
       "source": "This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."
+    },
+    {
+      "id": "DOC-MSG-HOME-DOMAIN-01",
+      "page": "index.md",
+      "source": "Applications across fields"
+    },
+    {
+      "id": "DOC-MSG-HOME-DOMAIN-02",
+      "page": "index.md",
+      "source": "The same distribution tools can support reliability, survival research, credit and insurance, fraud and cybersecurity, operations, supply chains, digital products, and environmental risk when the data and assumptions match the documented contract. “Lifetime” can mean time until any defined event, such as failure, relapse, default, a first claim, churn, or process completion. Scalar distribution calculations can also contribute signals for anomaly detection, but Veridist does not replace domain validation or provide an end-to-end fraud detector."
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-01",
+      "page": "api.md",
+      "source": "Use the same event-time contract in different fields"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-02",
+      "page": "api.md",
+      "source": "The two CSV columns describe a general time-to-event record. `time` says how long the item was observed. `event_observed` says whether the chosen event happened during that time. The code does not decide what the event means; your analysis must define it consistently."
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-03",
+      "page": "api.md",
+      "source": "Application field"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-04",
+      "page": "api.md",
+      "source": "What `time` can mean"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-05",
+      "page": "api.md",
+      "source": "What event `1` can mean"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-06",
+      "page": "api.md",
+      "source": "What event `0` can mean"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-07",
+      "page": "api.md",
+      "source": "Reliability record"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-08",
+      "page": "api.md",
+      "source": "Hours a component was observed"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-09",
+      "page": "api.md",
+      "source": "The component failed"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-10",
+      "page": "api.md",
+      "source": "It was still operating when observation ended"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-11",
+      "page": "api.md",
+      "source": "Health-research record"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-12",
+      "page": "api.md",
+      "source": "Days a participant was followed"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-13",
+      "page": "api.md",
+      "source": "The defined health event occurred"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-14",
+      "page": "api.md",
+      "source": "The event had not occurred by the last follow-up"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-15",
+      "page": "api.md",
+      "source": "Credit or insurance record"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-16",
+      "page": "api.md",
+      "source": "Months an account or policy was followed"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-17",
+      "page": "api.md",
+      "source": "Default or the first claim occurred"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-18",
+      "page": "api.md",
+      "source": "No such event had occurred by the study end"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-19",
+      "page": "api.md",
+      "source": "Digital-product record"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-20",
+      "page": "api.md",
+      "source": "Days since signup or campaign entry"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-21",
+      "page": "api.md",
+      "source": "Churn or conversion occurred"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-22",
+      "page": "api.md",
+      "source": "The user remained active without the event at the cutoff"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-23",
+      "page": "api.md",
+      "source": "Operations record"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-24",
+      "page": "api.md",
+      "source": "Hours since a repair, order, or case opened"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-25",
+      "page": "api.md",
+      "source": "The process completed"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-26",
+      "page": "api.md",
+      "source": "The process was still open when data collection ended"
+    },
+    {
+      "id": "DOC-MSG-API-DOMAIN-27",
+      "page": "api.md",
+      "source": "For fraud detection or cybersecurity, the time-to-event CSV may fit questions such as time until an alert, but it is not a general fraud-data format. The lower-level distribution tools can also compare a transaction amount, time gap, or latency with an already specified reference distribution. Such a value is one input to a separately tested detection system, not a fraud decision by itself."
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-01",
+      "page": "exponential-right-censoring.md",
+      "source": "The same two rows in other fields"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-02",
+      "page": "exponential-right-censoring.md",
+      "source": "“Lifetime” here means time until a defined event. The calculation is unchanged when the subject and event change, but the scientific meaning and assumptions must be checked again."
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-03",
+      "page": "exponential-right-censoring.md",
+      "source": "Example field"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-04",
+      "page": "exponential-right-censoring.md",
+      "source": "Event row"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-05",
+      "page": "exponential-right-censoring.md",
+      "source": "Still-event-free row"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-06",
+      "page": "exponential-right-censoring.md",
+      "source": "Manufacturing example"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-07",
+      "page": "exponential-right-censoring.md",
+      "source": "A component failed at the recorded hour"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-08",
+      "page": "exponential-right-censoring.md",
+      "source": "It was still operating at the inspection cutoff"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-09",
+      "page": "exponential-right-censoring.md",
+      "source": "Health-research example"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-10",
+      "page": "exponential-right-censoring.md",
+      "source": "Relapse or readmission occurred on the recorded day"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-11",
+      "page": "exponential-right-censoring.md",
+      "source": "It had not occurred by the last follow-up"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-12",
+      "page": "exponential-right-censoring.md",
+      "source": "Credit and insurance example"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-13",
+      "page": "exponential-right-censoring.md",
+      "source": "Default or a first claim occurred in the recorded month"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-14",
+      "page": "exponential-right-censoring.md",
+      "source": "It had not occurred by the study end"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-15",
+      "page": "exponential-right-censoring.md",
+      "source": "Digital-product example"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-16",
+      "page": "exponential-right-censoring.md",
+      "source": "Churn or conversion occurred on the recorded day"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-17",
+      "page": "exponential-right-censoring.md",
+      "source": "The user was still active without the event at the cutoff"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-18",
+      "page": "exponential-right-censoring.md",
+      "source": "Operations example"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-19",
+      "page": "exponential-right-censoring.md",
+      "source": "A repair, delivery, or service case completed"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-20",
+      "page": "exponential-right-censoring.md",
+      "source": "The case was still open when observation ended"
+    },
+    {
+      "id": "DOC-MSG-EXP-DOMAIN-21",
+      "page": "exponential-right-censoring.md",
+      "source": "Fraud and cybersecurity data can also contain event times, such as time until the first alert. A different use is to compare transaction amounts or time gaps with a reference distribution to produce an anomaly signal. This tutorial implements only the first kind of data: one time and one event indicator per row. It does not implement a complete fraud detector."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-01",
+      "page": "families-log-density-likelihood.md",
+      "source": "Where these calculations can help"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-02",
+      "page": "families-log-density-likelihood.md",
+      "source": "These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters and they do not turn a low-density value into a business decision."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-03",
+      "page": "families-log-density-likelihood.md",
+      "source": "Application area"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-04",
+      "page": "families-log-density-likelihood.md",
+      "source": "Example value"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-05",
+      "page": "families-log-density-likelihood.md",
+      "source": "Defensible use of this API"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-06",
+      "page": "families-log-density-likelihood.md",
+      "source": "Finance and insurance example"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-07",
+      "page": "families-log-density-likelihood.md",
+      "source": "A return, loss amount, or claim size"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-08",
+      "page": "families-log-density-likelihood.md",
+      "source": "Evaluate log density under an already justified reference model or combine log likelihood across chunks."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-09",
+      "page": "families-log-density-likelihood.md",
+      "source": "Fraud and cybersecurity example"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-10",
+      "page": "families-log-density-likelihood.md",
+      "source": "A transaction amount, time gap, or login latency"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-11",
+      "page": "families-log-density-likelihood.md",
+      "source": "Produce one anomaly signal under a reference model; low density is not itself a probability of fraud."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-12",
+      "page": "families-log-density-likelihood.md",
+      "source": "Manufacturing-quality example"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-13",
+      "page": "families-log-density-likelihood.md",
+      "source": "A dimension, load, or cycle measurement"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-14",
+      "page": "families-log-density-likelihood.md",
+      "source": "Compare measurements with a validated process model and identify values that need review."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-15",
+      "page": "families-log-density-likelihood.md",
+      "source": "Operations and supply-chain example"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-16",
+      "page": "families-log-density-likelihood.md",
+      "source": "A delivery, repair, waiting, or service duration"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-17",
+      "page": "families-log-density-likelihood.md",
+      "source": "Accumulate likelihood for a specified duration model without keeping every value in one array."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-18",
+      "page": "families-log-density-likelihood.md",
+      "source": "Environmental-risk example"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-19",
+      "page": "families-log-density-likelihood.md",
+      "source": "A high load, loss, or extreme measurement"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-20",
+      "page": "families-log-density-likelihood.md",
+      "source": "Evaluate the right-Gumbel log density when that family and its parameters have been justified independently."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-21",
+      "page": "families-log-density-likelihood.md",
+      "source": "Machine-learning example"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-22",
+      "page": "families-log-density-likelihood.md",
+      "source": "A distribution-based feature"
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-23",
+      "page": "families-log-density-likelihood.md",
+      "source": "Supply a model feature only when its parameters are estimated without future or test-set information."
+    },
+    {
+      "id": "DOC-MSG-FAM-DOMAIN-24",
+      "page": "families-log-density-likelihood.md",
+      "source": "Different fields have different sampling rules, costs, thresholds, and regulatory requirements. Validate the reference model and the downstream decision process in the field where they will be used."
     }
   ],
   "examples": [

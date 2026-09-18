@@ -16,7 +16,7 @@ msgstr ""
 
 #: ../../source/index.md:2 a4d417fdde0c4e2ca8a4c00654674315
 msgid "Veridist documentation"
-msgstr "مستندات وریدیست"
+msgstr "مستندات Veridist"
 
 #: ../../source/index.md:4 4d1671c215aa4995acb1ad5e8c001e3d
 msgid "Evidence-first, deliberately narrow distribution primitives."
@@ -115,3 +115,9 @@ msgstr ""
 #: ../../source/index.md:47 8ab71a5d2ade44dda34ca08662cb99a2
 msgid "Canonical executable example"
 msgstr "مثال اجرایی مرجع"
+
+msgid "Applications across fields"
+msgstr "کاربرد در حوزه‌های مختلف"
+
+msgid "The same distribution tools can support reliability, survival research, credit and insurance, fraud and cybersecurity, operations, supply chains, digital products, and environmental risk when the data and assumptions match the documented contract. “Lifetime” can mean time until any defined event, such as failure, relapse, default, a first claim, churn, or process completion. Scalar distribution calculations can also contribute signals for anomaly detection, but Veridist does not replace domain validation or provide an end-to-end fraud detector."
+msgstr "اگر داده و فرض‌ها با قرارداد مستند سازگار باشند، همین ابزارهای توزیعی می‌توانند در قابلیت اطمینان، پژوهش بقا، اعتبار و بیمه، تقلب و امنیت سایبری، عملیات، زنجیرهٔ تأمین، محصولات دیجیتال و ریسک محیط‌زیستی کاربرد داشته باشند. «طول عمر» می‌تواند زمان تا هر رویداد تعریف‌شده‌ای مانند خرابی، عود بیماری، نکول، نخستین خسارت، ریزش مشتری یا تکمیل فرایند باشد. محاسبات اسکالر توزیع نیز می‌توانند برای تشخیص ناهنجاری نشانه بسازند؛ اما Veridist جای اعتبارسنجی تخصصی را نمی‌گیرد و سامانهٔ کامل کشف تقلب نیست."

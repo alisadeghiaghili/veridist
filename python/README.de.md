@@ -115,6 +115,21 @@ Wenn Daten für das zuverlässige Trainieren und Bewerten komplexer Modelle wie 
 
 Eine Referenzverteilung kann **Anomalieerkennung** und **Distribution-Drift-Überwachung** unterstützen. Dafür bleiben Validierung, Entscheidungsschwellen und die Kontrolle falscher Alarme erforderlich. Parameter, Quantile und Überschreitungswahrscheinlichkeiten können später Merkmale für Deep-Learning-Modelle sein, wenn sie ohne Zukunfts- oder Testinformationen geschätzt werden.
 
+## Wo dieselben Ideen helfen können
+
+In der Statistik kann „Lebensdauer“ die Zeit bis zu jedem klar definierten Ereignis bedeuten, nicht nur die Lebensdauer einer Maschine. Vor dem Fit müssen Ereignis, Zeiteinheit, untersuchte Population und Grund für das Beobachtungsende festgelegt werden.
+
+| Bereich | Beispielfrage | Was Veridist heute beitragen kann |
+| --- | --- | --- |
+| Zuverlässigkeit und Fertigung | Wann fällt eine Pumpe, ein Lager, eine Batterie oder ein Bauteil aus? | Unterstützte Lebensdauermodelle anpassen und Einheiten einbeziehen, die am Beobachtungsende noch funktionierten. |
+| Gesundheit und Überlebenszeitanalyse | Wie lange dauert es bis zu Rückfall, Wiederaufnahme oder einem anderen dokumentierten Ereignis? | Exakte und unabhängig rechtszensierte Zeiten mit den unterstützten Lebensdauermodellen analysieren; klinische Interpretation und Kovariatenanpassung liegen außerhalb des aktuellen Pakets. |
+| Kredit und Versicherung | Wie lange dauert es bis zu Ausfall, vorzeitiger Rückzahlung oder erstem Schaden? | Kundinnen und Kunden ohne Ereignis bis zum Studienende rechtszensiert abbilden und ein unterstütztes Time-to-Event-Modell anpassen. |
+| Betrugserkennung und Cybersicherheit | Ist ein Transaktionsbetrag, Zeitabstand oder eine Anmeldelatenz gegenüber einer vertretbaren Referenzverteilung ungewöhnlich? | Skalare Log-Dichte, Randwahrscheinlichkeit oder ein Quantil als ein Signal in einem separat validierten Erkennungssystem verwenden. Veridist ist kein vollständiger Betrugsklassifikator. |
+| Betrieb und Lieferketten | Welche Liefer-, Reparatur-, Warte- oder Servicezeit ist zu erwarten? | Positive Dauern mit einem unterstützten Modell beschreiben und Wahrscheinlichkeiten oder Quantile berechnen, wenn Familie und Parameter verfügbar sind. |
+| Digitale Produkte und Kundenanalyse | Wie lange dauert es bis zu Abwanderung, Konversion oder einem anderen Produktereignis? | Nutzerinnen und Nutzer, die am Beobachtungsstichtag aktiv bleiben, rechtszensiert behandeln, sofern die Zensierungsannahme vertretbar ist. |
+
+Diese Beispiele teilen eine statistische Struktur, nicht dieselbe fachliche Bedeutung. Fachliche Validierung, Stichprobendesign, Kosten, Entscheidungsschwellen sowie rechtliche oder sicherheitsbezogene Anforderungen bleiben Teil der Anwendung.
+
 ## Wenn die Verteilung unbekannt ist
 
 Distribution Fitting kann Kandidaten anpassen, ihre Parameter schätzen und ihre Eignung vergleichen. Der beste Rang ist nicht automatisch die wahre datenerzeugende Verteilung; möglicherweise ist kein Kandidat ausreichend.

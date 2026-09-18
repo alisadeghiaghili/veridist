@@ -306,3 +306,66 @@ msgstr "Begriffe in diesem Tutorial"
 #~ " für gehaltene Nutzlast; es ist keine"
 #~ " portable Grenze für Prozessspeicher oder"
 #~ " RSS und keine Durchsatzbehauptung."
+
+msgid "The same two rows in other fields"
+msgstr "Dieselben zwei Zeilentypen in anderen Bereichen"
+
+msgid "“Lifetime” here means time until a defined event. The calculation is unchanged when the subject and event change, but the scientific meaning and assumptions must be checked again."
+msgstr "„Lebensdauer“ bedeutet hier die Zeit bis zu einem definierten Ereignis. Wenn sich Gegenstand und Ereignis ändern, bleibt die Berechnung gleich; die wissenschaftliche Bedeutung und die Annahmen müssen jedoch erneut geprüft werden."
+
+msgid "Example field"
+msgstr "Beispielbereich"
+
+msgid "Event row"
+msgstr "Zeile mit Ereignis"
+
+msgid "Still-event-free row"
+msgstr "Noch ereignisfreie Zeile"
+
+msgid "Manufacturing example"
+msgstr "Fertigungsbeispiel"
+
+msgid "A component failed at the recorded hour"
+msgstr "Ein Bauteil fiel in der aufgezeichneten Stunde aus"
+
+msgid "It was still operating at the inspection cutoff"
+msgstr "Es funktionierte am Prüfungsstichtag noch"
+
+msgid "Health-research example"
+msgstr "Beispiel aus der Gesundheitsforschung"
+
+msgid "Relapse or readmission occurred on the recorded day"
+msgstr "Rückfall oder Wiederaufnahme trat am aufgezeichneten Tag ein"
+
+msgid "It had not occurred by the last follow-up"
+msgstr "Bis zur letzten Nachbeobachtung trat das Ereignis nicht ein"
+
+msgid "Credit and insurance example"
+msgstr "Kredit- und Versicherungsbeispiel"
+
+msgid "Default or a first claim occurred in the recorded month"
+msgstr "Ausfall oder erster Schaden trat im aufgezeichneten Monat ein"
+
+msgid "It had not occurred by the study end"
+msgstr "Bis zum Studienende trat kein solches Ereignis ein"
+
+msgid "Digital-product example"
+msgstr "Beispiel eines digitalen Produkts"
+
+msgid "Churn or conversion occurred on the recorded day"
+msgstr "Abwanderung oder Konversion trat am aufgezeichneten Tag ein"
+
+msgid "The user was still active without the event at the cutoff"
+msgstr "Der Nutzer war am Stichtag noch aktiv und ereignisfrei"
+
+msgid "Operations example"
+msgstr "Betriebsbeispiel"
+
+msgid "A repair, delivery, or service case completed"
+msgstr "Eine Reparatur, Lieferung oder ein Servicefall wurde abgeschlossen"
+
+msgid "The case was still open when observation ended"
+msgstr "Der Fall war am Beobachtungsende noch offen"
+
+msgid "Fraud and cybersecurity data can also contain event times, such as time until the first alert. A different use is to compare transaction amounts or time gaps with a reference distribution to produce an anomaly signal. This tutorial implements only the first kind of data: one time and one event indicator per row. It does not implement a complete fraud detector."
+msgstr "Betrugs- und Cybersicherheitsdaten können ebenfalls Ereigniszeiten enthalten, etwa die Zeit bis zum ersten Alarm. Eine andere Anwendung vergleicht Transaktionsbeträge oder Zeitabstände mit einer Referenzverteilung, um ein Anomaliesignal zu erzeugen. Dieses Tutorial implementiert nur den ersten Datentyp: eine Zeit und einen Ereignisindikator pro Zeile. Es implementiert keinen vollständigen Betrugsdetektor."

@@ -120,3 +120,9 @@ msgstr ""
 #: ../../source/index.md:47 8ab71a5d2ade44dda34ca08662cb99a2
 msgid "Canonical executable example"
 msgstr "Kanonisches ausführbares Beispiel"
+
+msgid "Applications across fields"
+msgstr "Anwendungen in verschiedenen Bereichen"
+
+msgid "The same distribution tools can support reliability, survival research, credit and insurance, fraud and cybersecurity, operations, supply chains, digital products, and environmental risk when the data and assumptions match the documented contract. “Lifetime” can mean time until any defined event, such as failure, relapse, default, a first claim, churn, or process completion. Scalar distribution calculations can also contribute signals for anomaly detection, but Veridist does not replace domain validation or provide an end-to-end fraud detector."
+msgstr "Dieselben Verteilungswerkzeuge können Zuverlässigkeit, Überlebenszeitforschung, Kredit und Versicherung, Betrug und Cybersicherheit, Betrieb, Lieferketten, digitale Produkte und Umweltrisiken unterstützen, wenn Daten und Annahmen dem dokumentierten Vertrag entsprechen. „Lebensdauer“ kann die Zeit bis zu jedem definierten Ereignis bedeuten, etwa Ausfall, Rückfall, Kreditausfall, erster Schaden, Abwanderung oder Prozessabschluss. Skalare Verteilungsberechnungen können auch Signale für die Anomalieerkennung liefern; Veridist ersetzt jedoch keine fachliche Validierung und stellt keinen vollständigen Betrugsdetektor bereit."

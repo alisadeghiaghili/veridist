@@ -30,6 +30,20 @@ Eine Lebensdauerzeile hat zwei Felder:
 
 Zum Beispiel bedeutet eine Zeile `1,1`, dass das Ereignis zum Zeitpunkt 1 eingetreten ist. Eine Zeile `1,0` bedeutet, dass die Einheit bis zum Zeitpunkt 1 beobachtet wurde und zu diesem Zeitpunkt noch lebte, funktionierte oder ereignisfrei war. Auch diese zweite Zeile ist nützlich: Sie sagt dem Modell, dass die Lebensdauer länger als 1 ist. Das ist unabhängige Rechtszensierung.
 
+### Dieselben zwei Zeilentypen in anderen Bereichen
+
+„Lebensdauer“ bedeutet hier die Zeit bis zu einem definierten Ereignis. Wenn sich Gegenstand und Ereignis ändern, bleibt die Berechnung gleich; die wissenschaftliche Bedeutung und die Annahmen müssen jedoch erneut geprüft werden.
+
+| Beispielbereich | Zeile mit Ereignis | Noch ereignisfreie Zeile |
+| --- | --- | --- |
+| Fertigungsbeispiel | Ein Bauteil fiel in der aufgezeichneten Stunde aus | Es funktionierte am Prüfungsstichtag noch |
+| Beispiel aus der Gesundheitsforschung | Rückfall oder Wiederaufnahme trat am aufgezeichneten Tag ein | Bis zur letzten Nachbeobachtung trat das Ereignis nicht ein |
+| Kredit- und Versicherungsbeispiel | Ausfall oder erster Schaden trat im aufgezeichneten Monat ein | Bis zum Studienende trat kein solches Ereignis ein |
+| Beispiel eines digitalen Produkts | Abwanderung oder Konversion trat am aufgezeichneten Tag ein | Der Nutzer war am Stichtag noch aktiv und ereignisfrei |
+| Betriebsbeispiel | Eine Reparatur, Lieferung oder ein Servicefall wurde abgeschlossen | Der Fall war am Beobachtungsende noch offen |
+
+Betrugs- und Cybersicherheitsdaten können ebenfalls Ereigniszeiten enthalten, etwa die Zeit bis zum ersten Alarm. Eine andere Anwendung vergleicht Transaktionsbeträge oder Zeitabstände mit einer Referenzverteilung, um ein Anomaliesignal zu erzeugen. Dieses Tutorial implementiert nur den ersten Datentyp: eine Zeit und einen Ereignisindikator pro Zeile. Es implementiert keinen vollständigen Betrugsdetektor.
+
 ## Beispiel ausführen
 
 Die Schema-Deklaration unten benennt das einzige akzeptierte Kopfzeilenpaar und hält maschinenlesbare Bezeichner von links nach rechts.

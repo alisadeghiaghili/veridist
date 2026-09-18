@@ -82,3 +82,75 @@ msgstr "`LLR-06` یک snapshot تاریخی از جریانِ تولیدشده �
 
 msgid "This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."
 msgstr "دامنهٔ این شواهد به جریان اسکالر نرمالِ آزموده‌شده و کاهندهٔ دقیق محدود است. این شواهد برازش، استنباط، نیکویی برازش، رتبه‌بندی، آرایه‌ها، سانسور، پردازش عمومی برون‌هسته‌ای، گذردهی، کران حافظهٔ فرایند/RSS، آداپتور دادهٔ دیگر یا کارایی میان‌سکویی را اثبات نمی‌کنند."
+
+msgid "Where these calculations can help"
+msgstr "این محاسبات کجا کاربرد دارند؟"
+
+msgid "These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters and they do not turn a low-density value into a business decision."
+msgstr "این ابزارها به یک پرسش محدود پاسخ می‌دهند: یک مقدار یا مجموعه‌ای از مقادیر چقدر با یک خانوادهٔ توزیع و پارامترهای مشخص سازگار است؟ این ابزارها پارامترها را برآورد نمی‌کنند و یک مقدار با چگالی کم را مستقیماً به تصمیم کسب‌وکار تبدیل نمی‌کنند."
+
+msgid "Application area"
+msgstr "حوزهٔ کاربرد"
+
+msgid "Example value"
+msgstr "نمونهٔ مقدار"
+
+msgid "Defensible use of this API"
+msgstr "استفادهٔ قابل‌دفاع از این API"
+
+msgid "Finance and insurance example"
+msgstr "مثال مالی و بیمه"
+
+msgid "A return, loss amount, or claim size"
+msgstr "بازده، مبلغ زیان یا اندازهٔ خسارت"
+
+msgid "Evaluate log density under an already justified reference model or combine log likelihood across chunks."
+msgstr "چگالی لگاریتمی را زیر یک مدل مرجع ازپیش‌توجیه‌شده محاسبه کنید یا درست‌نمایی لگاریتمی چند بخش داده را با هم ترکیب کنید."
+
+msgid "Fraud and cybersecurity example"
+msgstr "مثال کشف تقلب و امنیت سایبری"
+
+msgid "A transaction amount, time gap, or login latency"
+msgstr "مبلغ تراکنش، فاصلهٔ زمانی یا زمان پاسخ ورود"
+
+msgid "Produce one anomaly signal under a reference model; low density is not itself a probability of fraud."
+msgstr "زیر یک مدل مرجع، یک نشانهٔ ناهنجاری بسازید؛ چگالی کم به‌خودی‌خود احتمال تقلب نیست."
+
+msgid "Manufacturing-quality example"
+msgstr "مثال کیفیت تولید"
+
+msgid "A dimension, load, or cycle measurement"
+msgstr "اندازه، بار یا اندازه‌گیری چرخه"
+
+msgid "Compare measurements with a validated process model and identify values that need review."
+msgstr "اندازه‌گیری‌ها را با یک مدل فرایند اعتبارسنجی‌شده مقایسه کنید و مقادیری را که نیاز به بررسی دارند مشخص کنید."
+
+msgid "Operations and supply-chain example"
+msgstr "مثال عملیات و زنجیرهٔ تأمین"
+
+msgid "A delivery, repair, waiting, or service duration"
+msgstr "مدت تحویل، تعمیر، انتظار یا خدمت"
+
+msgid "Accumulate likelihood for a specified duration model without keeping every value in one array."
+msgstr "درست‌نمایی یک مدل مدت‌زمان مشخص را بدون نگهداری همهٔ مقادیر در یک آرایه جمع کنید."
+
+msgid "Environmental-risk example"
+msgstr "مثال تحلیل محیط‌زیست و ریسک"
+
+msgid "A high load, loss, or extreme measurement"
+msgstr "بار زیاد، زیان یا اندازه‌گیری حدی"
+
+msgid "Evaluate the right-Gumbel log density when that family and its parameters have been justified independently."
+msgstr "وقتی خانوادهٔ گامبل راست و پارامترهایش مستقل از این محاسبه توجیه شده‌اند، چگالی لگاریتمی آن را محاسبه کنید."
+
+msgid "Machine-learning example"
+msgstr "مثال یادگیری ماشین"
+
+msgid "A distribution-based feature"
+msgstr "ویژگی مبتنی بر توزیع"
+
+msgid "Supply a model feature only when its parameters are estimated without future or test-set information."
+msgstr "فقط زمانی ویژگی را به مدل بدهید که پارامترهای آن بدون استفاده از اطلاعات آینده یا مجموعهٔ آزمون برآورد شده باشند."
+
+msgid "Different fields have different sampling rules, costs, thresholds, and regulatory requirements. Validate the reference model and the downstream decision process in the field where they will be used."
+msgstr "حوزه‌های مختلف قواعد نمونه‌گیری، هزینه‌ها، آستانه‌ها و الزامات قانونی متفاوتی دارند. مدل مرجع و فرایند تصمیم‌گیری بعدی را در همان حوزه‌ای که استفاده می‌شوند اعتبارسنجی کنید."

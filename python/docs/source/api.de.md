@@ -5,6 +5,20 @@
 
 Dieser Leitfaden erklärt die aktuelle öffentliche API in Veridist. Für die Anpassung einer Exponentialverteilung<sup id="fnref-fitting"><a href="#fn-fitting">1</a></sup> an Lebensdauerdaten ist der übliche Weg, eine CSV-Datei an die Hauptfunktion zu übergeben und das zurückgegebene Ergebnis zu lesen. Wenn eine Berechnung lange dauert und unterbrochen werden kann, können Sie den Fortschritt speichern und später fortsetzen. Skalarwerkzeuge<sup id="fnref-scalar"><a href="#fn-scalar">2</a></sup> und Datenströme, die vom Aufrufer<sup id="fnref-caller"><a href="#fn-caller">3</a></sup> verwaltet werden, stehen ebenfalls für technischere Anwendungsfälle bereit.
 
+## Denselben Zeit-Ereignis-Vertrag in verschiedenen Bereichen verwenden
+
+Die beiden CSV-Spalten beschreiben einen allgemeinen Time-to-Event-Datensatz. `time` gibt an, wie lange das Element beobachtet wurde. `event_observed` gibt an, ob das gewählte Ereignis in dieser Zeit eingetreten ist. Der Code entscheidet nicht, was das Ereignis bedeutet; Ihre Analyse muss es einheitlich definieren.
+
+| Anwendungsbereich | Mögliche Bedeutung von `time` | Mögliche Bedeutung von Ereignis `1` | Mögliche Bedeutung von Ereignis `0` |
+| --- | --- | --- | --- |
+| Zuverlässigkeitsdatensatz | Beobachtungsstunden eines Bauteils | Das Bauteil fiel aus | Es funktionierte am Beobachtungsende noch |
+| Datensatz der Gesundheitsforschung | Tage der Nachbeobachtung einer Person | Das definierte Gesundheitsereignis trat ein | Bis zur letzten Nachbeobachtung trat es nicht ein |
+| Kredit- oder Versicherungsdatensatz | Monate der Beobachtung eines Kontos oder einer Police | Ausfall oder erster Schaden trat ein | Bis zum Studienende trat kein solches Ereignis ein |
+| Datensatz eines digitalen Produkts | Tage seit Registrierung oder Kampagneneintritt | Abwanderung oder Konversion trat ein | Der Nutzer blieb bis zum Stichtag ohne Ereignis aktiv |
+| Betriebsdatensatz | Stunden seit Eröffnung einer Reparatur, Bestellung oder eines Falls | Der Vorgang wurde abgeschlossen | Der Vorgang war am Ende der Datenerhebung noch offen |
+
+Für Betrugserkennung oder Cybersicherheit kann die Time-to-Event-CSV zu Fragen wie der Zeit bis zu einem Alarm passen, ist aber kein allgemeines Betrugsdatenformat. Die grundlegenden Verteilungswerkzeuge können außerdem einen Transaktionsbetrag, Zeitabstand oder eine Latenz mit einer bereits festgelegten Referenzverteilung vergleichen. Ein solcher Wert ist ein Eingangssignal für ein separat getestetes Erkennungssystem, keine Betrugsentscheidung für sich allein.
+
 ## Ausführungspfad wählen
 
 <table width="100%">

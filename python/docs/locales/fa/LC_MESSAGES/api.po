@@ -324,3 +324,84 @@ msgstr ""
 #: ../../source/api.md:119 ab2b8eec86f64214a7f87767f90d5f80
 msgid "Terms Used On This Page"
 msgstr "اصطلاحات این صفحه"
+
+msgid "Use the same event-time contract in different fields"
+msgstr "از همین قرارداد زمان و رویداد در حوزه‌های مختلف استفاده کنید"
+
+msgid "The two CSV columns describe a general time-to-event record. `time` says how long the item was observed. `event_observed` says whether the chosen event happened during that time. The code does not decide what the event means; your analysis must define it consistently."
+msgstr "دو ستون فایل CSV یک مشاهدهٔ عمومیِ «زمان تا رویداد» را توصیف می‌کنند. `time` می‌گوید هر مورد چه مدت مشاهده شده و `event_observed` مشخص می‌کند رویداد انتخاب‌شده در آن مدت رخ داده است یا نه. کد معنای رویداد را تعیین نمی‌کند؛ شما باید آن را در کل تحلیل یکسان و روشن تعریف کنید."
+
+msgid "Application field"
+msgstr "حوزهٔ کاربرد"
+
+msgid "What `time` can mean"
+msgstr "معنای احتمالی `time`"
+
+msgid "What event `1` can mean"
+msgstr "معنای احتمالی رویداد `1`"
+
+msgid "What event `0` can mean"
+msgstr "معنای احتمالی رویداد `0`"
+
+msgid "Reliability record"
+msgstr "سابقهٔ قابلیت اطمینان"
+
+msgid "Hours a component was observed"
+msgstr "ساعت‌های مشاهدهٔ یک قطعه"
+
+msgid "The component failed"
+msgstr "قطعه خراب شده است"
+
+msgid "It was still operating when observation ended"
+msgstr "قطعه هنگام پایان مشاهده هنوز کار می‌کرد"
+
+msgid "Health-research record"
+msgstr "سابقهٔ پژوهش سلامت"
+
+msgid "Days a participant was followed"
+msgstr "روزهای پیگیری یک فرد"
+
+msgid "The defined health event occurred"
+msgstr "رخداد سلامتِ تعریف‌شده اتفاق افتاده است"
+
+msgid "The event had not occurred by the last follow-up"
+msgstr "تا آخرین پیگیری رخداد اتفاق نیفتاده است"
+
+msgid "Credit or insurance record"
+msgstr "سابقهٔ اعتبار یا بیمه"
+
+msgid "Months an account or policy was followed"
+msgstr "ماه‌های پیگیری حساب یا بیمه‌نامه"
+
+msgid "Default or the first claim occurred"
+msgstr "نکول یا نخستین خسارت رخ داده است"
+
+msgid "No such event had occurred by the study end"
+msgstr "تا پایان بررسی چنین رخدادی ثبت نشده است"
+
+msgid "Digital-product record"
+msgstr "سابقهٔ محصول دیجیتال"
+
+msgid "Days since signup or campaign entry"
+msgstr "روزهای گذشته از ثبت‌نام یا ورود به کمپین"
+
+msgid "Churn or conversion occurred"
+msgstr "ریزش یا تبدیل رخ داده است"
+
+msgid "The user remained active without the event at the cutoff"
+msgstr "کاربر تا پایان بازه فعال ماند و رویداد رخ نداد"
+
+msgid "Operations record"
+msgstr "سابقهٔ عملیات"
+
+msgid "Hours since a repair, order, or case opened"
+msgstr "ساعت‌های گذشته از شروع تعمیر، سفارش یا پرونده"
+
+msgid "The process completed"
+msgstr "فرایند کامل شده است"
+
+msgid "The process was still open when data collection ended"
+msgstr "هنگام پایان جمع‌آوری داده، فرایند هنوز باز بوده است"
+
+msgid "For fraud detection or cybersecurity, the time-to-event CSV may fit questions such as time until an alert, but it is not a general fraud-data format. The lower-level distribution tools can also compare a transaction amount, time gap, or latency with an already specified reference distribution. Such a value is one input to a separately tested detection system, not a fraud decision by itself."
+msgstr "در کشف تقلب یا امنیت سایبری، فایل زمان تا رویداد می‌تواند برای پرسشی مانند «زمان تا نخستین هشدار» مناسب باشد، اما قالب عمومی داده‌های تقلب نیست. ابزارهای توزیعیِ سطح پایین می‌توانند مبلغ تراکنش، فاصلهٔ زمانی یا زمان پاسخ را با یک توزیع مرجع که پارامترهایش از قبل مشخص شده مقایسه کنند. نتیجهٔ این محاسبه فقط یکی از ورودی‌های یک سامانهٔ تشخیص جداگانه و آزموده‌شده است و به‌تنهایی تصمیم تقلب نیست."

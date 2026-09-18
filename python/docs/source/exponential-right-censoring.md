@@ -32,6 +32,20 @@ A lifetime row has two fields:
 
 For example, a row `1,1` means the event happened at time 1. A row `1,0` means the unit was observed until time 1 and was still alive, working, or event-free at that point. That second row is still useful: it tells the model the lifetime is longer than 1. This is independent right censoring.
 
+### The same two rows in other fields
+
+“Lifetime” here means time until a defined event. The calculation is unchanged when the subject and event change, but the scientific meaning and assumptions must be checked again.
+
+| Example field | Event row | Still-event-free row |
+| --- | --- | --- |
+| Manufacturing example | A component failed at the recorded hour | It was still operating at the inspection cutoff |
+| Health-research example | Relapse or readmission occurred on the recorded day | It had not occurred by the last follow-up |
+| Credit and insurance example | Default or a first claim occurred in the recorded month | It had not occurred by the study end |
+| Digital-product example | Churn or conversion occurred on the recorded day | The user was still active without the event at the cutoff |
+| Operations example | A repair, delivery, or service case completed | The case was still open when observation ended |
+
+Fraud and cybersecurity data can also contain event times, such as time until the first alert. A different use is to compare transaction amounts or time gaps with a reference distribution to produce an anomaly signal. This tutorial implements only the first kind of data: one time and one event indicator per row. It does not implement a complete fraud detector.
+
 ## Run the example
 
 The schema declaration below names the only accepted header pair and keeps machine-readable identifiers left to right.

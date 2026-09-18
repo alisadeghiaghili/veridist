@@ -3,6 +3,10 @@
 
 Evidence-first, deliberately narrow distribution primitives.
 
+## Applications across fields
+
+The same distribution tools can support reliability, survival research, credit and insurance, fraud and cybersecurity, operations, supply chains, digital products, and environmental risk when the data and assumptions match the documented contract. “Lifetime” can mean time until any defined event, such as failure, relapse, default, a first claim, churn, or process completion. Scalar distribution calculations can also contribute signals for anomaly detection, but Veridist does not replace domain validation or provide an end-to-end fraud detector.
+
 ## First CSV vertical
 
 The first public vertical fits a fixed-location exponential lifetime model from

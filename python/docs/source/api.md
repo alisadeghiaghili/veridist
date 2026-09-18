@@ -5,6 +5,20 @@
 
 This guide explains the current public API in Veridist. For fitting an exponential distribution<sup id="fnref-fitting"><a href="#fn-fitting">1</a></sup> to lifetime data, the usual path is to pass one CSV file to the main function and read the returned result. If a calculation is long and may be interrupted, you can save progress and continue later. Scalar tools<sup id="fnref-scalar"><a href="#fn-scalar">2</a></sup> and data streams managed by the caller<sup id="fnref-caller"><a href="#fn-caller">3</a></sup> are also available for more technical use.
 
+## Use the same event-time contract in different fields
+
+The two CSV columns describe a general time-to-event record. `time` says how long the item was observed. `event_observed` says whether the chosen event happened during that time. The code does not decide what the event means; your analysis must define it consistently.
+
+| Application field | What `time` can mean | What event `1` can mean | What event `0` can mean |
+| --- | --- | --- | --- |
+| Reliability record | Hours a component was observed | The component failed | It was still operating when observation ended |
+| Health-research record | Days a participant was followed | The defined health event occurred | The event had not occurred by the last follow-up |
+| Credit or insurance record | Months an account or policy was followed | Default or the first claim occurred | No such event had occurred by the study end |
+| Digital-product record | Days since signup or campaign entry | Churn or conversion occurred | The user remained active without the event at the cutoff |
+| Operations record | Hours since a repair, order, or case opened | The process completed | The process was still open when data collection ended |
+
+For fraud detection or cybersecurity, the time-to-event CSV may fit questions such as time until an alert, but it is not a general fraud-data format. The lower-level distribution tools can also compare a transaction amount, time gap, or latency with an already specified reference distribution. Such a value is one input to a separately tested detection system, not a fraud decision by itself.
+
 ## Choose an execution path
 
 <table width="100%">

@@ -2,6 +2,13 @@
 
 Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
 
+## Was diese Grenzen in häufigen Anwendungen bedeuten
+
+- Teams für Zuverlässigkeit, Gesundheit, Kredit, Versicherung, digitale Produkte und Betrieb können ein klar definiertes Time-to-Event-Ergebnis modellieren, wenn die dokumentierten Annahmen gelten. Die aktuellen Modelle passen dieses Ergebnis nicht an Kunden-, Patienten-, Maschinen- oder Umweltmerkmale an.
+- Betrugs- und Cybersicherheitsteams können unterstützte skalare Verteilungsberechnungen verwenden, um unter einem bereits festgelegten Referenzmodell ein Signal zu erzeugen. Veridist trainiert keinen Klassifikator, wählt keine Alarmschwelle, verarbeitet keine Feedback-Labels und stellt keinen Adapter für produktive Ereignisströme bereit.
+- Teams aus Finanzen, Versicherung, Fertigung und Lieferketten sollten nicht annehmen, dass jede registrierte Familie eine Fit-API hat. Skalare Berechnungen benötigen eine Familie und Parameter, die separat begründet wurden, sofern kein dokumentierter Fit-Pfad existiert.
+- In jedem Bereich benötigt die Modellausgabe weiterhin fachliche Validierung, angemessene Stichproben, eine Analyse der Entscheidungskosten und alle erforderlichen rechtlichen, klinischen, sicherheitsbezogenen oder regulatorischen Prüfungen.
+
 - `FIT-CSV-EXP`: Der strikte CSV-Pfad passt nur ein Exponentialmodell mit
   festem Ort und Rate für exakte und unabhängig rechtszensierte Lebensdauern
   an. Weibull-Minimum und Lognormal sind über typisierte Lebensdauerobjekte,

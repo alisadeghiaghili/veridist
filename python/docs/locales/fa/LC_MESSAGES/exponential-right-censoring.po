@@ -289,3 +289,66 @@ msgstr "اصطلاحات این آموزش"
 #~ " منطقی payload نگه‌داشته‌شده است؛ سقف "
 #~ "قابل‌حمل حافظهٔ فرایند یا RSS نیست "
 #~ "و ادعای سرعت اجرا هم نیست."
+
+msgid "The same two rows in other fields"
+msgstr "همین دو نوع سطر در حوزه‌های دیگر"
+
+msgid "“Lifetime” here means time until a defined event. The calculation is unchanged when the subject and event change, but the scientific meaning and assumptions must be checked again."
+msgstr "«طول عمر» در اینجا یعنی زمان تا یک رویداد تعریف‌شده. با تغییر موضوع و رویداد، فرمول محاسبه عوض نمی‌شود؛ اما معنای علمی و فرض‌های آن باید دوباره بررسی شوند."
+
+msgid "Example field"
+msgstr "حوزهٔ مثال"
+
+msgid "Event row"
+msgstr "سطر دارای رویداد"
+
+msgid "Still-event-free row"
+msgstr "سطرِ هنوز بدون رویداد"
+
+msgid "Manufacturing example"
+msgstr "مثال تولید"
+
+msgid "A component failed at the recorded hour"
+msgstr "قطعه در ساعت ثبت‌شده خراب شد"
+
+msgid "It was still operating at the inspection cutoff"
+msgstr "قطعه تا پایان بازرسی هنوز کار می‌کرد"
+
+msgid "Health-research example"
+msgstr "مثال پژوهش سلامت"
+
+msgid "Relapse or readmission occurred on the recorded day"
+msgstr "عود بیماری یا بستری دوباره در روز ثبت‌شده رخ داد"
+
+msgid "It had not occurred by the last follow-up"
+msgstr "تا آخرین پیگیری این رخداد دیده نشد"
+
+msgid "Credit and insurance example"
+msgstr "مثال اعتبار و بیمه"
+
+msgid "Default or a first claim occurred in the recorded month"
+msgstr "نکول یا نخستین خسارت در ماه ثبت‌شده رخ داد"
+
+msgid "It had not occurred by the study end"
+msgstr "تا پایان بررسی چنین رخدادی ثبت نشد"
+
+msgid "Digital-product example"
+msgstr "مثال محصول دیجیتال"
+
+msgid "Churn or conversion occurred on the recorded day"
+msgstr "ریزش یا تبدیل در روز ثبت‌شده رخ داد"
+
+msgid "The user was still active without the event at the cutoff"
+msgstr "کاربر تا پایان بازه فعال و بدون رویداد بود"
+
+msgid "Operations example"
+msgstr "مثال عملیات"
+
+msgid "A repair, delivery, or service case completed"
+msgstr "تعمیر، تحویل یا پروندهٔ خدمت کامل شد"
+
+msgid "The case was still open when observation ended"
+msgstr "هنگام پایان مشاهده، پرونده هنوز باز بود"
+
+msgid "Fraud and cybersecurity data can also contain event times, such as time until the first alert. A different use is to compare transaction amounts or time gaps with a reference distribution to produce an anomaly signal. This tutorial implements only the first kind of data: one time and one event indicator per row. It does not implement a complete fraud detector."
+msgstr "داده‌های تقلب و امنیت سایبری هم ممکن است زمان یک رویداد، مانند زمان تا نخستین هشدار، را داشته باشند. کاربرد متفاوت دیگر، مقایسهٔ مبلغ تراکنش یا فاصلهٔ زمانی با یک توزیع مرجع و ساختن نشانهٔ ناهنجاری است. این آموزش فقط حالت اول را پیاده می‌کند: یک زمان و یک نشانگر رخداد در هر سطر. این آموزش سامانهٔ کامل کشف تقلب نمی‌سازد."

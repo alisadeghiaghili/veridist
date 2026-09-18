@@ -82,3 +82,75 @@ msgstr "`LLR-06` bewahrt einen historischen Snapshot generierter Ströme für di
 
 msgid "This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."
 msgstr "Diese Evidenz ist auf den getesteten skalaren Normalstrom und den exakten Reduzierer beschränkt. Sie belegt weder Anpassung, Inferenz, Anpassungsgüte, Ranking, Arrays, Zensierung, allgemeine Out-of-Core-Verarbeitung, Durchsatz, Grenzen für Prozessspeicher/RSS, einen anderen Datenadapter noch plattformübergreifende Leistung."
+
+msgid "Where these calculations can help"
+msgstr "Wo diese Berechnungen helfen können"
+
+msgid "These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters and they do not turn a low-density value into a business decision."
+msgstr "Diese Werkzeuge beantworten eine enge Frage: Wie vereinbar ist ein einzelner Wert oder eine Sammlung von Werten mit einer angegebenen Familie und einem Parametersatz? Sie schätzen diese Parameter nicht und machen aus einem Wert mit niedriger Dichte keine Geschäftsentscheidung."
+
+msgid "Application area"
+msgstr "Anwendungsbereich"
+
+msgid "Example value"
+msgstr "Beispielwert"
+
+msgid "Defensible use of this API"
+msgstr "Vertretbare Verwendung dieser API"
+
+msgid "Finance and insurance example"
+msgstr "Beispiel aus Finanzen und Versicherung"
+
+msgid "A return, loss amount, or claim size"
+msgstr "Eine Rendite, ein Verlustbetrag oder eine Schadenhöhe"
+
+msgid "Evaluate log density under an already justified reference model or combine log likelihood across chunks."
+msgstr "Log-Dichte unter einem bereits begründeten Referenzmodell auswerten oder Log-Likelihood über Datenabschnitte zusammenführen."
+
+msgid "Fraud and cybersecurity example"
+msgstr "Beispiel aus Betrugserkennung und Cybersicherheit"
+
+msgid "A transaction amount, time gap, or login latency"
+msgstr "Ein Transaktionsbetrag, Zeitabstand oder eine Anmeldelatenz"
+
+msgid "Produce one anomaly signal under a reference model; low density is not itself a probability of fraud."
+msgstr "Ein Anomaliesignal unter einem Referenzmodell erzeugen; niedrige Dichte ist für sich keine Betrugswahrscheinlichkeit."
+
+msgid "Manufacturing-quality example"
+msgstr "Beispiel aus der Fertigungsqualität"
+
+msgid "A dimension, load, or cycle measurement"
+msgstr "Eine Maß-, Last- oder Zyklusmessung"
+
+msgid "Compare measurements with a validated process model and identify values that need review."
+msgstr "Messungen mit einem validierten Prozessmodell vergleichen und prüfbedürftige Werte erkennen."
+
+msgid "Operations and supply-chain example"
+msgstr "Beispiel aus Betrieb und Lieferketten"
+
+msgid "A delivery, repair, waiting, or service duration"
+msgstr "Eine Liefer-, Reparatur-, Warte- oder Servicedauer"
+
+msgid "Accumulate likelihood for a specified duration model without keeping every value in one array."
+msgstr "Likelihood für ein angegebenes Dauermodell sammeln, ohne jeden Wert in einem Array zu halten."
+
+msgid "Environmental-risk example"
+msgstr "Beispiel aus Umwelt- und Risikoanalyse"
+
+msgid "A high load, loss, or extreme measurement"
+msgstr "Eine hohe Last, ein Verlust oder eine Extremwertmessung"
+
+msgid "Evaluate the right-Gumbel log density when that family and its parameters have been justified independently."
+msgstr "Die Rechts-Gumbel-Log-Dichte auswerten, wenn diese Familie und ihre Parameter unabhängig begründet wurden."
+
+msgid "Machine-learning example"
+msgstr "Machine-Learning-Beispiel"
+
+msgid "A distribution-based feature"
+msgstr "Ein verteilungsbasiertes Merkmal"
+
+msgid "Supply a model feature only when its parameters are estimated without future or test-set information."
+msgstr "Ein Modellmerkmal nur bereitstellen, wenn seine Parameter ohne Informationen aus Zukunft oder Testdaten geschätzt wurden."
+
+msgid "Different fields have different sampling rules, costs, thresholds, and regulatory requirements. Validate the reference model and the downstream decision process in the field where they will be used."
+msgstr "Verschiedene Bereiche haben unterschiedliche Stichprobenregeln, Kosten, Schwellen und regulatorische Anforderungen. Validieren Sie Referenzmodell und nachgelagerten Entscheidungsprozess in dem Bereich, in dem sie eingesetzt werden."

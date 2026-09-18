@@ -330,3 +330,84 @@ msgstr ""
 #: ../../source/api.md:119 ab2b8eec86f64214a7f87767f90d5f80
 msgid "Terms Used On This Page"
 msgstr "Begriffe auf dieser Seite"
+
+msgid "Use the same event-time contract in different fields"
+msgstr "Denselben Zeit-Ereignis-Vertrag in verschiedenen Bereichen verwenden"
+
+msgid "The two CSV columns describe a general time-to-event record. `time` says how long the item was observed. `event_observed` says whether the chosen event happened during that time. The code does not decide what the event means; your analysis must define it consistently."
+msgstr "Die beiden CSV-Spalten beschreiben einen allgemeinen Time-to-Event-Datensatz. `time` gibt an, wie lange das Element beobachtet wurde. `event_observed` gibt an, ob das gewählte Ereignis in dieser Zeit eingetreten ist. Der Code entscheidet nicht, was das Ereignis bedeutet; Ihre Analyse muss es einheitlich definieren."
+
+msgid "Application field"
+msgstr "Anwendungsbereich"
+
+msgid "What `time` can mean"
+msgstr "Mögliche Bedeutung von `time`"
+
+msgid "What event `1` can mean"
+msgstr "Mögliche Bedeutung von Ereignis `1`"
+
+msgid "What event `0` can mean"
+msgstr "Mögliche Bedeutung von Ereignis `0`"
+
+msgid "Reliability record"
+msgstr "Zuverlässigkeitsdatensatz"
+
+msgid "Hours a component was observed"
+msgstr "Beobachtungsstunden eines Bauteils"
+
+msgid "The component failed"
+msgstr "Das Bauteil fiel aus"
+
+msgid "It was still operating when observation ended"
+msgstr "Es funktionierte am Beobachtungsende noch"
+
+msgid "Health-research record"
+msgstr "Datensatz der Gesundheitsforschung"
+
+msgid "Days a participant was followed"
+msgstr "Tage der Nachbeobachtung einer Person"
+
+msgid "The defined health event occurred"
+msgstr "Das definierte Gesundheitsereignis trat ein"
+
+msgid "The event had not occurred by the last follow-up"
+msgstr "Bis zur letzten Nachbeobachtung trat es nicht ein"
+
+msgid "Credit or insurance record"
+msgstr "Kredit- oder Versicherungsdatensatz"
+
+msgid "Months an account or policy was followed"
+msgstr "Monate der Beobachtung eines Kontos oder einer Police"
+
+msgid "Default or the first claim occurred"
+msgstr "Ausfall oder erster Schaden trat ein"
+
+msgid "No such event had occurred by the study end"
+msgstr "Bis zum Studienende trat kein solches Ereignis ein"
+
+msgid "Digital-product record"
+msgstr "Datensatz eines digitalen Produkts"
+
+msgid "Days since signup or campaign entry"
+msgstr "Tage seit Registrierung oder Kampagneneintritt"
+
+msgid "Churn or conversion occurred"
+msgstr "Abwanderung oder Konversion trat ein"
+
+msgid "The user remained active without the event at the cutoff"
+msgstr "Der Nutzer blieb bis zum Stichtag ohne Ereignis aktiv"
+
+msgid "Operations record"
+msgstr "Betriebsdatensatz"
+
+msgid "Hours since a repair, order, or case opened"
+msgstr "Stunden seit Eröffnung einer Reparatur, Bestellung oder eines Falls"
+
+msgid "The process completed"
+msgstr "Der Vorgang wurde abgeschlossen"
+
+msgid "The process was still open when data collection ended"
+msgstr "Der Vorgang war am Ende der Datenerhebung noch offen"
+
+msgid "For fraud detection or cybersecurity, the time-to-event CSV may fit questions such as time until an alert, but it is not a general fraud-data format. The lower-level distribution tools can also compare a transaction amount, time gap, or latency with an already specified reference distribution. Such a value is one input to a separately tested detection system, not a fraud decision by itself."
+msgstr "Für Betrugserkennung oder Cybersicherheit kann die Time-to-Event-CSV zu Fragen wie der Zeit bis zu einem Alarm passen, ist aber kein allgemeines Betrugsdatenformat. Die grundlegenden Verteilungswerkzeuge können außerdem einen Transaktionsbetrag, Zeitabstand oder eine Latenz mit einer bereits festgelegten Referenzverteilung vergleichen. Ein solcher Wert ist ein Eingangssignal für ein separat getestetes Erkennungssystem, keine Betrugsentscheidung für sich allein."

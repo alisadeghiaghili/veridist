@@ -113,6 +113,21 @@ A reference distribution can support **anomaly detection** and **distribution dr
 
 Distribution-derived parameters, quantiles, and threshold-exceedance probabilities can later become features for deep-learning models. Evaluate those features separately and estimate them without future or test-set information to avoid leakage.
 
+## Where the same ideas can help
+
+In statistics, a “lifetime” can mean the time until any clearly defined event, not only the life of a machine. The event, time unit, population, and reason observation ended must be defined before fitting.
+
+| Field | Example question | How Veridist can contribute today |
+| --- | --- | --- |
+| Reliability and manufacturing | How long until a pump, bearing, battery, or component fails? | Fit supported lifetime models while retaining units that were still operating when observation ended. |
+| Health and survival research | How long until relapse, readmission, or another recorded event? | Analyse exact and independently right-censored times with the supported lifetime models; clinical interpretation and covariate adjustment remain outside the current package. |
+| Credit and insurance | How long until default, early repayment, or the first claim? | Represent customers with no event by the study end as right-censored observations and fit a supported time-to-event model. |
+| Fraud detection and cybersecurity | Is a transaction amount, time gap, or login latency unusual relative to a defensible reference distribution? | Use scalar log density, tail probability, or a quantile as one signal in a separately validated detection system. Veridist is not an end-to-end fraud classifier. |
+| Operations and supply chains | What delivery, repair, waiting, or service time should we expect? | Describe positive durations with a supported model and calculate probabilities or quantiles when the required family and parameters are available. |
+| Digital products and customer analytics | How long until churn, conversion, or another product event? | Treat users who remain active at the observation cutoff as right-censored, provided the censoring assumption is defensible. |
+
+These examples share statistical structure, not identical business meaning. Domain validation, sampling design, costs, decision thresholds, and legal or safety requirements remain part of the application.
+
 ## When you do not know the distribution
 
 Distribution fitting can mean fitting several candidate models, estimating their parameters, and comparing how well they describe the observations. A multi-model workflow can return ranked candidates with evaluation measures. The best-ranked candidate is not necessarily the true data-generating distribution, and none may be adequate.

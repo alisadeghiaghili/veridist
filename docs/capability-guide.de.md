@@ -4,9 +4,21 @@
 
 Dieser Leitfaden beschreibt die praktische Grenze von **Veridist 1.0.1**: welche Daten das Paket annimmt, welches Ergebnis es liefert und wo die Unterstützung endet. Eine Funktion ist nur unter den genannten Daten- und Ausführungsbedingungen unterstützt.
 
-## Ich möchte die Lebensdauer von Geräten analysieren
+## Ich möchte die Zeit bis zu einem Ereignis analysieren
 
-Veridist passt eine statistische Verteilung an beobachtete Lebensdauern an. **Exponential-MLE**, **Weibull-Minimum-MLE** und **Lognormal-MLE** sind mit fester Lage `loc=0` für exakte und unabhängige Rechtszensierung verfügbar. Der strikte UTF-8-CSV-Weg ist enger: Er passt nur das ratenbasierte Exponentialmodell an.
+Lebensdaueranalyse ist nicht auf Geräte beschränkt. Dieselbe Datenstruktur kann die Zeit bis zu Ausfall, Rückfall, Kreditausfall, erstem Versicherungsschaden, Kundenabwanderung, Konversion oder einem anderen klar definierten Ereignis beschreiben. Ein Datensatz ist rechtszensiert, wenn das Ereignis bis zum Beobachtungsstichtag nicht eingetreten ist.
+
+| Bereich | Beispiel für ein exaktes Ereignis | Beispiel für Rechtszensierung |
+| --- | --- | --- |
+| Zuverlässigkeit und Fertigung | Ein Lager fiel nach 400 Stunden aus | Das Lager funktionierte nach 400 Stunden noch |
+| Gesundheit und Überlebenszeitanalyse | Eine Wiederaufnahme erfolgte nach 30 Tagen | Bis Tag 30 war keine Wiederaufnahme erfolgt |
+| Kredit und Versicherung | Ein Ausfall oder erster Schaden trat während der Nachbeobachtung ein | Bis zum Studienende trat kein Ausfall oder Schaden ein |
+| Digitale Produkte | Ein Kunde wanderte ab oder konvertierte | Der Kunde blieb bis zum Stichtag ohne Ereignis aktiv |
+| Betrieb | Eine Reparatur, Lieferung oder Dienstleistung wurde abgeschlossen | Der Vorgang war am Ende der Datenerhebung noch offen |
+
+Veridist passt eine statistische Verteilung an diese beobachteten Zeiten an, wenn die aktuellen Modellannahmen und der Eingabevertrag gelten. **Exponential-MLE**, **Weibull-Minimum-MLE** und **Lognormal-MLE** sind mit fester Lage `loc=0` für exakte und unabhängige Rechtszensierung verfügbar. Der UTF-8-CSV-Workflow ist bewusst enger: Er passt das ratenbasierte Exponentialmodell aus einem dokumentierten Zweispaltenformat an.
+
+Betrugserkennung und Cybersicherheit stellen häufig eine andere Frage: Ist ein Betrag, Zeitabstand oder eine Latenz unter einer Referenzverteilung ungewöhnlich? Veridist kann für unterstützte Familien skalare Log-Dichte, Randwahrscheinlichkeit und Quantile berechnen, wenn vertretbare Parameter bereits vorliegen. Diese Werte können Signale in einem separat validierten Detektor sein; das Paket trainiert oder betreibt keinen vollständigen Betrugsklassifikator.
 
 | Modell | Beschriebenes Verhalten | Eingabe |
 | --- | --- | --- |

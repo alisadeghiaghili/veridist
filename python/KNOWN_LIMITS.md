@@ -2,6 +2,13 @@
 
 This document defines the 1.0 release boundary for package version `1.0.1`.
 
+## What these limits mean in common applications
+
+- Reliability, health, credit, insurance, digital-product, and operations teams can model one clearly defined time-to-event outcome when the documented assumptions apply. The current models do not adjust that outcome for customer, patient, machine, or environmental characteristics.
+- Fraud and cybersecurity teams can use supported scalar distribution calculations to create a signal under an already specified reference model. Veridist does not train a classifier, select an alert threshold, process feedback labels, or supply a production event-stream adapter.
+- Finance, insurance, manufacturing, and supply-chain teams should not assume every registered family has a fitting API. Scalar calculations require a family and parameters that were justified separately unless a documented fitting path exists.
+- In every field, model output still needs domain validation, appropriate sampling, decision-cost analysis, and any required legal, clinical, safety, or regulatory review.
+
 - `FIT-CSV-EXP`: the strict CSV path fits only a fixed-location, rate-only
   exponential model over exact and independently right-censored lifetimes.
   Weibull-minimum and lognormal fits are callable over typed lifetime objects,
