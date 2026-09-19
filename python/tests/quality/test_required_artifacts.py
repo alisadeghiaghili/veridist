@@ -87,7 +87,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
         }
         required_topics = {
             "en": (
-                "lifetime of equipment",
+                "time until an event",
                 "right-censoring",
                 "What result do I get?",
                 "large or a run is interrupted",
@@ -96,7 +96,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
                 "Technical details",
             ),
             "fa": (
-                "عمر دستگاه‌ها",
+                "زمان تا وقوع یک رویداد",
                 "سانسورشده از راست",
                 "چه نتیجه‌ای می‌گیرم؟",
                 "داده زیاد باشد یا برنامه قطع شود",
@@ -105,7 +105,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
                 "جزئیات فنی",
             ),
             "de": (
-                "Lebensdauer von Geräten",
+                "Zeit bis zu einem Ereignis",
                 "Rechtszensierung",
                 "Welches Ergebnis erhalte ich?",
                 "großen Daten oder einer Unterbrechung",
