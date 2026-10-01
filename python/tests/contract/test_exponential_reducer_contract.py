@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 import hashlib
+import sys
 import tempfile
 import tracemalloc
 import unittest
 from dataclasses import FrozenInstanceError, replace
 from decimal import Decimal
-from math import isclose
+from math import isclose, isfinite
 from pathlib import Path
 from unittest.mock import PropertyMock, patch
 
@@ -385,3 +386,38 @@ class ExponentialReducerContracts(unittest.TestCase):
         self.assertIsInstance(result, ExponentialFitFailure)
         assert isinstance(result, ExponentialFitFailure)
         self.assertIs(result.code, ExponentialFitFailureCode.NUMERICAL_OVERFLOW)
+
+    def test_exp15_tiny_total_time_overflows_the_rate_as_a_typed_non_estimate(self) -> None:
+        # events / total_time overflows to inf for a single, vanishingly small
+        # exact lifetime; this used to escape as a raw ValueError from the
+        # ExponentialFitSuccess constructor instead of a typed failure.
+        result = fit_exponential((ExactLifetime(1e-320),))
+        expected = ExponentialFitFailure(
+            code=ExponentialFitFailureCode.NUMERICAL_OVERFLOW,
+            observation_count=1,
+            event_count=1,
+            total_time=None,
+        )
+        self.assertEqual(result, expected)
+        self.assertEqual(
+            fit_exponential_reduction_state(ExponentialReductionState(1, 1, 1e-320, 0.0)),
+            expected,
+        )
+
+    def test_exp15_finite_rate_with_overflowing_inverse_is_a_typed_non_estimate(self) -> None:
+        # A single event accumulated against the largest representable total
+        # time yields a finite but subnormal rate whose reciprocal (the
+        # reported mean) overflows back out to inf.
+        rate = 1.0 / sys.float_info.max
+        self.assertTrue(isfinite(rate))
+        self.assertFalse(isfinite(1.0 / rate))
+        state = ExponentialReductionState(1, 1, sys.float_info.max, 0.0)
+        self.assertEqual(
+            fit_exponential_reduction_state(state),
+            ExponentialFitFailure(
+                code=ExponentialFitFailureCode.NUMERICAL_OVERFLOW,
+                observation_count=1,
+                event_count=1,
+                total_time=None,
+            ),
+        )

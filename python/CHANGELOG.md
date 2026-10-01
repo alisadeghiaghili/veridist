@@ -91,6 +91,17 @@ Veridist release record.
   from roughly 10.6s to roughly 0.02s on the reference machine; semantics
   are unchanged (verified against an independent reference within relative
   `1e-6`).
+- `fit_exponential` and `fit_exponential_csv` no longer raise a raw
+  `ValueError` for a sample whose rate estimate cannot be represented as a
+  finite number. A single vanishingly small exact lifetime (for example
+  `1e-320`) drives `events / total_time` past the top of `float` range, and
+  the resulting infinite rate used to escape the `ExponentialFitSuccess`
+  constructor as `ValueError: rate must be finite and positive` instead of a
+  typed outcome. `fit_exponential_reduction_state` now checks the rate, its
+  reciprocal, its logarithm, and the log-likelihood for finiteness before
+  constructing a success, and reports a typed `NUMERICAL_OVERFLOW` failure
+  instead; the CSV execution path already treats this as a complete run
+  carrying a non-estimate, not an execution failure.
 
 ### Added
 

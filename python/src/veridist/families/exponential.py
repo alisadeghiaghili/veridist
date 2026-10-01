@@ -233,13 +233,24 @@ def fit_exponential_reduction_state(state: ExponentialReductionState) -> Exponen
             ExponentialFitFailureCode.UNBOUNDED_LIKELIHOOD, count, events, total_time
         )
     rate = events / total_time
+    if not isfinite(rate) or rate <= 0.0:
+        return ExponentialFitFailure(
+            ExponentialFitFailureCode.NUMERICAL_OVERFLOW, count, events, None
+        )
+    mean = 1.0 / rate
+    log_rate = log(rate)
+    log_likelihood = events * log_rate - rate * total_time
+    if not isfinite(mean) or not isfinite(log_rate) or not isfinite(log_likelihood):
+        return ExponentialFitFailure(
+            ExponentialFitFailureCode.NUMERICAL_OVERFLOW, count, events, None
+        )
     return ExponentialFitSuccess(
         rate,
         count,
         events,
         total_time,
-        1.0 / rate,
-        events * log(rate) - rate * total_time,
+        mean,
+        log_likelihood,
         count - events,
         ExponentialFitProvenance(),
     )
