@@ -67,7 +67,7 @@
     "src/veridist/reporting/__init__.py": {"statements": 2, "branches": 0},
     "src/veridist/reporting/exponential.py": {"statements": 54, "branches": 12},
     "src/veridist/statistics/__init__.py": {"statements": 3, "branches": 0},
-    "src/veridist/statistics/distributions.py": {"statements": 176, "branches": 92},
+    "src/veridist/statistics/distributions.py": {"statements": 194, "branches": 102},
     "src/veridist/statistics/exponential.py": {"statements": 116, "branches": 54},
     "src/veridist/statistics/log_density.py": {"statements": 192, "branches": 46},
     "src/veridist/statistics/log_likelihood.py": {"statements": 181, "branches": 60}

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from importlib import import_module
-from math import erfc, exp, expm1, isfinite, lgamma, log, log1p, sqrt
+from math import copysign, erfc, exp, expm1, isfinite, lgamma, log, log1p, sqrt
 from typing import cast
 
 from veridist.families.registry import FAMILY_REGISTRY
@@ -45,39 +45,61 @@ def _finite_scalar(value: object) -> float:
     return numeric
 
 
-def _regularized_gamma(shape: float, value: float) -> float:
-    """Regularized lower incomplete gamma using the convergent series/CF split."""
+_GAMMA_FPMIN = 1e-300
+_GAMMA_EPS = 2e-16
+_GAMMA_MAXIT = 512
+
+
+def _regularized_gamma_pq(shape: float, value: float) -> tuple[float, float]:
+    """Return the regularized lower and upper incomplete gamma ratios ``(P, Q)``.
+
+    Uses the convergent power series for ``value < shape + 1`` and the
+    modified Lentz continued fraction otherwise. The continued fraction
+    evaluates ``Q`` directly and derives ``P = 1 - Q`` from it, which keeps
+    the right tail accurate where ``P`` alone would underflow to zero.  Its
+    intermediate terms ``c``/``d`` keep their natural sign when clamped away
+    from zero (clamping only the magnitude, as an earlier version did,
+    silently flips the sign of later terms and makes the result wrong).
+    """
 
     if value <= 0.0:
-        return 0.0
+        return 0.0, 1.0
     if value < shape + 1.0:
         term = 1.0 / shape
         total = term
         current = shape
-        for _ in range(512):
+        for _ in range(_GAMMA_MAXIT):
             current += 1.0
             term *= value / current
             total += term
-            if abs(term) <= abs(total) * 2e-16:  # pragma: no branch - iteration guard
+            if abs(term) <= abs(total) * _GAMMA_EPS:
                 break
-        return min(1.0, total * exp(-value + shape * log(value) - lgamma(shape)))
-    tiny = 1e-300
-    denominator = value + 1.0 - shape
-    continued = 1.0 / max(abs(denominator), tiny)
-    result = continued
-    for index in range(1, 512):
+        else:
+            raise ArithmeticError("gamma series expansion failed to converge")
+        lower = min(1.0, total * exp(-value + shape * log(value) - lgamma(shape)))
+        return lower, 1.0 - lower
+    b = value + 1.0 - shape
+    c = 1.0 / _GAMMA_FPMIN
+    d = 1.0 / b
+    h = d
+    for index in range(1, _GAMMA_MAXIT + 1):
         coefficient = -index * (index - shape)
-        denominator = coefficient * continued + value + 1.0 - shape + 2.0 * index
-        denominator = max(abs(denominator), tiny)
-        continued = 1.0 / denominator
-        numerator = value + 1.0 - shape + 2.0 * index + coefficient / max(abs(result), tiny)
-        numerator = max(abs(numerator), tiny)
-        delta = numerator * continued
-        result *= delta
-        if abs(delta - 1.0) <= 2e-16:  # pragma: no branch - iteration guard
+        b += 2.0
+        d = coefficient * d + b
+        if abs(d) < _GAMMA_FPMIN:
+            d = copysign(_GAMMA_FPMIN, d)
+        c = b + coefficient / c
+        if abs(c) < _GAMMA_FPMIN:
+            c = copysign(_GAMMA_FPMIN, c)
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) <= _GAMMA_EPS:
             break
-    upper = exp(-value + shape * log(value) - lgamma(shape)) * result
-    return max(0.0, min(1.0, 1.0 - upper))
+    else:
+        raise ArithmeticError("gamma continued fraction failed to converge")
+    upper = max(0.0, min(1.0, exp(-value + shape * log(value) - lgamma(shape)) * h))
+    return 1.0 - upper, upper
 
 
 def cdf(family: str, value: object, parameters: Mapping[str, object]) -> float:
@@ -90,7 +112,8 @@ def cdf(family: str, value: object, parameters: Mapping[str, object]) -> float:
     if family == "normal":
         return 0.5 * erfc(-(point - parameter["mu"]) / (parameter["sigma"] * _SQRT_TWO))
     if family == "gamma":
-        return _regularized_gamma(parameter["shape"], point / parameter["scale"])
+        lower, _ = _regularized_gamma_pq(parameter["shape"], point / parameter["scale"])
+        return lower
     if family == "weibull_min":
         if point <= 0.0:
             return 0.0
@@ -116,7 +139,8 @@ def sf(family: str, value: object, parameters: Mapping[str, object]) -> float:
     if family == "normal":
         return 0.5 * erfc((point - parameter["mu"]) / (parameter["sigma"] * _SQRT_TWO))
     if family == "gamma":
-        return 1.0 - _regularized_gamma(parameter["shape"], point / parameter["scale"])
+        _, upper = _regularized_gamma_pq(parameter["shape"], point / parameter["scale"])
+        return upper
     if family == "weibull_min":
         return 1.0 if point <= 0.0 else exp(-((point / parameter["scale"]) ** parameter["shape"]))
     if family == "lognormal":
@@ -185,28 +209,58 @@ def _normal_ppf(probability: float) -> float:
     return result
 
 
+_TINY_POSITIVE = 5e-324  # smallest positive (subnormal) built-in float
+
+
 def _inverse_by_bisection(
     family: str, probability: float, parameters: Mapping[str, object]
 ) -> float:
-    lower, upper = -1.0, 1.0
-    for _ in range(1024):
-        if cdf(family, lower, parameters) <= probability:  # pragma: no branch - gamma support
-            break
-        lower *= 2.0
-    else:  # pragma: no cover - finite distribution support guarantees a bracket
-        raise ArithmeticError("unable to bracket distribution quantile")
-    for _ in range(1024):
+    """Locate a quantile by bisection for families without a closed-form inverse.
+
+    The sole current caller is the gamma family, whose support is strictly
+    positive and whose CDF can climb from zero to its plateau across many
+    decades of ``x`` when the shape parameter is small. A fixed count of
+    equal-width (additive) halvings cannot resolve a root that may sit dozens
+    of orders of magnitude below one, so the bracket is refined multiplicatively
+    (bisecting the logarithm of ``x``, a relative-tolerance stop) instead.
+    """
+
+    if cdf(family, _TINY_POSITIVE, parameters) >= probability:
+        # No representable positive value is small enough to be closer to the
+        # true (unrepresentable) root than zero is; zero is the correctly
+        # rounded answer.
+        return 0.0
+    upper = 1.0
+    for _ in range(2048):
         if cdf(family, upper, parameters) >= probability:
             break
         upper *= 2.0
     else:  # pragma: no cover - finite distribution support guarantees a bracket
         raise ArithmeticError("unable to bracket distribution quantile")
-    for _ in range(120):
-        midpoint = (lower + upper) / 2.0
-        if cdf(family, midpoint, parameters) < probability:
-            lower = midpoint
-        else:
-            upper = midpoint
+    lower = _TINY_POSITIVE
+    # A fixed count of log-domain halvings, rather than an early relative-
+    # tolerance exit, reaches binary64 precision deterministically: the
+    # widest possible log-ratio between ``lower`` and ``upper`` here is a few
+    # thousand, and each step halves it, so 200 steps leave a residual
+    # log-width far below the ulp of any representable quantile.
+    if probability > 0.5:
+        # Bisecting on the survival function keeps upper-tail precision: the
+        # complementary probability stays representable in binary64 long
+        # after ``1 - cdf(midpoint)`` would have already underflowed to zero.
+        complement = 1.0 - probability
+        for _ in range(200):
+            midpoint = exp(0.5 * (log(lower) + log(upper)))
+            if sf(family, midpoint, parameters) > complement:
+                lower = midpoint
+            else:
+                upper = midpoint
+    else:
+        for _ in range(200):
+            midpoint = exp(0.5 * (log(lower) + log(upper)))
+            if cdf(family, midpoint, parameters) < probability:
+                lower = midpoint
+            else:
+                upper = midpoint
     return (lower + upper) / 2.0
 
 
