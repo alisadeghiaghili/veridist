@@ -17,6 +17,27 @@ Veridist release record.
 - Distinguished the static coverage requirement badge from live CI status and
   retained explicit citation, support, and conditional-license guidance.
 
+### Fixed
+
+- Corrected the gamma family's `cdf`/`sf`/`ppf` for the continued-fraction
+  branch (`x / scale >= shape + 1`), which a sign-destroying clamp
+  (`max(abs(...), tiny)`) on the modified Lentz recurrence's intermediate
+  terms made silently wrong. `_regularized_gamma` is replaced by
+  `_regularized_gamma_pq`, which returns `(P, Q)` directly from whichever
+  branch is numerically stable, so `sf` no longer computes `1 - P` and loses
+  the right tail to underflow. Both the series and continued-fraction loops
+  now raise `ArithmeticError` instead of returning silently if they exhaust
+  their iteration budget. The gamma quantile (`ppf`) bisects on `sf` for the
+  upper half and in log-space rather than over a fixed linear range, so it no
+  longer collapses to the search bound for small upper-tail probabilities.
+  Examples of the previous error, now corrected: `cdf("gamma", 6.5, {"shape":
+  5.0, "scale": 1.0})` returned `0.0` instead of `~0.77633`; `sf("gamma",
+  10.0, {"shape": 2.0, "scale": 1.0})` returned `9.08e-4` instead of
+  `~4.994e-4`; `sf("gamma", 50.0, {"shape": 2.0, "scale": 1.0})` returned
+  `0.0` instead of `~9.837e-21`; `ppf("gamma", 0.95, {"shape": 2.0, "scale":
+  1.0})` returned `~5.3696` instead of `~4.74386`. The gamma log-density
+  evaluator is unaffected; it does not share this code path.
+
 ## [1.0.1] - 2026-09-12
 
 ### Changed
