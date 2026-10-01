@@ -18,7 +18,10 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
 - `CSV-STRICT`: Der mitgelieferte Dateiadapter akzeptiert nur UTF-8-CSV mit
   exakt `time,event_observed`; `1` bezeichnet ein exaktes Ereignis und `0`
   unabhängige Rechtszensierung. Er ist kein allgemeiner CSV- oder
-  Tabellenkalkulationsleser.
+  Tabellenkalkulationsleser. Eine leere Zeile wird nur toleriert, wenn sie
+  das Letzte in der Datei ist (zum Beispiel eine abschließende Leerzeile,
+  die ein Editor oder eine Tabellenkalkulation angehängt hat); eine leere
+  Zeile an anderer Stelle bleibt ein `blank_record`-Fehler.
 - `SCALAR-FAMILIES`: Normal-, Gamma-, Weibull-Minimum-, Lognormal- und
   Rechts-Gumbel-Familien bieten skalare Log-Dichte-, CDF-, Survival-, Quantil-
   und Sampling-Operationen. Arrays, eine einheitliche Fit-API und Inferenz für

@@ -124,6 +124,12 @@ Veridist release record.
 - `ChunkEnvelope`, `DeliveryValidator`, and `DataSourceMetadata` now raise
   `TypeError` for a non-`str` id instead of letting `str.strip()` raise a
   bare `AttributeError`.
+- The strict CSV adapter no longer fails a whole run over a single trailing
+  blank record (for example a final `\r\n\r\n` an editor or spreadsheet
+  appended). A blank record is now tolerated only when it is the last thing
+  in the file; a blank record anywhere else, including one followed by
+  another data record, still fails with `SOURCE_ROW_INVALID`/`blank_record`
+  at that record's offset, exactly as before.
 
 ### Added
 
@@ -135,6 +141,15 @@ Veridist release record.
   `WeibullFitFailureCode.BOUNDARY_SOLUTION`, and
   `LognormalFitFailureCode.BOUNDARY_SOLUTION`: declared reasons for the
   previously-silent boundary and non-existence cases described above.
+- `CsvLifetimeLimits.default()`, returning `CsvLifetimeLimits(65_536,
+  65_536)`; its docstring states that the unit is CPython retained
+  object-graph bytes (as measured by `retained_object_graph_bytes`), not
+  file bytes.
+- `RefitMonteCarloGof.primary_statistic`, naming which requested
+  `GofStatistic` the reported standard error and interval actually describe.
+  Before this field, a caller requesting more than one statistic had no way
+  to tell which one `monte_carlo_standard_error`/`interval` referred to (it
+  was always the alphabetically first of the requested statistics).
 
 ### Deprecated
 
@@ -206,6 +221,34 @@ Veridist release record.
   scripts, and the mutation workflow file) is now enforced: a missing file
   previously was silently dropped from the expected set instead of failing
   the gate.
+- `CsvLifetimeAdapter`'s running byte tally no longer calls
+  `retained_object_graph_bytes` on every parsed observation. A
+  `ExactLifetime`/`RightCensoredLifetime` built from a `float` has a
+  retained-graph size that cannot depend on the float's value (asserted at
+  construction over a spread of sample values), so that size is now
+  measured once per observation *type* instead of two to three times per
+  row; the exact measurement is still taken at every chunk emission, and
+  every existing chunk-boundary and byte-limit test passes unchanged. The
+  conservative byte estimate used while a chunk is still being filled is
+  also now a tighter bound (still proven never to under-count), which cuts
+  down how often a near-boundary row needs a real rebuild-and-measure
+  check to confirm it. On a 200,000-row file (random exponential times
+  formatted `%.6f`, random `0`/`1` events, `CsvLifetimeLimits(32768,
+  32768)`), `fit_exponential_csv` went from roughly 33.9s (about 5.9k
+  rows/s) to roughly 6.9s (about 29.1k rows/s) on the reference machine.
+- `fit_exponential_csv`, `fit_exponential_checkpointed_csv`,
+  `create_checkpointed_csv_store`, and `CsvLifetimeAdapter` now accept
+  `str | os.PathLike[str]` for their path arguments, converting to `Path`
+  internally, instead of rejecting anything that is not already a
+  `pathlib.Path`. A non-path-like argument (for example an `int`) still
+  raises `TypeError`.
+- `compare_models`'s docstring now states that passing the adequacy gate is
+  not evidence that a candidate is an adequate model in any absolute sense,
+  and that every candidate's `aic` must come from the same data as every
+  other candidate's.
+- The Persian exponential report label for the fitted rate's reciprocal is
+  now "میانگین محاسبه‌شده" ("calculated mean"); the previous "میانگین
+  مشتق‌شده" ("derived mean") read as a direct, slightly awkward calque.
 
 ## [1.0.1] - 2026-09-12
 

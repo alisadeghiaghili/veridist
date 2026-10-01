@@ -17,7 +17,10 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
   remain unsupported.
 - `CSV-STRICT`: the bundled file adapter accepts only UTF-8 CSV with exactly
   `time,event_observed`, where `1` is an exact event and `0` is independent
-  right censoring. It is not a general CSV or spreadsheet reader.
+  right censoring. It is not a general CSV or spreadsheet reader. A blank
+  record is tolerated only when it is the last thing in the file (for
+  example a trailing blank line an editor or spreadsheet added); a blank
+  record anywhere else is still a `blank_record` failure.
 - `SCALAR-FAMILIES`: normal, gamma, Weibull-minimum, lognormal, and
   right-Gumbel expose scalar log-density, CDF, survival, quantile, and sampling
   operations. They do not expose array evaluation, a uniform fitting API, or

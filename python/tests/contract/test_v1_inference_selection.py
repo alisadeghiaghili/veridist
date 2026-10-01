@@ -33,6 +33,9 @@ class V1InferenceSelectionTests(unittest.TestCase):
         self.assertGreater(result.monte_carlo_standard_error, 0.0)
         self.assertEqual(result.method, "refit_monte_carlo")
         self.assertEqual(result.rng_policy, "caller_owned_generator")
+        # "AD" sorts before "CVM" and "KS", so it is the primary statistic
+        # whose p-value the standard error and interval above describe.
+        self.assertEqual(result.primary_statistic, GofStatistic.AD)
 
     def test_model_selection_returns_none_adequate(self) -> None:
         from veridist.inference import SelectionCode, compare_models
