@@ -384,25 +384,52 @@ class SQLiteCheckpointStore:
         *,
         timeout: float = 5.0,
     ) -> SQLiteCheckpointStore:
+        """Create a new store with the schema and initial row in one transaction.
+
+        `sqlite3.connect` brings the file into existence as a side effect of
+        opening it, before any statement runs. Since `path` was confirmed
+        absent above, this call is always the one that created that file, so
+        any failure past this point deletes it again: a failed create leaves
+        either no file, or a file holding a fully valid record. It never
+        leaves a file with the table created but no row, or no table at all.
+        """
+
         store = cls(path, timeout=timeout)
         payload, checksum = store._encode(initial)
         if store._path.exists():
             raise EngineContractError(FailureCode.CHECKPOINT_ALREADY_EXISTS)
+        created_file = False
         try:
             store._path.parent.mkdir(parents=True, exist_ok=True)
             with store._opened() as connection:
-                store._create_schema(connection)
-                connection.execute(
-                    "INSERT INTO checkpoint VALUES (1, ?, ?, ?, ?)",
-                    (initial.format_version, initial.generation, payload, checksum),
-                )
+                created_file = True
+                connection.execute("BEGIN IMMEDIATE")
+                try:
+                    store._create_schema(connection)
+                    connection.execute(
+                        "INSERT INTO checkpoint VALUES (1, ?, ?, ?, ?)",
+                        (initial.format_version, initial.generation, payload, checksum),
+                    )
+                    store._commit(connection)
+                except sqlite3.Error:
+                    try:
+                        connection.execute("ROLLBACK")
+                    except sqlite3.Error:
+                        pass
+                    raise
         except sqlite3.IntegrityError:
+            if created_file:
+                store._path.unlink(missing_ok=True)
             raise EngineContractError(FailureCode.CHECKPOINT_ALREADY_EXISTS) from None
         except sqlite3.OperationalError as error:
+            if created_file:
+                store._path.unlink(missing_ok=True)
             if "already exists" in str(error).casefold():
                 raise EngineContractError(FailureCode.CHECKPOINT_ALREADY_EXISTS) from None
             raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED) from None
         except OSError:
+            if created_file:
+                store._path.unlink(missing_ok=True)
             raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED) from None
         return store
 

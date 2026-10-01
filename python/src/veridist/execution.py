@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import secrets
+import warnings
 from collections.abc import Callable, Generator, Iterable
 from dataclasses import dataclass
 from pathlib import Path
@@ -17,7 +19,7 @@ from veridist.adapters.csv_lifetimes import (
     CsvLifetimeSchema,
 )
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
-from veridist.engine.checkpoint import CheckpointStore
+from veridist.engine.checkpoint import CheckpointRecord, CheckpointStore, SQLiteCheckpointStore
 from veridist.engine.data_source import DataSourceLike, ExecutionPlan, SpoolPolicy, plan_passes
 from veridist.engine.delivery import (
     AdapterKind,
@@ -25,7 +27,7 @@ from veridist.engine.delivery import (
     BufferedChunk,
     DeliveryValidator,
 )
-from veridist.engine.errors import EngineContractError
+from veridist.engine.errors import EngineContractError, FailureCode
 from veridist.engine.outcome import (
     CompleteOutcome,
     FailureStage,
@@ -54,14 +56,46 @@ from veridist.engine.provenance import (
     failure_record_from_error,
     snapshot_execution_observation,
 )
-from veridist.engine.retry import apply_pure_update
+from veridist.engine.resume import source_id_mismatch, source_schema_mismatch
+from veridist.engine.retry import _operation_digest, apply_pure_update
 from veridist.engine.streaming import iter_stream
 from veridist.families.exponential import (
     ExponentialFit,
     fit_exponential_chunks,
     fit_exponential_reduction_state,
 )
-from veridist.statistics.exponential import ExponentialCheckpointReducer
+from veridist.statistics.exponential import ExponentialCheckpointReducer, ExponentialReductionState
+
+#: Source schema recorded for every checkpointed CSV reduction. Also the
+#: literal value `tools/collect_v1_execution_evidence.py` uses for its own
+#: hand-built store, so the two stay contractually aligned.
+CHECKPOINTED_CSV_SOURCE_SCHEMA = "csv-lifetime-v1"
+
+#: Fixed, documented plan digest for stores built by
+#: `create_checkpointed_csv_store`. It identifies "the one checkpointed CSV
+#: exponential reduction plan" this module implements; it is not a hash of
+#: caller-supplied data and never needs to vary between stores.
+CHECKPOINTED_CSV_PLAN_DIGEST = "checkpointed-csv-exponential-v1"
+
+_FILE_HASH_BLOCK_BYTES = 1024 * 1024
+
+_LEGACY_CHECKPOINTED_CHUNK_WARNING = (
+    "passing bare bytes to fit_exponential_checkpointed_chunks is deprecated; "
+    "pass (row_start, payload) tuples so a replayed chunk can be detected"
+)
+
+
+def _hash_file_sha256(path: Path) -> str:
+    """Stream-hash a file with SHA-256 in bounded blocks; never load it whole."""
+
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        while True:
+            block = stream.read(_FILE_HASH_BLOCK_BYTES)
+            if not block:
+                break
+            digest.update(block)
+    return digest.hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -223,25 +257,95 @@ def fit_exponential_checkpointed_chunks(
     The caller owns acquisition and must provide a store initialized for the
     same source/reducer contract. Only one chunk is decoded at a time; the
     checkpoint contains sufficient statistics, never raw input rows.
+
+    Each chunk is either the offset form `(row_start, payload)` or, for
+    compatibility, bare `bytes`. Prefer the offset form: because its
+    `row_start` is caller-supplied rather than read from the live cursor, a
+    replay of an already-committed chunk is skipped as a safe no-op instead
+    of being double-counted, and a gap or partial overlap against the
+    checkpoint's cursor is rejected as `RANGE_MISMATCH`. The bare-bytes form
+    always derives `row_start` from the current cursor, so it cannot
+    recognize a replay in general; it emits `DeprecationWarning` once per
+    call and only ever recognizes one specific case -- the first chunk of
+    this call re-sending the single most recently committed chunk (the
+    common shape of a retry after a crash) -- by comparing against the
+    checkpoint's own recorded operation digest.
     """
 
     if not isinstance(chunks, Iterable):
         raise TypeError("chunks must be an iterable")
     reducer = ExponentialCheckpointReducer()
-    for payload in chunks:
-        if not isinstance(payload, bytes):
-            raise TypeError("checkpointed chunks must be bytes")
+    legacy_warned = False
+    for index, item in enumerate(chunks):
+        legacy: bool
+        if type(item) is tuple:
+            if (
+                len(item) != 2
+                or isinstance(item[0], bool)
+                or not isinstance(item[0], int)
+                or not isinstance(item[1], bytes)
+            ):
+                raise TypeError(
+                    "offset-form checkpointed chunks must be (row_start, payload)"
+                )
+            row_start, payload = cast(tuple[int, bytes], item)
+            legacy = False
+        elif isinstance(item, bytes):
+            payload = item
+            row_start = None
+            legacy = True
+        else:
+            raise TypeError("checkpointed chunks must be bytes or (row_start, payload)")
+
         rows = json.loads(payload.decode("utf-8"))
         if not isinstance(rows, list):
             raise ValueError("checkpointed chunk must be a JSON array")
+
         base = store.read()
-        row_start = base.cursor
-        row_stop = row_start + len(rows)
+        cursor = base.cursor
+        payload_sha256 = hashlib.sha256(payload).hexdigest()
+
+        if legacy:
+            if not legacy_warned:
+                warnings.warn(
+                    _LEGACY_CHECKPOINTED_CHUNK_WARNING, DeprecationWarning, stacklevel=2
+                )
+                legacy_warned = True
+            if index == 0 and len(rows) <= cursor:
+                candidate_start = cursor - len(rows)
+                candidate_stop = cursor
+                candidate_token = f"chunk-{candidate_start}-{candidate_stop}"
+                candidate_digest = _operation_digest(
+                    base,
+                    payload_sha256=payload_sha256,
+                    row_start=candidate_start,
+                    row_stop=candidate_stop,
+                    operation_token=candidate_token,
+                )
+                if candidate_digest == base.operation_digest:
+                    continue
+            row_start = cursor
+            row_stop = row_start + len(rows)
+        else:
+            assert row_start is not None
+            row_stop = row_start + len(rows)
+            if row_stop <= cursor:
+                continue
+            if row_start != cursor:
+                raise EngineContractError(
+                    FailureCode.RANGE_MISMATCH,
+                    {
+                        "checkpoint_cursor": cursor,
+                        "row_start": row_start,
+                        "row_stop": row_stop,
+                    },
+                )
+
         apply_pure_update(
             store=store,
             source_revision=source_revision,
             payload=payload,
-            payload_sha256=hashlib.sha256(payload).hexdigest(),
+            payload_sha256=payload_sha256,
             row_start=row_start,
             row_stop=row_stop,
             operation_token=f"chunk-{row_start}-{row_stop}",
@@ -268,6 +372,23 @@ def fit_exponential_checkpointed_csv(
     never submitted to the reducer again. Cancellation is observed before
     each row is added to a batch, and any preceding batch prefix is committed
     before the cancelled result is returned.
+
+    `source_revision` is a contract, not a free-form label: it must equal
+    the file's current SHA-256 digest (lowercase hex), stream-hashed in 1 MiB
+    blocks before any reducer call. A caller that reuses an old revision
+    string against a changed file, or a correct-looking revision that still
+    does not match the checkpoint's own recorded revision, gets
+    `SOURCE_REVISION_MISMATCH` rather than a silently mixed result. The
+    checkpoint's `source_id` and `source_schema` must likewise match
+    `source_id` and `CHECKPOINTED_CSV_SOURCE_SCHEMA`, or the call returns
+    `SOURCE_ID_MISMATCH` / `SOURCE_SCHEMA_MISMATCH` before touching the file.
+    `create_checkpointed_csv_store` builds a store that satisfies all of
+    this automatically.
+
+    Known limitation (TOCTOU): the file can still change between this hash
+    and the adapter's later parse of it. The adapter's own stat-identity
+    check covers that narrower parse-time window; this function does not
+    attempt to close it further.
     """
 
     if not isinstance(path, Path):
@@ -286,14 +407,24 @@ def fit_exponential_checkpointed_csv(
         # This check is deliberately before source acquisition and every
         # reducer call.  `apply_pure_update` repeats it at the CAS boundary.
         checkpoint = store.read()
-        if checkpoint.source_revision != source_revision:
-            return CheckpointedCsvFitResult("SOURCE_REVISION_MISMATCH", None)
         if not checkpoint.has_valid_checksum():
             return CheckpointedCsvFitResult("CHECKPOINT_CHECKSUM_MISMATCH", None)
+        if source_id_mismatch(checkpoint, source_id.value):
+            return CheckpointedCsvFitResult("SOURCE_ID_MISMATCH", None)
+        if source_schema_mismatch(checkpoint, CHECKPOINTED_CSV_SOURCE_SCHEMA):
+            return CheckpointedCsvFitResult("SOURCE_SCHEMA_MISMATCH", None)
         if checkpoint.reducer_id != reducer.reducer_id:
             return CheckpointedCsvFitResult("REDUCER_MISMATCH", None)
         if checkpoint.accumulator_schema != reducer.accumulator_schema:
             return CheckpointedCsvFitResult("ACCUMULATOR_SCHEMA_MISMATCH", None)
+        try:
+            file_revision = _hash_file_sha256(path)
+        except OSError:
+            return CheckpointedCsvFitResult("SOURCE_OPEN_FAILED", None)
+        if source_revision != file_revision:
+            return CheckpointedCsvFitResult("SOURCE_REVISION_MISMATCH", None)
+        if checkpoint.source_revision != source_revision:
+            return CheckpointedCsvFitResult("SOURCE_REVISION_MISMATCH", None)
 
         # The strict adapter's public logical-payload accounting has a fixed
         # object-graph overhead. Retain and checkpoint one bounded adapter
@@ -357,6 +488,45 @@ def fit_exponential_checkpointed_csv(
         return CheckpointedCsvFitResult(error.code.value, None)
 
 
+def create_checkpointed_csv_store(
+    store_path: str | os.PathLike[str],
+    *,
+    csv_path: Path,
+    source_id: PublicSourceId,
+) -> SQLiteCheckpointStore:
+    """Create a durable store contracted to one CSV file, source id and reducer.
+
+    The revision is the file's current SHA-256 digest, stream-hashed once
+    here; `fit_exponential_checkpointed_csv` re-hashes the file on every
+    call and rejects the resume with `SOURCE_REVISION_MISMATCH` if it no
+    longer matches. Callers no longer hand-write the checkpoint record
+    themselves.
+    """
+
+    if not isinstance(csv_path, Path):
+        raise TypeError("csv_path must be a pathlib.Path")
+    if type(source_id) is not PublicSourceId:
+        raise TypeError("source_id must be PublicSourceId")
+    revision = _hash_file_sha256(csv_path)
+    reducer = ExponentialCheckpointReducer()
+    record = CheckpointRecord.create(
+        format_version=1,
+        source_id=source_id.value,
+        source_schema=CHECKPOINTED_CSV_SOURCE_SCHEMA,
+        source_revision=revision,
+        reducer_id=reducer.reducer_id,
+        accumulator_schema=reducer.accumulator_schema,
+        plan_digest=CHECKPOINTED_CSV_PLAN_DIGEST,
+        cursor=0,
+        committed_ranges=(),
+        generation=0,
+        operation_token=None,
+        operation_digest=None,
+        state=reducer.encode_state(ExponentialReductionState.empty()),
+    )
+    return SQLiteCheckpointStore.create(store_path, record)
+
+
 def _provenance(
     adapter: CsvLifetimeAdapter,
     plan: ExecutionPlan,
@@ -404,8 +574,11 @@ def _exponential_settings_sha256() -> str:
 
 
 __all__ = [
+    "CHECKPOINTED_CSV_PLAN_DIGEST",
+    "CHECKPOINTED_CSV_SOURCE_SCHEMA",
     "CheckpointedCsvFitResult",
     "ExponentialSourceFitResult",
+    "create_checkpointed_csv_store",
     "fit_exponential_checkpointed_csv",
     "fit_exponential_checkpointed_chunks",
     "fit_exponential_csv",

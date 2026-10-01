@@ -116,13 +116,18 @@ def _write_fixture(path: Path, rows: int) -> tuple[str, int]:
     return digest, path.stat().st_size
 
 
-def _initial_store(path: Path, source_revision: str) -> SQLiteCheckpointStore:
+def _initial_store(
+    path: Path, source_revision: str, source_id: PublicSourceId
+) -> SQLiteCheckpointStore:
     state = (
         b'{"compensation":"0x0.0p+0","event_count":0,"observation_count":0,"total_time":"0x0.0p+0"}'
     )
     record = CheckpointRecord.create(
         format_version=1,
-        source_id="source",
+        # Must equal the PublicSourceId passed to fit_exponential_checkpointed_csv
+        # below (`_source_id(rows)`): the resumable CSV contract now rejects a
+        # checkpoint whose recorded source_id does not match the caller's.
+        source_id=source_id.value,
         source_schema="csv-lifetime-v1",
         source_revision=source_revision,
         reducer_id="exponential-reduction-v1",
@@ -179,7 +184,7 @@ def _run_scenario(
         interrupted_cursor = 0
         final_cursor = 0
         if scenario == "complete":
-            store = _initial_store(root / "complete.sqlite3", revision)
+            store = _initial_store(root / "complete.sqlite3", revision, _source_id(rows))
             attempt_count += 1
             result = fit_exponential_checkpointed_csv(
                 path=source,
@@ -195,7 +200,9 @@ def _run_scenario(
             cancellation_observed, retry_initial_code = False, None
         elif scenario == "retry_resume":
             if baseline_digest is None:
-                baseline_store = _initial_store(root / "baseline.sqlite3", revision)
+                baseline_store = _initial_store(
+                    root / "baseline.sqlite3", revision, _source_id(rows)
+                )
                 baseline = fit_exponential_checkpointed_csv(
                     path=source,
                     schema=_SCHEMA,
@@ -206,7 +213,7 @@ def _run_scenario(
                     cancel=None,
                 )
                 baseline_digest = _fit_digest(baseline)
-            store = _initial_store(root / "retry.sqlite3", revision)
+            store = _initial_store(root / "retry.sqlite3", revision, _source_id(rows))
             interrupt_at = max(1, rows // 2)
             attempt_count += 1
             interrupted = fit_exponential_checkpointed_csv(
@@ -235,7 +242,7 @@ def _run_scenario(
             final_cursor = store.read().cursor
             cancellation_observed, retry_initial_code = True, interrupted.code
         else:
-            store = _initial_store(root / "cancel.sqlite3", revision)
+            store = _initial_store(root / "cancel.sqlite3", revision, _source_id(rows))
             interrupt_at = max(1, rows // 2)
             attempt_count += 1
             result = fit_exponential_checkpointed_csv(

@@ -6,17 +6,6 @@ Veridist release record.
 
 ## [Unreleased]
 
-### Changed
-
-- Rebuilt the English, Persian, and German repository and package READMEs as
-  progressive tutorials, from distribution modelling to a runnable lifetime
-  analysis, result interpretation, supported APIs, and adoption guidance.
-- Explained distribution-derived machine-learning features, the distinction
-  between current fitting APIs and future multi-model ranking, and the planned
-  review and migration of 25 legacy distributions.
-- Distinguished the static coverage requirement badge from live CI status and
-  retained explicit citation, support, and conditional-license guidance.
-
 ### Fixed
 
 - Corrected the gamma family's `cdf`/`sf`/`ppf` for the continued-fraction
@@ -37,6 +26,51 @@ Veridist release record.
   `0.0` instead of `~9.837e-21`; `ppf("gamma", 0.95, {"shape": 2.0, "scale":
   1.0})` returned `~5.3696` instead of `~4.74386`. The gamma log-density
   evaluator is unaffected; it does not share this code path.
+- `fit_exponential_checkpointed_csv` no longer accepts a resume whose
+  `source_revision` is just a reused label: it must equal the CSV file's
+  current SHA-256 digest, stream-hashed before any row is read, and the
+  checkpoint's own `source_id` and `source_schema` must match the call's.
+  Resuming against a changed file with a stale revision string, or pairing
+  that stale revision with a different public source id, previously
+  advanced the checkpoint and silently mixed rows from two different files;
+  it now returns `SOURCE_REVISION_MISMATCH`, `SOURCE_ID_MISMATCH`, or
+  `SOURCE_SCHEMA_MISMATCH` before any reducer call.
+- `fit_exponential_checkpointed_chunks` no longer double-counts a replayed
+  chunk. `row_start` was always read from the live cursor, so resending an
+  already-committed chunk always looked like a new operation at a new
+  offset and its rows were counted twice; the offset form `(row_start,
+  payload)` now lets a replay be recognized and skipped instead of applied
+  again.
+- `SQLiteCheckpointStore.create` now creates its schema and initial row in a
+  single transaction instead of two separate autocommit statements. A crash
+  between the two previously could leave a store file that `read()` reported
+  as missing and a later `create()` rejected as already existing; a failed
+  `create()` now leaves either no file or a fully valid record.
+
+### Added
+
+- `veridist.execution.create_checkpointed_csv_store`, which builds a
+  checkpoint store already bound to one CSV file's current SHA-256 revision,
+  a public source id, and the exponential reducer contract, so callers no
+  longer hand-write the checkpoint record.
+
+### Deprecated
+
+- Passing bare `bytes` chunks to `fit_exponential_checkpointed_chunks` is
+  deprecated in favor of the offset form `(row_start, payload)`. The legacy
+  form still works but emits `DeprecationWarning`, and it can only recognize
+  a replay of the single most recently committed chunk.
+
+### Changed
+
+- Rebuilt the English, Persian, and German repository and package READMEs as
+  progressive tutorials, from distribution modelling to a runnable lifetime
+  analysis, result interpretation, supported APIs, and adoption guidance.
+- Explained distribution-derived machine-learning features, the distinction
+  between current fitting APIs and future multi-model ranking, and the planned
+  review and migration of 25 legacy distributions.
+- Distinguished the static coverage requirement badge from live CI status and
+  retained explicit citation, support, and conditional-license guidance.
 
 ## [1.0.1] - 2026-09-12
 

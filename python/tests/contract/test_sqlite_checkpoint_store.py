@@ -230,8 +230,9 @@ class SQLiteCheckpointStoreContractTests(unittest.TestCase):
                 with self.assertRaises(EngineContractError) as raced_schema:
                     SQLiteCheckpointStore.create(path, initial_record())
             self.assertIs(raced_schema.exception.code, FailureCode.CHECKPOINT_ALREADY_EXISTS)
-
-            path.unlink()
+            # create() rolls back and deletes its own partial file on failure, so
+            # the path is free again without an explicit cleanup step here.
+            self.assertFalse(path.exists())
             with patch.object(
                 SQLiteCheckpointStore,
                 "_create_schema",
@@ -261,6 +262,41 @@ class SQLiteCheckpointStoreContractTests(unittest.TestCase):
             with self.assertRaises(EngineContractError) as mismatch:
                 store.compare_and_swap(1, candidate)
             self.assertIs(mismatch.exception.code, FailureCode.CHECKPOINT_CONFLICT)
+            self.assertEqual(store.read(), initial_record())
+
+    def test_ckpt_sql04_create_is_atomic_across_schema_and_insert(self) -> None:
+        # sqlite3.Connection is an immutable C type: its `execute` cannot be
+        # patched directly. Wrap the real connection instead, so only the
+        # schema-creation half of create()'s transaction succeeds before the
+        # INSERT fails.
+        original_connect = SQLiteCheckpointStore._connect
+
+        class FailingConnection:
+            def __init__(self, real: sqlite3.Connection) -> None:
+                self._real = real
+
+            def execute(self, statement: str, *parameters: object) -> sqlite3.Cursor:
+                if statement.strip().upper().startswith("INSERT INTO CHECKPOINT"):
+                    raise sqlite3.OperationalError("simulated insert failure")
+                return self._real.execute(statement, *parameters)
+
+            def close(self) -> None:
+                self._real.close()
+
+        def failing_connect(self: SQLiteCheckpointStore) -> FailingConnection:
+            return FailingConnection(original_connect(self))
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "checkpoint.sqlite3"
+            with patch.object(SQLiteCheckpointStore, "_connect", failing_connect):
+                with self.assertRaises(EngineContractError) as failed:
+                    SQLiteCheckpointStore.create(path, initial_record())
+            self.assertIs(failed.exception.code, FailureCode.CHECKPOINT_STORAGE_FAILED)
+            # The schema-creation half of the transaction must not survive on
+            # its own: either nothing is left, or a fully valid record is.
+            self.assertFalse(path.exists())
+
+            store = SQLiteCheckpointStore.create(path, initial_record())
             self.assertEqual(store.read(), initial_record())
 
     def test_ckpt_sql05_reconciles_lost_commit_acknowledgement(self) -> None:
