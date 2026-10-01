@@ -118,6 +118,21 @@ class V1CensoringWeightTests(unittest.TestCase):
         self.assertAlmostEqual(point, 10.0, places=6)
         self.assertTrue(boundary)
 
+    def test_expand_bracket_stops_after_its_expansion_budget(self) -> None:
+        from unittest import mock
+
+        from veridist.families import _reliability
+
+        # With one expansion allowed, a monotonic objective is still on a bound
+        # after the single widening, far inside the hard limit; the search must
+        # stop and report a boundary solution instead of widening forever.
+        with mock.patch.object(_reliability, "_MAX_BRACKET_EXPANSIONS", 1):
+            point, _, boundary = _reliability.expand_bracket(
+                lambda x: x, lower=-1.0, upper=1.0, hard_lower=-1e6, hard_upper=1e6
+            )
+        self.assertTrue(boundary)
+        self.assertAlmostEqual(point, 1.0, delta=1e-6)
+
     def test_expand_bracket_rejects_hard_limits_that_do_not_contain_the_start(self) -> None:
         from veridist.families._reliability import expand_bracket
 

@@ -78,6 +78,11 @@ def bounded_maximize(
     return point, value, at_boundary
 
 
+# Each expansion at least doubles the bracket width, so this bound is far above
+# what any finite hard limit can require; it only guarantees termination.
+_MAX_BRACKET_EXPANSIONS = 64
+
+
 def expand_bracket(
     objective: Callable[[float], float],
     *,
@@ -104,7 +109,8 @@ def expand_bracket(
     ):
         raise ValueError("hard limits must contain and bound the starting bracket")
     current_lower, current_upper = lower, upper
-    while True:
+    point = value = 0.0
+    for _ in range(_MAX_BRACKET_EXPANSIONS):
         point, value, at_boundary = bounded_maximize(
             objective, lower=current_lower, upper=current_upper, steps=steps
         )
@@ -125,6 +131,7 @@ def expand_bracket(
         if not expanded:
             return point, value, True
         current_lower, current_upper = next_lower, next_upper
+    return point, value, True
 
 
 def positive_support(values: tuple[LifetimeObservation, ...]) -> bool:

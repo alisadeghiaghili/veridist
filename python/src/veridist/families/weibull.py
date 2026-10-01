@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
-from math import exp, isfinite, log
+from math import exp, fsum, isfinite, log
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
 from veridist.families._reliability import admitted_observations, expand_bracket, positive_support
@@ -122,7 +122,7 @@ def fit_weibull(
     # log-likelihood by a shape-independent constant), and the reported scale
     # and log-likelihood are converted back to the original units below.
     log_times = tuple(log(value.time) for value in values)
-    mean_log = sum(log_times) / count
+    mean_log = fsum(log_times) / count
     scaled_log_times = tuple(value - mean_log for value in log_times)
     scaled_event_logs = tuple(
         scaled
@@ -130,15 +130,17 @@ def fit_weibull(
         if type(value) is ExactLifetime
     )
 
+    sum_scaled_event_logs = fsum(scaled_event_logs)
+
     def at_shape(shape: float) -> tuple[float, float]:
         """Return `(scale, log_likelihood)` in the geometric-mean-scaled unit system."""
 
-        total = sum(exp(shape * value) for value in scaled_log_times)
+        total = fsum(exp(shape * value) for value in scaled_log_times)
         scale = exp(log(total / events) / shape)
         likelihood = (
             events * log(shape)
             - events * shape * log(scale)
-            + (shape - 1.0) * sum(scaled_event_logs)
+            + (shape - 1.0) * sum_scaled_event_logs
             - total / scale**shape
         )
         return scale, likelihood

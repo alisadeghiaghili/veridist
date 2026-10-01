@@ -6,7 +6,7 @@ from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
-from math import erfc, exp, isfinite, log, log1p, pi, sqrt
+from math import erfc, exp, fsum, isfinite, log, log1p, pi, sqrt
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
 from veridist.families._reliability import (
@@ -146,22 +146,26 @@ def fit_lognormal(
     exact_logs = tuple(log(value.time) for value in values if type(value) is ExactLifetime)
     try:
         if events == count:
-            mu = sum(exact_logs) / count
-            sigma = sqrt(sum((value - mu) ** 2 for value in exact_logs) / count)
+            mu = fsum(exact_logs) / count
+            sigma = sqrt(fsum((value - mu) ** 2 for value in exact_logs) / count)
             if sigma <= 0.0:
                 raise ValueError("degenerate lognormal sample")
-            likelihood = sum(
+            likelihood = fsum(
                 -log(value.time) - log(sigma) - 0.5 * log(2.0 * pi)
                 - (log(value.time) - mu) ** 2 / (2.0 * sigma**2)
                 for value in values
             )
         else:
-            center = sum(exact_logs) / events
+            center = fsum(exact_logs) / events
             # Hoist the exact-observation sums out of the inner likelihood loop:
             # the exact-part log-likelihood is a quadratic in mu, so it only
-            # needs these two running sums, computed once, regardless of n.
-            sum_exact_logs = sum(exact_logs)
-            sum_exact_logs_sq = sum(value * value for value in exact_logs)
+            # needs these sums, computed once, regardless of n. Deviations are
+            # taken from the exact-log center, so tightly clustered samples do
+            # not lose precision to the cancellation of sum(x**2) - n*mu**2.
+            sum_exact_logs = fsum(exact_logs)
+            deviations = tuple(value - center for value in exact_logs)
+            sum_deviation = fsum(deviations)
+            sum_deviation_sq = fsum(value * value for value in deviations)
             # Group censored observations by identical time (a single censoring
             # time is common) so the censored-part sum is O(distinct times)
             # instead of O(n) per likelihood evaluation.
@@ -173,14 +177,17 @@ def fit_lognormal(
 
             def at_log_sigma(mu: float, log_sigma: float) -> float:
                 sigma = exp(log_sigma)
-                sum_sq_deviation = sum_exact_logs_sq - 2.0 * mu * sum_exact_logs + events * mu * mu
+                shift = mu - center
+                sum_sq_deviation = (
+                    sum_deviation_sq - 2.0 * shift * sum_deviation + events * shift * shift
+                )
                 exact = (
                     -sum_exact_logs
                     - events * log(sigma)
                     - events * _HALF_LOG_2PI
                     - sum_sq_deviation / (2.0 * sigma**2)
                 )
-                censored = sum(
+                censored = fsum(
                     occurrences * _log_sf(float(time), mu, sigma)
                     for time, occurrences in censored_groups
                 )
@@ -192,7 +199,7 @@ def fit_lognormal(
                 )
                 return likelihood
 
-            spread = sqrt(sum((value - center) ** 2 for value in exact_logs) / events)
+            spread = sqrt(sum_deviation_sq / events)
             mu_half_width = _MU_START_MULTIPLE * max(1.0, spread)
             mu_hard_half_width = _MU_HARD_MULTIPLE * max(1.0, spread)
             mu, _, mu_boundary = expand_bracket(

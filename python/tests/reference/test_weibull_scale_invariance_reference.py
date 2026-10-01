@@ -40,6 +40,8 @@ def _observations_at_scale(
     )
 
 
+_ARGMAX_TOLERANCE = 1e-7
+
 class WeibullScaleInvarianceReferenceTests(unittest.TestCase):
     def test_censored_fit_matches_an_independent_scipy_reference_at_every_scale(self) -> None:
         # Reference computed out-of-band with scipy 1.x in a scratch venv:
@@ -68,12 +70,12 @@ class WeibullScaleInvarianceReferenceTests(unittest.TestCase):
                 self.assertTrue(result.converged)
 
     def test_shape_scale_and_log_likelihood_are_invariant_to_the_time_unit(self) -> None:
-        # A second, independently drawn sample (different seed/size) checked
-        # at tighter tolerance: the geometric-mean rescaling is an exact
-        # algebraic transformation, so the only remaining discrepancy between
-        # scales is floating-point noise in representing `time * factor`
-        # itself. This sample demonstrates that noise is far below 1e-9
-        # relative for shape and scale.
+        # The geometric-mean rescaling is an exact algebraic transformation, so
+        # fits at different time units differ only by rounding in
+        # `time * factor` and in the profiled objective. Near its maximum the
+        # objective is flat, so golden-section search locates the argmax only
+        # to about sqrt(machine epsilon) ~ 1.5e-8 relative; 1e-7 bounds that
+        # with margin on every platform and Python version.
         sample = _censored_weibull_sample(seed=10, n=80, shape=1.7, scale=1.0, censor_at=1.2)
         event_count = sum(1 for _, is_event in sample if is_event)
         self.assertEqual(event_count, 66)
@@ -90,11 +92,11 @@ class WeibullScaleInvarianceReferenceTests(unittest.TestCase):
                 result = results[factor]
                 self.assertTrue(hasattr(result, "shape"), result)
                 relative_shape_error = abs(result.shape - baseline.shape) / baseline.shape
-                self.assertLessEqual(relative_shape_error, 1e-9)
+                self.assertLessEqual(relative_shape_error, _ARGMAX_TOLERANCE)
                 relative_scale_error = abs(
                     result.scale / factor - baseline.scale
                 ) / baseline.scale
-                self.assertLessEqual(relative_scale_error, 1e-9)
+                self.assertLessEqual(relative_scale_error, _ARGMAX_TOLERANCE)
                 # The log-likelihood is not itself scale-invariant (a change
                 # of time unit rescales the density via its Jacobian), but
                 # the reported value must track that exactly: only exact
