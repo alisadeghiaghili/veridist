@@ -75,6 +75,28 @@ class ResumedCheckpoint(Generic[Accumulator]):
     public_metadata: PublicResumeMetadata
 
 
+def source_id_mismatch(record: CheckpointRecord, source_id: str) -> bool:
+    """Return whether the checkpoint's public source id differs from the expected one.
+
+    Shared by `_validate_compatibility` and
+    `execution.fit_exponential_checkpointed_csv` so the comparison is defined
+    exactly once.
+    """
+
+    return record.source_id != source_id
+
+
+def source_schema_mismatch(record: CheckpointRecord, source_schema: str) -> bool:
+    """Return whether the checkpoint's source schema differs from the expected one.
+
+    Shared by `_validate_compatibility` and
+    `execution.fit_exponential_checkpointed_csv` so the comparison is defined
+    exactly once.
+    """
+
+    return record.source_schema != source_schema
+
+
 def _validate_compatibility(
     record: CheckpointRecord,
     expected: ResumeExpectation,
@@ -89,9 +111,9 @@ def _validate_compatibility(
         or expected.format_version != CHECKPOINT_FORMAT_VERSION
     ):
         raise EngineContractError(FailureCode.CHECKPOINT_FORMAT_UNSUPPORTED)
-    if record.source_id != expected.source_id:
+    if source_id_mismatch(record, expected.source_id):
         raise EngineContractError(FailureCode.SOURCE_ID_MISMATCH)
-    if record.source_schema != expected.source_schema:
+    if source_schema_mismatch(record, expected.source_schema):
         raise EngineContractError(FailureCode.SOURCE_SCHEMA_MISMATCH)
     if record.source_revision != expected.source_revision:
         raise EngineContractError(FailureCode.SOURCE_REVISION_MISMATCH)

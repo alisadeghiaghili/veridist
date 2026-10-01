@@ -79,6 +79,30 @@ def checkpoint(
     )
 
 
+def exponential_checkpoint_record() -> CheckpointRecord:
+    """A fresh, empty-state checkpoint compatible with the exponential reducer."""
+
+    state = (
+        b'{"compensation":"0x0.0p+0","event_count":0,'
+        b'"observation_count":0,"total_time":"0x0.0p+0"}'
+    )
+    return CheckpointRecord.create(
+        format_version=1,
+        source_id="source",
+        source_schema="exponential-v1",
+        source_revision=SOURCE_REVISION,
+        reducer_id="exponential-reduction-v1",
+        accumulator_schema="exponential-reduction-v1",
+        plan_digest=PLAN_DIGEST,
+        cursor=0,
+        committed_ranges=(),
+        generation=0,
+        operation_token=None,
+        operation_digest=None,
+        state=state,
+    )
+
+
 def expectation(**overrides: object) -> ResumeExpectation:
     values: dict[str, object] = {
         "format_version": 1,
@@ -110,29 +134,10 @@ class CheckpointResumeContractTests(unittest.TestCase):
             )
 
     def test_ds09_checkpointed_exponential_chunks_return_a_fit(self) -> None:
-        reducer_id = "exponential-reduction-v1"
-        accumulator_schema = "exponential-reduction-v1"
-        state = (
-            b'{"compensation":"0x0.0p+0","event_count":0,'
-            b'"observation_count":0,"total_time":"0x0.0p+0"}'
-        )
-        initial = CheckpointRecord.create(
-            format_version=1,
-            source_id="source",
-            source_schema="exponential-v1",
-            source_revision=SOURCE_REVISION,
-            reducer_id=reducer_id,
-            accumulator_schema=accumulator_schema,
-            plan_digest=PLAN_DIGEST,
-            cursor=0,
-            committed_ranges=(),
-            generation=0,
-            operation_token=None,
-            operation_digest=None,
-            state=state,
-        )
         with tempfile.TemporaryDirectory() as directory:
-            store = SQLiteCheckpointStore.create(Path(directory) / "fit.sqlite3", initial)
+            store = SQLiteCheckpointStore.create(
+                Path(directory) / "fit.sqlite3", exponential_checkpoint_record()
+            )
             fit = fit_exponential_checkpointed_chunks(
                 store=store,
                 source_revision=SOURCE_REVISION,
@@ -141,6 +146,133 @@ class CheckpointResumeContractTests(unittest.TestCase):
         self.assertEqual(fit.observation_count, 2)
         self.assertEqual(fit.event_count, 1)
         self.assertEqual(fit.total_time, 3.75)
+
+    def test_ds09_legacy_bytes_chunk_replay_does_not_double_count(self) -> None:
+        """DS2b repro: resending a committed legacy chunk must not double-count.
+
+        Before the fix, `row_start` was always read from the live cursor, so
+        a replayed chunk always looked like a brand-new operation at a new
+        offset, and its rows were counted twice.
+        """
+
+        with tempfile.TemporaryDirectory() as directory:
+            store = SQLiteCheckpointStore.create(
+                Path(directory) / "fit.sqlite3", exponential_checkpoint_record()
+            )
+            first = fit_exponential_checkpointed_chunks(
+                store=store,
+                source_revision=SOURCE_REVISION,
+                chunks=(b"[[1.0,true]]",),
+            )
+            self.assertEqual(first.observation_count, 1)
+            self.assertEqual(first.total_time, 1.0)
+
+            with self.assertWarns(DeprecationWarning):
+                second = fit_exponential_checkpointed_chunks(
+                    store=store,
+                    source_revision=SOURCE_REVISION,
+                    chunks=(b"[[1.0,true]]", b"[[2.0,false]]"),
+                )
+        self.assertEqual(second.observation_count, 2)
+        self.assertEqual(second.event_count, 1)
+        self.assertEqual(second.total_time, 3.0)
+
+    def test_ds09_offset_form_full_replay_is_a_no_op(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = SQLiteCheckpointStore.create(
+                Path(directory) / "fit.sqlite3", exponential_checkpoint_record()
+            )
+            chunks = ((0, b"[[1.0,true]]"), (1, b"[[2.0,false]]"))
+            fit_exponential_checkpointed_chunks(
+                store=store, source_revision=SOURCE_REVISION, chunks=chunks
+            )
+            before = store.read()
+
+            replayed = fit_exponential_checkpointed_chunks(
+                store=store, source_revision=SOURCE_REVISION, chunks=chunks
+            )
+            after = store.read()
+
+        self.assertEqual(replayed.observation_count, 2)
+        self.assertEqual(replayed.event_count, 1)
+        self.assertEqual(replayed.total_time, 3.0)
+        self.assertEqual(after.generation, before.generation)
+        self.assertEqual(after.state, before.state)
+
+    def test_ds09_offset_form_gap_and_partial_overlap_are_range_mismatches(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            store = SQLiteCheckpointStore.create(
+                Path(directory) / "gap.sqlite3", exponential_checkpoint_record()
+            )
+            fit_exponential_checkpointed_chunks(
+                store=store,
+                source_revision=SOURCE_REVISION,
+                chunks=((0, b"[[1.0,true],[2.0,true]]"),),
+            )
+            self.assertEqual(store.read().cursor, 2)
+
+            with self.assertRaises(EngineContractError) as gap:
+                fit_exponential_checkpointed_chunks(
+                    store=store,
+                    source_revision=SOURCE_REVISION,
+                    chunks=((3, b"[[4.0,true]]"),),
+                )
+            self.assertIs(gap.exception.code, FailureCode.RANGE_MISMATCH)
+
+            with self.assertRaises(EngineContractError) as overlap:
+                fit_exponential_checkpointed_chunks(
+                    store=store,
+                    source_revision=SOURCE_REVISION,
+                    chunks=((1, b"[[4.0,true],[5.0,true]]"),),
+                )
+            self.assertIs(overlap.exception.code, FailureCode.RANGE_MISMATCH)
+            self.assertEqual(store.read().cursor, 2)
+
+    def test_ds09_offset_form_rejects_malformed_tuples(self) -> None:
+        malformed = (
+            (0,),
+            (0, 1, 2),
+            (1.5, b"[[1.0,true]]"),
+            (True, b"[[1.0,true]]"),
+            (0, "not-bytes"),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            store = SQLiteCheckpointStore.create(
+                Path(directory) / "fit.sqlite3", exponential_checkpoint_record()
+            )
+            for bad in malformed:
+                with self.subTest(bad=bad), self.assertRaises(TypeError):
+                    fit_exponential_checkpointed_chunks(
+                        store=store, source_revision=SOURCE_REVISION, chunks=(bad,)
+                    )
+
+    def test_ds09_legacy_chunk_matching_length_but_different_payload_is_new_data(self) -> None:
+        """A same-length but different legacy chunk must not be skipped.
+
+        The legacy form can only recognize replay through the checkpoint's
+        recorded operation digest, not merely by matching row count, so this
+        chunk is applied as new data at the current cursor.
+        """
+
+        with tempfile.TemporaryDirectory() as directory:
+            store = SQLiteCheckpointStore.create(
+                Path(directory) / "fit.sqlite3", exponential_checkpoint_record()
+            )
+            fit_exponential_checkpointed_chunks(
+                store=store,
+                source_revision=SOURCE_REVISION,
+                chunks=((0, b"[[1.0,true],[2.0,true]]"),),
+            )
+            self.assertEqual(store.read().cursor, 2)
+
+            with self.assertWarns(DeprecationWarning):
+                result = fit_exponential_checkpointed_chunks(
+                    store=store,
+                    source_revision=SOURCE_REVISION,
+                    chunks=(b"[[9.0,true],[9.0,true]]",),
+                )
+        self.assertEqual(result.observation_count, 4)
+        self.assertEqual(result.total_time, 1.0 + 2.0 + 9.0 + 9.0)
 
     def test_ds09_sqlite_resume_continues_transactional_reduction(self) -> None:
         reducer = IntegerSumReducer()

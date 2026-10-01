@@ -40,15 +40,19 @@ def create_store(path: Path) -> SQLiteCheckpointStore:
 with TemporaryDirectory() as directory:
     path = Path(directory) / "lifetimes.sqlite3"
     first_store = create_store(path)
+    # Each chunk is the offset form `(row_start, payload)`: row_start is the
+    # caller's own count of previously committed rows, not read back from the
+    # store. That is what lets a replayed chunk be recognized and skipped
+    # instead of being applied -- and its rows counted -- a second time.
     fit_exponential_checkpointed_chunks(
         store=first_store,
         source_revision=SOURCE_REVISION,
-        chunks=(b"[[1.5,true]]",),
+        chunks=((0, b"[[1.5,true]]"),),
     )
     resumed_fit = fit_exponential_checkpointed_chunks(
         store=SQLiteCheckpointStore(path),
         source_revision=SOURCE_REVISION,
-        chunks=(b"[[2.25,false]]",),
+        chunks=((1, b"[[2.25,false]]"),),
     )
 
 assert resumed_fit.observation_count == 2
