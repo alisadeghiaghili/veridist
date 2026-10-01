@@ -198,10 +198,11 @@ speichert lokalen Neustartzustand für kompatible Exponential-Reduktionen,
 einschließlich des unterstützten CSV-Pfads. Halten Sie die Quellrevision stabil
 und folgen Sie dem [Checkpoint- und Fortsetzungsrezept](python/examples/checkpoint_resume.py).
 
-Release-Evidenz deckt festgelegte CSV-/Exponentialpfade bei 10k, 100k und 1m
-Zeilen unter dokumentierten Bedingungen ab. Sie belegt keinen universellen
-Durchsatz oder eine portable Prozessspeichergrenze. Dauerhafte Wiederaufnahme
-läuft auf einer Maschine mit lokalem Dateisystem.
+Eine historische Scale-Evidenz-Momentaufnahme für den CSV-/Exponentialpfad ist
+bei 10k, 100k und 1m Zeilen erhalten, aber ihr Schema ist älter als das, was
+der aktuelle Prüfer verlangt; sie besteht die Prüfung daher nicht und stützt
+keinen aktuellen Durchsatz- oder Skalierungsanspruch. Dauerhafte
+Wiederaufnahme läuft auf einer Maschine mit lokalem Dateisystem.
 
 ## Wie Qualität geprüft wird
 

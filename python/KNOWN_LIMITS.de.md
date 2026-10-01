@@ -29,7 +29,18 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
 - `STREAM-SOURCE`: `IterableDataSource` adaptiert Chunk-Iterables des Aufrufers.
   Das Paket enthält keinen Parquet-, Arrow-, Dataframe-, Datenbank- oder
   Netzwerkadapter. Dauerhafte Fortsetzung ist auf den strikten Lebensdauer-CSV-
-  Pfad und lokales SQLite begrenzt; ein verteilter Checkpoint-Store fehlt.
+  Pfad und lokales SQLite auf einem Rechner begrenzt; ein verteilter
+  Checkpoint-Store fehlt. Bei `fit_exponential_checkpointed_csv` muss die
+  Revisionskennung genau dem aktuellen SHA-256-Hexdigest der CSV-Datei
+  entsprechen, geprüft gegen die Datei auf der Festplatte, bevor eine Zeile
+  gelesen wird; eine geänderte Datei, eine andere öffentliche Quellkennung
+  oder ein anderes gespeichertes Schema liefert statt einer Fortsetzung eine
+  typisierte Nichtübereinstimmung. `fit_exponential_checkpointed_chunks`
+  sollte mit der Offset-Form `(row_start, payload)` aufgerufen werden, damit
+  ein wiederholter Chunk an seinem Zeilenbereich erkannt und übersprungen
+  wird, statt ein zweites Mal angewendet zu werden; die veraltete reine
+  `bytes`-Form ist deprecated, gibt eine Warnung aus und kann eine
+  Wiederholung im Allgemeinen nicht erkennen.
 - `INFERENCE-EXP`: Refit-Monte-Carlo-KS/AD/CvM und adequacy-gesteuerte Auswahl
   gelten nur für endliche positive unzensierte Exponentialstichproben. Es gibt
   keine Bootstrap-Auswahlstabilität oder Kalibrierungsbehauptung außerhalb des

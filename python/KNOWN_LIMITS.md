@@ -28,7 +28,15 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
 - `STREAM-SOURCE`: `IterableDataSource` adapts caller-owned chunk iterables.
   The package bundles no Parquet, Arrow, dataframe, database, or network
   adapter. Durable resume is limited to the strict lifetime CSV path and local
-  SQLite; it is not a distributed checkpoint store.
+  SQLite on one host; it is not a distributed checkpoint store. For
+  `fit_exponential_checkpointed_csv`, the source revision must equal the CSV
+  file's current SHA-256 hex digest, checked against the file on disk before
+  any row is read; a changed file, a different public source identifier, or a
+  different stored schema returns a typed mismatch instead of resuming.
+  `fit_exponential_checkpointed_chunks` should be called with the offset form
+  `(row_start, payload)` so a replayed chunk is recognized by its row range
+  and skipped instead of being applied a second time; the legacy bare-`bytes`
+  form is deprecated, emits a warning, and cannot generally detect a replay.
 - `INFERENCE-EXP`: refit Monte Carlo KS/AD/CvM and adequacy-gated selection are
   limited to finite positive uncensored exponential samples. There is no
   bootstrap selection stability or calibration claim outside the tested grid.
