@@ -7,7 +7,10 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import date
 from pathlib import Path
+
+from tools.check_coverage import validate
 
 CHECKER = Path(__file__).parents[2] / "tools" / "check_coverage.py"
 
@@ -149,6 +152,102 @@ class CoverageGateTests(unittest.TestCase):
         self.assertIn("missing metric", result.stderr)
         self.assertIn("denominator drift", result.stderr)
         self.assertIn("unlisted production file", result.stderr)
+
+    def _exception_project(
+        self, repository_root: Path, *, adr: str, expiry: str, create_adr: bool
+    ) -> tuple[dict[str, object], dict[str, object]]:
+        project_root = repository_root / "python"
+        files = [
+            "src/veridist/domain/model.py",
+            "src/veridist/statistics/fit.py",
+            "src/veridist/families/normal.py",
+            "src/veridist/engine/run.py",
+            "src/veridist/result.py",
+        ]
+        excepted = files[-1]
+        for relative_path in files:
+            target = project_root / relative_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("# fixture\n", encoding="utf-8")
+        if create_adr:
+            adr_dir = repository_root / "docs" / "adr"
+            adr_dir.mkdir(parents=True, exist_ok=True)
+            (adr_dir / f"{adr}-coverage-exception.md").write_text("# fixture\n", encoding="utf-8")
+        manifest = _manifest(files)
+        manifest["accepted_exceptions"] = [
+            {
+                "path": excepted,
+                "owner": "platform",
+                "reason": "legacy adapter shim pending removal",
+                "expiry": expiry,
+                "adr": adr,
+            }
+        ]
+        coverage = _coverage(files)
+        coverage["files"][excepted]["summary"] = _summary(covered_lines=89, covered_branches=17)
+        return manifest, coverage
+
+    def test_rejects_expired_exception(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository_root = Path(temp_dir)
+            manifest, coverage = self._exception_project(
+                repository_root, adr="ADR-0001", expiry="2000-01-01", create_adr=True
+            )
+            (repository_root / "python" / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            (repository_root / "python" / "coverage.json").write_text(
+                json.dumps(coverage), encoding="utf-8"
+            )
+            errors = validate(
+                repository_root / "python",
+                repository_root / "python" / "manifest.json",
+                repository_root / "python" / "coverage.json",
+                today=date(2026, 1, 1),
+            )
+            self.assertTrue(any("exception expired" in error for error in errors), errors)
+
+    def test_accepts_exception_exactly_on_its_expiry_date(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository_root = Path(temp_dir)
+            manifest, coverage = self._exception_project(
+                repository_root, adr="ADR-0001", expiry="2026-06-15", create_adr=True
+            )
+            (repository_root / "python" / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            (repository_root / "python" / "coverage.json").write_text(
+                json.dumps(coverage), encoding="utf-8"
+            )
+            errors = validate(
+                repository_root / "python",
+                repository_root / "python" / "manifest.json",
+                repository_root / "python" / "coverage.json",
+                today=date(2026, 6, 15),
+            )
+            self.assertEqual(errors, [])
+
+    def test_rejects_exception_whose_adr_does_not_exist(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository_root = Path(temp_dir)
+            manifest, coverage = self._exception_project(
+                repository_root, adr="ADR-9999", expiry="2099-01-01", create_adr=False
+            )
+            (repository_root / "python" / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            (repository_root / "python" / "coverage.json").write_text(
+                json.dumps(coverage), encoding="utf-8"
+            )
+            errors = validate(
+                repository_root / "python",
+                repository_root / "python" / "manifest.json",
+                repository_root / "python" / "coverage.json",
+                today=date(2026, 1, 1),
+            )
+            self.assertTrue(
+                any("exception ADR does not exist" in error for error in errors), errors
+            )
 
     def test_rejects_weak_exception_manifest(self) -> None:
         files = [

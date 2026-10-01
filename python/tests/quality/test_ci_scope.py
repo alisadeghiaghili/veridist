@@ -52,7 +52,6 @@ class CiScopeClassifierTests(unittest.TestCase):
             ".github/workflows/v1-ci.yml",
             ".github/workflows/v1-release-evidence.yml",
             ".github/workflows/pypi-publish.yml",
-            ".github/workflows/ci.yml",
         )
         self.assertFalse(classifier.legacy_relevant(paths))
 
@@ -74,6 +73,7 @@ class CiScopeClassifierTests(unittest.TestCase):
             "LICENSE",
             ".gitignore",
             "new-root-area/file.txt",
+            ".github/workflows/ci.yml",
         )
         for path in relevant_paths:
             with self.subTest(path=path):

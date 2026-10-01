@@ -18,9 +18,37 @@ METADATA = (
 ).encode()
 
 
-def _wheel(path: Path, *, metadata: bytes = METADATA, legacy: bool = False) -> None:
+def _source_payloads() -> dict[str, bytes]:
+    root = PROJECT_ROOT / "src" / "veridist"
+    payloads: dict[str, bytes] = {}
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or "__pycache__" in path.parts:
+            continue
+        if path.suffix != ".py" and path.name != "py.typed":
+            continue
+        payloads[path.relative_to(root).as_posix()] = path.read_bytes()
+    return payloads
+
+
+def _wheel(
+    path: Path,
+    *,
+    metadata: bytes = METADATA,
+    legacy: bool = False,
+    drop: str | None = None,
+    tamper: str | None = None,
+    extra: str | None = None,
+) -> None:
+    payloads = dict(_source_payloads())
+    if drop is not None:
+        del payloads[drop]
+    if tamper is not None:
+        payloads[tamper] = payloads[tamper] + b"\n# tampered\n"
     with zipfile.ZipFile(path, "w") as archive:
-        archive.writestr("veridist/__init__.py", f'__version__ = "{VERSION}"\n')
+        for name, payload in payloads.items():
+            archive.writestr(f"veridist/{name}", payload)
+        if extra is not None:
+            archive.writestr(f"veridist/{extra}", b"# unexpected\n")
         archive.writestr(f"veridist-{VERSION}.dist-info/METADATA", metadata)
         archive.writestr(
             f"veridist-{VERSION}.dist-info/licenses/LICENSE",
@@ -30,12 +58,25 @@ def _wheel(path: Path, *, metadata: bytes = METADATA, legacy: bool = False) -> N
             archive.writestr("distfit_pro/__init__.py", b"")
 
 
-def _sdist(path: Path, *, modified_known_limits: bool = False) -> None:
+def _sdist(
+    path: Path,
+    *,
+    modified_known_limits: bool = False,
+    drop: str | None = None,
+    tamper: str | None = None,
+    extra: str | None = None,
+) -> None:
+    source_prefix = f"veridist-{VERSION}/src/veridist"
+    payloads = dict(_source_payloads())
+    if drop is not None:
+        del payloads[drop]
+    if tamper is not None:
+        payloads[tamper] = payloads[tamper] + b"\n# tampered\n"
     members = {
         f"veridist-{VERSION}/PKG-INFO": METADATA,
         f"veridist-{VERSION}/src/veridist.egg-info/PKG-INFO": METADATA,
         f"veridist-{VERSION}/LICENSE": (PROJECT_ROOT / "LICENSE").read_bytes(),
-        f"veridist-{VERSION}/src/veridist/__init__.py": b"",
+        **{f"{source_prefix}/{name}": payload for name, payload in payloads.items()},
         **{
             f"veridist-{VERSION}/{name}": (PROJECT_ROOT / name).read_bytes()
             for name in (
@@ -46,6 +87,8 @@ def _sdist(path: Path, *, modified_known_limits: bool = False) -> None:
             )
         },
     }
+    if extra is not None:
+        members[f"{source_prefix}/{extra}"] = b"# unexpected\n"
     if modified_known_limits:
         members[f"veridist-{VERSION}/KNOWN_LIMITS.md"] = b"modified\n"
     with tarfile.open(path, "w:gz") as archive:
@@ -105,6 +148,48 @@ class ReleaseArtifactContractTests(unittest.TestCase):
                     project_root=PROJECT_ROOT,
                     release_tag=f"v{VERSION}",
                 )
+
+    def test_rejects_a_wheel_holding_only_a_tampered_init_module(self) -> None:
+        # This is the historical escape: a wheel containing nothing but a
+        # rewritten veridist/__init__.py (plus METADATA and LICENSE) used to
+        # pass validation because no byte-for-byte payload check existed.
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / f"veridist-{VERSION}-py3-none-any.whl"
+            with zipfile.ZipFile(artifact, "w") as archive:
+                archive.writestr(
+                    "veridist/__init__.py", "raise SystemExit('tampered')\n"
+                )
+                archive.writestr(f"veridist-{VERSION}.dist-info/METADATA", METADATA)
+                archive.writestr(
+                    f"veridist-{VERSION}.dist-info/licenses/LICENSE",
+                    (PROJECT_ROOT / "LICENSE").read_bytes(),
+                )
+            with self.assertRaisesRegex(ReleaseArtifactError, "missing veridist source file"):
+                validate_artifact(artifact, project_root=PROJECT_ROOT, release_tag=f"v{VERSION}")
+
+    def test_rejects_tampered_missing_and_extra_payloads(self) -> None:
+        cases: dict[str, dict[str, str]] = {
+            "tampered": {"tamper": "families/weibull.py"},
+            "missing": {"drop": "families/weibull.py"},
+            "extra": {"extra": "families/not_real.py"},
+        }
+        expected_message = {
+            "tampered": "modified veridist source file",
+            "missing": "missing veridist source file",
+            "extra": "unexpected file",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            for name, kwargs in cases.items():
+                for builder, suffix in ((_wheel, ".whl"), (_sdist, ".tar.gz")):
+                    with self.subTest(case=name, kind=suffix):
+                        artifact = Path(directory) / f"{name}-{suffix.lstrip('.')}{suffix}"
+                        builder(artifact, **kwargs)  # type: ignore[arg-type]
+                        with self.assertRaisesRegex(
+                            ReleaseArtifactError, expected_message[name]
+                        ):
+                            validate_artifact(
+                                artifact, project_root=PROJECT_ROOT, release_tag=f"v{VERSION}"
+                            )
 
 
 if __name__ == "__main__":

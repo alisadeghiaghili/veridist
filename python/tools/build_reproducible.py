@@ -1,4 +1,16 @@
-"""Build wheel and sdist archives with canonical container metadata."""
+"""Build wheel and sdist archives with canonical container metadata.
+
+Byte-for-byte reproducibility here depends on two things this module does
+not control. First, both archives store payloads with DEFLATE
+(``zipfile.ZIP_DEFLATED`` for the wheel, gzip for the sdist); the compressed
+bytes can differ between zlib versions even when the decompressed content is
+identical, so builds across hosts with different zlib builds are only
+guaranteed to match after decompression, not as raw archive bytes. Second,
+``build()`` invokes ``python -m build --no-isolation``, which builds with
+whatever ``setuptools``/``wheel`` versions are already installed; pin those
+versions in the calling environment (as ``veridist-release.yml`` does) if the
+raw archive bytes must match across runs.
+"""
 
 from __future__ import annotations
 
@@ -31,6 +43,8 @@ def _normalise_sdist(source: Path, target: Path, epoch: int) -> None:
                         member.uname = ""
                         member.gname = ""
                         member.pax_headers = {}
+                        is_executable = bool(member.mode & 0o111)
+                        member.mode = 0o755 if member.isdir() or is_executable else 0o644
                         payload = archive.extractfile(member) if member.isfile() else None
                         output.addfile(member, payload)
 
@@ -69,8 +83,8 @@ def _normalise_wheel(source: Path, target: Path, epoch: int) -> None:
             original = originals[name]
             info = zipfile.ZipInfo(name, date_time=date_time)
             info.compress_type = zipfile.ZIP_DEFLATED
-            info.create_system = original.create_system
-            info.external_attr = original.external_attr
+            info.create_system = 3  # Unix, so external_attr mode bits below are honored.
+            info.external_attr = 0o644 << 16
             info.flag_bits = original.flag_bits
             output.writestr(info, contents[name], compress_type=zipfile.ZIP_DEFLATED)
 

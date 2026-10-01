@@ -18,6 +18,8 @@ class ReleaseWorkflowTests(unittest.TestCase):
             "fetch-depth: 0",
             "persist-credentials: false",
             "working-directory: python",
+            "setuptools==84.0.0",
+            "wheel==0.48.0",
             "python tools/build_reproducible.py --project . --output dist-a",
             "python tools/build_reproducible.py --project . --output dist-b",
             "cmp dist-a/*.whl dist-b/*.whl",
