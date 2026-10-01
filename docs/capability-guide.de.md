@@ -62,6 +62,8 @@ Historische Nachweise decken den strikten exponentiellen CSV-Pfad mit 10 Tausend
 
 Für kompatible exponentielle Reduktionen kann ein lokaler SQLite-Checkpoint den Zustand nach einer Unterbrechung bewahren. Vor dem Fortsetzen prüft Veridist Quellrevision, Prüfsumme, Checkpoint-Generation und verarbeitete Bereiche. Dauerhafte Wiederaufnahme ist auf einen Host und sein lokales Dateisystem begrenzt; sie ist keine verteilte Ausführung.
 
+Diese Prüfung ist unabhängig von einer einfacheren Absicherung innerhalb eines einzelnen CSV-Lesevorgangs: Veridist vergleicht die vom Betriebssystem gemeldete Identität der Datei -- Gerät, Inode, Größe und letzte Änderungszeit -- unmittelbar vor und nach diesem Lesevorgang. Das erkennt viele versehentliche Änderungen, ist aber kein Inhalts-Hash; ein Überschreiben an Ort und Stelle, das diese vier Werte unverändert lässt, wird dadurch nicht erkannt.
+
 ## Was wird noch nicht unterstützt?
 
 Die Version 1.0 unterstützt keine Kovariaten wie Temperatur oder Druck, analytischen Gewichte, freien Lageparameter, allgemeinen Dataframe-/Datenbankadapter, verteilte Checkpoints, Bootstrap-Stabilität der Auswahl oder Inferenz für jede registrierte Familie. Die vollständige Grenze steht unter [bekannte Grenzen](../python/KNOWN_LIMITS.de.md).

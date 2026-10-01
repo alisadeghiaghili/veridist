@@ -24,6 +24,21 @@ def _require_text(label: str, value: str) -> None:
         raise ValueError(f"{label} must be non-empty")
 
 
+def _sqlite_error_context(error: sqlite3.Error) -> dict[str, object]:
+    """Surface sqlite's own machine-readable error name, never its free-text message.
+
+    ``sqlite3.Error.sqlite_errorname`` (for example ``SQLITE_BUSY`` or
+    ``SQLITE_FULL``) is a stable symbolic constant from the SQLite C API, safe
+    to expose in a redacted failure context. The exception's human-readable
+    ``str()``, which can embed a path or other local detail, is never used.
+    """
+
+    name = getattr(error, "sqlite_errorname", None)
+    if isinstance(name, str) and name:
+        return {"sqlite_errorname": name}
+    return {}
+
+
 def _canonical_payload(record: CheckpointRecord) -> bytes:
     value = {
         "accumulator_schema": record.accumulator_schema,
@@ -274,10 +289,11 @@ class SQLiteCheckpointStore:
             )
             connection.execute("PRAGMA synchronous = FULL")
             return connection
-        except (OSError, sqlite3.Error):
+        except (OSError, sqlite3.Error) as error:
             if connection is not None:
                 connection.close()
-            raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED) from None
+            context = _sqlite_error_context(error) if isinstance(error, sqlite3.Error) else {}
+            raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED, context) from None
 
     @contextmanager
     def _opened(self) -> Iterator[sqlite3.Connection]:
@@ -426,7 +442,9 @@ class SQLiteCheckpointStore:
                 store._path.unlink(missing_ok=True)
             if "already exists" in str(error).casefold():
                 raise EngineContractError(FailureCode.CHECKPOINT_ALREADY_EXISTS) from None
-            raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED) from None
+            raise EngineContractError(
+                FailureCode.CHECKPOINT_STORAGE_FAILED, _sqlite_error_context(error)
+            ) from None
         except OSError:
             if created_file:
                 store._path.unlink(missing_ok=True)
@@ -442,8 +460,10 @@ class SQLiteCheckpointStore:
                     "SELECT format_version, generation, payload, checksum "
                     "FROM checkpoint WHERE singleton = 1"
                 ).fetchone()
-        except sqlite3.Error:
-            raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED) from None
+        except sqlite3.Error as error:
+            raise EngineContractError(
+                FailureCode.CHECKPOINT_STORAGE_FAILED, _sqlite_error_context(error)
+            ) from None
         if row is None:
             raise EngineContractError(FailureCode.CHECKPOINT_NOT_FOUND)
         return self._decode(*row)
@@ -489,8 +509,10 @@ class SQLiteCheckpointStore:
                     acknowledgement_lost = True
         except EngineContractError:
             raise
-        except sqlite3.Error:
-            raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED) from None
+        except sqlite3.Error as error:
+            raise EngineContractError(
+                FailureCode.CHECKPOINT_STORAGE_FAILED, _sqlite_error_context(error)
+            ) from None
         if acknowledgement_lost:
             return self._reconcile_uncertain_commit(expected_generation, candidate)
         return candidate

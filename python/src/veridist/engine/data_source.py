@@ -47,6 +47,8 @@ class DataSourceMetadata:
             ("schema_version", self.schema_version),
             ("provenance_schema_version", self.provenance_schema_version),
         ):
+            if not isinstance(value, str):
+                raise TypeError(f"{name} must be a string")
             if not value.strip():
                 raise ValueError(f"{name} must be non-empty")
         if self.provenance_schema_version not in SUPPORTED_PROVENANCE_SCHEMA_VERSIONS:

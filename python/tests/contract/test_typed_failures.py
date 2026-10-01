@@ -171,17 +171,53 @@ class TypedFailureSurfaceTests(unittest.TestCase):
             with self.subTest(key=key), self.assertRaises(TypeError):
                 EngineContractError(FailureCode.RANGE_MISMATCH, {key: "private-value"})
 
-    def test_ds10_text_surfaces_code_but_never_context(self) -> None:
-        sentinel = "C:/private/source.csv?credential=secret"
+    def test_ds10_text_surfaces_bare_code_only_when_context_is_empty(self) -> None:
+        for error in (
+            EngineContractError(FailureCode.RANGE_MISMATCH),
+            EngineContractError(FailureCode.RANGE_MISMATCH, {}),
+        ):
+            with self.subTest(context=error.context):
+                self.assertEqual(str(error), "RANGE_MISMATCH")
+                self.assertEqual(repr(error), "EngineContractError(code=RANGE_MISMATCH)")
+
+    def test_ds10_text_surfaces_a_sorted_context_when_present(self) -> None:
+        # Exception text shows numeric and token-like context, sorted by key,
+        # so failures are diagnosable from a log line alone.
         error = EngineContractError(
             FailureCode.RANGE_MISMATCH,
-            {"expected": sentinel, "actual": (0, 3)},
+            {"row_start": 5, "checkpoint_cursor": 3},
         )
 
-        self.assertEqual(str(error), "RANGE_MISMATCH")
-        self.assertEqual(repr(error), "EngineContractError(code=RANGE_MISMATCH)")
-        self.assertNotIn(sentinel, str(error))
-        self.assertNotIn(sentinel, repr(error))
+        self.assertEqual(str(error), "RANGE_MISMATCH (checkpoint_cursor=3, row_start=5)")
+        self.assertEqual(
+            repr(error),
+            "EngineContractError(code=RANGE_MISMATCH, "
+            "context={checkpoint_cursor=3, row_start=5})",
+        )
+
+    def test_ds10_text_never_surfaces_untrusted_context_strings(self) -> None:
+        # Context keys are screened, values are not, so free-form strings such
+        # as paths or URIs must never reach exception text even under an
+        # allowed key; code-defined tokens remain visible.
+        sentinel = "C:/private/source.csv?credential=secret"
+        error = EngineContractError(
+            FailureCode.CHECKPOINT_STORAGE_FAILED,
+            {
+                "expected": sentinel,
+                "actual": (0, 3),
+                "nested": {"note": "free text with spaces"},
+                "sqlite_errorname": "SQLITE_BUSY",
+            },
+        )
+
+        for text in (str(error), repr(error)):
+            with self.subTest(text=text):
+                self.assertNotIn(sentinel, text)
+                self.assertNotIn("free text with spaces", text)
+                self.assertIn("sqlite_errorname=SQLITE_BUSY", text)
+                self.assertIn("expected=<redacted>", text)
+                self.assertIn("actual=(0, 3)", text)
+                self.assertIn("nested={note=<redacted>}", text)
 
     def test_ds10_buffer_timeouts_use_one_typed_distinct_code(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)

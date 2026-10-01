@@ -170,6 +170,22 @@ class AdapterAndIdentityContractTests(unittest.TestCase):
         with self.assertRaises(IndexError):
             envelope.row_identity(2)
 
+    def test_ds04_envelope_rejects_non_string_ids_with_typeerror_not_attributeerror(
+        self,
+    ) -> None:
+        for field_name in ("source_id", "chunk_id"):
+            arguments: dict[str, object] = {
+                "source_id": "dataset:delivery-001",
+                "chunk_id": "x",
+                "sequence_number": 0,
+                "row_start": 0,
+                "row_stop": 1,
+                "byte_size": 1,
+            }
+            arguments[field_name] = 1
+            with self.subTest(field_name=field_name), self.assertRaises(TypeError):
+                ChunkEnvelope(**arguments)  # type: ignore[arg-type]
+
 
 class DeliveryValidationContractTests(unittest.TestCase):
     """DS-05: invalid delivery modes are distinct and never mutate state."""
@@ -189,6 +205,10 @@ class DeliveryValidationContractTests(unittest.TestCase):
         self.assertEqual(validator.next_sequence, 4)
         self.assertEqual(validator.accepted_rows, 4)
         self.assertEqual(validator.accepted_chunks, 4)
+
+    def test_ds05_validator_rejects_a_non_string_source_id_with_typeerror(self) -> None:
+        with self.assertRaises(TypeError):
+            DeliveryValidator(1)  # type: ignore[arg-type]
 
     def test_ds05_validator_and_finish_reject_invalid_bounds(self) -> None:
         with self.assertRaises(ValueError):
@@ -466,6 +486,21 @@ class BoundedBufferContractTests(unittest.TestCase):
         self.assertEqual(caught.exception.code, "CHUNK_TOO_LARGE")
         self.assertEqual(buffer.inflight_bytes, 0)
         self.assertEqual(buffer.queued_chunks, 0)
+
+    def test_ds06_release_underflow_is_rejected_before_mutating_inflight_bytes(self) -> None:
+        buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)
+        bounded_buffer_call(
+            buffer,
+            lambda: buffer.put(buffered(chunk("only", 0, 1, byte_size=4))),
+        )
+        self.assertEqual(buffer.inflight_bytes, 4)
+
+        with self.assertRaises(RuntimeError):
+            buffer._release(5)
+
+        # The check runs before the subtraction, so a rejected release leaves
+        # the tally exactly as it was instead of first going negative.
+        self.assertEqual(buffer.inflight_bytes, 4)
 
     def test_ds06_fresh_buffer_has_an_exact_empty_runtime_snapshot(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=8)

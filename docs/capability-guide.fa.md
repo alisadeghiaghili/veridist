@@ -72,6 +72,8 @@ timeline
 
 <p dir="rtl" align="right">برای <strong>محاسبات نماییِ سازگار</strong><sup id="fnref-compatible-exponential"><a href="#fn-compatible-exponential">۱۰</a></sup>، از جمله مسیر CSV مربوط به ادامهٔ اجرا، پیشرفت محاسبه در یک فایل محلی <bdi dir="ltr">SQLite</bdi><sup id="fnref-sqlite"><a href="#fn-sqlite">۱۱</a></sup> ذخیره می‌شود و پس از وقفه قابل ادامه است. پیش از ادامه، برنامه <strong>نسخهٔ منبع</strong><sup id="fnref-source-revision"><a href="#fn-source-revision">۱۲</a></sup>، <strong>جمع کنترلی</strong><sup id="fnref-checksum"><a href="#fn-checksum">۱۳</a></sup>، <strong>نسل وضعیت</strong><sup id="fnref-generation"><a href="#fn-generation">۱۴</a></sup> و <strong>بازه‌های پردازش‌شده</strong><sup id="fnref-ranges"><a href="#fn-ranges">۱۵</a></sup> را بررسی می‌کند. این قابلیت روی یک کامپیوتر و فایل‌سیستم محلی کار می‌کند.</p>
 
+<p dir="rtl" align="right">این بررسی با قرارداد ادامهٔ اجرا در بالا تفاوت دارد: در یک اجرای تکیِ CSV، Veridist فقط هویت گزارش‌شدهٔ سیستم‌عامل برای فایل—دستگاه، inode، اندازه و زمان آخرین تغییر—را پیش و پس از خواندن مقایسه می‌کند، نه کل محتوای بایت‌به‌بایت آن؛ بنابراین بازنویسی‌ای که این چهار مقدار را حفظ کند تشخیص داده نمی‌شود.</p>
+
 <h2 dir="rtl" align="right">چه کارهایی هنوز پشتیبانی نمی‌شوند؟</h2>
 
 <p dir="rtl" align="right">روش فعلی داده‌هایی را که فقط زمان تقریبی رویداد در یک بازه یا پیش از یک زمان مشخص معلوم است نمی‌پذیرد. مدل‌کردن اثر عواملی مثل دما و فشار بر عمر، اتصال عمومی به دیتافریم و پایگاه داده و ذخیرهٔ پیشرفت بین چند کامپیوتر هم در دسترس نیست. جزئیات فنی این موارد در بخش بازشوندهٔ پایین و فهرست کامل و راست‌چین آن‌ها در <a href="../python/KNOWN_LIMITS.fa.md">محدودیت‌های شناخته‌شده</a> آمده است.</p>

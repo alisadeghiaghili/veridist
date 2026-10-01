@@ -62,6 +62,8 @@ Historical evidence covers the strict exponential CSV path at 10 thousand, 100 t
 
 For compatible exponential reductions, a local SQLite checkpoint can preserve state after interruption. Before resuming, Veridist checks source revision, checksum, checkpoint generation, and processed ranges. Durable resume is limited to one host and its local filesystem; it is not distributed execution.
 
+That resume check is separate from a plainer guard made within a single CSV read: Veridist compares the file's operating-system identity -- device, inode, size, and last-modified time -- immediately before and after that read. This catches many accidental changes but is not a content hash, so an in-place rewrite that happens to preserve all four values is not detected.
+
 ## What is not supported yet?
 
 The 1.0 release does not support covariates such as temperature or pressure, analytic weights, free location parameters, generic dataframe/database adapters, distributed checkpoints, bootstrap selection stability, or inference for every registered family. See [known limits](../python/KNOWN_LIMITS.md) for the complete release boundary.

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from enum import Enum, StrEnum
 from math import isfinite
@@ -73,7 +74,46 @@ _SENSITIVE_CONTEXT_KEY_PARTS = frozenset(
 )
 
 
+# Strings are shown in exception text only when they look like a code-defined
+# token (a stage, operation or library error name). Anything else - a path, a
+# URI, free text - is replaced, because values are not otherwise screened.
+_DISPLAYABLE_TEXT = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.+-]{0,63}")
+_REDACTED_TEXT = "<redacted>"
+
+
+def _display_context_value(value: object) -> str:
+    """Render one frozen context value for exception text without leaking data."""
+
+    if value is None or type(value) in {bool, int, float}:
+        return str(value)
+    if type(value) is str:
+        return value if _DISPLAYABLE_TEXT.fullmatch(value) else _REDACTED_TEXT
+    if type(value) is tuple:
+        return "(" + ", ".join(_display_context_value(item) for item in value) + ")"
+    if isinstance(value, Mapping):
+        return "{" + _display_pairs(value) + "}"
+    return _REDACTED_TEXT
+
+
+def _display_pairs(context: Mapping[str, object]) -> str:
+    return ", ".join(
+        f"{key}={_display_context_value(context[key])}" for key in sorted(context)
+    )
+
+
 def _freeze_context_value(value: object) -> object:
+    """Recursively freeze a context value, rejecting unsafe shapes and keys.
+
+    This is a **key-name allowlist**, not data redaction: a mapping key is
+    rejected only when one of its ``_``-separated parts matches
+    :data:`_SENSITIVE_CONTEXT_KEY_PARTS` exactly (so ``file_path`` is
+    rejected but ``filepath``, having one undivided part, is not). Values are
+    never inspected, so a caller that stores a sensitive value under an
+    unlisted key (or an unsplit key) is not protected by this function; the
+    callers in this package are expected to use only narrow, reviewed key
+    names (see ``tests/contract/test_context_key_redaction.py``).
+    """
+
     if isinstance(value, Enum):
         return _freeze_context_value(value.value)
     if type(value) is float:
@@ -110,10 +150,15 @@ class EngineContractError(Exception):
         self.context = cast(Mapping[str, object], _freeze_context_value(context or {}))
 
     def __str__(self) -> str:
-        return self.code.value
+        if not self.context:
+            return self.code.value
+        return f"{self.code.value} ({_display_pairs(self.context)})"
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}(code={self.code.value})"
+        if not self.context:
+            return f"{type(self).__name__}(code={self.code.value})"
+        pairs = _display_pairs(self.context)
+        return f"{type(self).__name__}(code={self.code.value}, context={{{pairs}}})"
 
 
 class CapabilityCode(StrEnum):

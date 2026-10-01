@@ -102,6 +102,28 @@ Veridist release record.
   constructing a success, and reports a typed `NUMERICAL_OVERFLOW` failure
   instead; the CSV execution path already treats this as a complete run
   carrying a non-estimate, not an execution failure.
+- `fit_exponential_source`'s terminal-coverage check could never actually
+  fail: `expected_row_stop` and `expected_chunk_count` were re-derived from
+  the very same chunk envelopes `DeliveryValidator` had just accepted, so a
+  chunk silently lost between parsing and delivery would pass unnoticed.
+  The CSV adapter now records, independently of what it hands to a caller,
+  how many records it parsed through EOF (`CsvLifetimeAdapter
+  .terminal_record_count`), and `finish()` compares delivery against that
+  instead of against itself.
+- Execution provenance's reported pass count was always `1`, even when the
+  adapter's own source was never actually read, because
+  `fit_exponential_source` wrapped a fresh `PassEnforcer` around its own
+  internal generator instead of observing the adapter's own single-pass
+  enforcer (`CsvLifetimeAdapter` already tracked this separately). Reported
+  provenance now comes from the adapter's own enforcer
+  (`CsvLifetimeAdapter.passes`), so it reflects what actually happened.
+- `BoundedChunkBuffer._release` subtracted a released chunk's bytes from the
+  in-flight tally and only then checked for underflow, so a corrupted,
+  briefly-negative tally could be observed before the call raised. The check
+  now runs before the subtraction.
+- `ChunkEnvelope`, `DeliveryValidator`, and `DataSourceMetadata` now raise
+  `TypeError` for a non-`str` id instead of letting `str.strip()` raise a
+  bare `AttributeError`.
 
 ### Added
 
@@ -131,6 +153,22 @@ Veridist release record.
   review and migration of 25 legacy distributions.
 - Distinguished the static coverage requirement badge from live CI status and
   retained explicit citation, support, and conditional-license guidance.
+- `EngineContractError.__str__` and `__repr__` now include the failure's
+  sorted context (`CODE (k1=v1, k2=v2)`) instead of only the bare code, when
+  that context is non-empty; an empty context still renders as just the
+  code. Numbers and short code-like tokens are shown as-is; any other
+  string, such as a path or URI, is rendered as `<redacted>`, because
+  context keys are screened but values are not (see the new
+  `CONTEXT-REDACTION` entry in `KNOWN_LIMITS.md`).
+- `SQLiteCheckpointStore` now adds `sqlite_errorname` (for example
+  `SQLITE_BUSY` or `SQLITE_FULL`) to the context of a
+  `CHECKPOINT_STORAGE_FAILED` failure raised from a `sqlite3.Error`, without
+  exposing that exception's free-text message.
+- Documented, in docstrings and in `KNOWN_LIMITS.md`/the capability guide,
+  that `SourceMutationStatus.VERIFIED_UNCHANGED` compares a file's
+  OS-reported identity (device, inode, size, modification time) rather than
+  its content, and that failure-context redaction is a key-name allowlist,
+  not general data redaction.
 
 ## [1.0.1] - 2026-09-12
 

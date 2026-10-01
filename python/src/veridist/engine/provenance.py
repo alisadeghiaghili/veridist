@@ -105,6 +105,17 @@ class SourceRedaction:
 
 
 class SourceMutationStatus(StrEnum):
+    """Whether a source's identity was found unchanged across one read.
+
+    For the bundled CSV adapter, ``VERIFIED_UNCHANGED`` means the file's
+    OS-reported identity -- device, inode, size, and modification time, see
+    :meth:`~veridist.adapters.csv_lifetimes._FilesystemCsvSource.identity` --
+    matched immediately before and after the read. It is a best-effort
+    mutation guard, not a content hash or checksum: an in-place rewrite that
+    happens to preserve all four of those values is not detected, and this
+    status is never upgraded by re-reading or hashing the bytes themselves.
+    """
+
     NOT_CHECKED = "not_checked"
     VERIFIED_UNCHANGED = "verified_unchanged"
     MISMATCH_DETECTED = "mismatch_detected"

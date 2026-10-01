@@ -396,6 +396,10 @@ os._exit(0)
                 lock_holder.execute("ROLLBACK")
                 lock_holder.close()
             self.assertIs(locked.exception.code, FailureCode.CHECKPOINT_STORAGE_FAILED)
+            # The sqlite-reported error name is a safe, stable diagnostic
+            # fact; the human-readable message text ("database is locked")
+            # is deliberately not surfaced.
+            self.assertEqual(locked.exception.context["sqlite_errorname"], "SQLITE_BUSY")
             self.assertEqual(SQLiteCheckpointStore(path).read(), initial)
 
     def test_ckpt_sql05_independent_processes_allow_one_generation_commit(self) -> None:

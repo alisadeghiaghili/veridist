@@ -138,7 +138,6 @@ def fit_exponential_source(adapter: object) -> ExponentialSourceFitResult:
     plan = plan_passes(
         cast(DataSourceLike, adapter), required_passes=1, spool=SpoolPolicy.disabled()
     )
-    passes = PassEnforcer(max_passes=1)
     buffer = BoundedChunkBuffer(
         chunk_bytes=adapter.limits.chunk_bytes,
         max_inflight_bytes=adapter.limits.max_inflight_bytes,
@@ -148,24 +147,19 @@ def fit_exponential_source(adapter: object) -> ExponentialSourceFitResult:
     error: EngineContractError | None = None
     fit: ExponentialFit | None = None
     coverage: KnownCoverage | UnknownMissingRanges
-    expected_row_stop = 0
     expected_chunk_count = 0
     iterator: object | None = None
 
     def delivered_payloads() -> Generator[tuple[LifetimeObservation, ...], None, None]:
         """Deliver one validated payload at a time and release it before advancing."""
 
-        nonlocal stage, expected_row_stop, expected_chunk_count, iterator
+        nonlocal stage, expected_chunk_count, iterator
         acquired = iter_stream(adapter)
         iterator = acquired
         try:
             for chunk in acquired:
                 stage = FailureStage.DELIVERY
                 validator.accept(chunk.envelope)
-                # These terminal facts are deliberately maintained separately
-                # from DeliveryValidator, so finish validates rather than merely
-                # echoes the validator's own counters.
-                expected_row_stop = chunk.envelope.row_stop
                 expected_chunk_count += 1
                 lease = BufferedChunk(envelope=chunk.envelope, payload=chunk.observations)
                 buffer.put(lease)
@@ -178,8 +172,21 @@ def fit_exponential_source(adapter: object) -> ExponentialSourceFitResult:
                 finally:
                     received.release()
             stage = FailureStage.FINALIZATION
+            # The adapter tracks how many records it actually parsed through
+            # EOF on its own, independent of what made it through delivery, so
+            # this expectation is not simply re-derived from the same
+            # envelopes `validator` already accepted; a chunk silently lost
+            # between parsing and delivery now makes `finish` fail. A source
+            # that does not offer this fact (for example a test double that
+            # replaces `iter_chunks` entirely) falls back to the validator's
+            # own tally, which cannot be independently wrong.
+            terminal_record_count = adapter.terminal_record_count
             validator.finish(
-                expected_row_stop=expected_row_stop,
+                expected_row_stop=(
+                    terminal_record_count
+                    if terminal_record_count is not None
+                    else validator.next_offset
+                ),
                 expected_chunk_count=expected_chunk_count,
             )
         finally:
@@ -191,7 +198,7 @@ def fit_exponential_source(adapter: object) -> ExponentialSourceFitResult:
             buffer.cancel()
 
     try:
-        fit = fit_exponential_chunks(passes.begin_pass(delivered_payloads()))
+        fit = fit_exponential_chunks(delivered_payloads())
     except EngineContractError as captured:
         error = captured
         if type(captured) is CsvLifetimeAdapterError:
@@ -229,7 +236,7 @@ def fit_exponential_source(adapter: object) -> ExponentialSourceFitResult:
         )
     execution = ExecutionReport(
         outcome,
-        _provenance(adapter, plan, passes, buffer, mutation),
+        _provenance(adapter, plan, adapter.passes, buffer, mutation),
     )
     return ExponentialSourceFitResult(fit, execution)
 
