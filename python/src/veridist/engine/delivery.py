@@ -59,6 +59,10 @@ class ChunkEnvelope:
     byte_size: int
 
     def __post_init__(self) -> None:
+        if not isinstance(self.source_id, str):
+            raise TypeError("source_id must be a string")
+        if not isinstance(self.chunk_id, str):
+            raise TypeError("chunk_id must be a string")
         if not self.source_id.strip():
             raise ValueError("source_id must be non-empty")
         if not self.chunk_id.strip():
@@ -106,6 +110,8 @@ class DeliveryValidator:
         initial_offset: int = 0,
         initial_sequence: int = 0,
     ) -> None:
+        if not isinstance(source_id, str):
+            raise TypeError("source_id must be a string")
         if not source_id.strip():
             raise ValueError("source_id must be non-empty")
         if initial_offset < 0:
@@ -368,7 +374,14 @@ class BoundedChunkBuffer:
             raise DeliveryContractError(FailureCode.CANCELLED, {})
 
     def put(self, item: BufferedChunk, *, timeout: float | None = None) -> None:
-        """Queue an item, blocking while its bytes would exceed the hard bound."""
+        """Queue an item, blocking while its bytes would exceed the hard bound.
+
+        ``timeout=None`` waits without a deadline. In a single-threaded
+        caller that never releases an earlier lease before calling ``put``
+        again, nothing will ever free the capacity this call is waiting for,
+        so it blocks forever; pass a finite ``timeout`` whenever that
+        ordering is not guaranteed.
+        """
 
         byte_size = item.envelope.byte_size
         if byte_size <= 0:
@@ -418,9 +431,9 @@ class BoundedChunkBuffer:
         """Release a transferred queue lease exactly once through BufferedChunk."""
 
         with self._condition:
-            self._inflight_bytes -= byte_size
-            if self._inflight_bytes < 0:
+            if byte_size > self._inflight_bytes:
                 raise RuntimeError("buffer inflight byte accounting underflow")
+            self._inflight_bytes -= byte_size
             self._condition.notify_all()
 
     def read_and_put(

@@ -2,7 +2,7 @@
 
 <p dir="rtl" align="right"><a href="KNOWN_LIMITS.md">English</a> | <a href="KNOWN_LIMITS.fa.md">فارسی</a> | <a href="KNOWN_LIMITS.de.md">Deutsch</a></p>
 
-<!-- CI contract IDs: `FIT-CSV-EXP` `CSV-STRICT` `SCALAR-FAMILIES` `STREAM-SOURCE` `MEMORY-BOUND` `SCALE-EVIDENCE` `LICENSE` -->
+<!-- CI contract IDs: `FIT-CSV-EXP` `CSV-STRICT` `SCALAR-FAMILIES` `STREAM-SOURCE` `MEMORY-BOUND` `SCALE-EVIDENCE` `LICENSE` `SOURCE-MUTATION-STAT` `CONTEXT-REDACTION` -->
 
 <p dir="rtl" align="right">این صفحه مرزهای نسخهٔ <bdi dir="ltr">1.0.1</bdi> را به زبان ساده توضیح می‌دهد. اگر کاری در این فهرست نیامده، نباید آن را قابلیت پشتیبانی‌شده فرض کرد.</p>
 
@@ -41,6 +41,13 @@
   <li>پردازش مرحله‌ای داده به معنی تضمین سرعت یا سقف حافظه برای همهٔ رایانه‌ها نیست.</li>
   <li>ادعای مقیاس فقط برای همان آداپتور، مدل، داده، محیط، نسخهٔ پایتون و کامیتی معتبر است که آزمایش شده‌اند.</li>
   <li>ادامهٔ اجرا فقط برای مسیر CSV طول عمر و <bdi dir="ltr">SQLite</bdi><sup id="fnref-sqlite"><a href="#fn-sqlite">۷</a></sup> محلی پشتیبانی می‌شود.</li>
+</ul>
+
+<h2 dir="rtl" align="right">امنیت و پنهان‌سازی زمینهٔ خطا</h2>
+
+<ul dir="rtl" align="right">
+  <li>وضعیت <bdi dir="ltr">VERIFIED_UNCHANGED</bdi> در یک اجرای CSV فقط هویت گزارش‌شده توسط سیستم‌عامل برای فایل (دستگاه، inode، اندازه و زمان آخرین تغییر) را پیش و پس از خواندن مقایسه می‌کند؛ این یک مقایسهٔ محتوای فایل نیست و هر بازنویسی‌ای که این چهار مقدار را حفظ کند تشخیص داده نمی‌شود.</li>
+  <li>پنهان‌سازی زمینهٔ خطا بر پایهٔ فهرست مجاز نام کلیدها (با جداکنندهٔ <code dir="ltr">_</code>) است؛ کلیدهایی که بخشی از نامشان در فهرست ممنوع باشد رد می‌شوند، اما مقدارها هرگز بررسی نمی‌شوند. کلیدی که این بخش‌ها را به‌طور تصادفی کنار بزند (مثلاً <code dir="ltr">filepath</code> به‌جای <code dir="ltr">file_path</code>) غربال نمی‌شود، پس این پنهان‌سازی عمومیِ داده نیست. متن استثنا فقط عددها و توکن‌های کوتاهِ شبیه کد را از زمینه نشان می‌دهد و هر رشتهٔ دیگری، مثل مسیر فایل یا <bdi dir="ltr">URI</bdi>، را با <code dir="ltr">&lt;redacted&gt;</code> جایگزین می‌کند؛ خودِ نگاشت زمینه تغییری نمی‌کند.</li>
 </ul>
 
 <h2 dir="rtl" align="right">مجوز</h2>

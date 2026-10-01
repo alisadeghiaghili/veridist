@@ -80,6 +80,17 @@ class _FilesystemCsvSource:
         return path.open("rb")
 
     def identity(self, path: Path) -> object:
+        """Return a cheap OS-reported identity snapshot, not a content hash.
+
+        The tuple is ``(st_dev, st_ino, st_size, st_mtime_ns)``. Two snapshots
+        comparing equal is reported upstream as
+        :attr:`~veridist.engine.provenance.SourceMutationStatus.VERIFIED_UNCHANGED`,
+        but it only means those four OS-reported values did not change; it is
+        not a guarantee that the file's bytes are identical, since a rewrite
+        that preserves device, inode, size, and modification time is not
+        detected.
+        """
+
         stat = path.stat()
         return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns
 
@@ -225,6 +236,7 @@ class CsvLifetimeAdapter:
     opener: CsvBinarySource | None = None
     _estimated_fixed_bytes: int = field(init=False, repr=False, compare=False)
     _passes: PassEnforcer = field(init=False, repr=False, compare=False)
+    _terminal_record_count: int | None = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.path, Path):
@@ -241,6 +253,7 @@ class CsvLifetimeAdapter:
             if not callable(getattr(self.opener, "identity", None)):
                 raise TypeError("opener must define identity")
         object.__setattr__(self, "_passes", PassEnforcer(max_passes=1))
+        object.__setattr__(self, "_terminal_record_count", None)
         empty_envelope = ChunkEnvelope(
             source_id=self.source_id.value,
             chunk_id=_chunk_id(self.source_id, 0, 0),
@@ -252,6 +265,32 @@ class CsvLifetimeAdapter:
         fixed = retained_object_graph_bytes(CsvLifetimeChunk(empty_envelope, (), 1))
         fixed += sys.getsizeof(self.limits.chunk_bytes) + 256
         object.__setattr__(self, "_estimated_fixed_bytes", fixed)
+
+    @property
+    def passes(self) -> PassEnforcer:
+        """Expose this adapter's own single-pass enforcer for provenance snapshots.
+
+        This is the enforcer actually consulted by :meth:`iter_chunks`, so its
+        ``observation`` reflects how many times this adapter's source was
+        really acquired -- unlike a pass enforcer created fresh around a
+        caller-side iterator, which can only ever report one pass regardless
+        of what the adapter itself did.
+        """
+
+        return self._passes
+
+    @property
+    def terminal_record_count(self) -> int | None:
+        """Return the number of records parsed through EOF, or ``None`` before then.
+
+        This is recorded independently of the chunks actually delivered to a
+        caller, so a delivery-layer validator can compare the two and detect a
+        chunk silently dropped between parsing and delivery, instead of only
+        ever re-deriving its expectation from the same chunks it already
+        accepted.
+        """
+
+        return self._terminal_record_count
 
     @property
     def metadata(self) -> DataSourceMetadata:
@@ -420,6 +459,10 @@ class CsvLifetimeAdapter:
                 records.append(observation)
                 record_bytes += retained_object_graph_bytes(observation)
             record_offset += 1
+        # Recorded once the source reader itself has reached EOF, independent
+        # of whatever a caller does with the chunks yielded below -- so a
+        # chunk silently lost downstream can be detected by comparison.
+        object.__setattr__(self, "_terminal_record_count", record_offset)
         if failure is not None:
             return failure
         if records:

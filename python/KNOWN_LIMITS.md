@@ -38,5 +38,16 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
   out-of-core capability.
 - `LICENSE`: the package uses BUSL-1.1 with the Apache-2.0 additional-use grant
   stated in `LICENSE`; it changes to Apache-2.0 on 2030-09-05.
+- `SOURCE-MUTATION-STAT`: a CSV execution's `VERIFIED_UNCHANGED` mutation
+  status compares the file's OS-reported identity (device, inode, size, and
+  modification time) before and after the read. It is not a content hash and
+  cannot detect every in-place rewrite that preserves those four values.
+- `CONTEXT-REDACTION`: failure-context redaction is a fixed key-name
+  allowlist split on `_`; it rejects a key whose parts match a forbidden
+  list but never inspects values. A key that happens to avoid those parts
+  (for example `filepath` instead of `file_path`) is not screened, so this
+  is not general data redaction. Exception text shows numbers and short
+  code-like tokens from the context and replaces any other string, such as a
+  path or URI, with `<redacted>`; the context mapping itself is unchanged.
 
 [فارسی](KNOWN_LIMITS.fa.md) | [Deutsch](KNOWN_LIMITS.de.md)

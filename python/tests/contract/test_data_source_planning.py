@@ -94,6 +94,25 @@ class DataSourceMetadataContractTests(unittest.TestCase):
                     checkpoint_schema_version=overrides.get("checkpoint_schema_version", None),
                 )
 
+    def test_ds01_metadata_rejects_non_string_identifiers_with_typeerror(self) -> None:
+        for field_name in ("source_id", "schema_version", "provenance_schema_version"):
+            overrides: dict[str, object] = {
+                "source_id": "dataset:example-001",
+                "schema_version": "1",
+                "provenance_schema_version": "1",
+            }
+            overrides[field_name] = 1
+            with self.subTest(field_name=field_name), self.assertRaises(TypeError):
+                DataSourceMetadata(
+                    source_id=overrides["source_id"],  # type: ignore[arg-type]
+                    schema_version=overrides["schema_version"],  # type: ignore[arg-type]
+                    provenance_schema_version=overrides[  # type: ignore[arg-type]
+                        "provenance_schema_version"
+                    ],
+                    replayability=Replayability.REPLAYABLE,
+                    redaction_reason="redacted",
+                )
+
 
 class ReplayabilityPlanningContractTests(unittest.TestCase):
     """DS-02: plans are admitted or rejected without consuming the source."""

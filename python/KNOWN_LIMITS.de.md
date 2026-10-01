@@ -41,5 +41,18 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
 - `LICENSE`: Das Paket verwendet BUSL-1.1 mit der in `LICENSE` beschriebenen
   zusätzlichen Apache-2.0-Nutzungserlaubnis und wechselt am 2030-09-05 zu
   Apache-2.0.
+- `SOURCE-MUTATION-STAT`: Der Mutationsstatus `VERIFIED_UNCHANGED` einer
+  CSV-Ausführung vergleicht die vom Betriebssystem gemeldete Identität der
+  Datei (Gerät, Inode, Größe und Änderungszeit) vor und nach dem Lesen. Das
+  ist kein Inhalts-Hash und erkennt nicht jedes Überschreiben an Ort und
+  Stelle, das diese vier Werte unverändert lässt.
+- `CONTEXT-REDACTION`: Die Redaktion des Fehlerkontexts ist eine feste, nach
+  `_` aufgeteilte Zulassungsliste von Schlüsselnamen; sie verwirft Schlüssel,
+  deren Teile einer verbotenen Liste entsprechen, prüft aber nie die Werte.
+  Ein Schlüssel, der diese Teile zufällig vermeidet (zum Beispiel `filepath`
+  statt `file_path`), wird nicht erkannt; dies ist daher keine allgemeine
+  Datenredaktion. Der Ausnahmetext zeigt Zahlen und kurze, codeartige Token
+  aus dem Kontext und ersetzt jede andere Zeichenkette, etwa einen Pfad oder
+  eine URI, durch `<redacted>`; das Kontext-Mapping selbst bleibt unverändert.
 
 [English](KNOWN_LIMITS.md) | [فارسی](KNOWN_LIMITS.fa.md)

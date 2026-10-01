@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import re
 import unittest
+from collections.abc import Iterator
 from io import BytesIO
 from pathlib import Path
 from unittest.mock import patch
 
 from veridist.adapters.csv_lifetimes import (
     CsvLifetimeAdapter,
+    CsvLifetimeChunk,
     CsvLifetimeLimits,
     CsvLifetimeSchema,
 )
@@ -191,6 +193,44 @@ class CsvLifetimeExecutionContracts(unittest.TestCase):
             ExponentialSourceFitResult(None, complete.execution)
         with self.assertRaises(TypeError):
             fit_exponential_source(object())
+
+    def test_csv_exec10_finish_detects_a_chunk_parsed_but_never_delivered(self) -> None:
+        payload = b"time,event_observed\n1,1\n2,1\n"
+        wide, _ = _adapter(payload, chunk_bytes=4096)
+        combined = next(wide.iter_chunks())
+        adapter, _ = _adapter(payload, chunk_bytes=combined.retained_payload_bytes - 1)
+
+        original_iter_chunks = CsvLifetimeAdapter.iter_chunks
+
+        def dropped_last(self: CsvLifetimeAdapter) -> Iterator[CsvLifetimeChunk]:
+            # Drain the real generator fully -- so the adapter still records
+            # its true terminal record count -- then withhold the final
+            # chunk, simulating a chunk lost between parsing and delivery.
+            chunks = list(original_iter_chunks(self))
+            assert len(chunks) == 2
+            yield from chunks[:1]
+
+        with patch.object(CsvLifetimeAdapter, "iter_chunks", dropped_last):
+            result = fit_exponential_source(adapter)
+
+        self.assertEqual(adapter.terminal_record_count, 2)
+        self.assertIsNone(result.fit)
+        self.assertIsInstance(result.execution.outcome, FailedOutcome)
+        assert isinstance(result.execution.outcome, FailedOutcome)
+        self.assertEqual(result.execution.outcome.failure.code, FailureCode.MISSING_CHUNK)
+        self.assertEqual(result.execution.outcome.failure.stage, FailureStage.FINALIZATION)
+
+    def test_csv_exec11_provenance_pass_count_reflects_the_adapters_own_enforcer(self) -> None:
+        adapter, _ = _adapter(b"time,event_observed\n1,1\n")
+        self.assertEqual(adapter.passes.actual_pass_count, 0)
+
+        result = fit_exponential_source(adapter)
+
+        self.assertEqual(adapter.passes.actual_pass_count, 1)
+        self.assertEqual(
+            result.execution.provenance.execution.passes,
+            adapter.passes.observation,
+        )
 
     def test_csv_exec08_iterator_without_close_and_non_tuple_payload_cleanup(self) -> None:
         adapter, _ = _adapter(b"time,event_observed\n")
