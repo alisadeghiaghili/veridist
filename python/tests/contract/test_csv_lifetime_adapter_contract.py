@@ -377,7 +377,11 @@ class CsvLifetimeAdapterContracts(unittest.TestCase):
                 FailureCode.SOURCE_SCHEMA_INVALID,
                 "header_columns_mismatch",
             ),
-            (b"time,event_observed\n\n", FailureCode.SOURCE_ROW_INVALID, "blank_record"),
+            (
+                b"time,event_observed\n\n1,1\n",
+                FailureCode.SOURCE_ROW_INVALID,
+                "blank_record",
+            ),
             (
                 b"time,event_observed\nsuper-secret-cell,1\n",
                 FailureCode.SOURCE_ROW_INVALID,
@@ -399,6 +403,24 @@ class CsvLifetimeAdapterContracts(unittest.TestCase):
                 adapter, source = self.adapter(payload)
                 self.assert_adapter_error(adapter, code=code, reason=reason)
                 self.assertEqual(source.close_count, 1)
+
+        # A blank record is tolerated only when it is the last thing in the
+        # file, for example a trailing "\r\n\r\n" an editor or spreadsheet
+        # added; it does not change the delivered rows.
+        for trailing_blank_payload in (
+            b"time,event_observed\n\n",
+            b"time,event_observed\n1,1\n\n",
+            b"time,event_observed\n1,1\n\n\n",
+        ):
+            with self.subTest(payload=trailing_blank_payload):
+                tolerant, _ = self.adapter(trailing_blank_payload)
+                observations = tuple(
+                    item for chunk in tolerant.iter_chunks() for item in chunk.observations
+                )
+                self.assertEqual(
+                    observations,
+                    (ExactLifetime(1.0),) if b"1,1" in trailing_blank_payload else (),
+                )
 
         changed, source = self.adapter(
             b"time,event_observed\n1,1\n",
@@ -472,7 +494,7 @@ class CsvLifetimeAdapterContracts(unittest.TestCase):
                     CsvLifetimeLimits(*limits)
         with self.assertRaises(TypeError):
             CsvLifetimeAdapter(  # type: ignore[arg-type]
-                "not-a-path",
+                123.456,
                 schema=SCHEMA,
                 source_id=SOURCE_ID,
                 limits=CsvLifetimeLimits(2048, 2048),
@@ -829,7 +851,9 @@ class CsvLifetimeAdapterContracts(unittest.TestCase):
             (b'time,event_observed\n"1"junk,1\n', "malformed_record"),
             (b"time,event_observed\n1\x00,1\n", "invalid_time"),
             (b"time,event_observed\r\n1,1\r\n", None),
-            (b"time,event_observed\n1,1\n\n", "blank_record"),
+            # A trailing blank record (nothing follows it) is tolerated, not
+            # a failure; see the dedicated trailing-blank assertions above.
+            (b"time,event_observed\n1,1\n\n", None),
             (b'time,event_observed\n"1\n",1\n', "invalid_time"),
         )
         for payload, reason in corpus:
@@ -919,6 +943,44 @@ class CsvLifetimeAdapterContracts(unittest.TestCase):
             with patch("veridist.adapters.csv_lifetimes.os.fstat", wraps=os.fstat) as fstat:
                 self.assertEqual(len(tuple(adapter.iter_chunks())), 1)
             fstat.assert_called_once()
+
+    def test_csv20_path_accepts_str_and_pathlike_and_still_rejects_other_types(self) -> None:
+        str_source = TrackingSource(b"time,event_observed\n1,1\n")
+        str_adapter = CsvLifetimeAdapter(
+            "private-lifetime-data.csv",
+            schema=SCHEMA,
+            source_id=SOURCE_ID,
+            limits=CsvLifetimeLimits(2048, 2048),
+            opener=str_source,
+        )
+        self.assertEqual(str_adapter.path, Path("private-lifetime-data.csv"))
+        self.assertEqual(len(tuple(str_adapter.iter_chunks())), 1)
+
+        class _FakePathLike:
+            def __fspath__(self) -> str:
+                return "private-lifetime-data.csv"
+
+        pathlike_source = TrackingSource(b"time,event_observed\n1,1\n")
+        pathlike_adapter = CsvLifetimeAdapter(
+            _FakePathLike(),  # type: ignore[arg-type]
+            schema=SCHEMA,
+            source_id=SOURCE_ID,
+            limits=CsvLifetimeLimits(2048, 2048),
+            opener=pathlike_source,
+        )
+        self.assertEqual(pathlike_adapter.path, Path("private-lifetime-data.csv"))
+        self.assertEqual(len(tuple(pathlike_adapter.iter_chunks())), 1)
+
+        with self.assertRaises(TypeError):
+            CsvLifetimeAdapter(  # type: ignore[arg-type]
+                12345,
+                schema=SCHEMA,
+                source_id=SOURCE_ID,
+                limits=CsvLifetimeLimits(2048, 2048),
+            )
+
+    def test_csv21_default_limits_are_the_documented_constant(self) -> None:
+        self.assertEqual(CsvLifetimeLimits.default(), CsvLifetimeLimits(65_536, 65_536))
 
 
 if __name__ == "__main__":

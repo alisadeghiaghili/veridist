@@ -242,7 +242,7 @@ def fit_exponential_source(adapter: object) -> ExponentialSourceFitResult:
 
 
 def fit_exponential_csv(
-    path: Path,
+    path: str | os.PathLike[str],
     *,
     schema: CsvLifetimeSchema,
     source_id: PublicSourceId,
@@ -363,7 +363,7 @@ def fit_exponential_checkpointed_chunks(
 
 def fit_exponential_checkpointed_csv(
     *,
-    path: Path,
+    path: str | os.PathLike[str],
     schema: CsvLifetimeSchema,
     source_id: PublicSourceId,
     limits: CsvLifetimeLimits,
@@ -398,8 +398,12 @@ def fit_exponential_checkpointed_csv(
     attempt to close it further.
     """
 
-    if not isinstance(path, Path):
-        raise TypeError("path must be a pathlib.Path")
+    if isinstance(path, Path):
+        pass
+    elif isinstance(path, (str, os.PathLike)):
+        path = Path(path)
+    else:
+        raise TypeError("path must be a pathlib.Path, str, or os.PathLike[str]")
     if type(schema) is not CsvLifetimeSchema:
         raise TypeError("schema must be CsvLifetimeSchema")
     if type(source_id) is not PublicSourceId:
@@ -498,7 +502,7 @@ def fit_exponential_checkpointed_csv(
 def create_checkpointed_csv_store(
     store_path: str | os.PathLike[str],
     *,
-    csv_path: Path,
+    csv_path: str | os.PathLike[str],
     source_id: PublicSourceId,
 ) -> SQLiteCheckpointStore:
     """Create a durable store contracted to one CSV file, source id and reducer.
@@ -510,8 +514,12 @@ def create_checkpointed_csv_store(
     themselves.
     """
 
-    if not isinstance(csv_path, Path):
-        raise TypeError("csv_path must be a pathlib.Path")
+    if isinstance(csv_path, Path):
+        pass
+    elif isinstance(csv_path, (str, os.PathLike)):
+        csv_path = Path(csv_path)
+    else:
+        raise TypeError("csv_path must be a pathlib.Path, str, or os.PathLike[str]")
     if type(source_id) is not PublicSourceId:
         raise TypeError("source_id must be PublicSourceId")
     revision = _hash_file_sha256(csv_path)

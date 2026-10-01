@@ -31,12 +31,21 @@ class InformationCriteria:
 
 @dataclass(frozen=True, slots=True)
 class RefitMonteCarloGof:
+    """Refit Monte Carlo goodness-of-fit result for one or more EDF statistics.
+
+    `monte_carlo_standard_error` and `interval` describe exactly one
+    statistic's p-value -- `primary_statistic` names which one. When more
+    than one statistic was requested, the other p-values are still present
+    in `p_values`, but they have no standard error or interval reported here.
+    """
+
     requested_replicates: int
     successful_replicates: int
     failed_replicates: int
     monte_carlo_standard_error: float
     interval: tuple[float, float]
     p_values: Mapping[GofStatistic, float]
+    primary_statistic: GofStatistic
     method: str = "refit_monte_carlo"
     rng_policy: str = "caller_owned_generator"
 
@@ -166,7 +175,8 @@ def refit_monte_carlo_gof(
     p_values = {
         statistic: (exceedances[statistic] + 1.0) / (successful + 1.0) for statistic in requested
     }
-    primary = p_values[requested[0]]
+    primary_statistic = requested[0]
+    primary = p_values[primary_statistic]
     standard_error = sqrt(primary * (1.0 - primary) / successful)
     return RefitMonteCarloGof(
         replicates,
@@ -175,13 +185,24 @@ def refit_monte_carlo_gof(
         standard_error,
         (max(0.0, primary - 1.96 * standard_error), min(1.0, primary + 1.96 * standard_error)),
         p_values,
+        primary_statistic,
     )
 
 
 def compare_models(
     *, candidates: Iterable[Mapping[str, object]], adequacy_threshold: float
 ) -> ModelSelection:
-    """Choose the lowest-AIC adequate candidate, or return the typed empty outcome."""
+    """Choose the lowest-AIC adequate candidate, or return the typed empty outcome.
+
+    Passing the adequacy gate (``p_value >= adequacy_threshold``) means a
+    candidate was not rejected by the admitted goodness-of-fit test; it is
+    not evidence that the candidate is an adequate model in any absolute
+    sense, and a small or unrepresentative sample can fail to reject a poor
+    model. Each candidate's ``aic`` must be computed from the same data as
+    every other candidate's; AIC values fit on different samples, subsets,
+    or censoring are not comparable and this function has no way to detect
+    that they were not.
+    """
 
     if type(adequacy_threshold) is not float or not 0.0 <= adequacy_threshold <= 1.0:
         raise ValueError("adequacy_threshold must be a built-in probability")

@@ -129,6 +129,25 @@ class V1CheckpointedCsvTests(unittest.TestCase):
             self.assertEqual(result.code, "SOURCE_REVISION_MISMATCH")
             self.assertEqual(store.read().cursor, 0)
 
+    def test_missing_csv_file_is_a_typed_open_failure(self) -> None:
+        from veridist.execution import fit_exponential_checkpointed_csv
+
+        with tempfile.TemporaryDirectory() as directory:
+            missing = Path(directory) / "does-not-exist.csv"
+            store = self._store(directory, "irrelevant-revision")
+            result = fit_exponential_checkpointed_csv(
+                path=missing,
+                schema=CsvLifetimeSchema("time", "event_observed"),
+                source_id=PublicSourceId(_SOURCE_ID),
+                limits=CsvLifetimeLimits(32, 64),
+                store=store,
+                source_revision="irrelevant-revision",
+                cancel=None,
+            )
+            self.assertEqual(result.code, "SOURCE_OPEN_FAILED")
+            self.assertIsNone(result.fit)
+            self.assertEqual(store.read().cursor, 0)
+
     def test_rewritten_file_is_rejected_even_when_the_old_revision_is_reused(self) -> None:
         """DS2a repro: a rewritten CSV must not silently advance the checkpoint.
 
@@ -281,15 +300,50 @@ class V1CheckpointedCsvTests(unittest.TestCase):
             with self.assertRaises(TypeError):
                 create_checkpointed_csv_store(
                     Path(directory) / "store.sqlite3",
-                    csv_path="not-a-path",  # type: ignore[arg-type]
+                    csv_path=12345,  # type: ignore[arg-type]
                     source_id=PublicSourceId(_SOURCE_ID),
                 )
+            str_store_path = Path(directory) / "store-from-str-path.sqlite3"
+            str_path_store = create_checkpointed_csv_store(
+                str(str_store_path),
+                csv_path=str(source),
+                source_id=PublicSourceId(_SOURCE_ID),
+            )
+            self.assertEqual(str_path_store.read().source_revision, _sha256(source))
             with self.assertRaises(TypeError):
                 create_checkpointed_csv_store(
                     Path(directory) / "store.sqlite3",
                     csv_path=source,
                     source_id="not-a-public-source-id",  # type: ignore[arg-type]
                 )
+
+    def test_fit_exponential_checkpointed_csv_accepts_a_str_path(self) -> None:
+        from veridist.execution import (
+            create_checkpointed_csv_store,
+            fit_exponential_checkpointed_csv,
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / "lifetimes.csv"
+            source.write_text("time,event_observed\n1,1\n2,0\n", encoding="utf-8")
+            store_path = Path(directory) / "store.sqlite3"
+            store = create_checkpointed_csv_store(
+                store_path,
+                csv_path=source,
+                source_id=PublicSourceId(_SOURCE_ID),
+            )
+            result = fit_exponential_checkpointed_csv(
+                path=str(source),
+                schema=CsvLifetimeSchema("time", "event_observed"),
+                source_id=PublicSourceId(_SOURCE_ID),
+                limits=CsvLifetimeLimits(2048, 2048),
+                store=store,
+                source_revision=_sha256(source),
+                cancel=None,
+            )
+        self.assertEqual(result.code, "COMPLETE")
+        assert result.fit is not None
+        self.assertEqual(result.fit.observation_count, 2)
 
     def test_checkpoint_internal_revision_disagrees_with_a_correctly_identified_file(
         self,
@@ -474,7 +528,7 @@ class V1CheckpointedCsvTests(unittest.TestCase):
             "cancel": None,
         }
         for name, value in (
-            ("path", "source.csv"),
+            ("path", 12345),
             ("schema", object()),
             ("source_id", object()),
             ("limits", object()),

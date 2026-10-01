@@ -71,7 +71,7 @@ _FA_CATALOG: Final[Mapping[str, str]] = MappingProxyType(
         "parameterization": "پارامتردهی",
         "location": "مکان ثابت",
         "rate": "نرخ",
-        "mean": "میانگین مشتق‌شده",
+        "mean": "میانگین محاسبه‌شده",
         "observation_count": "تعداد مشاهده‌ها",
         "event_count": "تعداد رویدادهای مشاهده‌شده",
         "censored_count": "تعداد سانسورشده از راست",

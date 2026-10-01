@@ -126,6 +126,18 @@ class CsvLifetimeLimits:
         if self.max_inflight_bytes < self.chunk_bytes:
             raise ValueError("max_inflight_bytes must cover one chunk")
 
+    @staticmethod
+    def default() -> CsvLifetimeLimits:
+        """Return the default byte limits: 65,536 for chunk and inflight bytes.
+
+        The unit is CPython retained object-graph bytes, as measured by
+        :func:`retained_object_graph_bytes` -- the memory a chunk and its
+        parsed observations retain while buffered -- not serialized file
+        bytes, not process RSS, and not any other platform byte count.
+        """
+
+        return CsvLifetimeLimits(65_536, 65_536)
+
 
 class CsvLifetimeAdapterError(EngineContractError):
     """Typed redacted adapter failure from the closed engine code taxonomy."""
@@ -229,7 +241,7 @@ def retained_object_graph_bytes(value: object) -> int:
 class CsvLifetimeAdapter:
     """Family-neutral strict CSV source with replayable sequential chunks."""
 
-    path: Path
+    path: Path | str | os.PathLike[str]
     schema: CsvLifetimeSchema
     source_id: PublicSourceId
     limits: CsvLifetimeLimits
@@ -237,10 +249,18 @@ class CsvLifetimeAdapter:
     _estimated_fixed_bytes: int = field(init=False, repr=False, compare=False)
     _passes: PassEnforcer = field(init=False, repr=False, compare=False)
     _terminal_record_count: int | None = field(init=False, repr=False, compare=False)
+    _exact_lifetime_bytes: int = field(init=False, repr=False, compare=False)
+    _censored_lifetime_bytes: int = field(init=False, repr=False, compare=False)
+    _exact_lifetime_needs_single_check: bool = field(init=False, repr=False, compare=False)
+    _censored_lifetime_needs_single_check: bool = field(init=False, repr=False, compare=False)
+    _tuple_slot_bytes: int = field(init=False, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not isinstance(self.path, Path):
-            raise TypeError("path must be a pathlib.Path")
+            if isinstance(self.path, (str, os.PathLike)):
+                object.__setattr__(self, "path", Path(self.path))
+            else:
+                raise TypeError("path must be a pathlib.Path, str, or os.PathLike[str]")
         if type(self.schema) is not CsvLifetimeSchema:
             raise TypeError("schema must be CsvLifetimeSchema")
         if type(self.source_id) is not PublicSourceId:
@@ -263,8 +283,63 @@ class CsvLifetimeAdapter:
             byte_size=1,
         )
         fixed = retained_object_graph_bytes(CsvLifetimeChunk(empty_envelope, (), 1))
-        fixed += sys.getsizeof(self.limits.chunk_bytes) + 256
+        # `retained_object_graph_bytes` deduplicates by object identity, and
+        # CPython's small-int cache means a chunk's envelope fields (offset,
+        # sequence number, byte size) can share objects with each other --
+        # or not -- depending on their actual values, in a way the
+        # all-zero probe above does not reproduce. An exhaustive sweep over
+        # realistic offsets, sequence numbers, and byte sizes found that
+        # swing to be at most one machine int's worth (28 bytes on a 64-bit
+        # build); the padding below is nearly three times that, so it stays
+        # a genuine over-estimate with a wide margin. It is still never
+        # treated as exact: it is always re-verified against a real
+        # measurement before a chunk boundary decision is final (see
+        # `_read_chunks`).
+        fixed += 80
         object.__setattr__(self, "_estimated_fixed_bytes", fixed)
+
+        # `ExactLifetime`/`RightCensoredLifetime` each hold exactly one
+        # built-in `float` field, and CPython's float object size does not
+        # depend on the float's value, so the retained graph size of either
+        # type is a per-type constant. Measuring it once here -- instead of
+        # on every parsed row -- is the whole point of this cache; the
+        # sampled values below are not just a correctness check, they prove
+        # the invariant the cache depends on actually holds before anything
+        # relies on it. Unlike small ints, built-in floats are not
+        # value-cached by CPython, so this measurement is not subject to
+        # the identity-sharing swing described above.
+        exact_bytes = retained_object_graph_bytes(ExactLifetime(1.0))
+        censored_bytes = retained_object_graph_bytes(RightCensoredLifetime(1.0))
+        for sample in (0.0, 1e-300, 1.0, 123456.789, 1e300):
+            if retained_object_graph_bytes(ExactLifetime(sample)) != exact_bytes:
+                raise AssertionError(
+                    "ExactLifetime's retained object-graph size must not depend on "
+                    "its float value"
+                )
+            if retained_object_graph_bytes(RightCensoredLifetime(sample)) != censored_bytes:
+                raise AssertionError(
+                    "RightCensoredLifetime's retained object-graph size must not "
+                    "depend on its float value"
+                )
+        object.__setattr__(self, "_exact_lifetime_bytes", exact_bytes)
+        object.__setattr__(self, "_censored_lifetime_bytes", censored_bytes)
+
+        # Conservative (over-estimating, never under-estimating) single-record
+        # chunk size, built the same way `_estimated_chunk_bytes` is: it is
+        # safe to skip the exact per-row check below whenever this constant
+        # already fits comfortably inside the declared limit.
+        tuple_slot_bytes = sys.getsizeof((None,)) - sys.getsizeof(())
+        object.__setattr__(self, "_tuple_slot_bytes", tuple_slot_bytes)
+        object.__setattr__(
+            self,
+            "_exact_lifetime_needs_single_check",
+            fixed + tuple_slot_bytes + exact_bytes > self.limits.chunk_bytes,
+        )
+        object.__setattr__(
+            self,
+            "_censored_lifetime_needs_single_check",
+            fixed + tuple_slot_bytes + censored_bytes > self.limits.chunk_bytes,
+        )
 
     @property
     def passes(self) -> PassEnforcer:
@@ -311,9 +386,10 @@ class CsvLifetimeAdapter:
         # second source open or a hidden retry.
         self._passes.begin_pass((None,))
         source = self.opener if self.opener is not None else _FilesystemCsvSource()
+        resolved_path = cast(Path, self.path)
         open_failure: CsvLifetimeAdapterError | None = None
         try:
-            binary = source.open_binary(self.path)
+            binary = source.open_binary(resolved_path)
         except OSError:
             open_failure = CsvLifetimeAdapterError(
                 FailureCode.SOURCE_OPEN_FAILED,
@@ -329,7 +405,7 @@ class CsvLifetimeAdapter:
         translated: CsvLifetimeAdapterError | None = None
         try:
             before_identity, identity_failure = _identity_or_failure(
-                source, self.path, binary=binary
+                source, resolved_path, binary=binary
             )
             if identity_failure is not None:
                 raise identity_failure
@@ -341,7 +417,7 @@ class CsvLifetimeAdapter:
             self._validate_header(header)
             semantic_failure = yield from self._read_chunks(reader)
             after_identity, identity_failure = _identity_or_failure(
-                source, self.path, phase=CsvAdapterFailurePhase.FINALIZATION
+                source, resolved_path, phase=CsvAdapterFailurePhase.FINALIZATION
             )
             if identity_failure is not None:
                 raise identity_failure
@@ -419,27 +495,58 @@ class CsvLifetimeAdapter:
         record_offset = 0
         sequence = 0
         failure: CsvLifetimeAdapterError | None = None
+        # A blank record is only valid when it is the last thing in the file
+        # (for example a trailing "\r\n\r\n" an editor or spreadsheet added).
+        # Its offset is held here, undecided, until either a later row proves
+        # it was not actually trailing (and it fails at this offset) or the
+        # reader reaches EOF (and it is silently dropped).
+        pending_blank_offset: int | None = None
         for row in reader:
-            try:
-                observation = self._parse_row(row, record_offset)
-            except CsvLifetimeAdapterError as error:
-                if failure is None:
-                    failure = error
+            if not row:
+                if pending_blank_offset is None:
+                    pending_blank_offset = record_offset
                 record_offset += 1
                 continue
+            if pending_blank_offset is not None:
+                if failure is None:
+                    failure = CsvLifetimeAdapterError(
+                        FailureCode.SOURCE_ROW_INVALID,
+                        reason="blank_record",
+                        phase=CsvAdapterFailurePhase.DELIVERY,
+                        record_offset=pending_blank_offset,
+                    )
+                pending_blank_offset = None
             if failure is not None:
                 record_offset += 1
                 continue
-            single = self._chunk((observation,), record_offset, sequence)
-            if single.retained_payload_bytes > self.limits.chunk_bytes:
-                raise CsvLifetimeAdapterError(
-                    FailureCode.CHUNK_TOO_LARGE,
-                    reason="record_too_large",
-                    phase=CsvAdapterFailurePhase.DELIVERY,
-                    record_offset=record_offset,
-                )
+            try:
+                observation = self._parse_row(row, record_offset)
+            except CsvLifetimeAdapterError as error:
+                failure = error
+                record_offset += 1
+                continue
+            if type(observation) is ExactLifetime:
+                observation_bytes = self._exact_lifetime_bytes
+                needs_single_check = self._exact_lifetime_needs_single_check
+            else:
+                observation_bytes = self._censored_lifetime_bytes
+                needs_single_check = self._censored_lifetime_needs_single_check
+            if needs_single_check:
+                # `ExactLifetime`/`RightCensoredLifetime` with a float payload
+                # have a value-independent retained graph size (asserted in
+                # `__post_init__`), so this exact rebuild only ever runs when
+                # the declared limit is already tight enough that it might
+                # matter -- never once per row on an ordinary file.
+                single = self._chunk((observation,), record_offset, sequence)
+                if single.retained_payload_bytes > self.limits.chunk_bytes:
+                    raise CsvLifetimeAdapterError(
+                        FailureCode.CHUNK_TOO_LARGE,
+                        reason="record_too_large",
+                        phase=CsvAdapterFailurePhase.DELIVERY,
+                        record_offset=record_offset,
+                    )
             candidate_bytes = self._estimated_chunk_bytes(
-                records, record_bytes + retained_object_graph_bytes(observation), start, sequence
+                records, record_bytes + observation_bytes, start, sequence
             )
             if records and candidate_bytes > self.limits.chunk_bytes:
                 # The conservative tally can deliberately over-estimate.  An
@@ -448,16 +555,16 @@ class CsvLifetimeAdapter:
                 candidate = self._chunk(tuple([*records, observation]), start, sequence)
                 if candidate.retained_payload_bytes <= self.limits.chunk_bytes:
                     records.append(observation)
-                    record_bytes += retained_object_graph_bytes(observation)
+                    record_bytes += observation_bytes
                 else:
                     yield self._chunk(tuple(records), start, sequence)
                     start = record_offset
                     sequence += 1
                     records = [observation]
-                    record_bytes = retained_object_graph_bytes(observation)
+                    record_bytes = observation_bytes
             else:
                 records.append(observation)
-                record_bytes += retained_object_graph_bytes(observation)
+                record_bytes += observation_bytes
             record_offset += 1
         # Recorded once the source reader itself has reached EOF, independent
         # of whatever a caller does with the chunks yielded below -- so a
@@ -485,9 +592,9 @@ class CsvLifetimeAdapter:
         count = len(records) + 1
         # Account from declared graph components.  The tuple capacity follows
         # CPython's published object-size seam (empty tuple plus one element),
-        # so no O(k) prefix tuple is ever constructed merely to estimate it.
-        # The final emitted chunk is still measured exactly below.
-        tuple_slot_bytes = sys.getsizeof((None,)) - sys.getsizeof(())
+        # cached once in `__post_init__`, so no O(k) prefix tuple is ever
+        # constructed merely to estimate it.  The final emitted chunk is
+        # still measured exactly below.
         # Object ownership is exact at emission, while this pre-emission tally
         # intentionally avoids an O(k) graph walk.  Different chunk-id values
         # can have small interpreter-specific graph overhead, so reserve a
@@ -495,18 +602,15 @@ class CsvLifetimeAdapter:
         # cross the public byte cap only after emission.
         return (
             self._estimated_fixed_bytes
-            + tuple_slot_bytes * count
+            + self._tuple_slot_bytes * count
             + observation_bytes
         )
 
     def _parse_row(self, row: list[str], record_offset: int) -> LifetimeObservation:
-        if not row:
-            raise CsvLifetimeAdapterError(
-                FailureCode.SOURCE_ROW_INVALID,
-                reason="blank_record",
-                phase=CsvAdapterFailurePhase.DELIVERY,
-                record_offset=record_offset,
-            )
+        # Blank records are intercepted by `_read_chunks` before this is
+        # called, because a blank record's validity depends on whether it is
+        # the last row in the file -- something only the caller's loop, not
+        # this single-row parser, can know.
         if len(row) != 2:
             raise CsvLifetimeAdapterError(
                 FailureCode.SOURCE_ROW_INVALID,
