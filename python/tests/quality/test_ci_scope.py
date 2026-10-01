@@ -44,6 +44,7 @@ class CiScopeClassifierTests(unittest.TestCase):
             "README.fa.md",
             "README.de.md",
             "SECURITY.md",
+            "CONTRIBUTING.md",
             ".zenodo.json",
             "CITATION.cff",
             "conda-forge-recipe/meta.yaml",

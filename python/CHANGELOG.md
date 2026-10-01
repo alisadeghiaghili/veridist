@@ -250,6 +250,35 @@ Veridist release record.
   now "میانگین محاسبه‌شده" ("calculated mean"); the previous "میانگین
   مشتق‌شده" ("derived mean") read as a direct, slightly awkward calque.
 
+### Documentation
+
+- The repository-root and package READMEs (en/fa/de) no longer claim that
+  "release evidence covers declared CSV/Exponential paths at 10k, 100k, and
+  1m rows"; the retained `scale-csv-exponential-v1.json` snapshot predates
+  the schema the current checker requires and does not pass it, so the
+  sentence now says a historical snapshot is retained, that it does not pass
+  the current checker, and that no throughput or scale claim follows from it.
+- Added dated amendment notes to `docs/adr/ADR-0005-out-of-core-backends-and-
+  scale-tiers.md` and `docs/adr/ADR-0021-streaming-log-likelihood-reducer.md`
+  recording that their retained scale-evidence artifacts (schema version 1
+  and schema version 2, respectively) are both now rejected by their current
+  checkers — the CSV artifact needs schema version 2, and the log-likelihood
+  artifact needs schema version 4 and its recorded `git_sha` is not part of
+  this repository's history — without rewriting either ADR's body.
+- `python/docs/source/api.md` (and its Persian/German counterparts and
+  `.po` catalogs) now documents the `fit_exponential_checkpointed_csv`
+  revision contract (it must equal the CSV file's current SHA-256 hex
+  digest) and the `create_checkpointed_csv_store` helper.
+- `KNOWN_LIMITS.md`/`.fa.md`/`.de.md` now describe the checkpoint-resume
+  contract under `STREAM-SOURCE`: the SHA-256 revision check, the offset
+  chunk form, and that durable resume is local to one host.
+- Rewrote the repository-root `CONTRIBUTING.md` for `veridist`: it previously
+  described the legacy `distfit_pro` tooling (black/isort, a `py-distfit-pro`
+  clone URL). It now covers the `python/` layout, the ruff/mypy/pytest/
+  `check_coverage.py` gates, the coverage-manifest denominator rule, the
+  en/fa/de documentation-parity rule, Conventional Commits, and that mutation
+  testing runs only on Linux CI.
+
 ## [1.0.1] - 2026-09-12
 
 ### Changed

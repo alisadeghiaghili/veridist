@@ -38,7 +38,7 @@ as a statement about uninspected current files.
 - `LLR-06` preserves `python/evidence/scale-log-likelihood-v1.json` as a
   historical 10k/100k/1m generated-stream snapshot. Its schema-v2 artifact
   lacks candidate binding and a public-source-route fact, so the current
-  checker rejects it as candidate evidence. A current schema-v3 run must bind
+  checker rejects it as candidate evidence. A current schema-v4 run must bind
   the candidate SHA, use public `IterableDataSource` single-pass acquisition,
   and verify the returned total bitwise against independently reconstructed
   `Fraction` oracle units and the algorithmic 2162-bit bound. Elapsed/tracemalloc

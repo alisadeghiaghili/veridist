@@ -85,6 +85,19 @@ algorithmic bound. It does not claim to have measured a public reducer state.
 Elapsed/tracemalloc fields are descriptive. It proves neither process-memory,
 throughput, out-of-core, nor cross-platform performance bounds.
 
+### Amendment (2026-10)
+
+The retained artifact's schema has since moved past what the checker
+requires: `python/evidence/scale-log-likelihood-v1.json` records
+`schema_version: 2`, while the current `check_log_likelihood_scale_evidence.py`
+requires schema version 4 and rejects the file as "artifact version or digest
+invalid". The artifact's recorded `run.git_sha` (`9d4ef675c6f9ecc25e15d43e0f937a5ffd6c5a41`)
+is also not an ancestor of this repository's current history, so it cannot
+bind to a reviewable candidate. The paragraph above describes the artifact's
+historical content and the checker's intended contract; it does not mean the
+artifact currently passes. No current performance, scale, or candidate-binding
+claim is made for this snapshot, matching `docs/v1-readiness.md`.
+
 ## Test implications
 
 - `LLR-01`: exact-integer state and one correctly rounded finalization.

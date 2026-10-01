@@ -15,6 +15,7 @@ _VERIDIST_PATHS = frozenset(
         "README.fa.md",
         "README.de.md",
         "SECURITY.md",
+        "CONTRIBUTING.md",
         ".zenodo.json",
         "CITATION.cff",
         "conda-forge-recipe/meta.yaml",

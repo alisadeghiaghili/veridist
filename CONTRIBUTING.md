@@ -1,318 +1,133 @@
-# Contributing to DistFit Pro
+# Contributing to veridist
 
-Thank you for your interest in contributing! 🎉
+veridist lives under [`python/`](python/) in this repository. All of the
+guidance below is about that package. The repository root also still carries
+the legacy `distfit_pro` project (the root `pyproject.toml`, `distfit_pro/`,
+`tests/`, `examples/` and `docs/source` / `docs/user_guide` / `docs/api`); that package is legacy
+and is **not accepting changes**. If you are not sure which tree you are in,
+check whether your working directory is `python/` — if it is not, you are
+probably looking at the legacy package.
 
-## Ways to Contribute
+## Repository layout
 
-### 1. Report Bugs
-
-**Before submitting:**
-- Check if already reported
-- Include minimal reproducible example
-- Specify Python version, OS, package version
-
-**Create issue with:**
-```python
-# Code that reproduces the bug
-import distfit_pro
-# ...
+```
+python/
+  src/veridist/        # the package: domain, statistics, families, engine, execution, ...
+  tests/                # contract, reference, unit, conformance, property, docs, quality, scale
+  tools/                # coverage, release, and evidence-checking scripts used by CI
+  quality/              # coverage-manifest.json and other gate manifests
+  docs/                 # Sphinx source, EN/FA/DE locale catalogs, checkpoint-resume.md
+  examples/             # runnable example scripts referenced from the docs
+  KNOWN_LIMITS*.md       # the current release boundary, in en/fa/de
+  README*.md             # the package README, in en/fa/de
+docs/                   # repository-level ADRs, readiness ledger, evidence notes
 ```
 
-### 2. Request Features
+The package changelog is [`python/CHANGELOG.md`](python/CHANGELOG.md).
 
-**Good feature requests include:**
-- Use case / motivation
-- Example API
-- Why existing features don't work
+Everything under `python/` targets Python 3.11+.
 
-### 3. Fix Bugs
-
-Look for issues labeled `bug` or `good-first-issue`.
-
-### 4. Add Features
-
-**Before starting:**
-1. Open issue to discuss
-2. Get approval from maintainer
-3. Follow coding standards
-
-### 5. Improve Documentation
-
-- Fix typos
-- Add examples
-- Clarify explanations
-- Translate to new languages
-
-## Development Setup
-
-### Clone & Install
+## Development setup
 
 ```bash
-git clone https://github.com/alisadeghiaghili/py-distfit-pro.git
-cd py-distfit-pro
-pip install -e ".[dev]"
+cd python
+python -m venv .venv
+source .venv/bin/activate   # or .venv\Scripts\activate on Windows
+pip install -e ".[test,lint,docs]"
 ```
 
-### Development Dependencies
+Use `.[mutation]` only if you intend to run `mutmut` on Linux (see
+"Mutation testing" below), and `.[browser]` only for the opt-in Playwright
+tests.
+
+## Gates that must stay green
+
+Run these from `python/` before opening a pull request:
 
 ```bash
-pip install pytest pytest-cov black isort mypy sphinx
+python -m ruff check src tests docs tools
+python -m mypy src
+python -m pytest -q --cov=veridist --cov-branch --cov-report=json:coverage.json
+python tools/check_coverage.py --project-root . --manifest quality/coverage-manifest.json --coverage-json coverage.json
 ```
 
-## Coding Standards
+`mypy` runs in `--strict` mode (`[tool.mypy]` in `pyproject.toml`); this
+applies to every module under `src/`, including new ones.
 
-### Style
+Coverage thresholds are 95% global line/branch coverage, 98% for the
+`domain`, `statistics`, `families`, and `engine` modules, and 90% per
+production file, enforced by `tools/check_coverage.py` against
+`quality/coverage-manifest.json`. That manifest pins the **exact** expected
+`statements`/`branches` count for every production file. If you add,
+remove, or restructure code in a file under `src/veridist/`, its recorded
+denominators will no longer match the measured `coverage.json`, and the gate
+fails with a "denominator drift" message. When that happens, regenerate
+`coverage.json` from your own change and update only the denominators of the
+files you touched — do not touch unrelated entries. Do not add
+`# pragma: no cover` or `# pragma: no branch` to work around the gate, and
+never add `# pragma: no mutate`, which the mutation tooling rejects.
 
-- **Format:** Black (line length 100)
-- **Imports:** isort
-- **Type hints:** Required for public APIs
-- **Docstrings:** NumPy style
+Never weaken or delete an existing test to make a gate pass. If a test
+encoded behavior that a fix corrects, change its expectation and explain why
+in the commit message.
 
-**Format code:**
-```bash
-black distfit_pro/
-isort distfit_pro/
-```
+### Mutation testing
 
-### Documentation
+`mutmut` cannot run on Windows in this project (`tools/run_mutation.py`
+refuses to start). Mutation testing (`.github/workflows/mutation.yml`) runs
+only on Linux CI, against `ubuntu-latest`. When you add a regression test for
+a statistical or execution-path fix, put it under `tests/contract`,
+`tests/reference`, `tests/unit`, `tests/conformance`, or `tests/property` so
+that job can see it; tests under other directories (for example `tests/docs`
+or `tests/quality`) are excluded from the mutation run by design.
 
-**Every public function needs:**
+## Documentation parity (en/fa/de)
 
-```python
-def my_function(param1: int, param2: str) -> float:
-    """
-    Brief description.
-    
-    Longer explanation if needed.
-    
-    Parameters
-    ----------
-    param1 : int
-        Description of param1
-    param2 : str
-        Description of param2
-        
-    Returns
-    -------
-    result : float
-        Description of return value
-        
-    Examples
-    --------
-    >>> my_function(42, "test")
-    3.14
-    """
-    pass
-```
+User-facing documentation exists in English, Persian (fa), and German (de):
+`README*.md` at the repository root and in `python/`,
+`python/KNOWN_LIMITS*.md`, `docs/capability-guide*.md`, the Sphinx sources
+under `python/docs/source/*.md`, and the matching catalogs under
+`python/docs/locales/{fa,de}/LC_MESSAGES/*.po`. Tests under `python/tests/docs`
+and `python/tests/quality` enforce this parity — in places, they check for
+exact strings or exact gettext message sets extracted from the English
+source.
 
-### Testing
-
-**All new code needs tests:**
-
-```python
-# tests/test_myfeature.py
-import pytest
-from distfit_pro import my_function
-
-def test_my_function_basic():
-    result = my_function(42, "test")
-    assert result > 0
-
-def test_my_function_edge_case():
-    with pytest.raises(ValueError):
-        my_function(-1, "invalid")
-```
-
-**Run tests:**
-```bash
-pytest tests/
-pytest --cov=distfit_pro tests/  # with coverage
-```
-
-## Pull Request Process
-
-### 1. Create Branch
+When you change an English sentence that is covered by this parity
+requirement, make the equivalent change to the Persian and German text in
+the same commit. Keep Persian and German natural rather than literal,
+word-for-word translations, but keep API names, literals, error codes, and
+numbers identical across all three languages. If you touch
+`python/docs/source/api.md` (or the other Sphinx source pages), check
+`python/docs/i18n/parity-manifest.json` and run the docs test suite — it
+regenerates the real `.pot` catalogs with Sphinx and compares them against
+the manifest and the `.po` files, so a mismatch is caught locally:
 
 ```bash
-git checkout -b feature/my-new-feature
-# or
-git checkout -b fix/bug-description
+pip install -e ".[docs]"
+python -m pytest tests/docs tests/quality -q
 ```
 
-### 2. Make Changes
+## Commit messages
 
-- Write code
-- Add tests
-- Update documentation
-- Run tests locally
+Use [Conventional Commits](https://www.conventionalcommits.org/): a prefix
+such as `fix:`, `feat:`, `docs:`, `test:`, `refactor:`, `perf:`, or `ci:`,
+optionally scoped (for example `fix(families): ...`, `docs(readme): ...`),
+an imperative-mood subject of 72 characters or fewer, and a body that
+explains the reasoning behind the change, not just what changed.
 
-### 3. Commit
+## Pull requests
 
-**Commit message format:**
-```
-type: short description
+- Keep a pull request scoped to one change; unrelated cleanups belong in a
+  separate PR.
+- Add tests for the behavior you changed, and update
+  `python/CHANGELOG.md` under `## [Unreleased]` for any behavior change.
+- Do not bump the package version; that is a maintainer decision made at
+  release time.
+- Run the gates above locally before requesting review. CI re-runs them on
+  Linux across the supported Python versions, plus the Linux-only mutation
+  job for the statistical and execution core.
 
-Longer explanation if needed.
+## Reporting issues
 
-Fixes #123
-```
-
-**Types:**
-- `feat`: New feature
-- `fix`: Bug fix
-- `docs`: Documentation
-- `test`: Tests
-- `refactor`: Code restructuring
-- `perf`: Performance improvement
-
-**Example:**
-```
-feat: add Nakagami distribution
-
-Implemented Nakagami distribution with MLE and moments fitting.
-Added comprehensive tests and documentation.
-
-Fixes #45
-```
-
-### 4. Push & Create PR
-
-```bash
-git push origin feature/my-new-feature
-```
-
-Then create PR on GitHub.
-
-**PR should include:**
-- Description of changes
-- Related issue number
-- Tests added/updated
-- Documentation updated
-
-### 5. Code Review
-
-- Address reviewer comments
-- Update PR
-- Get approval
-
-### 6. Merge
-
-Maintainer will merge after approval.
-
-## Adding a New Distribution
-
-### Step-by-Step
-
-**1. Create distribution class:**
-
-```python
-# distfit_pro/core/distributions.py
-
-class MyDistribution(BaseDistribution):
-    @property
-    def info(self) -> DistributionInfo:
-        return DistributionInfo(
-            name="mydist",
-            display_name="My Distribution",
-            parameters={
-                "alpha": "Shape parameter (α > 0)",
-                "beta": "Scale parameter (β > 0)"
-            },
-            support="x > 0",
-            use_cases=[
-                "Use case 1",
-                "Use case 2"
-            ],
-            characteristics=[
-                "Characteristic 1",
-                "Characteristic 2"
-            ]
-        )
-    
-    def pdf(self, x: np.ndarray) -> np.ndarray:
-        # Implement PDF
-        pass
-    
-    def cdf(self, x: np.ndarray) -> np.ndarray:
-        # Implement CDF
-        pass
-    
-    def ppf(self, q: np.ndarray) -> np.ndarray:
-        # Implement inverse CDF
-        pass
-    
-    def fit_mle(self, data: np.ndarray, **kwargs) -> Dict[str, float]:
-        # Implement MLE
-        pass
-    
-    def fit_moments(self, data: np.ndarray) -> Dict[str, float]:
-        # Implement method of moments
-        pass
-```
-
-**2. Register distribution:**
-
-```python
-# distfit_pro/core/distributions.py
-
-DISTRIBUTION_REGISTRY = {
-    # ...
-    'mydist': MyDistribution,
-}
-```
-
-**3. Add tests:**
-
-```python
-# tests/test_distributions.py
-
-def test_mydist_pdf():
-    dist = get_distribution('mydist')
-    dist.params = {'alpha': 2.0, 'beta': 1.0}
-    # Test PDF
-
-def test_mydist_fit():
-    data = # Generate test data
-    dist = get_distribution('mydist')
-    dist.fit(data)
-    # Verify parameters
-```
-
-**4. Add documentation:**
-
-```rst
-# docs/source/api/distributions.rst
-
-My Distribution
-^^^^^^^^^^^^^^^
-
-Description...
-```
-
-**5. Add translations:**
-
-```python
-# distfit_pro/locales/fa.py (for Farsi)
-# Add translations
-```
-
-## Release Process
-
-(For maintainers)
-
-1. Update version in `setup.py`
-2. Update `CHANGELOG.md`
-3. Create git tag
-4. Push to PyPI
-5. Create GitHub release
-
-## Questions?
-
-Open an issue or contact:
-- [@alisadeghiaghili](https://github.com/alisadeghiaghili)
-
-## Code of Conduct
-
-Be respectful, inclusive, and professional.
-
-Thank you for contributing! 🙏
+Include a minimal reproducible example, the Python version, operating
+system, and `veridist` version, and the exact error or unexpected output.
