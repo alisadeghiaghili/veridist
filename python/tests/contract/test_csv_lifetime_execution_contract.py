@@ -150,6 +150,7 @@ class CsvLifetimeExecutionContracts(unittest.TestCase):
         cases = (
             (b"time,event_observed\n1,0\n2,0\n", ExponentialFitFailureCode.NO_OBSERVED_EVENTS),
             (b"time,event_observed\n0,1\n", ExponentialFitFailureCode.UNBOUNDED_LIKELIHOOD),
+            (b"time,event_observed\n1e-320,1\n", ExponentialFitFailureCode.NUMERICAL_OVERFLOW),
         )
         for payload, code in cases:
             with self.subTest(code=code):
