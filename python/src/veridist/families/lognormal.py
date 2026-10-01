@@ -2,13 +2,30 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
-from math import erfc, exp, isfinite, log, pi, sqrt
+from math import erfc, exp, isfinite, log, log1p, pi, sqrt
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
-from veridist.families._reliability import admitted_observations, bounded_maximize, positive_support
+from veridist.families._reliability import (
+    admitted_observations,
+    bounded_maximize,
+    expand_bracket,
+    positive_support,
+)
+
+_HALF_LOG_2PI = 0.5 * log(2.0 * pi)
+_SQRT_2 = sqrt(2.0)
+
+#: Starting and hard-limit half-widths for the log-sigma search (natural log units).
+_LOG_SIGMA_BOUNDS = (-6.0, 6.0)
+_LOG_SIGMA_HARD_LIMITS = (-20.0, 20.0)
+#: mu's starting and hard-limit half-widths are these multiples of
+#: ``max(1.0, sd(exact_logs))``.
+_MU_START_MULTIPLE = 8.0
+_MU_HARD_MULTIPLE = 64.0
 
 
 class LognormalFitFailureCode(StrEnum):
@@ -18,10 +35,18 @@ class LognormalFitFailureCode(StrEnum):
     NO_OBSERVED_EVENTS = "NO_OBSERVED_EVENTS"
     INVALID_SUPPORT = "INVALID_SUPPORT"
     OPTIMIZER_EXHAUSTED = "OPTIMIZER_EXHAUSTED"
+    BOUNDARY_SOLUTION = "BOUNDARY_SOLUTION"
 
 
 @dataclass(frozen=True, slots=True)
 class LognormalFitFailure:
+    """A declared reason no Lognormal point estimate is reported.
+
+    ``converged`` is always ``False`` and ``restart_failures`` is always ``0``:
+    a failure never ran an interior optimization to convergence, and no restart
+    strategy is attempted.
+    """
+
     code: LognormalFitFailureCode
     observation_count: int
     event_count: int
@@ -33,6 +58,14 @@ class LognormalFitFailure:
 
 @dataclass(frozen=True, slots=True)
 class LognormalFitSuccess:
+    """A Lognormal MLE point estimate from an interior, converged optimum.
+
+    ``converged`` is always ``True``: a result that only exists at the edge of
+    the search range is reported as :attr:`LognormalFitFailureCode.BOUNDARY_SOLUTION`
+    instead of a success. ``restart_failures`` is always ``0`` because the
+    deterministic golden-section search never restarts.
+    """
+
     mu_log: float
     sigma_log: float
     log_likelihood: float
@@ -55,11 +88,32 @@ class LognormalFitSuccess:
 LognormalFit = LognormalFitSuccess | LognormalFitFailure
 
 
+def _log_normal_sf(z: float) -> float:
+    """Stable log of the standard-normal upper-tail survival probability.
+
+    Computes ``log(0.5 * erfc(z / sqrt(2)))`` directly while that stays
+    representable (``>= 1e-300``). For larger ``z`` -- where ``erfc`` would
+    underflow to exactly ``0.0`` and the direct formula would raise -- this
+    falls back to the asymptotic Mills-ratio expansion of the upper tail:
+    ``-z**2/2 - log(z) - 0.5*log(2*pi) + log1p(-1/z**2 + 3/z**4 - 15/z**6)``.
+    Never raises for finite ``z``.
+    """
+
+    survival = 0.5 * erfc(z / _SQRT_2)
+    if survival >= 1e-300:
+        return log(survival)
+    # Use `*` rather than `**` to form the powers of `z`: for huge `z` (e.g.
+    # 1e100+) `z ** 4` raises OverflowError in CPython instead of saturating,
+    # while `z * z` saturates to `inf`, and the correction terms it feeds into
+    # (`1/z**2` etc.) are negligible deep in this regime regardless.
+    z_squared = z * z
+    a = 1.0 / z_squared
+    correction = -a + 3.0 * a * a - 15.0 * a * a * a
+    return -0.5 * z_squared - log(z) - _HALF_LOG_2PI + log1p(correction)
+
+
 def _log_sf(time: float, mu: float, sigma: float) -> float:
-    survival = erfc((log(time) - mu) / (sigma * sqrt(2.0))) / 2.0
-    if survival <= 0.0:
-        raise ValueError("right-censoring survival underflow")
-    return log(survival)
+    return _log_normal_sf((log(time) - mu) / sigma)
 
 
 def fit_lognormal(
@@ -103,42 +157,65 @@ def fit_lognormal(
             )
         else:
             center = sum(exact_logs) / events
+            # Hoist the exact-observation sums out of the inner likelihood loop:
+            # the exact-part log-likelihood is a quadratic in mu, so it only
+            # needs these two running sums, computed once, regardless of n.
+            sum_exact_logs = sum(exact_logs)
+            sum_exact_logs_sq = sum(value * value for value in exact_logs)
+            # Group censored observations by identical time (a single censoring
+            # time is common) so the censored-part sum is O(distinct times)
+            # instead of O(n) per likelihood evaluation.
+            censored_groups = tuple(
+                Counter(
+                    value.time for value in values if type(value) is not ExactLifetime
+                ).items()
+            )
 
-            def profile(mu: float) -> float:
-                def at_log_sigma(log_sigma: float) -> float:
-                    sigma = exp(log_sigma)
-                    exact = sum(
-                        -value - log(sigma) - 0.5 * log(2.0 * pi)
-                        - (value - mu) ** 2 / (2.0 * sigma**2)
-                        for value in exact_logs
-                    )
-                    censored = sum(
-                        (_log_sf(float(value.time), mu, sigma)
-                         for value in values if type(value) is not ExactLifetime),
-                        0.0,
-                    )
-                    return exact + censored
-
-                _, likelihood = bounded_maximize(at_log_sigma, lower=-6.0, upper=6.0)
-                return likelihood
-
-            mu, _ = bounded_maximize(profile, lower=center - 8.0, upper=center + 8.0)
-
-            def final(log_sigma: float) -> float:
+            def at_log_sigma(mu: float, log_sigma: float) -> float:
                 sigma = exp(log_sigma)
-                exact = sum(
-                    -value - log(sigma) - 0.5 * log(2.0 * pi)
-                    - (value - mu) ** 2 / (2.0 * sigma**2)
-                    for value in exact_logs
+                sum_sq_deviation = sum_exact_logs_sq - 2.0 * mu * sum_exact_logs + events * mu * mu
+                exact = (
+                    -sum_exact_logs
+                    - events * log(sigma)
+                    - events * _HALF_LOG_2PI
+                    - sum_sq_deviation / (2.0 * sigma**2)
                 )
                 censored = sum(
-                    (_log_sf(float(value.time), mu, sigma)
-                     for value in values if type(value) is not ExactLifetime),
-                    0.0,
+                    occurrences * _log_sf(float(time), mu, sigma)
+                    for time, occurrences in censored_groups
                 )
                 return exact + censored
 
-            log_sigma, likelihood = bounded_maximize(final, lower=-6.0, upper=6.0)
+            def profile(mu: float) -> float:
+                _, likelihood, _ = bounded_maximize(
+                    lambda log_sigma: at_log_sigma(mu, log_sigma), lower=-6.0, upper=6.0
+                )
+                return likelihood
+
+            spread = sqrt(sum((value - center) ** 2 for value in exact_logs) / events)
+            mu_half_width = _MU_START_MULTIPLE * max(1.0, spread)
+            mu_hard_half_width = _MU_HARD_MULTIPLE * max(1.0, spread)
+            mu, _, mu_boundary = expand_bracket(
+                profile,
+                lower=center - mu_half_width,
+                upper=center + mu_half_width,
+                hard_lower=center - mu_hard_half_width,
+                hard_upper=center + mu_hard_half_width,
+            )
+            if mu_boundary:
+                return failure(LognormalFitFailureCode.BOUNDARY_SOLUTION)
+
+            lower, upper = _LOG_SIGMA_BOUNDS
+            hard_lower, hard_upper = _LOG_SIGMA_HARD_LIMITS
+            log_sigma, likelihood, sigma_boundary = expand_bracket(
+                lambda log_sigma: at_log_sigma(mu, log_sigma),
+                lower=lower,
+                upper=upper,
+                hard_lower=hard_lower,
+                hard_upper=hard_upper,
+            )
+            if sigma_boundary:
+                return failure(LognormalFitFailureCode.BOUNDARY_SOLUTION)
             sigma = exp(log_sigma)
     except (ArithmeticError, OverflowError, ValueError):
         return failure(LognormalFitFailureCode.OPTIMIZER_EXHAUSTED)

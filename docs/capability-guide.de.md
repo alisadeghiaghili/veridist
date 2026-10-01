@@ -73,7 +73,7 @@ Ergebnisse werden mit unabhängigen Referenzen verglichen. Tests decken ungülti
 <details>
 <summary>Technische Details zur genaueren Prüfung</summary>
 
-Alle drei Fit-Modelle verwenden Maximum-Likelihood-Schätzung mit fester Lage null. Exponential schätzt nur die Rate; Weibull schätzt Form und Skala; Lognormal schätzt logarithmische Lage und Skala. Häufigkeitsgewichte bedeuten wiederholte Beobachtungen und werden von Weibull und Lognormal unterstützt; sie unterscheiden sich von analytischen Gewichten. Ein numerisches Scheitern oder fehlende Konvergenz wird mit einer benannten Ursache gemeldet.
+Alle drei Fit-Modelle verwenden Maximum-Likelihood-Schätzung mit fester Lage null. Exponential schätzt nur die Rate; Weibull schätzt Form und Skala; Lognormal schätzt logarithmische Lage und Skala. Häufigkeitsgewichte bedeuten wiederholte Beobachtungen und werden von Weibull und Lognormal unterstützt; sie unterscheiden sich von analytischen Gewichten. Ein numerisches Scheitern wird als `OPTIMIZER_EXHAUSTED` gemeldet; ein Ergebnis, das nur am Rand des zulässigen Suchbereichs liegt, wird anstelle einer konvergierten Schätzung als `BOUNDARY_SOLUTION` gemeldet, und eine Stichprobe, für die keine Maximum-Likelihood-Schätzung existiert (zum Beispiel wenn alle beobachteten exakten Zeiten identisch sind), wird als `DEGENERATE_SAMPLE` gemeldet.
 
 Die Exponentialauswertung berichtet angeforderte, erfolgreiche und fehlgeschlagene Neuanpassungen sowie Monte-Carlo-Unsicherheit. Sie bestimmen die Zufallszahlenfolge selbst; derselbe Seed reproduziert dasselbe Experiment. Die Stream-Anzahl hat eine explizite vorzeichenlose 64-Bit-Grenze. Tests decken Unterbrechung, Wiederholung, Beschädigung, konkurrierenden Zugriff und Abbruch ab.
 
