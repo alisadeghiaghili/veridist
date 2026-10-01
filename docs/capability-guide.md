@@ -73,7 +73,7 @@ Results are compared with independent references. Tests cover invalid input, bou
 <details>
 <summary>Technical details for closer review</summary>
 
-All three fitting models use maximum-likelihood estimation with fixed location zero. Exponential estimates rate only; Weibull estimates shape and scale; Lognormal estimates log-location and log-scale. Frequency weights mean repeated observations and are supported by Weibull and Lognormal; they are distinct from analytic weights. A numerical failure or lack of convergence is reported with a stated reason.
+All three fitting models use maximum-likelihood estimation with fixed location zero. Exponential estimates rate only; Weibull estimates shape and scale; Lognormal estimates log-location and log-scale. Frequency weights mean repeated observations and are supported by Weibull and Lognormal; they are distinct from analytic weights. A numerical failure is reported as `OPTIMIZER_EXHAUSTED`; a result that only exists at the edge of the allowed search range is reported as `BOUNDARY_SOLUTION` instead of a converged estimate, and a sample for which no maximum-likelihood estimate exists (for example, every observed exact time identical) is reported as `DEGENERATE_SAMPLE`.
 
 The Exponential evaluation reports requested, successful, and failed refits plus Monte Carlo uncertainty. You supply the random-number sequence; using the same seed reproduces the same experiment. The stream count has an explicit unsigned 64-bit limit. Tests cover interruption, replay, corruption, concurrent access, and cancellation.
 

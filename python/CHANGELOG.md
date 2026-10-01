@@ -46,6 +46,51 @@ Veridist release record.
   between the two previously could leave a store file that `read()` reported
   as missing and a later `create()` rejected as already existing; a failed
   `create()` now leaves either no file or a fully valid record.
+- `fit_weibull` and `fit_lognormal` no longer report a point at the edge of
+  their internal search range as a converged estimate. `bounded_maximize` now
+  detects when its result sits on a bound, and a new bracket-expansion step
+  widens that bound (up to a hard limit) before giving up, so an estimate
+  that genuinely exists just outside the old fixed range is now found rather
+  than clipped. Previously, `fit_weibull([ExactLifetime(5.0)])`,
+  `fit_weibull([ExactLifetime(5.0)] * 5)`, and a 50-point sample with
+  standard deviation `1e-4` around 5 all reported `shape ~= 403.43` (`e**6`,
+  the old hard-coded bound) with `converged=True`; a heavily right-censored
+  Lognormal sample (1 event out of 500) reported `mu_log` at exactly
+  `center + 8`, also with `converged=True`. The first two Weibull cases have
+  no finite-shape MLE at all (every exact time is tied, with no censored
+  time beyond it) and are now declared non-estimable immediately, before any
+  search; the noisier 50-point sample and the heavy-censoring Lognormal case
+  now either find a genuine (if large) interior optimum or, if the hard
+  limit is reached, report a boundary failure instead of a false success.
+  `WeibullFitSuccess`/`LognormalFitSuccess` are now only ever constructed
+  for an interior, converged optimum, so their `converged` field is
+  truthful; `restart_failures` stays `0`, documented as such, because
+  neither fit restarts.
+- The Weibull shape search now divides every time by the sample's geometric
+  mean before optimizing and rescales the reported scale and log-likelihood
+  back afterward, so the fit no longer depends on the time unit. It
+  previously computed `exp(shape * log(time))` directly, which could lose
+  precision or overflow once times were recorded on a very different scale
+  (verified invariant to within relative `1e-9` for the same sample recorded
+  at a factor of `1e-8`, `1`, and `1e12`).
+- The Lognormal right-censoring term (`_log_sf`) raised `ValueError`
+  whenever `erfc` underflowed to exactly `0.0`, which aborted the entire fit
+  with `OPTIMIZER_EXHAUSTED` even when the true optimum was fine elsewhere.
+  It is replaced by `_log_normal_sf`, which falls back to the asymptotic
+  Mills-ratio expansion of the standard-normal upper tail once the direct
+  formula would underflow, and never raises for a finite argument (checked
+  against `mpmath` up to `z = 1e3` at relative error `1e-12`).
+- Censored Lognormal fitting is substantially faster. It grouped identical
+  censoring times and summed them individually rather than by count, and
+  recomputed the exact-observation sum terms from scratch on every one of
+  the roughly 6,400 nested golden-section likelihood evaluations. Censored
+  observations are now grouped by identical time (a single shared censoring
+  time is the common case), and the exact-observation sums are hoisted out
+  of the inner loop, so each evaluation is `O(distinct censored times)`
+  instead of `O(n)`. A 2,000-observation censored sample (1,403 events) went
+  from roughly 10.6s to roughly 0.02s on the reference machine; semantics
+  are unchanged (verified against an independent reference within relative
+  `1e-6`).
 
 ### Added
 
@@ -53,6 +98,10 @@ Veridist release record.
   checkpoint store already bound to one CSV file's current SHA-256 revision,
   a public source id, and the exponential reducer contract, so callers no
   longer hand-write the checkpoint record.
+- `WeibullFitFailureCode.DEGENERATE_SAMPLE` and
+  `WeibullFitFailureCode.BOUNDARY_SOLUTION`, and
+  `LognormalFitFailureCode.BOUNDARY_SOLUTION`: declared reasons for the
+  previously-silent boundary and non-existence cases described above.
 
 ### Deprecated
 

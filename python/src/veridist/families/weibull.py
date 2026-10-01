@@ -5,10 +5,14 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 from enum import StrEnum
-from math import exp, isfinite, log
+from math import exp, fsum, isfinite, log
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
-from veridist.families._reliability import admitted_observations, bounded_maximize, positive_support
+from veridist.families._reliability import admitted_observations, expand_bracket, positive_support
+
+#: Starting and hard-limit half-widths for the log-shape search (natural log units).
+_LOG_SHAPE_BOUNDS = (-6.0, 6.0)
+_LOG_SHAPE_HARD_LIMITS = (-20.0, 20.0)
 
 
 class WeibullFitFailureCode(StrEnum):
@@ -18,10 +22,19 @@ class WeibullFitFailureCode(StrEnum):
     NO_OBSERVED_EVENTS = "NO_OBSERVED_EVENTS"
     INVALID_SUPPORT = "INVALID_SUPPORT"
     OPTIMIZER_EXHAUSTED = "OPTIMIZER_EXHAUSTED"
+    DEGENERATE_SAMPLE = "DEGENERATE_SAMPLE"
+    BOUNDARY_SOLUTION = "BOUNDARY_SOLUTION"
 
 
 @dataclass(frozen=True, slots=True)
 class WeibullFitFailure:
+    """A declared reason no Weibull point estimate is reported.
+
+    ``converged`` is always ``False`` and ``restart_failures`` is always ``0``:
+    a failure never ran an interior optimization to convergence, and no restart
+    strategy is attempted.
+    """
+
     code: WeibullFitFailureCode
     observation_count: int
     event_count: int
@@ -33,6 +46,14 @@ class WeibullFitFailure:
 
 @dataclass(frozen=True, slots=True)
 class WeibullFitSuccess:
+    """A Weibull MLE point estimate from an interior, converged optimum.
+
+    ``converged`` is always ``True``: a result that only exists at the edge of
+    the search range is reported as :attr:`WeibullFitFailureCode.BOUNDARY_SOLUTION`
+    instead of a success. ``restart_failures`` is always ``0`` because the
+    deterministic golden-section search never restarts.
+    """
+
     shape: float
     scale: float
     log_likelihood: float
@@ -83,16 +104,43 @@ def fit_weibull(
         return failure(WeibullFitFailureCode.NO_OBSERVED_EVENTS)
     if not positive_support(values):
         return failure(WeibullFitFailureCode.INVALID_SUPPORT)
+    if fixed_shape is None:
+        exact_times = tuple(value.time for value in values if type(value) is ExactLifetime)
+        common_time = exact_times[0]
+        if max(exact_times) == min(exact_times) and all(
+            value.time <= common_time
+            for value in values
+            if type(value) is not ExactLifetime
+        ):
+            return failure(WeibullFitFailureCode.DEGENERATE_SAMPLE)
+
+    # Divide every time by the sample's geometric mean before optimizing, so
+    # `exp(shape * log_time)` cannot overflow merely because the input times
+    # are reported in a different unit/scale. `mean_log` is the arithmetic
+    # mean of the logs, i.e. the log of the geometric mean. The optimum shape
+    # does not depend on this rescaling (it only shifts the profiled
+    # log-likelihood by a shape-independent constant), and the reported scale
+    # and log-likelihood are converted back to the original units below.
     log_times = tuple(log(value.time) for value in values)
-    event_logs = tuple(log(value.time) for value in values if type(value) is ExactLifetime)
+    mean_log = fsum(log_times) / count
+    scaled_log_times = tuple(value - mean_log for value in log_times)
+    scaled_event_logs = tuple(
+        scaled
+        for scaled, value in zip(scaled_log_times, values, strict=True)
+        if type(value) is ExactLifetime
+    )
+
+    sum_scaled_event_logs = fsum(scaled_event_logs)
 
     def at_shape(shape: float) -> tuple[float, float]:
-        total = sum(exp(shape * value) for value in log_times)
+        """Return `(scale, log_likelihood)` in the geometric-mean-scaled unit system."""
+
+        total = fsum(exp(shape * value) for value in scaled_log_times)
         scale = exp(log(total / events) / shape)
         likelihood = (
             events * log(shape)
             - events * shape * log(scale)
-            + (shape - 1.0) * sum(event_logs)
+            + (shape - 1.0) * sum_scaled_event_logs
             - total / scale**shape
         )
         return scale, likelihood
@@ -102,7 +150,13 @@ def fit_weibull(
             def profile(log_shape: float) -> float:
                 return at_shape(exp(log_shape))[1]
 
-            log_shape, _ = bounded_maximize(profile, lower=-6.0, upper=6.0)
+            lower, upper = _LOG_SHAPE_BOUNDS
+            hard_lower, hard_upper = _LOG_SHAPE_HARD_LIMITS
+            log_shape, _, boundary = expand_bracket(
+                profile, lower=lower, upper=upper, hard_lower=hard_lower, hard_upper=hard_upper
+            )
+            if boundary:
+                return failure(WeibullFitFailureCode.BOUNDARY_SOLUTION)
             shape = exp(log_shape)
         else:
             if isinstance(fixed_shape, bool) or not isinstance(fixed_shape, int | float):
@@ -110,7 +164,9 @@ def fit_weibull(
             shape = float(fixed_shape)
             if not isfinite(shape) or shape <= 0.0:
                 raise ValueError("fixed_shape must be finite and positive")
-        scale, likelihood = at_shape(shape)
+        scaled_scale, scaled_likelihood = at_shape(shape)
+        scale = scaled_scale * exp(mean_log)
+        likelihood = scaled_likelihood - events * mean_log
     except (ArithmeticError, OverflowError, ValueError):
         return failure(WeibullFitFailureCode.OPTIMIZER_EXHAUSTED)
     if not (isfinite(scale) and scale > 0.0 and isfinite(likelihood)):
