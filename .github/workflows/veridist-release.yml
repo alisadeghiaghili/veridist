@@ -46,7 +46,8 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          python -m pip install "build>=1.2,<2" "twine>=6,<7" "PyYAML>=6,<7"
+          python -m pip install "build>=1.2,<2" "twine>=6,<7" "PyYAML>=6,<7" \
+            "setuptools==84.0.0" "wheel==0.48.0"
           release_epoch="$(python -c 'import datetime, json; value=json.load(open("../.zenodo.json", encoding="utf-8"))["publication_date"]; print(int(datetime.datetime.fromisoformat(value).replace(tzinfo=datetime.timezone.utc).timestamp()))')"
           python tools/build_reproducible.py --project . --output dist-a --epoch "$release_epoch"
           python tools/build_reproducible.py --project . --output dist-b --epoch "$release_epoch"

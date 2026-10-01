@@ -86,11 +86,21 @@ def _integer_metric(summary: dict[str, Any], metric: str, path: str, errors: lis
     return value
 
 
+def _adr_exists(repository_root: Path, adr: str) -> bool:
+    adr_dir = repository_root / "docs" / "adr"
+    if not adr_dir.is_dir():
+        return False
+    return any(adr_dir.glob(f"{adr}-*.md"))
+
+
 def _validate_exception(
     exception: object,
     production_files: set[str],
     seen: set[str],
     errors: list[str],
+    *,
+    repository_root: Path,
+    today: date,
 ) -> str | None:
     if not isinstance(exception, dict):
         errors.append("exception must be an object")
@@ -120,10 +130,16 @@ def _validate_exception(
     if not ADR_PATTERN.fullmatch(adr):
         errors.append(f"exception ADR is invalid for {path}")
         return None
+    if not _adr_exists(repository_root, adr):
+        errors.append(f"exception ADR does not exist for {path}: {adr}")
+        return None
     try:
-        date.fromisoformat(expiry)
+        expiry_date = date.fromisoformat(expiry)
     except ValueError:
         errors.append(f"exception expiry is invalid for {path}")
+        return None
+    if expiry_date < today:
+        errors.append(f"exception expired for {path} on {expiry_date.isoformat()}")
         return None
     seen.add(path)
     return path
@@ -133,8 +149,24 @@ def _format_rate(rate: float) -> str:
     return f"{rate * 100:.2f}%"
 
 
-def validate(project_root: Path, manifest_path: Path, coverage_path: Path) -> list[str]:
-    """Return contract violations, or an empty list when evidence satisfies the gate."""
+def validate(
+    project_root: Path,
+    manifest_path: Path,
+    coverage_path: Path,
+    *,
+    today: date | None = None,
+) -> list[str]:
+    """Return contract violations, or an empty list when evidence satisfies the gate.
+
+    ``today`` defaults to :func:`datetime.date.today` and is compared against
+    every accepted exception's ``expiry``: an exception whose expiry has
+    passed is rejected rather than silently honored forever. Each exception's
+    ``adr`` must also name an ADR document that actually exists under
+    ``docs/adr`` at the repository root (``project_root.parent``).
+    """
+
+    if today is None:
+        today = date.today()
 
     errors: list[str] = []
     manifest = _load_json(manifest_path, "manifest", errors)
@@ -197,7 +229,14 @@ def validate(project_root: Path, manifest_path: Path, coverage_path: Path) -> li
 
     exception_paths: set[str] = set()
     for exception in exceptions_value:
-        _validate_exception(exception, production_files, exception_paths, errors)
+        _validate_exception(
+            exception,
+            production_files,
+            exception_paths,
+            errors,
+            repository_root=project_root.parent,
+            today=today,
+        )
 
     coverage_files_value = coverage.get("files")
     if not isinstance(coverage_files_value, dict):

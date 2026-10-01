@@ -40,6 +40,52 @@ def _required_member(members: dict[str, bytes], name: str, artifact: Path) -> by
         raise ReleaseArtifactError(f"{artifact.name} is missing required member {name}") from error
 
 
+def _source_payloads(project_root: Path) -> dict[str, bytes]:
+    """Return every ``*.py``/``py.typed`` payload under ``src/veridist``, keyed by relative path."""
+
+    root = project_root / "src" / "veridist"
+    payloads: dict[str, bytes] = {}
+    for path in sorted(root.rglob("*")):
+        if not path.is_file() or "__pycache__" in path.parts:
+            continue
+        if path.suffix != ".py" and path.name != "py.typed":
+            continue
+        payloads[path.relative_to(root).as_posix()] = path.read_bytes()
+    return payloads
+
+
+def _validate_package_payload(
+    members: dict[str, bytes],
+    *,
+    prefix: str,
+    expected: dict[str, bytes],
+    artifact: Path,
+) -> None:
+    prefix_path = PurePosixPath(prefix)
+    packaged: dict[str, bytes] = {}
+    for member, payload in members.items():
+        try:
+            relative = PurePosixPath(member).relative_to(prefix_path)
+        except ValueError:
+            continue
+        packaged[relative.as_posix()] = payload
+    missing = sorted(set(expected) - set(packaged))
+    if missing:
+        raise ReleaseArtifactError(
+            f"{artifact.name} is missing veridist source file(s): {', '.join(missing)}"
+        )
+    extra = sorted(set(packaged) - set(expected))
+    if extra:
+        raise ReleaseArtifactError(
+            f"{artifact.name} contains unexpected file(s) under {prefix}: {', '.join(extra)}"
+        )
+    modified = sorted(name for name in expected if packaged[name] != expected[name])
+    if modified:
+        raise ReleaseArtifactError(
+            f"{artifact.name} contains a modified veridist source file: {', '.join(modified)}"
+        )
+
+
 def _expected(project_root: Path, release_tag: str) -> tuple[str, str, str]:
     configuration = tomllib.loads((project_root / "pyproject.toml").read_text(encoding="utf-8"))
     project = configuration["project"]
@@ -119,11 +165,15 @@ def validate_artifact(artifact: Path, *, project_root: Path, release_tag: str) -
         raise ReleaseArtifactError(f"{artifact.name} does not contain the exact project LICENSE")
 
     package_members = [PurePosixPath(member).parts for member in members]
+    expected_payloads = _source_payloads(project_root)
     if artifact.suffix == ".whl":
         if not any(parts and parts[0] == "veridist" for parts in package_members):
             raise ReleaseArtifactError(f"{artifact.name} does not contain the veridist package")
         if any(parts and parts[0] == "distfit_pro" for parts in package_members):
             raise ReleaseArtifactError(f"{artifact.name} contains the legacy distfit_pro package")
+        _validate_package_payload(
+            members, prefix="veridist", expected=expected_payloads, artifact=artifact
+        )
     else:
         source_prefix = f"{name}-{version}"
         if not any(
@@ -142,6 +192,12 @@ def validate_artifact(artifact: Path, *, project_root: Path, release_tag: str) -
             packaged = _required_member(members, f"{source_prefix}/{required_name}", artifact)
             if packaged != (project_root / required_name).read_bytes():
                 raise ReleaseArtifactError(f"{artifact.name} contains a modified {required_name}")
+        _validate_package_payload(
+            members,
+            prefix=f"{source_prefix}/src/veridist",
+            expected=expected_payloads,
+            artifact=artifact,
+        )
 
 
 def main(arguments: list[str] | None = None) -> int:

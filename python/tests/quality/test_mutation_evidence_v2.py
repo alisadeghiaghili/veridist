@@ -310,6 +310,43 @@ class MutationEvidenceV2Contracts(unittest.TestCase):
         self.assertNotIn("mutants/example.meta", files)
         self.assertTrue(all("__pycache__" not in item for item in files))
 
+    def test_input_files_raises_when_a_required_non_test_file_is_missing(self) -> None:
+        sys.path.insert(0, str(PYTHON_ROOT / "tools"))
+        import mutation_evidence
+
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            root = repository / "python"
+            for module in mutation_evidence.CRITICAL_MODULES:
+                target = root / "src" / "veridist" / module / "sample.py"
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("value = 1\n", encoding="utf-8")
+            required = [
+                "tests/test_sample.py",
+                "pyproject.toml",
+                "quality/mutation-manifest.json",
+                "tools/mutation_evidence.py",
+                "tools/run_mutation.py",
+                "tools/check_mutation_evidence.py",
+            ]
+            for relative in required:
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text("x\n", encoding="utf-8")
+            workflow = repository / ".github" / "workflows" / "mutation.yml"
+            workflow.parent.mkdir(parents=True)
+            workflow.write_text("name: a\n", encoding="utf-8")
+            subprocess.run(["git", "init", "-q"], cwd=repository, check=True)
+            subprocess.run(["git", "add", "."], cwd=repository, check=True)
+
+            # Confirm the fully-populated tree is accepted before removing a
+            # required non-test file.
+            mutation_evidence.input_files(root)
+
+            workflow.unlink()
+            with self.assertRaisesRegex(ValueError, "mutation input file is missing"):
+                mutation_evidence.input_files(root)
+
     def test_portable_runner_commands_and_relative_logs_are_contractual(self) -> None:
         runner = (PYTHON_ROOT / "tools" / "run_mutation.py").read_text(encoding="utf-8")
         self.assertIn('["python", "-m", "pytest", "tests"]', runner)

@@ -169,6 +169,43 @@ Veridist release record.
   OS-reported identity (device, inode, size, modification time) rather than
   its content, and that failure-context redaction is a key-name allowlist,
   not general data redaction.
+- The PyPI publish workflow now rebuilds the published wheel and sdist from
+  the tagged commit with the same reproducible-build procedure and epoch as
+  release validation, refuses to publish unless both rebuilt artifacts are
+  byte-identical to the ones attached to the release, and runs the release
+  metadata, artifact-payload, and legacy-isolation checks against them before
+  calling the publish action. It also now requires a successful CI run and a
+  successful mutation-evidence run for the exact tagged commit, and fails
+  with an explicit message telling the maintainer to dispatch the missing
+  run. Third-party actions it uses are pinned to a commit SHA. The mutation
+  workflow now also runs on every push to `main`, so a squash-merged commit
+  gets evidence instead of relying on its (now-superseded) pull-request run.
+- `check_release_artifacts.py` now compares every `*.py`/`py.typed` file
+  under `src/veridist` byte-for-byte against the packaged wheel and sdist
+  payload and rejects any missing or unexpected file under the package root.
+  Previously it only checked a handful of top-level documents and the
+  package's presence by name, so a wheel containing nothing but a rewritten
+  `veridist/__init__.py` (plus the real `METADATA` and `LICENSE`) passed
+  validation.
+- `check_coverage.py` now rejects a coverage exception once its `expiry`
+  date has passed, and rejects one whose `adr` does not name a document that
+  actually exists under `docs/adr`. Previously an exception's expiry and ADR
+  reference were only checked for well-formedness, not for being true.
+- `build_reproducible.py` now normalizes file permission bits in both
+  archives (`0o644` for ordinary files, `0o755` for directories and files
+  that were executable in the source build) instead of carrying over
+  whatever the local build toolchain happened to produce. The release
+  workflow pins `setuptools` and `wheel` to exact versions for the same
+  reason: `build --no-isolation` otherwise depends on whatever is already
+  installed.
+- `ci_scope.py` no longer classifies `.github/workflows/ci.yml` as
+  Veridist-only; edits to the legacy workflow itself now correctly route
+  through the legacy test lane instead of skipping it.
+- The mutation evidence tool's list of required non-test input files
+  (`pyproject.toml`, the mutation manifest, the three mutation tool
+  scripts, and the mutation workflow file) is now enforced: a missing file
+  previously was silently dropped from the expected set instead of failing
+  the gate.
 
 ## [1.0.1] - 2026-09-12
 

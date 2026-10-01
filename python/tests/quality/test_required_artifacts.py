@@ -219,6 +219,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
             "workflow_dispatch:",
             "pull_request:",
             "types: [published]",
+            "push:\n    branches: [main]",
             "MUTMUT_WHEEL_SHA256:",
             "MUTMUT_WHEEL: mutmut-3.7.0-py3-none-any.whl",
             "1d2f9a1bfa4a474b2213df6b17223150b492bf4a85af0eda4fb322297337fb32",

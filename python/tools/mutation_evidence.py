@@ -206,16 +206,25 @@ def config_digest(project_root: Path) -> str:
     return sha256_text(canonical_json(mutation_config(project_root)))
 
 
+REQUIRED_NON_TEST_FILES = (
+    "pyproject.toml",
+    "quality/mutation-manifest.json",
+    "tools/mutation_evidence.py",
+    "tools/run_mutation.py",
+    "tools/check_mutation_evidence.py",
+    "../.github/workflows/mutation.yml",
+)
+
+
 def input_files(project_root: Path) -> list[str]:
-    candidates = source_files(project_root) + tree_files(project_root, "tests")
-    candidates += [
-        "pyproject.toml",
-        "quality/mutation-manifest.json",
-        "tools/mutation_evidence.py",
-        "tools/run_mutation.py",
-        "tools/check_mutation_evidence.py",
-        "../.github/workflows/mutation.yml",
-    ]
+    missing = [name for name in REQUIRED_NON_TEST_FILES if not (project_root / name).is_file()]
+    if missing:
+        raise ValueError(f"mutation input file is missing: {', '.join(sorted(missing))}")
+    candidates = (
+        source_files(project_root)
+        + tree_files(project_root, "tests")
+        + list(REQUIRED_NON_TEST_FILES)
+    )
     result = subprocess.run(
         ["git", "ls-files", "-z", "--", *candidates],
         cwd=project_root,
@@ -225,9 +234,7 @@ def input_files(project_root: Path) -> list[str]:
     if result.returncode:
         raise ValueError("cannot enumerate tracked mutation inputs")
     files = sorted(item for item in result.stdout.decode("utf-8").split("\0") if item)
-    if set(files) != set(candidates) - {
-        name for name in candidates if not (project_root / name).is_file()
-    }:
+    if set(files) != set(candidates):
         raise ValueError("mutation input manifest contains untracked or missing file")
     return files
 

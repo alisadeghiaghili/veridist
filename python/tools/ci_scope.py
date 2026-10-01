@@ -18,7 +18,6 @@ _VERIDIST_PATHS = frozenset(
         ".zenodo.json",
         "CITATION.cff",
         "conda-forge-recipe/meta.yaml",
-        ".github/workflows/ci.yml",
         ".github/workflows/mutation.yml",
         ".github/workflows/scale-evidence.yml",
         ".github/workflows/veridist-release.yml",
