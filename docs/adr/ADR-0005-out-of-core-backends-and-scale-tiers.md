@@ -100,8 +100,8 @@ theorem.
 
 The schema has since moved past what `check_scale_csv_exponential_evidence.py`
 accepts. The retained artifact records `schema_version: "1"`; the current
-checker requires schema version 2 and rejects the file with "current evidence
-requires schema version 2". The preceding addendum describes the artifact's
+checker requires schema version 3 and rejects the file with "current evidence
+requires schema version 3". The preceding addendum describes the artifact's
 historical content, not a currently passing check. The historical snapshot
 remains useful only for the independently reproducible source bytes, Decimal
 fit facts, one-pass counts, and logical retained-payload observations it

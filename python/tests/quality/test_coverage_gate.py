@@ -10,7 +10,7 @@ import unittest
 from datetime import date
 from pathlib import Path
 
-from tools.check_coverage import validate
+from tools.check_coverage import count_pragmas, validate
 
 CHECKER = Path(__file__).parents[2] / "tools" / "check_coverage.py"
 
@@ -39,6 +39,7 @@ def _manifest(files: list[str]) -> dict[str, object]:
             path: {"statements": 100, "branches": 20} for path in files
         },
         "accepted_exceptions": [],
+        "pragma_budget": {path: {"no_branch": 0, "no_cover": 0} for path in files},
     }
 
 
@@ -248,6 +249,163 @@ class CoverageGateTests(unittest.TestCase):
             self.assertTrue(
                 any("exception ADR does not exist" in error for error in errors), errors
             )
+
+    def _pragma_project(
+        self, root: Path, source: str, budget: dict[str, int] | None
+    ) -> tuple[Path, Path, Path]:
+        files = [
+            "src/veridist/domain/model.py",
+            "src/veridist/statistics/fit.py",
+            "src/veridist/families/normal.py",
+            "src/veridist/engine/run.py",
+            "src/veridist/result.py",
+        ]
+        for relative_path in files:
+            target = root / relative_path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("# fixture\n", encoding="utf-8")
+        (root / files[0]).write_text(source, encoding="utf-8")
+        manifest = _manifest(files)
+        budgets = manifest["pragma_budget"]
+        assert isinstance(budgets, dict)
+        if budget is None:
+            del budgets[files[0]]
+        else:
+            budgets[files[0]] = budget
+        manifest_path = root / "manifest.json"
+        coverage_path = root / "coverage.json"
+        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+        coverage_path.write_text(json.dumps(_coverage(files)), encoding="utf-8")
+        return root, manifest_path, coverage_path
+
+    def _pragma_errors(self, source: str, budget: dict[str, int] | None) -> list[str]:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, manifest_path, coverage_path = self._pragma_project(
+                Path(temp_dir), source, budget
+            )
+            return validate(root, manifest_path, coverage_path, today=date(2026, 1, 1))
+
+    def test_counts_both_pragma_kinds_by_regex(self) -> None:
+        source = (
+            "a = 1  # pragma: no cover\n"
+            "b = 2  #pragma:no cover - reason\n"
+            "if c:  # pragma: no branch\n"
+            "d = 'text mentioning pragma and cover'\n"
+            "e = 3  # PRAGMA: NO COVER\n"
+            "f = 4  # pragma: nocover\n"
+        )
+        self.assertEqual(count_pragmas(source), {"no_branch": 1, "no_cover": 4})
+        self.assertEqual(count_pragmas("# fixture\n"), {"no_branch": 0, "no_cover": 0})
+
+    def test_accepts_a_file_exactly_at_its_pragma_budget(self) -> None:
+        source = "a = 1  # pragma: no cover\nif b:  # pragma: no branch\n    pass\n"
+        self.assertEqual(self._pragma_errors(source, {"no_branch": 1, "no_cover": 1}), [])
+
+    def test_accepts_a_file_under_its_pragma_budget(self) -> None:
+        source = "a = 1  # pragma: no cover\n"
+        self.assertEqual(self._pragma_errors(source, {"no_branch": 3, "no_cover": 2}), [])
+        self.assertEqual(self._pragma_errors("x = 1\n", {"no_branch": 1, "no_cover": 1}), [])
+
+    def test_rejects_a_file_over_its_pragma_budget(self) -> None:
+        source = "a = 1  # pragma: no cover\nb = 2  # pragma: no cover\n"
+        errors = self._pragma_errors(source, {"no_branch": 0, "no_cover": 1})
+        self.assertEqual(
+            errors,
+            ["pragma budget exceeded for src/veridist/domain/model.py: no cover 2 > 1"],
+        )
+        errors = self._pragma_errors(
+            "if a:  # pragma: no branch\n    pass\n", {"no_branch": 0, "no_cover": 5}
+        )
+        self.assertEqual(
+            errors,
+            ["pragma budget exceeded for src/veridist/domain/model.py: no branch 1 > 0"],
+        )
+
+    def test_rejects_a_pragma_in_a_file_the_budget_does_not_list(self) -> None:
+        errors = self._pragma_errors("a = 1  # pragma: no cover\n", None)
+        self.assertEqual(
+            errors, ["unlisted file contains coverage pragmas: src/veridist/domain/model.py"]
+        )
+        self.assertEqual(self._pragma_errors("a = 1\n", None), [])
+
+    def test_rejects_malformed_pragma_budgets(self) -> None:
+        files = ["src/veridist/domain/model.py"]
+        malformed_entries: dict[str, object] = {
+            "wrong keys": {"no_cover": 0},
+            "extra keys": {"no_branch": 0, "no_cover": 0, "other": 0},
+            "negative": {"no_branch": -1, "no_cover": 0},
+            "boolean": {"no_branch": True, "no_cover": 0},
+            "float": {"no_branch": 0.0, "no_cover": 0},
+            "not an object": 3,
+        }
+        for name, entry in malformed_entries.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                target = root / files[0]
+                target.parent.mkdir(parents=True)
+                target.write_text("# fixture\n", encoding="utf-8")
+                manifest = _manifest(files)
+                manifest["pragma_budget"] = {files[0]: entry}
+                (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+                (root / "coverage.json").write_text(
+                    json.dumps(_coverage(files)), encoding="utf-8"
+                )
+                errors = validate(root, root / "manifest.json", root / "coverage.json")
+                self.assertIn(f"invalid pragma budget for {files[0]}", errors)
+
+    def test_rejects_budget_structure_errors(self) -> None:
+        files = ["src/veridist/domain/model.py"]
+        for name, budget, expected in (
+            ("not an object", [], "manifest pragma_budget must be an object"),
+            (
+                "unlisted path",
+                {"src/veridist/ghost.py": {"no_branch": 0, "no_cover": 0}},
+                "pragma budget names an unlisted file: src/veridist/ghost.py",
+            ),
+        ):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temp_dir:
+                root = Path(temp_dir)
+                target = root / files[0]
+                target.parent.mkdir(parents=True)
+                target.write_text("# fixture\n", encoding="utf-8")
+                manifest = _manifest(files)
+                manifest["pragma_budget"] = budget
+                (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+                (root / "coverage.json").write_text(
+                    json.dumps(_coverage(files)), encoding="utf-8"
+                )
+                errors = validate(root, root / "manifest.json", root / "coverage.json")
+                self.assertIn(expected, errors)
+
+    def test_rejects_a_manifest_without_a_pragma_budget(self) -> None:
+        files = ["src/veridist/domain/model.py"]
+        manifest = _manifest(files)
+        del manifest["pragma_budget"]
+        result = self._run(manifest, _coverage(files), files)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("manifest missing required field: pragma_budget", result.stderr)
+
+    def test_reports_an_unreadable_source_file(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root, manifest_path, coverage_path = self._pragma_project(
+                Path(temp_dir), "# fixture\n", {"no_branch": 0, "no_cover": 0}
+            )
+            (root / "src/veridist/domain/model.py").write_bytes(b"\xff\xfe\x00bad")
+            errors = validate(root, manifest_path, coverage_path, today=date(2026, 1, 1))
+            expected = "cannot read src/veridist/domain/model.py for the pragma budget"
+            self.assertTrue(any(error.startswith(expected) for error in errors), errors)
+
+    def test_repository_pragma_budget_matches_the_source_tree_exactly(self) -> None:
+        root = Path(__file__).parents[2]
+        manifest = json.loads((root / "quality/coverage-manifest.json").read_text("utf-8"))
+        budget = manifest["pragma_budget"]
+        self.assertEqual(list(budget), sorted(budget))
+        self.assertEqual(set(budget), set(manifest["production_files"]))
+        for path, recorded in budget.items():
+            with self.subTest(path=path):
+                self.assertEqual(
+                    recorded, count_pragmas((root / path).read_text(encoding="utf-8"))
+                )
 
     def test_rejects_weak_exception_manifest(self) -> None:
         files = [

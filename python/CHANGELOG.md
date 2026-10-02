@@ -249,6 +249,46 @@ Veridist release record.
 - The Persian exponential report label for the fitted rate's reciprocal is
   now "میانگین محاسبه‌شده" ("calculated mean"); the previous "میانگین
   مشتق‌شده" ("derived mean") read as a direct, slightly awkward calque.
+- Package metadata now declares search keywords and trove classifiers
+  (audience, topic, Python 3 only, Python 3.11 to 3.14, OS independent,
+  typed). No `License ::` or `Development Status ::` classifier is declared.
+- `check_release_metadata.py` now also requires `veridist.__version__`
+  (read from the source with `ast`, never imported) to equal the project
+  version, and the conda-forge recipe's `license` to equal the project
+  license.
+- The `veridist-ci`, scale-evidence, v1-release-evidence and release
+  workflows now pin every third-party action to a commit SHA with the tag in
+  a trailing comment, and a test requires it for every workflow except the
+  hash-pinned legacy `ci.yml`. `veridist-ci` also runs the test suite on
+  Windows and macOS (Python 3.12) and its aggregate gate waits for both.
+- `check_coverage.py` now enforces a pragma budget: the coverage manifest's
+  new `pragma_budget` records, per production file, how many `# pragma: no
+  cover` and `# pragma: no branch` comments it may contain, and the gate
+  rejects a file that exceeds its budget or an unlisted file that contains
+  any such comment. The only pragmas today are the five in
+  `statistics/distributions.py`.
+- Mutation evidence moves to schema 3. It counts mutants rejected by mutmut's
+  type checker (`type_check`, a subset of `killed`) separately per file,
+  module and in the totals, and reports `score_excluding_type_check` next to
+  the unchanged `score`; the 0.8 gate still applies to `score`.
+- Scale evidence moves to schema 3 (CSV/exponential) and schema 5
+  (log-likelihood). Each cell now measures elapsed time in a pass without
+  `tracemalloc` and memory in a separate pass, the artifact records the
+  worker count and the methodology, and the checkers reject timing evidence
+  from more than one measurement worker. `run_scale_csv_exponential_evidence.py`
+  now defaults to one worker. Process memory is read by one shared helper
+  (`tools/process_memory.py`), which also corrects the log-likelihood runner's
+  macOS `ru_maxrss` unit (bytes there, not KiB). `artifact_sha256` is
+  documented as an integrity digest, not a signature. Retained evidence files
+  are unchanged and remain rejected by the current checkers.
+- v1 execution evidence moves to schema 2 and six scenarios per row count:
+  the previous three plus `source_mutated` (a changed source is refused with
+  `SOURCE_REVISION_MISMATCH` and the checkpoint is untouched), `chunk_replay`
+  (replaying committed offset chunks changes neither state nor generation) and
+  `process_killed` (a child process is terminated after its first commit and
+  the parent resumes it to the uninterrupted result). The assembled matrix has
+  54 cells, enforced by the checker, the assembler and the release-evidence
+  workflow.
 
 ### Documentation
 
@@ -262,9 +302,9 @@ Veridist release record.
   scale-tiers.md` and `docs/adr/ADR-0021-streaming-log-likelihood-reducer.md`
   recording that their retained scale-evidence artifacts (schema version 1
   and schema version 2, respectively) are both now rejected by their current
-  checkers — the CSV artifact needs schema version 2, and the log-likelihood
-  artifact needs schema version 4 and its recorded `git_sha` is not part of
-  this repository's history — without rewriting either ADR's body.
+  checkers (which now require schema versions 3 and 5); the log-likelihood
+  artifact's recorded `git_sha` is also not part of this repository's
+  history. Neither ADR's body is rewritten.
 - `python/docs/source/api.md` (and its Persian/German counterparts and
   `.po` catalogs) now documents the `fit_exponential_checkpointed_csv`
   revision contract (it must equal the CSV file's current SHA-256 hex
@@ -278,6 +318,10 @@ Veridist release record.
   `check_coverage.py` gates, the coverage-manifest denominator rule, the
   en/fa/de documentation-parity rule, Conventional Commits, and that mutation
   testing runs only on Linux CI.
+- The scale-evidence notes in `docs/evidence`, `docs/v1-readiness.md`,
+  `docs/v1-test-plan.md` and the two scale-evidence ADR amendments name the
+  schema versions the current checkers require (3 and 5) and the single-worker
+  timing rule.
 
 ## [1.0.1] - 2026-09-12
 

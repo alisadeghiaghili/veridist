@@ -69,6 +69,43 @@ class PackageHygieneTests(unittest.TestCase):
             ],
         )
 
+    def test_project_metadata_declares_discovery_fields(self) -> None:
+        project = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
+            "project"
+        ]
+        self.assertEqual(
+            project["keywords"],
+            [
+                "reliability",
+                "survival-analysis",
+                "lifetime-data",
+                "right-censoring",
+                "distribution-fitting",
+                "maximum-likelihood",
+            ],
+        )
+        self.assertEqual(
+            project["classifiers"],
+            [
+                "Intended Audience :: Science/Research",
+                "Topic :: Scientific/Engineering :: Mathematics",
+                "Programming Language :: Python :: 3 :: Only",
+                "Programming Language :: Python :: 3.11",
+                "Programming Language :: Python :: 3.12",
+                "Programming Language :: Python :: 3.13",
+                "Programming Language :: Python :: 3.14",
+                "Operating System :: OS Independent",
+                "Typing :: Typed",
+            ],
+        )
+
+    def test_license_and_status_classifiers_are_left_to_the_owner(self) -> None:
+        project = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
+            "project"
+        ]
+        for classifier in project["classifiers"]:
+            self.assertFalse(classifier.startswith(("License ::", "Development Status ::")))
+
     def test_workflow_lints_documentation_python_sources(self) -> None:
         workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
         self.assertIn("python -m ruff check src tests docs tools", workflow)

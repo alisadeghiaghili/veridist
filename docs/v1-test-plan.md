@@ -80,8 +80,9 @@ lifetime adapter plus one-pass exponential-orchestrator snapshot at
 `python/evidence/scale-csv-exponential-v1.json`. Schema v1 is quarantined by
 the current checker because its timing lacks valid provenance. It supplies
 historical source/Decimal/one-pass/logical-payload facts, not current candidate
-or performance evidence. Any replacement must be schema v2, bind the reviewed
-candidate SHA, declare paired timing provenance, and cover the fixed
+or performance evidence. Any replacement must be schema v3, bind the reviewed
+candidate SHA, declare paired timing provenance, record a single measurement
+worker, and cover the fixed
 10k/100k/1m-row by three-budget matrix before it can support a current claim.
 
 ## Statistical evidence

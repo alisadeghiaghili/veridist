@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import re
@@ -15,6 +16,7 @@ import yaml
 
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _VERSION_LINE = re.compile(r'^\{% set version = "([^"]+)" %\}$', re.MULTILINE)
+_RECIPE_LICENSE = re.compile(r"^\s*license:\s*(\S+)\s*$", re.MULTILINE)
 
 
 def _date(value: object) -> str | None:
@@ -25,6 +27,33 @@ def _date(value: object) -> str | None:
             return date.fromisoformat(value).isoformat()
         except ValueError:
             return None
+    return None
+
+
+def _module_version(source: str) -> str | None:
+    """Return the literal ``__version__`` assigned at module level, without importing."""
+
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        return None
+    for node in tree.body:
+        if isinstance(node, ast.Assign):
+            targets = node.targets
+            value: ast.expr | None = node.value
+        elif isinstance(node, ast.AnnAssign):
+            targets = [node.target]
+            value = node.value
+        else:
+            continue
+        for target in targets:
+            if (
+                isinstance(target, ast.Name)
+                and target.id == "__version__"
+                and isinstance(value, ast.Constant)
+                and isinstance(value.value, str)
+            ):
+                return value.value
     return None
 
 
@@ -41,6 +70,7 @@ def validate(repository: Path, sdist: Path | None = None) -> list[str]:
         citation = yaml.safe_load((repository / "CITATION.cff").read_text("utf-8"))
         zenodo = json.loads((repository / ".zenodo.json").read_text("utf-8"))
         recipe = (repository / "conda-forge-recipe/meta.yaml").read_text("utf-8")
+        module_source = (repository / "python/src/veridist/__init__.py").read_text("utf-8")
     except (
         OSError,
         KeyError,
@@ -52,6 +82,8 @@ def validate(repository: Path, sdist: Path | None = None) -> list[str]:
         return [f"release metadata is unreadable: {error}"]
     if not isinstance(version, str) or not re.fullmatch(r"\d+\.\d+\.\d+", version):
         return ["project version is not a stable semantic version"]
+    if _module_version(module_source) != version:
+        errors.append("veridist.__version__ differs from the package version")
     if not isinstance(citation, dict):
         return ["CITATION.cff root must be a mapping"]
     if citation.get("cff-version") != "1.2.0":
@@ -82,6 +114,9 @@ def validate(repository: Path, sdist: Path | None = None) -> list[str]:
     recipe_version = _VERSION_LINE.search(recipe)
     if recipe_version is None or recipe_version.group(1) != version:
         errors.append("conda-forge recipe version differs from the package")
+    recipe_license = _RECIPE_LICENSE.search(recipe)
+    if recipe_license is None or recipe_license.group(1) != license_id:
+        errors.append("conda-forge recipe license differs from the package")
     digest = re.search(r"^\s*sha256:\s*([0-9a-f]+)\s*$", recipe, re.MULTILINE)
     if digest is None or _SHA256.fullmatch(digest.group(1)) is None:
         errors.append("conda-forge recipe lacks an immutable SHA-256")

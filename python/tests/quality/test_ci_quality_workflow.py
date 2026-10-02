@@ -27,6 +27,9 @@ BROWSER_TEST_PATH = (
 )
 
 
+CHECKOUT_PIN = "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2"
+
+
 def _load_legacy_release_safety_checker() -> ModuleType:
     spec = spec_from_file_location("legacy_release_safety", LEGACY_RELEASE_SAFETY_PATH)
     if spec is None or spec.loader is None:
@@ -75,7 +78,7 @@ class VeridistWorkflowContractTests(unittest.TestCase):
             "  package:", maxsplit=1
         )[0]
         self.assertIn(
-            "uses: actions/checkout@v4\n        with:\n          fetch-depth: 0", tests_block
+            f"uses: {CHECKOUT_PIN}\n        with:\n          fetch-depth: 0", tests_block
         )
         coverage_step = self.workflow.split(
             "      - name: Test with branch coverage", maxsplit=1
@@ -96,6 +99,27 @@ class VeridistWorkflowContractTests(unittest.TestCase):
         self.assertIn("python tools/check_coverage.py --project-root .", self.workflow)
         self.assertIn("--manifest quality/coverage-manifest.json", self.workflow)
         self.assertIn("--coverage-json coverage.json", self.workflow)
+
+    def test_non_linux_job_runs_the_suite_on_windows_and_macos_with_one_python(self) -> None:
+        job = re.search(r"(?ms)^  tests-os:$(.*?)(?=^  \S|\Z)", self.workflow)
+        self.assertIsNotNone(job)
+        block = job.group(0)
+        self.assertIn("name: veridist / tests (${{ matrix.os }}, 3.12)", block)
+        self.assertIn("runs-on: ${{ matrix.os }}", block)
+        self.assertIn("os: [windows-latest, macos-latest]", block)
+        self.assertIn("fail-fast: false", block)
+        self.assertIn('python-version: "3.12"', block)
+        self.assertEqual(re.findall(r"python-version:", block), ["python-version:"])
+        self.assertIn("working-directory: python", block)
+        self.assertIn(f"uses: {CHECKOUT_PIN}\n        with:\n          fetch-depth: 0", block)
+        self.assertIn('python -m pip install -e ".[test]"', block)
+        self.assertEqual(
+            re.findall(r"python -m pytest.*", block),
+            ["python -m pytest --ignore=tests/docs/test_docs_toolchain.py"],
+        )
+        self.assertNotIn("continue-on-error", block)
+        self.assertNotIn("--deselect", block)
+        self.assertNotIn("-k ", block)
 
     def test_package_job_builds_checks_and_installs_the_wheel_outside_checkout(self) -> None:
         self.assertIn("  package:", self.workflow)
@@ -233,23 +257,28 @@ class VeridistWorkflowContractTests(unittest.TestCase):
     def test_aggregate_gate_fails_if_any_required_job_does_not_succeed(self) -> None:
         self.assertIn("  veridist-gate:", self.workflow)
         self.assertIn("name: veridist / gate", self.workflow)
-        self.assertIn("needs: [static, tests, package, docs, browser-rtl]", self.workflow)
+        self.assertIn(
+            "needs: [static, tests, tests-os, package, docs, browser-rtl]", self.workflow
+        )
         self.assertIn("if: always()", self.workflow)
         for result in (
             "needs.static.result",
             "needs.tests.result",
+            "needs.tests-os.result",
             "needs.package.result",
             "needs.docs.result",
             "needs.browser-rtl.result",
         ):
             with self.subTest(result=result):
                 self.assertIn(result, self.workflow)
+        self.assertIn("TEST_OS_RESULT: ${{ needs.tests-os.result }}", self.workflow)
+        self.assertIn('"$TEST_RESULT" "$TEST_OS_RESULT" "$PACKAGE_RESULT"', self.workflow)
         self.assertNotIn("continue-on-error", self.workflow)
         self.assertNotIn("|| true", self.workflow)
 
     def test_aggregate_gate_runs_from_the_checkout_root_without_a_checkout(self) -> None:
         self.assertNotIn("defaults:\n  run:\n    working-directory: python", self.workflow)
-        for job in ("static", "tests", "package", "docs", "browser-rtl"):
+        for job in ("static", "tests", "tests-os", "package", "docs", "browser-rtl"):
             with self.subTest(job=job):
                 job_block = re.search(
                     rf"(?ms)^  {job}:$(.*?)(?=^  \S|\Z)", self.workflow

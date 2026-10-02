@@ -66,7 +66,7 @@ class ScaleEvidenceWorkflowTests(unittest.TestCase):
             "--repo-root ..",
             "1m public-stream likelihood evidence",
             "if: always()",
-            "actions/upload-artifact@v4",
+            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2",
         ):
             with self.subTest(required=required):
                 self.assertIn(required, workflow)

@@ -19,6 +19,8 @@ REQUIRED_SUMMARY_METRICS = {
 }
 REQUIRED_EXCEPTION_FIELDS = {"path", "owner", "reason", "expiry", "adr"}
 ADR_PATTERN = re.compile(r"ADR-\d{4}$")
+PRAGMA_PATTERN = re.compile(r"#\s*pragma:\s*no\s*(cover|branch)", re.IGNORECASE)
+PRAGMA_KINDS = ("no_branch", "no_cover")
 
 
 @dataclass(frozen=True)
@@ -145,6 +147,70 @@ def _validate_exception(
     return path
 
 
+def count_pragmas(source: str) -> dict[str, int]:
+    """Count coverage-exclusion pragma comments in source text, keyed by kind."""
+
+    counts = {kind: 0 for kind in PRAGMA_KINDS}
+    for match in PRAGMA_PATTERN.finditer(source):
+        counts["no_" + match.group(1).lower()] += 1
+    return counts
+
+
+def _validate_pragma_budget(
+    project_root: Path,
+    budget_value: object,
+    production_files: set[str],
+    discovered: set[str],
+    errors: list[str],
+) -> None:
+    """Fail when a file holds more coverage pragmas than its recorded budget allows.
+
+    The budget can only shrink: a file may carry fewer pragmas than recorded
+    (an under-budget file passes), but any increase, and any pragma in a file
+    the budget does not list, is rejected.
+    """
+
+    if not isinstance(budget_value, dict):
+        errors.append("manifest pragma_budget must be an object")
+        return
+    budgets: dict[str, dict[str, int]] = {}
+    for path, entry in budget_value.items():
+        if path not in production_files:
+            errors.append(f"pragma budget names an unlisted file: {path}")
+            continue
+        valid = (
+            isinstance(entry, dict)
+            and set(entry) == set(PRAGMA_KINDS)
+            and all(
+                isinstance(entry[kind], int)
+                and not isinstance(entry[kind], bool)
+                and entry[kind] >= 0
+                for kind in PRAGMA_KINDS
+            )
+        )
+        if not valid:
+            errors.append(f"invalid pragma budget for {path}")
+            continue
+        budgets[path] = entry
+    for path in sorted(discovered):
+        try:
+            counts = count_pragmas((project_root / path).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError) as exc:
+            errors.append(f"cannot read {path} for the pragma budget: {exc}")
+            continue
+        budget = budgets.get(path)
+        if budget is None:
+            if any(counts.values()):
+                errors.append(f"unlisted file contains coverage pragmas: {path}")
+            continue
+        for kind in PRAGMA_KINDS:
+            if counts[kind] > budget[kind]:
+                errors.append(
+                    f"pragma budget exceeded for {path}: "
+                    f"{kind.replace('_', ' ')} {counts[kind]} > {budget[kind]}"
+                )
+
+
 def _format_rate(rate: float) -> str:
     return f"{rate * 100:.2f}%"
 
@@ -177,6 +243,7 @@ def validate(
         "critical_modules",
         "expected_denominators",
         "accepted_exceptions",
+        "pragma_budget",
     }
     for field in sorted(required_manifest.difference(manifest)):
         errors.append(f"manifest missing required field: {field}")
@@ -226,6 +293,10 @@ def validate(
         errors.append(f"unlisted production file: {path}")
     for path in sorted(production_files.difference(discovered)):
         errors.append(f"listed production file does not exist: {path}")
+
+    _validate_pragma_budget(
+        project_root, manifest["pragma_budget"], production_files, discovered, errors
+    )
 
     exception_paths: set[str] = set()
     for exception in exceptions_value:

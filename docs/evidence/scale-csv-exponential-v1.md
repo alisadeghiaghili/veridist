@@ -12,9 +12,11 @@ byte counts and SHA-256 values, never raw input paths.
 
 Schema v1 has no timing provenance and is deliberately quarantined: the current
 checker rejects it, so it cannot establish candidate readiness, performance, or
-a current scale claim. A new candidate must generate schema v2 evidence from a
-clean checkout; v2 records the paired timing provenance and binds both the run
-and candidate SHA to the reviewed commit. The historical snapshot remains useful
+a current scale claim. A new candidate must generate schema v3 evidence from a
+clean checkout; v3 records the paired timing provenance, measures elapsed time
+in a pass without `tracemalloc` and memory in a separate pass, requires exactly
+one measurement worker, and binds both the run and candidate SHA to the
+reviewed commit. `artifact_sha256` is an integrity digest, not a signature. The historical snapshot remains useful
 only for independently reproducible source bytes, Decimal fit facts, one-pass
 counts, and logical retained-payload observations.
 

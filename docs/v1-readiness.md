@@ -38,11 +38,12 @@ as a statement about uninspected current files.
 - `LLR-06` preserves `python/evidence/scale-log-likelihood-v1.json` as a
   historical 10k/100k/1m generated-stream snapshot. Its schema-v2 artifact
   lacks candidate binding and a public-source-route fact, so the current
-  checker rejects it as candidate evidence. A current schema-v4 run must bind
+  checker rejects it as candidate evidence. A current schema-v5 run must bind
   the candidate SHA, use public `IterableDataSource` single-pass acquisition,
-  and verify the returned total bitwise against independently reconstructed
-  `Fraction` oracle units and the algorithmic 2162-bit bound. Elapsed/tracemalloc
-  facts are descriptive; no process-memory, throughput, out-of-core, fitting,
+  record one measurement worker and the untraced-timing/separate-memory-pass
+  methodology, and verify the returned total bitwise against independently
+  reconstructed `Fraction` oracle units and the algorithmic 2162-bit bound.
+  Elapsed/tracemalloc facts are descriptive; no process-memory, throughput, out-of-core, fitting,
   or general cross-platform claim follows from this historical artifact.
 
 ### Historical snapshot: `bfb496d` (preserved verbatim)
@@ -137,8 +138,9 @@ as a statement about uninspected current files.
   not candidate evidence and cannot support a current scale or performance
   claim. Its independently reproducible source bytes, Decimal fit facts,
   one-pass counts and logical-payload observations remain historical context.
-  A current candidate requires a clean schema-v2 run that binds both run and
-  candidate SHA and declares paired timing provenance. Parquet/Arrow/dataframe/
+  A current candidate requires a clean schema-v3 run that binds both run and
+  candidate SHA, declares paired timing provenance, and records a single
+  measurement worker. Parquet/Arrow/dataframe/
   database adapters, cancellation orchestration, broad streaming
   equivalence and production-scale RSS bounds remain **NOT IMPLEMENTED**.
   A local SQLite checkpoint backend, its resume/retry contracts, and an

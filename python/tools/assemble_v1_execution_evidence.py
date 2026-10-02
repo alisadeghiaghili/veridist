@@ -9,13 +9,23 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from tools.check_v1_execution_evidence import validate, validate_raw_fragment
+    from tools.check_v1_execution_evidence import (
+        RESULT_SCENARIOS,
+        SCHEMA_VERSION,
+        validate,
+        validate_raw_fragment,
+    )
 except ModuleNotFoundError:  # Direct execution from the tools directory.
-    from check_v1_execution_evidence import validate, validate_raw_fragment
+    from check_v1_execution_evidence import (
+        RESULT_SCENARIOS,
+        SCHEMA_VERSION,
+        validate,
+        validate_raw_fragment,
+    )
 
 
 def assemble(paths: list[Path], expected_sha: str) -> tuple[dict[str, object] | None, list[str]]:
-    """Return a fully checked 27-cell object only when all raw fragments verify."""
+    """Return a fully checked 54-cell object only when all raw fragments verify."""
 
     errors: list[str] = []
     cells: list[object] = []
@@ -38,7 +48,7 @@ def assemble(paths: list[Path], expected_sha: str) -> tuple[dict[str, object] | 
         if isinstance(fragment_cells, list):
             cells.extend(fragment_cells)
     value: dict[str, object] = {
-        "schema_version": 1,
+        "schema_version": SCHEMA_VERSION,
         "candidate_git_sha": expected_sha,
         "cells": cells,
     }
@@ -49,7 +59,7 @@ def assemble(paths: list[Path], expected_sha: str) -> tuple[dict[str, object] | 
             continue
         rows = cell["rows"]
         source_digests.setdefault(rows, set()).add(cell.get("source_sha256"))
-        if cell.get("scenario") in {"complete", "retry_resume"}:
+        if cell.get("scenario") in RESULT_SCENARIOS:
             result_digests.setdefault(rows, set()).add(cell.get("result_sha256"))
     if any(len(digests) != 1 for digests in source_digests.values()):
         errors.append("source digests differ across platforms")

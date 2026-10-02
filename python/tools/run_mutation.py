@@ -23,6 +23,7 @@ from mutation_evidence import (
     mutation_manifest,
     official_status,
     reject_mutation_pragmas,
+    score_excluding_type_check,
     scoring_status,
     sha256_bytes,
     source_files,
@@ -110,10 +111,18 @@ def report_for(path: str, meta: dict[str, Any] | None) -> dict[str, Any]:
                     "scoring_status": scoring_status(code),
                 }
             )
-    counts = {"generated": len(mutants), "killed": 0, "survived": 0, "unresolved": 0}
+    counts = {
+        "generated": len(mutants),
+        "killed": 0,
+        "survived": 0,
+        "unresolved": 0,
+        "type_check": 0,
+    }
     for item in mutants:
         key = item["scoring_status"]
         counts[key if key in {"killed", "survived"} else "unresolved"] += 1
+        if item["official_status"] == "type_check":
+            counts["type_check"] += 1
     return {
         "path": path,
         **counts,
@@ -147,7 +156,7 @@ def export(
             cache_parts.extend([path.encode("utf-8"), b"\0", pair[1]])
     totals = {
         key: sum(int(report[key]) for report in reports)
-        for key in ("generated", "killed", "survived", "unresolved")
+        for key in ("generated", "killed", "survived", "unresolved", "type_check")
     }
     modules = [
         {
@@ -161,7 +170,7 @@ def export(
     ]
     denominator = totals["killed"] + totals["survived"]
     payload = {
-        "schema_version": 2,
+        "schema_version": 3,
         "source": {
             "commit": commit,
             "tree_sha256": source_tree_digest(project_root, files),
@@ -196,6 +205,9 @@ def export(
         "modules": modules,
         "totals": totals,
         "score": 0.0 if denominator == 0 else totals["killed"] / denominator,
+        "score_excluding_type_check": score_excluding_type_check(
+            totals["killed"], totals["survived"], totals["type_check"]
+        ),
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = output.with_suffix(output.suffix + ".tmp")
@@ -224,7 +236,7 @@ def publish_diagnostic(output: Path, error: Exception) -> None:
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = output.with_suffix(output.suffix + ".tmp")
     staging.write_text(
-        json.dumps({"schema_version": 2, "state": "incomplete", "error": str(error)}) + "\n",
+        json.dumps({"schema_version": 3, "state": "incomplete", "error": str(error)}) + "\n",
         encoding="utf-8",
     )
     staging.replace(output)

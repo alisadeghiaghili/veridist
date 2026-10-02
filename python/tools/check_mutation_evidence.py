@@ -1,4 +1,4 @@
-"""Fail-closed validator for cache-bound formal mutation evidence v2."""
+"""Fail-closed validator for cache-bound formal mutation evidence (schema 3)."""
 
 from __future__ import annotations
 
@@ -20,6 +20,7 @@ from mutation_evidence import (
     mutation_manifest,
     official_status,
     reject_mutation_pragmas,
+    score_excluding_type_check,
     scoring_status,
     sha256_bytes,
     source_files,
@@ -27,7 +28,7 @@ from mutation_evidence import (
     strict_json,
 )
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
 TOP_KEYS = frozenset(
     {
         "schema_version",
@@ -41,9 +42,12 @@ TOP_KEYS = frozenset(
         "modules",
         "totals",
         "score",
+        "score_excluding_type_check",
     }
 )
 COUNT_KEYS = ("generated", "killed", "survived", "unresolved")
+# ``type_check`` is the subset of ``killed`` rejected by mutmut's type checker (exit code 37).
+REPORT_COUNT_KEYS = (*COUNT_KEYS, "type_check")
 
 
 def load_json(source: str) -> object:
@@ -301,7 +305,7 @@ def check(
         by_path[report["path"]] = report
     if set(by_path) != set(files):
         fail("missing or extra source file report")
-    total = {key: 0 for key in COUNT_KEYS}
+    total = {key: 0 for key in REPORT_COUNT_KEYS}
     seen: set[str] = set()
     cache_parts: list[bytes] = []
     for path in files:
@@ -310,7 +314,7 @@ def check(
             report,
             {
                 "path",
-                *COUNT_KEYS,
+                *REPORT_COUNT_KEYS,
                 "mutants",
                 "function_hashes",
                 "type_check_errors",
@@ -319,7 +323,7 @@ def check(
             },
             path,
         )
-        counts = {key: integer(report[key], f"{path}:{key}") for key in COUNT_KEYS}
+        counts = {key: integer(report[key], f"{path}:{key}") for key in REPORT_COUNT_KEYS}
         mutants = report["mutants"]
         if not isinstance(mutants, list) or counts["generated"] != len(mutants):
             fail(f"{path}: mutant count drift")
@@ -336,7 +340,7 @@ def check(
             ):
                 if report[evidence_key] != meta[meta_key]:
                     fail(f"{path}: {evidence_key} does not bind raw cache")
-        observed = {key: 0 for key in COUNT_KEYS}
+        observed = {key: 0 for key in REPORT_COUNT_KEYS}
         raw_keys = set() if meta is None else set(meta["exit_code_by_key"])
         for mutant in mutants:
             data = exact(
@@ -364,20 +368,25 @@ def check(
                 if data["scoring_status"] in {"killed", "survived"}
                 else "unresolved"
             ] += 1
+            if data["official_status"] == "type_check":
+                observed["type_check"] += 1
             seen.add(identifier)
             if meta is not None and (key not in raw_keys or meta["exit_code_by_key"][key] != code):
                 fail(f"{path}: raw cache identity/exit-code drift")
         if meta is not None and {item["cache_key"] for item in mutants} != raw_keys:
             fail(f"{path}: omitted/fabricated cache identities")
-        if any(counts[key] != observed[key] for key in ("killed", "survived", "unresolved")):
+        if any(
+            counts[key] != observed[key]
+            for key in ("killed", "survived", "unresolved", "type_check")
+        ):
             fail(f"{path}: declared counts mismatch")
-        for key in COUNT_KEYS:
+        for key in REPORT_COUNT_KEYS:
             total[key] += counts[key]
     if not fixture and source["cache_sha256"] != sha256_bytes(b"".join(cache_parts)):
         fail("raw cache digest drift")
-    declared = exact(payload["totals"], set(COUNT_KEYS), "totals")
+    declared = exact(payload["totals"], set(REPORT_COUNT_KEYS), "totals")
     if (
-        any(integer(declared[key], f"totals:{key}") != total[key] for key in COUNT_KEYS)
+        any(integer(declared[key], f"totals:{key}") != total[key] for key in REPORT_COUNT_KEYS)
         or total["generated"] != total["killed"] + total["survived"] + total["unresolved"]
     ):
         fail("totals drift")
@@ -388,8 +397,8 @@ def check(
     if set(module_map) != set(CRITICAL_MODULES):
         fail("missing/duplicate module reports")
     for module, report in module_map.items():
-        exact(report, {"module", *COUNT_KEYS}, f"module {module}")
-        for key in COUNT_KEYS:
+        exact(report, {"module", *REPORT_COUNT_KEYS}, f"module {module}")
+        for key in REPORT_COUNT_KEYS:
             if integer(report[key], f"{module}:{key}") != sum(
                 by_path[name][key] for name in files if f"/{module}/" in name
             ):
@@ -400,6 +409,13 @@ def check(
     score = finite(payload["score"], "score")
     if score != total["killed"] / denominator or score < 0.8:
         fail("invalid/insufficient mutation score")
+    score_without_type_check = finite(
+        payload["score_excluding_type_check"], "score_excluding_type_check"
+    )
+    if score_without_type_check != score_excluding_type_check(
+        total["killed"], total["survived"], total["type_check"]
+    ):
+        fail("invalid mutation score excluding type-check kills")
 
 
 def main() -> int:
