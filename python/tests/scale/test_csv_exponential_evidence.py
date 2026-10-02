@@ -91,7 +91,7 @@ def _smoke_artifact() -> dict[str, object]:
             "python": {"implementation": "CPython", "version": "3.11.0"},
             "platform": "test-platform",
             "measurement_workers": 1,
-            "timing": {"clock": "time.time_ns", "preflight": "paired-wall-monotonic-v1"},
+            "timing": {"clock": "time.perf_counter_ns", "preflight": "paired-monotonic-wall-v2"},
             "methodology": dict(CHECKER_MODULE.METHODOLOGY),
         },
         "generator": {"formula_version": "1", "temporary_root": "redacted"},
@@ -118,7 +118,7 @@ def _full_artifact() -> dict[str, object]:
             "python": {"implementation": "CPython", "version": "3.11.0"},
             "platform": "test-platform",
             "measurement_workers": 1,
-            "timing": {"clock": "time.time_ns", "preflight": "paired-wall-monotonic-v1"},
+            "timing": {"clock": "time.perf_counter_ns", "preflight": "paired-monotonic-wall-v2"},
             "methodology": dict(CHECKER_MODULE.METHODOLOGY),
         },
         "generator": {"formula_version": "1", "temporary_root": "redacted"},
@@ -435,7 +435,7 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
             self.assertEqual(artifact["schema_version"], "3")
             self.assertEqual(
                 artifact["run"]["timing"],
-                {"clock": "time.time_ns", "preflight": "paired-wall-monotonic-v1"},
+                {"clock": "time.perf_counter_ns", "preflight": "paired-monotonic-wall-v2"},
             )
             self.assertEqual(artifact["run"]["candidate_git_sha"], "a" * 40)
             self.assertEqual(
@@ -576,6 +576,17 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
                 8_000,
                 72_008_000_000_000,
             )
+
+    def test_scale16a_elapsed_uses_monotonic_clock_when_wall_clock_is_coarse(self) -> None:
+        # A short cell can finish within one wall-clock tick (the wall clock
+        # advances in coarse steps on some platforms), so the persisted
+        # duration comes from the monotonic clock.
+        self.assertEqual(
+            RUNNER_MODULE._paired_elapsed_seconds(5_000, 5_000, 8_000, 8_250),
+            0.00000025,
+        )
+        with self.assertRaisesRegex(RuntimeError, "below the monotonic clock resolution"):
+            RUNNER_MODULE._paired_elapsed_seconds(5_000, 5_000, 8_000, 8_000)
 
     def test_scale17_v2_rejects_missing_timing_provenance(self) -> None:
         artifact = _smoke_artifact()

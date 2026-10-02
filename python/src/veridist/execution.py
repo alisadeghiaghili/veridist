@@ -277,12 +277,21 @@ def fit_exponential_checkpointed_chunks(
     this call re-sending the single most recently committed chunk (the
     common shape of a retry after a crash) -- by comparing against the
     checkpoint's own recorded operation digest.
+
+    The store is read for the first chunk only; later chunks reuse the record
+    returned by this call's own last commit, and each commit re-reads and
+    revalidates the store at the compare-and-swap boundary.
     """
 
     if not isinstance(chunks, Iterable):
         raise TypeError("chunks must be an iterable")
     reducer = ExponentialCheckpointReducer()
     legacy_warned = False
+    # The first chunk always reads the store. After that, the record returned
+    # by this call's own last commit is the freshest state it can know, so a
+    # per-chunk read would only repeat what `apply_pure_update` re-reads at the
+    # CAS boundary (where a concurrent writer is detected and rejected).
+    known: CheckpointRecord | None = None
     for index, item in enumerate(chunks):
         legacy: bool
         if type(item) is tuple:
@@ -308,7 +317,8 @@ def fit_exponential_checkpointed_chunks(
         if not isinstance(rows, list):
             raise ValueError("checkpointed chunk must be a JSON array")
 
-        base = store.read()
+        base = known if known is not None else store.read()
+        known = base
         cursor = base.cursor
         payload_sha256 = hashlib.sha256(payload).hexdigest()
 
@@ -348,7 +358,7 @@ def fit_exponential_checkpointed_chunks(
                     },
                 )
 
-        apply_pure_update(
+        known = apply_pure_update(
             store=store,
             source_revision=source_revision,
             payload=payload,
@@ -396,6 +406,13 @@ def fit_exponential_checkpointed_csv(
     and the adapter's later parse of it. The adapter's own stat-identity
     check covers that narrower parse-time window; this function does not
     attempt to close it further.
+
+    The checkpoint is read before the first chunk; afterwards the call
+    continues from the record returned by its own last commit instead of
+    re-reading the store per chunk. Each commit still re-reads and
+    revalidates the store at the compare-and-swap boundary, so a writer that
+    advanced the checkpoint in between is reported (`RANGE_MISMATCH`,
+    `SOURCE_REVISION_MISMATCH`, or `CHECKPOINT_CONFLICT`), never merged.
     """
 
     if isinstance(path, Path):
@@ -447,10 +464,18 @@ def fit_exponential_checkpointed_csv(
             source_id,
             CsvLifetimeLimits(adapter_limit, max(adapter_limit, limits.max_inflight_bytes)),
         )
+        # The cursor is refreshed once, after the file hash and adapter setup
+        # above. From then on, the record returned by this call's own last
+        # commit is the freshest state it can know: a per-chunk read would
+        # only repeat the read `apply_pure_update` performs (and revalidates)
+        # at the CAS boundary, where a concurrent writer is rejected.
+        refreshed = False
         for chunk in adapter.iter_chunks():
-            checkpoint = store.read()
-            if checkpoint.source_revision != source_revision:
-                return CheckpointedCsvFitResult("SOURCE_REVISION_MISMATCH", None)
+            if not refreshed:
+                checkpoint = store.read()
+                refreshed = True
+                if checkpoint.source_revision != source_revision:
+                    return CheckpointedCsvFitResult("SOURCE_REVISION_MISMATCH", None)
             row_start = chunk.envelope.row_start
             row_stop = chunk.envelope.row_stop
             if checkpoint.cursor >= row_stop:
@@ -465,7 +490,7 @@ def fit_exponential_checkpointed_csv(
                 if cancel is not None and cancel(cursor):
                     if batch:
                         payload = json.dumps(batch, separators=(",", ":")).encode("utf-8")
-                        apply_pure_update(
+                        checkpoint = apply_pure_update(
                             store=store,
                             source_revision=source_revision,
                             payload=payload,
@@ -479,7 +504,7 @@ def fit_exponential_checkpointed_csv(
                 batch.append([float(observation.time), type(observation) is ExactLifetime])
             if batch:
                 payload = json.dumps(batch, separators=(",", ":")).encode("utf-8")
-                apply_pure_update(
+                checkpoint = apply_pure_update(
                     store=store,
                     source_revision=source_revision,
                     payload=payload,

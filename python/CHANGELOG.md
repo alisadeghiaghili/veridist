@@ -130,6 +130,17 @@ Veridist release record.
   in the file; a blank record anywhere else, including one followed by
   another data record, still fails with `SOURCE_ROW_INVALID`/`blank_record`
   at that record's offset, exactly as before.
+- A CSV time literal with an astronomically large exponent (beyond roughly
+  `1e18` digits of exponent, for example `1e9999999999999999999999`) escaped
+  `fit_exponential_csv` and the checkpointed CSV fit as a raw
+  `decimal.InvalidOperation`, because `Decimal` rejects such an exponent
+  before any range check runs. The literal is now an ordinary typed outcome:
+  `SOURCE_ROW_INVALID`/`invalid_time` when it overflows to infinity or a
+  nonzero mantissa underflows to zero, and a valid zero for a zero mantissa.
+- `IterableDataSource.iter_chunks` could hand the single allowed pass of a
+  single-pass source to more than one thread when they acquired it at the same
+  time. Acquisition is now serialized with a lock: exactly one caller receives
+  the iterator and the others get `PASS_BUDGET_EXCEEDED`.
 
 ### Added
 
@@ -150,6 +161,22 @@ Veridist release record.
   Before this field, a caller requesting more than one statistic had no way
   to tell which one `monte_carlo_standard_error`/`interval` referred to (it
   was always the alphabetically first of the requested statistics).
+- `veridist.engine.VeridistError`, the common base of every exception class the
+  package defines (`EngineContractError` and its subclasses, `CapabilityError`
+  and `CheckpointCommitUncertain`). It is exported from `veridist.engine`, not
+  from the top-level package.
+- `veridist.statistics.reduce_lifetime_log_likelihood_chunks`, an exact-state
+  streaming log-likelihood for exact and right-censored lifetimes under the
+  fixed-location `WEIBULL_MIN`, `LOGNORMAL` and `GAMMA` families: an
+  `ExactLifetime` contributes its log-density and a `RightCensoredLifetime` its
+  log-survival. Terms are accumulated in the same exact integer units as
+  `reduce_log_likelihood_chunks`, so the total does not depend on chunking or
+  order. The gamma log-survival is evaluated in the log domain, so a survival
+  probability below the smallest binary64 stays a finite term instead of
+  becoming `-inf`; a term that is not representable, or an incomplete-gamma
+  expansion that does not converge (very large shape), is a typed failure.
+  Checked against `mpmath` and against the Weibull and lognormal fits'
+  reported log-likelihood. It is not exported from the top-level package.
 
 ### Deprecated
 
@@ -289,6 +316,22 @@ Veridist release record.
   the parent resumes it to the uninterrupted result). The assembled matrix has
   54 cells, enforced by the checker, the assembler and the release-evidence
   workflow.
+- `CheckpointCommitUncertain` is now also a `VeridistError` (it remains a
+  `RuntimeError`, so existing handlers keep working), and `EngineContractError`
+  and `CapabilityError` derive from `VeridistError` instead of directly from
+  `Exception`.
+- `fit_exponential_checkpointed_csv` and `fit_exponential_checkpointed_chunks`
+  no longer re-read the checkpoint before every chunk: the record returned by
+  their own last commit is reused, and `apply_pure_update` still re-reads and
+  revalidates the store at the compare-and-swap boundary, so a concurrent
+  writer is still rejected (as `RANGE_MISMATCH`, `SOURCE_REVISION_MISMATCH` or
+  `CHECKPOINT_CONFLICT`) rather than merged. For a 100,000-row CSV in 111
+  chunks the store reads fall from 224 to 114. `SQLiteCheckpointStore` also
+  requests `PRAGMA synchronous = FULL` only on its write paths.
+- The strict CSV adapter converts a validated time literal with `float`
+  instead of building a `Decimal` first; both round correctly, so every literal
+  that parsed before still yields the same value, and the rejection of a
+  positive literal that underflows to zero is unchanged.
 
 ### Documentation
 
@@ -322,6 +365,11 @@ Veridist release record.
   `docs/v1-test-plan.md` and the two scale-evidence ADR amendments name the
   schema versions the current checkers require (3 and 5) and the single-worker
   timing rule.
+- `fit_exponential`, `fit_exponential_chunks` and `reduce_log_likelihood_chunks`
+  now document that an already exhausted one-shot iterator is
+  indistinguishable from an empty input (an `EMPTY_SAMPLE` failure for the
+  exponential fits, a zero-count success for the log-likelihood reducer), and
+  point to `IterableDataSource` for enforced single-pass semantics.
 
 ## [1.0.1] - 2026-09-12
 

@@ -26,7 +26,7 @@ from veridist.engine.delivery import (
     DeliveryValidator,
     OrderingGuarantee,
 )
-from veridist.engine.errors import EngineContractError, FailureCode
+from veridist.engine.errors import EngineContractError, FailureCode, VeridistError
 from veridist.engine.outcome import (
     CompleteOutcome,
     Coverage,
@@ -162,6 +162,7 @@ __all__ = [
     "SourceRedactionReason",
     "SinkResult",
     "UnknownMissingRanges",
+    "VeridistError",
     "apply_pure_update",
     "apply_sink_update",
     "checkpoint_observation_from_resume",

@@ -259,6 +259,13 @@ def reduce_log_likelihood_chunks(
     Parameters are validated before iteration.  `processed_count` on a failure
     counts only successful observations preceding the terminal failure and is
     deliberately not a complete-input count.
+
+    ``chunks`` is consumed once. An already exhausted one-shot iterator (for
+    example a generator iterated earlier) is indistinguishable from an empty
+    input, so it silently reduces to a success with ``observation_count == 0``
+    and a total of ``0.0`` rather than raising. To enforce single-pass
+    semantics (a second acquisition raises ``PASS_BUDGET_EXCEEDED``), pass the
+    chunks through :class:`~veridist.engine.streaming.IterableDataSource`.
     """
 
     validated = _validate_family_and_parameters(family, parameters)

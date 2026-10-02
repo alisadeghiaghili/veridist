@@ -9,7 +9,6 @@ import re
 import sys
 from collections.abc import Generator, Iterator
 from dataclasses import dataclass, field, fields, is_dataclass, replace
-from decimal import Decimal
 from enum import StrEnum
 from io import BufferedIOBase, TextIOWrapper
 from math import isfinite
@@ -631,7 +630,16 @@ class CsvLifetimeAdapter:
         )
 
     @staticmethod
-    def _parse_time(value: str, record_offset: int) -> Decimal:
+    def _parse_time(value: str, record_offset: int) -> float:
+        """Parse one time literal; ``_TIME`` restricts the grammar first.
+
+        After the grammar check ``float(value)`` is the single conversion and
+        is correctly rounded, exactly as converting through ``Decimal`` first
+        would be. A literal is rejected when it overflows to infinity, or when
+        its mantissa has a nonzero digit yet the result is ``0.0`` (a positive
+        time that underflowed); a literal such as ``0.0e5`` is a genuine zero.
+        """
+
         if _TIME.fullmatch(value) is None:
             raise CsvLifetimeAdapterError(
                 FailureCode.SOURCE_ROW_INVALID,
@@ -639,16 +647,17 @@ class CsvLifetimeAdapter:
                 phase=CsvAdapterFailurePhase.DELIVERY,
                 record_offset=record_offset,
             )
-        decimal = Decimal(value)
-        converted = float(decimal)
-        if not isfinite(converted) or (decimal > 0 and converted == 0.0):
+        converted = float(value)
+        if not isfinite(converted) or (
+            converted == 0.0 and value.partition("e")[0].partition("E")[0].strip("0.") != ""
+        ):
             raise CsvLifetimeAdapterError(
                 FailureCode.SOURCE_ROW_INVALID,
                 reason="invalid_time",
                 phase=CsvAdapterFailurePhase.DELIVERY,
                 record_offset=record_offset,
             )
-        return decimal
+        return converted
 
     def _chunk(
         self,

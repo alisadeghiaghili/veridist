@@ -41,8 +41,8 @@ SCHEMA = CsvLifetimeSchema("time", "event_observed")
 # Windows virtualized clocks can disagree after a worker migrates between
 # timing domains.  Evidence must fail closed rather than preserve an elapsed
 # value that cannot be tied to a trustworthy clock.
-ELAPSED_CLOCK = "time.time_ns"
-ELAPSED_PREFLIGHT = "paired-wall-monotonic-v1"
+ELAPSED_CLOCK = "time.perf_counter_ns"
+ELAPSED_PREFLIGHT = "paired-monotonic-wall-v2"
 
 # Elapsed time comes from an untraced pass, memory from a separate traced pass, and RSS is
 # the process high-water mark (``peak_rss_bytes``), so ``rss_delta_bytes`` is only the growth
@@ -107,12 +107,13 @@ def _paired_elapsed_seconds(
     monotonic_started_ns: int,
     monotonic_finished_ns: int,
 ) -> float:
-    """Return a wall duration only when an independent monotonic clock agrees.
+    """Return the monotonic duration only when the wall clock agrees with it.
 
-    ``time.time_ns`` is the persisted wall-clock measurement.  The paired
-    monotonic duration is not reported as a performance metric; it is a local
-    provenance check that prevents a known bad timer domain from producing a
-    deceptively precise retained value.
+    ``time.perf_counter_ns`` is the persisted measurement: it is monotonic and
+    high resolution on every platform, whereas ``time.time_ns`` can advance in
+    coarse ticks (for example on Windows runners), so a short cell could
+    measure as exactly zero. The wall-clock duration is a provenance check that
+    rejects a timer domain whose two clocks disagree beyond the tolerance.
     """
 
     wall_elapsed = wall_finished_ns - wall_started_ns
@@ -125,7 +126,9 @@ def _paired_elapsed_seconds(
     )
     if abs(wall_elapsed - monotonic_elapsed) > tolerance:
         raise RuntimeError("elapsed clocks disagree; refusing timing evidence")
-    return wall_elapsed / 1_000_000_000
+    if monotonic_elapsed == 0:
+        raise RuntimeError("elapsed time is below the monotonic clock resolution")
+    return monotonic_elapsed / 1_000_000_000
 
 
 def _preflight_elapsed_clock() -> None:
