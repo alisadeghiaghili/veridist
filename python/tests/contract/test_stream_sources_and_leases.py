@@ -83,6 +83,66 @@ class StreamSourceContractTests(unittest.TestCase):
             tuple(source.iter_chunks())
         self.assertIs(caught.exception.code, FailureCode.PASS_BUDGET_EXCEEDED)
 
+    def test_concurrent_acquisition_admits_exactly_one_thread(self) -> None:
+        threads_per_round = 8
+        for _ in range(20):
+            source = IterableDataSource(((0.0,),), metadata())
+            barrier = threading.Barrier(threads_per_round, timeout=10.0)
+            results: list[object] = []
+            results_lock = threading.Lock()
+
+            def acquire(
+                source: IterableDataSource[tuple[float, ...]] = source,
+                barrier: threading.Barrier = barrier,
+                results: list[object] = results,
+                results_lock: threading.Lock = results_lock,
+            ) -> None:
+                barrier.wait()
+                try:
+                    outcome: object = source.iter_chunks()
+                except StreamSourceError as error:
+                    outcome = error
+                with results_lock:
+                    results.append(outcome)
+
+            workers = [threading.Thread(target=acquire) for _ in range(threads_per_round)]
+            for worker in workers:
+                worker.start()
+            for worker in workers:
+                worker.join(timeout=10.0)
+                self.assertFalse(worker.is_alive())
+
+            failures = [item for item in results if isinstance(item, StreamSourceError)]
+            winners = [item for item in results if not isinstance(item, StreamSourceError)]
+            self.assertEqual(len(winners), 1)
+            self.assertEqual(len(failures), threads_per_round - 1)
+            for failure in failures:
+                self.assertIs(failure.code, FailureCode.PASS_BUDGET_EXCEEDED)
+
+    def test_single_pass_acquisition_is_serialized_by_the_source_lock(self) -> None:
+        class SpyLock:
+            def __init__(self) -> None:
+                self.entered = 0
+                self.held = False
+
+            def __enter__(self) -> None:
+                self.entered += 1
+                self.held = True
+
+            def __exit__(self, *exc_info: object) -> None:
+                self.held = False
+
+        source = IterableDataSource(((0.0,),), metadata())
+        spy = SpyLock()
+        source._lock = cast(threading.Lock, spy)
+        source.iter_chunks()
+        self.assertEqual(spy.entered, 1)
+        self.assertFalse(spy.held)
+        with self.assertRaises(StreamSourceError):
+            source.iter_chunks()
+        self.assertEqual(spy.entered, 2)
+        self.assertFalse(spy.held)
+
     def test_replayable_source_requires_a_factory_and_can_be_acquired_twice(self) -> None:
         with self.assertRaises(ValueError):
             IterableDataSource(((0.0,),), metadata(Replayability.REPLAYABLE))

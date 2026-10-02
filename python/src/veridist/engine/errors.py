@@ -137,7 +137,16 @@ def _freeze_context_value(value: object) -> object:
     raise TypeError("failure context contains an unsafe value type")
 
 
-class EngineContractError(Exception):
+class VeridistError(Exception):
+    """Common base of every exception class that veridist defines.
+
+    Catch this to handle any typed veridist failure without enumerating the
+    individual classes. Built-in exceptions raised for programmer errors
+    (``TypeError``, ``ValueError``) are deliberately not wrapped.
+    """
+
+
+class EngineContractError(VeridistError):
     """A typed engine failure with immutable diagnostic context."""
 
     def __init__(self, code: FailureCode, context: Mapping[str, object] | None = None) -> None:
@@ -170,7 +179,7 @@ class CapabilityCode(StrEnum):
     TRUNCATION_UNSUPPORTED = "TRUNCATION_UNSUPPORTED"
 
 
-class CapabilityError(Exception):
+class CapabilityError(VeridistError):
     """Typed request for a declared but unsupported statistical capability."""
 
     def __init__(self, code: CapabilityCode) -> None:

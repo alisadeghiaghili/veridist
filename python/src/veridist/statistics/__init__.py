@@ -5,6 +5,7 @@ from veridist.statistics.exponential import (
     ExponentialReductionState,
     reduce_exponential_chunks,
 )
+from veridist.statistics.lifetime_log_likelihood import reduce_lifetime_log_likelihood_chunks
 from veridist.statistics.log_likelihood import (
     LogLikelihoodErrorCode,
     LogLikelihoodFailure,
@@ -23,5 +24,6 @@ __all__ = [
     "LogLikelihoodState",
     "LogLikelihoodSuccess",
     "reduce_exponential_chunks",
+    "reduce_lifetime_log_likelihood_chunks",
     "reduce_log_likelihood_chunks",
 ]

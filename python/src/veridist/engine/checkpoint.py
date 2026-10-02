@@ -14,7 +14,7 @@ from pathlib import Path
 from threading import Lock
 from typing import Protocol
 
-from veridist.engine.errors import EngineContractError, FailureCode
+from veridist.engine.errors import EngineContractError, FailureCode, VeridistError
 
 CHECKPOINT_FORMAT_VERSION = 1
 
@@ -189,8 +189,14 @@ class CheckpointRecord:
         )
 
 
-class CheckpointCommitUncertain(RuntimeError):
-    """The store cannot say whether a requested CAS transition committed."""
+class CheckpointCommitUncertain(VeridistError, RuntimeError):
+    """The store cannot say whether a requested CAS transition committed.
+
+    It stays a ``RuntimeError`` so existing handlers keep working, and is also
+    a :class:`~veridist.engine.errors.VeridistError` because it is part of the
+    public store contract. It carries no failure code or context on purpose:
+    the retry layer reconciles the ambiguity and never reports it directly.
+    """
 
 
 class CheckpointStore(Protocol):
@@ -287,7 +293,6 @@ class SQLiteCheckpointStore:
                 timeout=self._timeout,
                 isolation_level=None,
             )
-            connection.execute("PRAGMA synchronous = FULL")
             return connection
         except (OSError, sqlite3.Error) as error:
             if connection is not None:
@@ -296,9 +301,19 @@ class SQLiteCheckpointStore:
             raise EngineContractError(FailureCode.CHECKPOINT_STORAGE_FAILED, context) from None
 
     @contextmanager
-    def _opened(self) -> Iterator[sqlite3.Connection]:
+    def _opened(self, *, write: bool = False) -> Iterator[sqlite3.Connection]:
+        """Open one short-lived connection; durability is requested for writes only.
+
+        Every operation uses its own connection (process safety, and the file
+        stays deletable on Windows). ``PRAGMA synchronous = FULL`` is set only
+        on write paths, where it governs fsync behaviour at commit; a read has
+        nothing to make durable. It is issued before any transaction begins.
+        """
+
         connection = self._connect()
         try:
+            if write:
+                connection.execute("PRAGMA synchronous = FULL")
             yield connection
         finally:
             connection.close()
@@ -417,7 +432,7 @@ class SQLiteCheckpointStore:
         created_file = False
         try:
             store._path.parent.mkdir(parents=True, exist_ok=True)
-            with store._opened() as connection:
+            with store._opened(write=True) as connection:
                 created_file = True
                 connection.execute("BEGIN IMMEDIATE")
                 try:
@@ -480,7 +495,7 @@ class SQLiteCheckpointStore:
         payload, checksum = self._encode(candidate)
         acknowledgement_lost = False
         try:
-            with self._opened() as connection:
+            with self._opened(write=True) as connection:
                 connection.execute("BEGIN IMMEDIATE")
                 updated = connection.execute(
                     """

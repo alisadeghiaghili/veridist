@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from importlib import import_module
-from math import copysign, erfc, exp, expm1, isfinite, lgamma, log, log1p, sqrt
+from math import copysign, erfc, exp, expm1, fsum, isfinite, lgamma, log, log1p, sqrt
 from typing import cast
 
 from veridist.families.registry import FAMILY_REGISTRY
@@ -50,6 +50,37 @@ _GAMMA_EPS = 2e-16
 _GAMMA_MAXIT = 512
 
 
+def _upper_gamma_continued_fraction(shape: float, value: float) -> float:
+    """Return ``h`` with ``Q(shape, value) = exp(-value + shape*log(value) - lgamma(shape)) * h``.
+
+    Modified Lentz evaluation of the upper incomplete gamma continued
+    fraction, valid for ``value >= shape + 1``. Raises ``ArithmeticError`` if
+    it does not converge within the iteration budget.
+    """
+
+    b = value + 1.0 - shape
+    c = 1.0 / _GAMMA_FPMIN
+    d = 1.0 / b
+    h = d
+    for index in range(1, _GAMMA_MAXIT + 1):
+        coefficient = -index * (index - shape)
+        b += 2.0
+        d = coefficient * d + b
+        if abs(d) < _GAMMA_FPMIN:
+            d = copysign(_GAMMA_FPMIN, d)
+        c = b + coefficient / c
+        if abs(c) < _GAMMA_FPMIN:
+            c = copysign(_GAMMA_FPMIN, c)
+        d = 1.0 / d
+        delta = d * c
+        h *= delta
+        if abs(delta - 1.0) <= _GAMMA_EPS:
+            break
+    else:
+        raise ArithmeticError("gamma continued fraction failed to converge")
+    return h
+
+
 def _regularized_gamma_pq(shape: float, value: float) -> tuple[float, float]:
     """Return the regularized lower and upper incomplete gamma ratios ``(P, Q)``.
 
@@ -78,28 +109,99 @@ def _regularized_gamma_pq(shape: float, value: float) -> tuple[float, float]:
             raise ArithmeticError("gamma series expansion failed to converge")
         lower = min(1.0, total * exp(-value + shape * log(value) - lgamma(shape)))
         return lower, 1.0 - lower
-    b = value + 1.0 - shape
-    c = 1.0 / _GAMMA_FPMIN
-    d = 1.0 / b
-    h = d
-    for index in range(1, _GAMMA_MAXIT + 1):
-        coefficient = -index * (index - shape)
-        b += 2.0
-        d = coefficient * d + b
-        if abs(d) < _GAMMA_FPMIN:
-            d = copysign(_GAMMA_FPMIN, d)
-        c = b + coefficient / c
-        if abs(c) < _GAMMA_FPMIN:
-            c = copysign(_GAMMA_FPMIN, c)
-        d = 1.0 / d
-        delta = d * c
-        h *= delta
-        if abs(delta - 1.0) <= _GAMMA_EPS:
-            break
-    else:
-        raise ArithmeticError("gamma continued fraction failed to converge")
+    h = _upper_gamma_continued_fraction(shape, value)
     upper = max(0.0, min(1.0, exp(-value + shape * log(value) - lgamma(shape)) * h))
     return 1.0 - upper, upper
+
+
+_EULER_GAMMA = 0.5772156649015329
+#: ``zeta(2) .. zeta(9)``, rounded from a 50-digit evaluation.
+_ZETA_2_TO_9 = (
+    1.6449340668482264,
+    1.2020569031595942,
+    1.0823232337111381,
+    1.03692775514337,
+    1.0173430619844492,
+    1.008349277381923,
+    1.0040773561979444,
+    1.0020083928260821,
+)
+#: Shapes below this use the small-shape upper-tail identity, where ``1 - P``
+#: would cancel catastrophically.
+_SMALL_SHAPE = 0.01
+_SMALL_SHAPE_TERMS = 40
+
+
+def _lgamma_one_plus_small(shape: float) -> float:
+    """Return ``lgamma(1 + shape)`` for ``0 < shape < 0.01`` without forming ``1 + shape``.
+
+    ``1.0 + shape`` rounds away the low bits of a tiny shape, so ``lgamma``
+    of it loses all relative accuracy; the Taylor series
+    ``-gamma*s + sum((-1)**k * zeta(k) * s**k / k)`` does not.
+    """
+
+    total = -_EULER_GAMMA * shape
+    power = shape
+    for order, zeta in enumerate(_ZETA_2_TO_9, start=2):
+        power *= shape
+        term = zeta * power / order
+        total += term if order % 2 == 0 else -term
+    return total
+
+
+def _log_upper_gamma_small_shape(shape: float, value: float, log_value: float) -> float:
+    """Return ``log Q(shape, value)`` for ``0 < shape < 0.01`` and ``value < shape + 1``.
+
+    With ``g = value**shape / Gamma(shape + 1)`` and
+    ``T = shape * sum((-value)**n / (n! * (shape + n)))``, the lower ratio is
+    ``P = g * (1 + T)`` and ``Q = -(u + T + u*T)`` for ``u = g - 1``. The
+    second form is evaluated with ``expm1`` so that a ``Q`` far below
+    machine epsilon (which ``1 - P`` rounds to zero) keeps full relative
+    accuracy.
+    """
+
+    exponent = shape * log_value - _lgamma_one_plus_small(shape)
+    term = 1.0
+    total = 0.0
+    for order in range(1, _SMALL_SHAPE_TERMS + 1):
+        term *= -value / order
+        total += term / (shape + order)
+    correction = shape * total
+    lower = exp(exponent) * (1.0 + correction)
+    if lower <= 0.5:
+        return log1p(-lower)
+    u = expm1(exponent)
+    return log(-fsum((u, correction, u * correction)))
+
+
+def _log_regularized_gamma_q(shape: float, value: float, log_value: float) -> float:
+    """Return ``log Q(shape, value)`` for positive finite ``shape`` and ``value >= 0``.
+
+    ``log_value`` must be the finite natural logarithm of the mathematical
+    ``value``; ``value`` itself may have underflowed to ``0.0`` or a
+    subnormal, which is why the logarithm is supplied separately.
+
+    ``Q`` itself is never formed in the upper tail: the continued fraction's
+    prefactor ``exp(-value + shape*log(value) - lgamma(shape))`` is kept as a
+    sum of logarithms, so a ``Q`` far below the smallest binary64 (where
+    ``log(Q)`` of a rounded ``Q`` would be ``-inf``) is still returned as a
+    finite number, and no asymptotic fallback is needed. Every outcome is
+    either a finite float or an exception: ``ArithmeticError`` when an
+    expansion does not converge in its iteration budget (very large
+    ``shape``), ``OverflowError`` or ``ValueError`` when a required
+    intermediate or the result is not representable.
+    """
+
+    if value >= shape + 1.0:
+        h = _upper_gamma_continued_fraction(shape, value)
+        return fsum((-value, shape * log_value, -lgamma(shape), log(h)))
+    if shape < _SMALL_SHAPE:
+        return _log_upper_gamma_small_shape(shape, value, log_value)
+    if value < _GAMMA_FPMIN:
+        lower = exp(shape * log_value - lgamma(shape + 1.0))
+    else:
+        lower = _regularized_gamma_pq(shape, value)[0]
+    return log1p(-lower)
 
 
 def cdf(family: str, value: object, parameters: Mapping[str, object]) -> float:

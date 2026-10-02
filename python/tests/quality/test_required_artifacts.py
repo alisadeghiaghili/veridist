@@ -26,11 +26,11 @@ class RequiredQualityArtifactTests(unittest.TestCase):
     def test_manifest_records_the_authoritative_production_file_count(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         production_count = len(manifest["production_files"])
-        self.assertEqual(production_count, 31)
+        self.assertEqual(production_count, 32)
         self.assertIn("src/veridist/engine/streaming.py", manifest["production_files"])
         self.assertEqual(
             manifest["expected_denominators"]["src/veridist/engine/streaming.py"],
-            {"statements": 53, "branches": 22},
+            {"statements": 57, "branches": 22},
         )
 
     def test_readiness_separates_historical_snapshot_from_current_evidence(

@@ -184,7 +184,15 @@ ExponentialFit = ExponentialFitSuccess | ExponentialFitFailure
 
 
 def fit_exponential(observations: Iterable[LifetimeObservation]) -> ExponentialFit:
-    """Fit the fixed-location exponential rate by its closed-form likelihood MLE."""
+    """Fit the fixed-location exponential rate by its closed-form likelihood MLE.
+
+    ``observations`` is consumed once. A one-shot iterator that was already
+    exhausted (for example a generator that was iterated earlier) looks exactly
+    like an empty sample, so the result is an ``EMPTY_SAMPLE`` failure rather
+    than an error. Pass a re-iterable collection, or wrap the stream in
+    :class:`~veridist.engine.streaming.IterableDataSource`, when the number of
+    passes must be enforced and a second acquisition must fail loudly.
+    """
 
     return fit_exponential_chunks((observations,))
 
@@ -192,7 +200,14 @@ def fit_exponential(observations: Iterable[LifetimeObservation]) -> ExponentialF
 def fit_exponential_chunks(
     chunks: StreamSource[Iterable[LifetimeObservation]] | Iterable[Iterable[LifetimeObservation]],
 ) -> ExponentialFit:
-    """Fit from ragged chunks without retaining raw observations or chunk payloads."""
+    """Fit from ragged chunks without retaining raw observations or chunk payloads.
+
+    ``chunks`` is consumed once. An already exhausted one-shot iterator yields
+    no chunks and therefore an ``EMPTY_SAMPLE`` failure, not an error; the
+    library cannot tell it apart from an empty input. To enforce single-pass
+    semantics (a second acquisition raises ``PASS_BUDGET_EXCEEDED``), pass the
+    chunks through :class:`~veridist.engine.streaming.IterableDataSource`.
+    """
 
     try:
         state = reduce_exponential_chunks(iter_stream(chunks))
