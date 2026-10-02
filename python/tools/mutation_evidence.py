@@ -67,6 +67,19 @@ def scoring_status(exit_code: object) -> str:
     return "unresolved"
 
 
+def score_excluding_type_check(killed: int, survived: int, type_check: int) -> float:
+    """Return the mutation score with type-check-rejected mutants removed entirely.
+
+    ``killed`` already counts every mutant that mutmut rejected through its type
+    checker (exit code 37); ``type_check`` is the size of that subset. Dropping
+    those mutants from numerator and denominator reports how many mutants were
+    killed by the test suite itself. The gate score is unchanged and still counts them.
+    """
+
+    denominator = killed + survived - type_check
+    return 0.0 if denominator == 0 else (killed - type_check) / denominator
+
+
 def canonical_json(value: object) -> str:
     return json.dumps(
         value, ensure_ascii=True, sort_keys=True, separators=(",", ":"), allow_nan=False

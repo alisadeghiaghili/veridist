@@ -1,14 +1,22 @@
-"""Generate retained one-pass exact-state log-likelihood scale evidence."""
+"""Generate retained one-pass exact-state log-likelihood scale evidence.
+
+Each cell is measured twice in the measuring process: an untraced pass supplies
+``elapsed_seconds`` (``tracemalloc`` would distort the timing), then a separate traced
+pass supplies the memory facts. Cells run strictly one after another; the artifact
+records ``measurement_workers`` (always 1) and the checker rejects anything else.
+
+``artifact_sha256`` is an integrity digest over the canonical JSON body. It detects
+accidental edits and truncation; it is not a signature and does not authenticate who
+produced the artifact.
+"""
 
 from __future__ import annotations
 
 import argparse
-import ctypes
 import hashlib
 import json
 import platform
 import subprocess
-import sys
 import time
 import tracemalloc
 from fractions import Fraction
@@ -18,6 +26,16 @@ from veridist import DataSourceMetadata, IterableDataSource, Replayability
 from veridist.families.registry import FamilyId
 from veridist.statistics.log_likelihood import LogLikelihoodSuccess, reduce_log_likelihood_chunks
 
+try:  # direct script execution puts tools/ on sys.path
+    from process_memory import peak_rss_bytes
+except ImportError:  # imported as ``tools.<module>``
+    from tools.process_memory import peak_rss_bytes
+
+# Elapsed time comes from an untraced pass, memory from a separate traced pass, and RSS is
+# the process high-water mark (``peak_rss_bytes``), so ``rss_delta_bytes`` is only the growth
+# of that mark and is zero when an earlier pass in the process already reached it.
+METHODOLOGY = {"passes": "elapsed-untraced-then-memory-traced-v1", "rss": "process-peak-v1"}
+MEASUREMENT_WORKERS = 1
 ROWS = (10_000, 100_000, 1_000_000)
 BUDGETS = (1_024, 8_192, 65_536)
 FAMILY_CASES = (
@@ -70,41 +88,6 @@ def _oracle_units(rows: int, contribution_hex: str) -> int:
     return rows * numerator * ((1 << 1074) // denominator)
 
 
-def _rss_bytes() -> int:
-    """Return current process RSS on every CI platform or fail closed."""
-
-    if sys.platform == "win32":
-
-        class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
-            _fields_ = [
-                ("cb", ctypes.c_ulong),
-                ("PageFaultCount", ctypes.c_ulong),
-                ("PeakWorkingSetSize", ctypes.c_size_t),
-                ("WorkingSetSize", ctypes.c_size_t),
-                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
-                ("PagefileUsage", ctypes.c_size_t),
-                ("PeakPagefileUsage", ctypes.c_size_t),
-                ("PrivateUsage", ctypes.c_size_t),
-            ]
-
-        counters = PROCESS_MEMORY_COUNTERS_EX()
-        counters.cb = ctypes.sizeof(counters)
-        process = ctypes.windll.kernel32.GetCurrentProcess()
-        getter = ctypes.windll.psapi.GetProcessMemoryInfo
-        getter.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_ulong]
-        getter.restype = ctypes.c_int
-        ok = getter(process, ctypes.byref(counters), ctypes.sizeof(counters))
-        if not ok:
-            raise RuntimeError("cannot obtain Windows process RSS")
-        return int(counters.WorkingSetSize)
-    import resource
-
-    return int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss * 1024)
-
-
 def _cell(
     rows: int,
     chunk_size: int,
@@ -116,25 +99,38 @@ def _cell(
 ) -> dict[str, object]:
     if parameters is None:
         parameters = {"mu": 0.0, "sigma": 1.0}
-    chunks = _chunks(rows, chunk_size, observation)
-    source = IterableDataSource(
-        chunks,
-        DataSourceMetadata(
-            source_id=f"scale-{family.value}-{rows}-{chunk_size}",
-            schema_version="1",
-            provenance_schema_version="1",
-            replayability=Replayability.SINGLE_PASS,
-            redaction_reason="generated",
-        ),
-    )
-    tracemalloc.start()
-    rss_before = _rss_bytes()
+    def reduce_once() -> tuple[object, _GeneratedChunks]:
+        chunks = _chunks(rows, chunk_size, observation)
+        source = IterableDataSource(
+            chunks,
+            DataSourceMetadata(
+                source_id=f"scale-{family.value}-{rows}-{chunk_size}",
+                schema_version="1",
+                provenance_schema_version="1",
+                replayability=Replayability.SINGLE_PASS,
+                redaction_reason="generated",
+            ),
+        )
+        return reduce_log_likelihood_chunks(family, source, **parameters), chunks
+
     started = time.perf_counter()
-    result = reduce_log_likelihood_chunks(family, source, **parameters)
+    result, chunks = reduce_once()
     elapsed = time.perf_counter() - started
-    _, peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-    rss_after = _rss_bytes()
+    rss_before = peak_rss_bytes()
+    tracemalloc.start()
+    try:
+        traced_result, traced_chunks = reduce_once()
+        _, peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    rss_after = peak_rss_bytes()
+    if (
+        not isinstance(traced_result, LogLikelihoodSuccess)
+        or traced_result != result
+        or traced_chunks.iterator_acquisitions != 1
+        or traced_chunks.observation_yields != rows
+    ):
+        raise RuntimeError("memory pass did not reproduce the timed reduction")
     if (
         not isinstance(result, LogLikelihoodSuccess)
         or result.family is not family
@@ -182,7 +178,7 @@ def main() -> int:
     root = Path(__file__).resolve().parents[2]
     sha = _head(root)
     value: dict[str, object] = {
-        "schema_version": "4",
+        "schema_version": "5",
         "run": {
             "git_sha": sha,
             "candidate_git_sha": sha,
@@ -194,6 +190,8 @@ def main() -> int:
                 "version": platform.python_version(),
             },
             "platform": platform.platform(),
+            "measurement_workers": MEASUREMENT_WORKERS,
+            "methodology": dict(METHODOLOGY),
         },
         "cells": [
             _cell(

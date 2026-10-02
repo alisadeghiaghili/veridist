@@ -35,7 +35,7 @@ def _head() -> str:
 class LogLikelihoodScaleEvidenceTests(unittest.TestCase):
     def _value(self) -> dict[str, object]:
         value: dict[str, object] = {
-            "schema_version": "4",
+            "schema_version": "5",
             "run": {
                 "git_sha": _head(),
                 "candidate_git_sha": _head(),
@@ -44,6 +44,8 @@ class LogLikelihoodScaleEvidenceTests(unittest.TestCase):
                 "source_contract": "public-iterable-data-source-v1",
                 "python": {"implementation": "CPython", "version": "3.11"},
                 "platform": "test-platform",
+                "measurement_workers": 1,
+                "methodology": dict(MODULE.METHODOLOGY),
             },
             "cells": [],
         }
@@ -113,17 +115,15 @@ class LogLikelihoodScaleEvidenceTests(unittest.TestCase):
 
         with patch.object(RUNNER_MODULE, "IterableDataSource", RecordingSource):
             cell = RUNNER_MODULE._cell(10, 3)
-        self.assertEqual(len(observed), 1)
-        self.assertEqual(
-            observed[0],
-            DataSourceMetadata(
-                source_id="scale-normal-10-3",
-                schema_version="1",
-                provenance_schema_version="1",
-                replayability=Replayability.SINGLE_PASS,
-                redaction_reason="generated",
-            ),
+        expected = DataSourceMetadata(
+            source_id="scale-normal-10-3",
+            schema_version="1",
+            provenance_schema_version="1",
+            replayability=Replayability.SINGLE_PASS,
+            redaction_reason="generated",
         )
+        # One single-pass source for the untraced timing pass and a fresh one for the memory pass.
+        self.assertEqual(observed, [expected, expected])
         self.assertEqual(cell["one_pass"], {"iterator_acquisitions": 1, "observation_yields": 10})
         self.assertEqual(cell["actual"]["observation_count"], 10)
 
@@ -141,6 +141,76 @@ class LogLikelihoodScaleEvidenceTests(unittest.TestCase):
         with patch.object(RUNNER_MODULE, "reduce_log_likelihood_chunks", side_effect=second_pass):
             with self.assertRaisesRegex(Exception, "PASS_BUDGET_EXCEEDED"):
                 RUNNER_MODULE._cell(10, 1)
+
+    def test_checker_rejects_parallel_workers_and_unknown_methodology(self) -> None:
+        self.assertEqual(
+            MODULE.validate(self._value(), expected_git_sha=_head(), repo_root=REPO), []
+        )
+        for workers, message in (
+            (2, "exactly one measurement worker"),
+            (0, "must be positive"),
+            (True, "must be positive"),
+        ):
+            with self.subTest(workers=workers):
+                value = self._value()
+                value["run"]["measurement_workers"] = workers
+                value["artifact_sha256"] = MODULE._digest(value)
+                errors = MODULE.validate(value, expected_git_sha=_head(), repo_root=REPO)
+                self.assertTrue(any(message in error for error in errors), errors)
+        for methodology in (
+            {"passes": "traced-single-pass", "rss": "process-peak-v1"},
+            {"passes": "elapsed-untraced-then-memory-traced-v1", "rss": "current"},
+            {},
+        ):
+            with self.subTest(methodology=methodology):
+                value = self._value()
+                value["run"]["methodology"] = methodology
+                value["artifact_sha256"] = MODULE._digest(value)
+                self.assertIn(
+                    "run measurement methodology is not supported",
+                    MODULE.validate(value, expected_git_sha=_head(), repo_root=REPO),
+                )
+
+    def test_checker_rejects_the_previous_schema(self) -> None:
+        value = self._value()
+        value["schema_version"] = "4"
+        value["artifact_sha256"] = MODULE._digest(value)
+        self.assertIn(
+            "artifact version or digest invalid",
+            MODULE.validate(value, expected_git_sha=_head(), repo_root=REPO),
+        )
+
+    def test_runner_times_an_untraced_pass_then_measures_memory_in_a_separate_pass(self) -> None:
+        import tracemalloc
+
+        tracing: list[bool] = []
+        real_reduce = RUNNER_MODULE.reduce_log_likelihood_chunks
+
+        def spy(*arguments: object, **keywords: object) -> object:
+            tracing.append(tracemalloc.is_tracing())
+            return real_reduce(*arguments, **keywords)
+
+        with patch.object(RUNNER_MODULE, "reduce_log_likelihood_chunks", side_effect=spy):
+            cell = RUNNER_MODULE._cell(10, 3)
+        self.assertEqual(tracing, [False, True])
+        self.assertFalse(tracemalloc.is_tracing())
+        self.assertGreater(cell["memory"]["tracemalloc_peak_bytes"], 0)
+        self.assertGreater(cell["memory"]["rss_peak_bytes"], 0)
+        self.assertEqual(cell["one_pass"], {"iterator_acquisitions": 1, "observation_yields": 10})
+
+    def test_runner_refuses_a_memory_pass_that_differs_from_the_timed_reduction(self) -> None:
+        real_reduce = RUNNER_MODULE.reduce_log_likelihood_chunks
+        calls: list[object] = []
+
+        def drifting(family: FamilyId, chunks: object, /, **parameters: object) -> object:
+            calls.append(chunks)
+            if len(calls) == 1:
+                return real_reduce(family, chunks, **parameters)
+            return real_reduce(family, chunks, **{**parameters, "mu": 1.0})
+
+        with patch.object(RUNNER_MODULE, "reduce_log_likelihood_chunks", side_effect=drifting):
+            with self.assertRaisesRegex(RuntimeError, "memory pass did not reproduce"):
+                RUNNER_MODULE._cell(10, 3)
 
     def test_checker_rejects_tampered_actual_returned_total(self) -> None:
         value = self._value()
@@ -216,7 +286,9 @@ class LogLikelihoodScaleEvidenceTests(unittest.TestCase):
             ):
                 self.assertEqual(RUNNER_MODULE.main(), 0)
             artifact = json.loads(output.read_text(encoding="utf-8"))
-            self.assertEqual(artifact["schema_version"], "4")
+            self.assertEqual(artifact["schema_version"], "5")
             self.assertEqual(artifact["run"]["candidate_git_sha"], "a" * 40)
+            self.assertEqual(artifact["run"]["measurement_workers"], 1)
+            self.assertEqual(artifact["run"]["methodology"], MODULE.METHODOLOGY)
             self.assertEqual(artifact["run"]["source_contract"], "public-iterable-data-source-v1")
             self.assertEqual(len(artifact["cells"]), len(RUNNER_MODULE.FAMILY_CASES))

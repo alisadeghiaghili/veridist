@@ -82,7 +82,7 @@ def _smoke_artifact() -> dict[str, object]:
     row, budgets = 100, (2048, 4096, 8192)
     cells = [_cell(row, budget) for budget in budgets]
     value: dict[str, object] = {
-        "schema_version": "2",
+        "schema_version": "3",
         "run": {
             "git_sha": _head(),
             "candidate_git_sha": _head(),
@@ -92,6 +92,7 @@ def _smoke_artifact() -> dict[str, object]:
             "platform": "test-platform",
             "measurement_workers": 1,
             "timing": {"clock": "time.time_ns", "preflight": "paired-wall-monotonic-v1"},
+            "methodology": dict(CHECKER_MODULE.METHODOLOGY),
         },
         "generator": {"formula_version": "1", "temporary_root": "redacted"},
         "cells": cells,
@@ -108,7 +109,7 @@ def _full_artifact() -> dict[str, object]:
     rows, budgets = (10_000, 100_000, 1_000_000), (32_768, 65_536, 131_072)
     cells = [_cell(row, budget) for row in rows for budget in budgets]
     value: dict[str, object] = {
-        "schema_version": "2",
+        "schema_version": "3",
         "run": {
             "git_sha": _head(),
             "candidate_git_sha": _head(),
@@ -116,8 +117,9 @@ def _full_artifact() -> dict[str, object]:
             "utc_started": "2026-08-27T00:00:00Z",
             "python": {"implementation": "CPython", "version": "3.11.0"},
             "platform": "test-platform",
-            "measurement_workers": 3,
+            "measurement_workers": 1,
             "timing": {"clock": "time.time_ns", "preflight": "paired-wall-monotonic-v1"},
+            "methodology": dict(CHECKER_MODULE.METHODOLOGY),
         },
         "generator": {"formula_version": "1", "temporary_root": "redacted"},
         "cells": cells,
@@ -244,6 +246,39 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
         self.assertIn("workers", result.stderr)
         self.assertIn("dirty", result.stderr)
 
+    def test_scale07a_rejects_timing_evidence_from_parallel_workers(self) -> None:
+        for smoke, build in ((True, _smoke_artifact), (False, _full_artifact)):
+            for workers in (2, 3):
+                with self.subTest(smoke=smoke, workers=workers):
+                    artifact = build()
+                    artifact["run"]["measurement_workers"] = workers
+                    _seal(artifact)
+                    result = self._check(artifact, smoke=smoke)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("exactly one measurement worker", result.stderr)
+        accepted = _full_artifact()
+        self.assertEqual(accepted["run"]["measurement_workers"], 1)
+        self.assertEqual(self._check(accepted, smoke=False).returncode, 0)
+
+    def test_scale07b_rejects_missing_or_unknown_measurement_methodology(self) -> None:
+        missing = _smoke_artifact()
+        del missing["run"]["methodology"]
+        _seal(missing)
+        result = self._check(missing)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("schema keys", result.stderr)
+        for methodology in (
+            {"passes": "traced-single-pass", "rss": "process-peak-v1"},
+            {"passes": "elapsed-untraced-then-memory-traced-v1", "rss": "current"},
+        ):
+            with self.subTest(methodology=methodology):
+                artifact = _smoke_artifact()
+                artifact["run"]["methodology"] = methodology
+                _seal(artifact)
+                result = self._check(artifact)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("methodology is not supported", result.stderr)
+
     def test_scale08_runner_produces_checker_accepted_smoke_artifact(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "artifact.json"
@@ -256,13 +291,13 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
                 "100",
                 "--chunk-bytes",
                 "2048,4096,8192",
-                "--workers",
-                "2",
             ]
             generated = subprocess.run(
                 command, check=False, capture_output=True, text=True, env=self._environment()
             )
             self.assertEqual(generated.returncode, 0, generated.stderr)
+            artifact = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(artifact["run"]["measurement_workers"], 1)
             result = subprocess.run(
                 [
                     sys.executable,
@@ -282,7 +317,86 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_scale08a_runner_default_uses_retained_artifact_worker_count(self) -> None:
+    def test_scale08b_checker_rejects_runner_output_from_parallel_workers(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "artifact.json"
+            generated = subprocess.run(
+                [
+                    sys.executable,
+                    str(RUNNER),
+                    "--output",
+                    str(output),
+                    "--rows",
+                    "100",
+                    "--chunk-bytes",
+                    "2048,4096,8192",
+                    "--workers",
+                    "2",
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                env=self._environment(),
+            )
+            self.assertEqual(generated.returncode, 0, generated.stderr)
+            artifact = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(artifact["run"]["measurement_workers"], 2)
+            result = self._check(artifact)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("exactly one measurement worker", result.stderr)
+
+    def test_scale08c_elapsed_pass_is_untraced_and_memory_pass_is_separate(self) -> None:
+        import tracemalloc
+
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = Path(temporary) / "fixture.csv"
+            events, total = RUNNER_MODULE._generate(fixture, 50)
+            tracing: list[bool] = []
+            real_fit = RUNNER_MODULE._fit
+
+            def spy(*arguments: object) -> object:
+                tracing.append(tracemalloc.is_tracing())
+                return real_fit(*arguments)
+
+            with patch.object(RUNNER_MODULE, "_fit", side_effect=spy):
+                cell = RUNNER_MODULE._cell(
+                    fixture,
+                    rows=50,
+                    chunk_bytes=2048,
+                    expected_events=events,
+                    expected_total=total,
+                )
+        self.assertEqual(tracing, [False, True])
+        self.assertFalse(tracemalloc.is_tracing())
+        self.assertGreater(cell["memory"]["tracemalloc_peak_bytes"], 0)
+        self.assertGreater(cell["memory"]["rss_peak_bytes"], 0)
+        self.assertGreater(cell["elapsed_seconds"], 0)
+
+    def test_scale08d_runner_refuses_a_memory_pass_that_differs_from_the_timed_fit(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            fixture = Path(temporary) / "fixture.csv"
+            events, total = RUNNER_MODULE._generate(fixture, 50)
+            real_fit = RUNNER_MODULE._fit
+            shorter_fixture = Path(temporary) / "shorter.csv"
+            RUNNER_MODULE._generate(shorter_fixture, 40)
+            shorter = real_fit(shorter_fixture, 40, 2048)
+            calls: list[object] = []
+
+            def drifting(*arguments: object) -> object:
+                calls.append(arguments)
+                return real_fit(*arguments) if len(calls) == 1 else shorter
+
+            with patch.object(RUNNER_MODULE, "_fit", side_effect=drifting):
+                with self.assertRaisesRegex(RuntimeError, "memory pass did not reproduce"):
+                    RUNNER_MODULE._cell(
+                        fixture,
+                        rows=50,
+                        chunk_bytes=2048,
+                        expected_events=events,
+                        expected_total=total,
+                    )
+
+    def test_scale08a_runner_default_uses_a_single_measurement_worker(self) -> None:
         class InlineExecutor:
             def __init__(self, *, max_workers: int) -> None:
                 self.max_workers = max_workers
@@ -317,13 +431,18 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
             ):
                 self.assertEqual(RUNNER_MODULE.main(), 0)
             artifact = json.loads(output.read_text(encoding="utf-8"))
-            self.assertEqual(artifact["run"]["measurement_workers"], 3)
-            self.assertEqual(artifact["schema_version"], "2")
+            self.assertEqual(artifact["run"]["measurement_workers"], 1)
+            self.assertEqual(artifact["schema_version"], "3")
             self.assertEqual(
                 artifact["run"]["timing"],
                 {"clock": "time.time_ns", "preflight": "paired-wall-monotonic-v1"},
             )
             self.assertEqual(artifact["run"]["candidate_git_sha"], "a" * 40)
+            self.assertEqual(
+                artifact["run"]["methodology"],
+                {"passes": "elapsed-untraced-then-memory-traced-v1", "rss": "process-peak-v1"},
+            )
+            self.assertEqual(artifact["run"]["methodology"], CHECKER_MODULE.METHODOLOGY)
 
     def test_scale09_runner_smoke_is_concurrent_safe(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
@@ -404,7 +523,7 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
             text=True,
         )
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("current evidence requires schema version 2", result.stderr)
+        self.assertIn("current evidence requires schema version 3", result.stderr)
 
     def test_scale13_rejects_large_rate_with_truthful_large_error_facts(self) -> None:
         artifact = _smoke_artifact()

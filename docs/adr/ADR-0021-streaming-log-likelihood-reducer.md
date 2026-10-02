@@ -90,7 +90,7 @@ throughput, out-of-core, nor cross-platform performance bounds.
 The retained artifact's schema has since moved past what the checker
 requires: `python/evidence/scale-log-likelihood-v1.json` records
 `schema_version: 2`, while the current `check_log_likelihood_scale_evidence.py`
-requires schema version 4 and rejects the file as "artifact version or digest
+requires schema version 5 and rejects the file as "artifact version or digest
 invalid". The artifact's recorded `run.git_sha` (`9d4ef675c6f9ecc25e15d43e0f937a5ffd6c5a41`)
 is also not an ancestor of this repository's current history, so it cannot
 bind to a reviewable candidate. The paragraph above describes the artifact's

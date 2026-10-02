@@ -1,14 +1,23 @@
-"""Generate deterministic retained evidence for the CSV exponential vertical."""
+"""Generate deterministic retained evidence for the CSV exponential vertical.
+
+Each cell is measured twice in the measuring process: first an untraced pass that
+supplies ``elapsed_seconds`` (``tracemalloc`` slows allocation-heavy code and would
+distort timing), then a separate traced pass that supplies the memory facts. Timing
+evidence is only meaningful when cells run one at a time, so ``--workers`` defaults to
+one, is recorded in the artifact, and the checker rejects any value above one.
+
+``artifact_sha256`` is an integrity digest over the canonical JSON body. It detects
+accidental edits and truncation; it is not a signature and does not authenticate who
+produced the artifact.
+"""
 
 from __future__ import annotations
 
 import argparse
-import ctypes
 import hashlib
 import json
 import platform
 import subprocess
-import sys
 import tempfile
 import time
 import tracemalloc
@@ -19,8 +28,13 @@ from pathlib import Path
 
 from veridist.adapters.csv_lifetimes import CsvLifetimeLimits, CsvLifetimeSchema
 from veridist.engine.provenance import PublicSourceId
-from veridist.execution import fit_exponential_csv
+from veridist.execution import ExponentialSourceFitResult, fit_exponential_csv
 from veridist.families.exponential import ExponentialFitSuccess
+
+try:  # direct script execution puts tools/ on sys.path
+    from process_memory import peak_rss_bytes
+except ImportError:  # imported as ``tools.<module>``
+    from tools.process_memory import peak_rss_bytes
 
 SCHEMA = CsvLifetimeSchema("time", "event_observed")
 
@@ -29,6 +43,11 @@ SCHEMA = CsvLifetimeSchema("time", "event_observed")
 # value that cannot be tied to a trustworthy clock.
 ELAPSED_CLOCK = "time.time_ns"
 ELAPSED_PREFLIGHT = "paired-wall-monotonic-v1"
+
+# Elapsed time comes from an untraced pass, memory from a separate traced pass, and RSS is
+# the process high-water mark (``peak_rss_bytes``), so ``rss_delta_bytes`` is only the growth
+# of that mark and is zero when an earlier pass in the process already reached it.
+METHODOLOGY = {"passes": "elapsed-untraced-then-memory-traced-v1", "rss": "process-peak-v1"}
 _CLOCK_ABSOLUTE_TOLERANCE_NS = 100_000_000
 _CLOCK_RELATIVE_TOLERANCE = 0.05
 
@@ -67,42 +86,6 @@ def _clean_checkout_sha(root: Path) -> str:
     if _git(root, "status", "--porcelain"):
         raise RuntimeError("refusing evidence run from a dirty checkout")
     return _git(root, "rev-parse", "HEAD")
-
-
-def _rss_bytes() -> int:
-    """Return process RSS on both required evidence platforms or fail closed."""
-
-    if sys.platform == "win32":
-
-        class PROCESS_MEMORY_COUNTERS_EX(ctypes.Structure):
-            _fields_ = [
-                ("cb", ctypes.c_ulong),
-                ("PageFaultCount", ctypes.c_ulong),
-                ("PeakWorkingSetSize", ctypes.c_size_t),
-                ("WorkingSetSize", ctypes.c_size_t),
-                ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
-                ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
-                ("PagefileUsage", ctypes.c_size_t),
-                ("PeakPagefileUsage", ctypes.c_size_t),
-                ("PrivateUsage", ctypes.c_size_t),
-            ]
-
-        counters = PROCESS_MEMORY_COUNTERS_EX()
-        counters.cb = ctypes.sizeof(counters)
-        getter = ctypes.windll.psapi.GetProcessMemoryInfo
-        getter.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_ulong]
-        getter.restype = ctypes.c_int
-        if not getter(
-            ctypes.windll.kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb
-        ):
-            raise RuntimeError("cannot obtain Windows process RSS")
-        return int(counters.WorkingSetSize)
-    import resource
-
-    value = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-    return int(value if sys.platform == "darwin" else value * 1024)
 
 
 def _canonical_digest(value: dict[str, object]) -> str:
@@ -159,6 +142,17 @@ def _preflight_elapsed_clock() -> None:
     )
 
 
+def _fit(path: Path, rows: int, chunk_bytes: int) -> ExponentialSourceFitResult:
+    return fit_exponential_csv(
+        path,
+        schema=SCHEMA,
+        source_id=PublicSourceId(
+            f"src_{hashlib.md5(str(rows).encode(), usedforsecurity=False).hexdigest()}"
+        ),
+        limits=CsvLifetimeLimits(chunk_bytes, chunk_bytes),
+    )
+
+
 def _cell(
     path: Path,
     *,
@@ -168,29 +162,27 @@ def _cell(
     expected_total: Decimal,
 ) -> dict[str, object]:
     _preflight_elapsed_clock()
-    before_rss = _rss_bytes()
-    tracemalloc.start()
     wall_started = time.time_ns()
     monotonic_started = time.perf_counter_ns()
-    result = fit_exponential_csv(
-        path,
-        schema=SCHEMA,
-        source_id=PublicSourceId(
-            f"src_{hashlib.md5(str(rows).encode(), usedforsecurity=False).hexdigest()}"
-        ),
-        limits=CsvLifetimeLimits(chunk_bytes, chunk_bytes),
-    )
+    result = _fit(path, rows, chunk_bytes)
     elapsed = _paired_elapsed_seconds(
         wall_started,
         time.time_ns(),
         monotonic_started,
         time.perf_counter_ns(),
     )
-    _, trace_peak = tracemalloc.get_traced_memory()
-    tracemalloc.stop()
-    after_rss = _rss_bytes()
+    before_rss = peak_rss_bytes()
+    tracemalloc.start()
+    try:
+        traced = _fit(path, rows, chunk_bytes)
+        _, trace_peak = tracemalloc.get_traced_memory()
+    finally:
+        tracemalloc.stop()
+    after_rss = peak_rss_bytes()
     if not result.execution.outcome.complete or not isinstance(result.fit, ExponentialFitSuccess):
         raise RuntimeError("scale fixture did not produce a complete exponential fit")
+    if not isinstance(traced.fit, ExponentialFitSuccess) or traced.fit != result.fit:
+        raise RuntimeError("memory pass did not reproduce the timed fit")
     fit = result.fit
     expected_rate = Decimal(expected_events) / expected_total
     actual_rate = Decimal(str(fit.rate))
@@ -250,7 +242,12 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--rows", default="10000,100000,1000000")
     parser.add_argument("--chunk-bytes", default="32768,65536,131072")
-    parser.add_argument("--workers", type=int, default=3)
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=1,
+        help="parallel measurement processes; timing evidence is only valid with 1",
+    )
     parser.add_argument(
         "--temporary-root",
         type=Path,
@@ -291,7 +288,7 @@ def main() -> int:
             cells.extend(row_cells)
             chunks_by_row[row_count] = int(row_cells[0]["observed"]["accepted_chunk_count"])
     value: dict[str, object] = {
-        "schema_version": "2",
+        "schema_version": "3",
         "run": {
             "git_sha": preflight_sha,
             "candidate_git_sha": preflight_sha,
@@ -304,6 +301,7 @@ def main() -> int:
             "platform": platform.platform(),
             "measurement_workers": args.workers,
             "timing": {"clock": ELAPSED_CLOCK, "preflight": ELAPSED_PREFLIGHT},
+            "methodology": dict(METHODOLOGY),
         },
         "generator": {"formula_version": "1", "temporary_root": "redacted"},
         "cells": cells,

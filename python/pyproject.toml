@@ -13,6 +13,25 @@ authors = [
     { name = "Ali Sadeghi Aghili", email = "alisadeghiaghili@gmail.com" },
 ]
 requires-python = ">=3.11"
+keywords = [
+    "reliability",
+    "survival-analysis",
+    "lifetime-data",
+    "right-censoring",
+    "distribution-fitting",
+    "maximum-likelihood",
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
 dependencies = ["numpy>=1.26,<3"]
 
 [project.urls]

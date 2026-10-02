@@ -2,6 +2,12 @@
 
 The checker recomputes deterministic fixture facts without importing the
 production fitter. Acceptance is tied to an explicit frozen Git revision.
+
+Timing evidence is accepted only from a single measurement worker, and only when the
+artifact declares the measurement methodology this checker understands (elapsed time
+from an untraced pass, memory from a separate traced pass). ``artifact_sha256`` is an
+integrity digest of the canonical JSON body: it detects accidental damage but is not a
+signature and does not prove who produced the artifact.
 """
 
 from __future__ import annotations
@@ -18,7 +24,7 @@ from functools import cache
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = "2"
+SCHEMA_VERSION = "3"
 FULL_ROWS = (10_000, 100_000, 1_000_000)
 FULL_BUDGETS = (32_768, 65_536, 131_072)
 SHA256 = re.compile(r"[0-9a-f]{64}")
@@ -32,7 +38,7 @@ ARTIFACT_KEYS = {
     "operation_evidence",
     "artifact_sha256",
 }
-RUN_KEYS_V2 = {
+RUN_KEYS = {
     "git_sha",
     "candidate_git_sha",
     "git_dirty",
@@ -41,8 +47,11 @@ RUN_KEYS_V2 = {
     "platform",
     "measurement_workers",
     "timing",
+    "methodology",
 }
 TIMING_KEYS = {"clock", "preflight"}
+METHODOLOGY_KEYS = {"passes", "rss"}
+METHODOLOGY = {"passes": "elapsed-untraced-then-memory-traced-v1", "rss": "process-peak-v1"}
 PYTHON_KEYS = {"implementation", "version"}
 GENERATOR_KEYS = {"formula_version", "temporary_root"}
 CELL_KEYS = {
@@ -193,13 +202,13 @@ def validate(
     assert isinstance(value, dict)
     schema_version = value["schema_version"]
     if schema_version != SCHEMA_VERSION:
-        errors.append("current evidence requires schema version 2")
+        errors.append("current evidence requires schema version 3")
     if not isinstance(value["artifact_sha256"], str) or value["artifact_sha256"] != _digest(value):
         errors.append("artifact digest mismatch")
     if _contains_path(value):
         errors.append("path leaked into evidence artifact")
     run = value["run"]
-    if not _exact_keys(run, RUN_KEYS_V2, "run", errors):
+    if not _exact_keys(run, RUN_KEYS, "run", errors):
         return errors
     assert isinstance(run, dict)
     actual_sha = run["git_sha"]
@@ -227,14 +236,19 @@ def validate(
         errors.append("run UTC timestamp is invalid")
     if not _integer(run["measurement_workers"]) or run["measurement_workers"] <= 0:
         errors.append("measurement workers must be positive")
-    if not smoke and run["measurement_workers"] != 3:
-        errors.append("retained artifact measurement workers must equal 3")
+    elif run["measurement_workers"] != 1:
+        errors.append("timing evidence requires exactly one measurement worker")
     timing = run["timing"]
     if not _exact_keys(timing, TIMING_KEYS, "run timing", errors):
         return errors
     assert isinstance(timing, dict)
     if timing["clock"] != "time.time_ns" or timing["preflight"] != "paired-wall-monotonic-v1":
         errors.append("run timing provenance is invalid")
+    methodology = run["methodology"]
+    if not _exact_keys(methodology, METHODOLOGY_KEYS, "run methodology", errors):
+        return errors
+    if methodology != METHODOLOGY:
+        errors.append("run measurement methodology is not supported")
     generator = value["generator"]
     if not _exact_keys(generator, GENERATOR_KEYS, "generator", errors):
         return errors

@@ -15,12 +15,16 @@ from mutation_evidence import (  # noqa: E402
     CRITICAL_MODULES,
     MUTMUT_WHEEL_SHA256,
     config_digest,
+    official_status,
+    score_excluding_type_check,
+    scoring_status,
     source_tree_digest,
 )
 
 CHECKER = PYTHON_ROOT / "tools" / "check_mutation_evidence.py"
 RUNNER = PYTHON_ROOT / "tools" / "run_mutation.py"
 COUNT_KEYS = ("generated", "killed", "survived", "unresolved")
+REPORT_COUNT_KEYS = (*COUNT_KEYS, "type_check")
 MUTATION_SELECTION = [
     "tests/contract",
     "tests/reference",
@@ -65,6 +69,7 @@ def fixture(root: Path) -> dict[str, object]:
                 "killed": 1,
                 "survived": 0,
                 "unresolved": 0,
+                "type_check": 0,
                 "mutants": [
                     {
                         "id": f"{name}::value__mutmut_1",
@@ -107,7 +112,7 @@ def fixture(root: Path) -> dict[str, object]:
         encoding="utf-8",
     )
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "source": {
             "commit": "fixture",
             "tree_sha256": source_tree_digest(root),
@@ -134,12 +139,15 @@ def fixture(root: Path) -> dict[str, object]:
         "modules": [
             {
                 "module": module,
-                **{key: 1 if key in {"generated", "killed"} else 0 for key in COUNT_KEYS},
+                **{key: 1 if key in {"generated", "killed"} else 0 for key in REPORT_COUNT_KEYS},
             }
             for module in CRITICAL_MODULES
         ],
-        "totals": {key: 4 if key in {"generated", "killed"} else 0 for key in COUNT_KEYS},
+        "totals": {
+            key: 4 if key in {"generated", "killed"} else 0 for key in REPORT_COUNT_KEYS
+        },
         "score": 1.0,
+        "score_excluding_type_check": 1.0,
     }
 
 
@@ -162,7 +170,134 @@ def check(root: Path, payload: dict[str, object]) -> subprocess.CompletedProcess
     )
 
 
+def mutant(name: str, key: str, exit_code: int) -> dict[str, object]:
+    return {
+        "id": f"{name}::{key}",
+        "cache_key": key,
+        "exit_code": exit_code,
+        "official_status": official_status(exit_code),
+        "scoring_status": scoring_status(exit_code),
+    }
+
+
+def with_type_check_mutants(payload: dict[str, object]) -> dict[str, object]:
+    """Give the first file 5 test kills, 4 type-check kills and 1 survivor."""
+    report = payload["files"][0]  # type: ignore[index]
+    name = report["path"]
+    report["mutants"] = [
+        *(mutant(name, f"killed_{index}", 1) for index in range(5)),
+        *(mutant(name, f"typed_{index}", 37) for index in range(4)),
+        mutant(name, "survivor", 0),
+    ]
+    report.update(generated=10, killed=9, survived=1, type_check=4)
+    module = payload["modules"][0]  # type: ignore[index]
+    module.update(generated=10, killed=9, survived=1, type_check=4)
+    payload["totals"] = {
+        "generated": 13,
+        "killed": 12,
+        "survived": 1,
+        "unresolved": 0,
+        "type_check": 4,
+    }
+    payload["score"] = 12 / 13
+    payload["score_excluding_type_check"] = 8 / 9
+    return payload
+
+
 class MutationEvidenceTests(unittest.TestCase):
+    def test_type_check_kills_are_counted_separately_and_scored_both_ways(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            payload = with_type_check_mutants(fixture(root))
+            result = check(root, payload)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertNotEqual(payload["score"], payload["score_excluding_type_check"])
+
+    def test_rejects_type_check_accounting_and_score_tampering(self) -> None:
+        def file_count(payload: dict[str, object]) -> None:
+            payload["files"][0]["type_check"] = 3  # type: ignore[index]
+
+        def total_count(payload: dict[str, object]) -> None:
+            payload["totals"]["type_check"] = 5  # type: ignore[index]
+
+        def module_count(payload: dict[str, object]) -> None:
+            payload["modules"][0]["type_check"] = 0  # type: ignore[index]
+
+        def hidden_type_checks(payload: dict[str, object]) -> None:
+            for report in payload["files"]:  # type: ignore[attr-defined]
+                report["type_check"] = 0
+            payload["totals"]["type_check"] = 0  # type: ignore[index]
+            payload["modules"][0]["type_check"] = 0  # type: ignore[index]
+
+        def plain_score_reused(payload: dict[str, object]) -> None:
+            payload["score_excluding_type_check"] = payload["score"]
+
+        def missing_score(payload: dict[str, object]) -> None:
+            del payload["score_excluding_type_check"]
+
+        def boolean_score(payload: dict[str, object]) -> None:
+            payload["score_excluding_type_check"] = True
+
+        def gate_score_changed(payload: dict[str, object]) -> None:
+            payload["score"] = 8 / 9
+
+        def schema_v2(payload: dict[str, object]) -> None:
+            payload["schema_version"] = 2
+
+        for name, tamper in (
+            ("file count", file_count),
+            ("total count", total_count),
+            ("module count", module_count),
+            ("hidden type-check kills", hidden_type_checks),
+            ("plain score reused", plain_score_reused),
+            ("missing score", missing_score),
+            ("boolean score", boolean_score),
+            ("gate score changed", gate_score_changed),
+            ("old schema", schema_v2),
+        ):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                payload = with_type_check_mutants(fixture(root))
+                tamper(payload)
+                self.assertNotEqual(check(root, payload).returncode, 0)
+
+    def test_rejects_evidence_without_the_type_check_fields(self) -> None:
+        for name in ("file", "total", "module"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                payload = fixture(root)
+                if name == "file":
+                    del payload["files"][0]["type_check"]  # type: ignore[index]
+                elif name == "total":
+                    del payload["totals"]["type_check"]  # type: ignore[index]
+                else:
+                    del payload["modules"][0]["type_check"]  # type: ignore[index]
+                self.assertNotEqual(check(root, payload).returncode, 0)
+
+    def test_score_excluding_type_check_removes_those_mutants_entirely(self) -> None:
+        self.assertEqual(score_excluding_type_check(12, 1, 4), 8 / 9)
+        self.assertEqual(score_excluding_type_check(12, 1, 0), 12 / 13)
+        self.assertEqual(score_excluding_type_check(4, 0, 4), 0.0)
+        self.assertEqual(score_excluding_type_check(0, 0, 0), 0.0)
+
+    def test_runner_report_counts_type_check_mutants_inside_killed(self) -> None:
+        import run_mutation
+
+        meta = {
+            "exit_code_by_key": {"a": 1, "b": 37, "c": 37, "d": 0, "e": 36},
+            "hash_by_function_name": {},
+            "type_check_error_by_key": {"b": "error", "c": None},
+            "durations_by_key": {},
+            "estimated_durations_by_key": {},
+        }
+        report = run_mutation.report_for("src/veridist/domain/x.py", meta)
+        self.assertEqual(
+            {key: report[key] for key in (*COUNT_KEYS, "type_check")},
+            {"generated": 5, "killed": 3, "survived": 1, "unresolved": 1, "type_check": 2},
+        )
+        empty = run_mutation.report_for("src/veridist/domain/y.py", None)
+        self.assertEqual(empty["type_check"], 0)
+
     def test_accepts_complete_deterministic_fixture(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)

@@ -1,4 +1,11 @@
-"""Fail closed on retained exact-state log-likelihood scale evidence."""
+"""Fail closed on retained exact-state log-likelihood scale evidence.
+
+Timing evidence is accepted only from a single measurement worker and only when the
+artifact declares the measurement methodology this checker understands (elapsed time
+from an untraced pass, memory from a separate traced pass). ``artifact_sha256`` is an
+integrity digest of the canonical JSON body: it detects accidental damage but is not a
+signature and does not prove who produced the artifact.
+"""
 
 from __future__ import annotations
 
@@ -22,6 +29,8 @@ CONTRIBUTIONS = {
     "lognormal": "-0x1.d67f1c864beb4p-1",
     "gumbel_right": "-0x1.0000000000000p+0",
 }
+SCHEMA_VERSION = "5"
+METHODOLOGY = {"passes": "elapsed-untraced-then-memory-traced-v1", "rss": "process-peak-v1"}
 SHA = re.compile(r"[0-9a-f]{40}")
 KEYS = {"schema_version", "run", "cells", "artifact_sha256"}
 CELL_KEYS = {
@@ -61,7 +70,7 @@ def validate(value: object, *, expected_git_sha: str, repo_root: Path) -> list[s
     errors: list[str] = []
     if not isinstance(value, dict) or set(value) != KEYS:
         return ["artifact schema keys invalid"]
-    if value["schema_version"] != "4" or value["artifact_sha256"] != _digest(value):
+    if value["schema_version"] != SCHEMA_VERSION or value["artifact_sha256"] != _digest(value):
         errors.append("artifact version or digest invalid")
     run = value["run"]
     if not isinstance(run, dict) or set(run) != {
@@ -72,8 +81,17 @@ def validate(value: object, *, expected_git_sha: str, repo_root: Path) -> list[s
         "source_contract",
         "python",
         "platform",
+        "measurement_workers",
+        "methodology",
     }:
         return [*errors, "run schema invalid"]
+    workers = run["measurement_workers"]
+    if type(workers) is not int or workers <= 0:
+        errors.append("measurement workers must be positive")
+    elif workers != 1:
+        errors.append("timing evidence requires exactly one measurement worker")
+    if run["methodology"] != METHODOLOGY:
+        errors.append("run measurement methodology is not supported")
     if (
         run["git_sha"] != expected_git_sha
         or not isinstance(run["git_sha"], str)
