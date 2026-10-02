@@ -242,7 +242,10 @@ def validate(
     if not _exact_keys(timing, TIMING_KEYS, "run timing", errors):
         return errors
     assert isinstance(timing, dict)
-    if timing["clock"] != "time.time_ns" or timing["preflight"] != "paired-wall-monotonic-v1":
+    if (
+        timing["clock"] != "time.perf_counter_ns"
+        or timing["preflight"] != "paired-monotonic-wall-v2"
+    ):
         errors.append("run timing provenance is invalid")
     methodology = run["methodology"]
     if not _exact_keys(methodology, METHODOLOGY_KEYS, "run methodology", errors):
