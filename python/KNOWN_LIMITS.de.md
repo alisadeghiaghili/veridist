@@ -52,9 +52,14 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
   Arbeitslast, Plattform, Python-Version, Chunk-Grenze und Kandidaten-SHA. Sie
   belegen weder universellen Durchsatz noch allgemeine Big-Data-Unterstützung
   oder eine breite Out-of-Core-Fähigkeit.
-- `LICENSE`: Das Paket verwendet BUSL-1.1 mit der in `LICENSE` beschriebenen
-  zusätzlichen Apache-2.0-Nutzungserlaubnis und wechselt am 2030-09-05 zu
-  Apache-2.0.
+- `LICENSE`: Das Paket verwendet BUSL-1.1; das ist eine quelltextverfügbare,
+  aber keine Open-Source-Lizenz. Die zusätzliche Nutzungserlaubnis in `LICENSE`
+  gestattet die produktive Nutzung nur für nichtkommerzielle Zwecke (private
+  Nutzung, akademische Forschung und Lehre sowie nichtkommerzielle Aktivitäten
+  gemeinnütziger Organisationen); jede andere produktive Nutzung, auch die
+  interne betriebliche Nutzung, erfordert eine kommerzielle Lizenz des
+  Lizenzgebers. Die Lizenz wechselt am 2030-09-05 zu Apache License, Version
+  2.0 (Apache-2.0).
 - `SOURCE-MUTATION-STAT`: Der Mutationsstatus `VERIFIED_UNCHANGED` einer
   CSV-Ausführung vergleicht die vom Betriebssystem gemeldete Identität der
   Datei (Gerät, Inode, Größe und Änderungszeit) vor und nach dem Lesen. Das

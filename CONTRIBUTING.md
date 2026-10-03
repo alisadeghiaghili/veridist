@@ -127,6 +127,13 @@ explains the reasoning behind the change, not just what changed.
   Linux across the supported Python versions, plus the Linux-only mutation
   job for the statistical and execution core.
 
+## License of contributions
+
+veridist is distributed under the Business Source License 1.1, which is
+source-available and not an open-source license; its additional use grant
+covers non-commercial production use only (see `LICENSE`). By submitting a
+contribution you agree that it is provided under the same license.
+
 ## Reporting issues
 
 Include a minimal reproducible example, the Python version, operating

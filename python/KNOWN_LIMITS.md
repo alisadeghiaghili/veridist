@@ -47,8 +47,13 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
   workload, platform, Python version, chunk limit, and candidate SHA. They do
   not establish universal throughput, generic big-data support, or a broad
   out-of-core capability.
-- `LICENSE`: the package uses BUSL-1.1 with the Apache-2.0 additional-use grant
-  stated in `LICENSE`; it changes to Apache-2.0 on 2030-09-05.
+- `LICENSE`: the package uses BUSL-1.1, which is source-available and not an
+  open-source license. The additional use grant in `LICENSE` permits production
+  use only for non-commercial purposes (personal use, academic research and
+  teaching, and non-profit organisations' non-commercial activities); any other
+  production use, including internal business use, needs a commercial license
+  from the licensor. The license changes to Apache License, Version 2.0
+  (Apache-2.0) on 2030-09-05.
 - `SOURCE-MUTATION-STAT`: a CSV execution's `VERIFIED_UNCHANGED` mutation
   status compares the file's OS-reported identity (device, inode, size, and
   modification time) before and after the read. It is not a content hash and

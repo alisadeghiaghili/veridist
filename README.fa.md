@@ -260,6 +260,6 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">مجوز</h2>
 
-<p dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> تحت <strong><bdi dir="ltr">Business Source License 1.1 — BUSL-1.1</bdi></strong> عرضه می‌شود. <a href="LICENSE"><bdi dir="ltr">LICENSE</bdi></a> اعطای استفادهٔ اضافی تحت <bdi dir="ltr">Apache-2.0</bdi> با شرایط مشخص و تاریخ تغییر مجوز را تعیین می‌کند. بج <bdi dir="ltr">BUSL-1.1</bdi> به معنای عرضهٔ فعلی بدون قیدوشرط تحت <bdi dir="ltr">Apache-2.0</bdi> نیست.</p>
+<p dir="rtl" align="right"><bdi dir="ltr">Veridist</bdi> تحت <strong><bdi dir="ltr">Business Source License 1.1 — BUSL-1.1</bdi></strong> عرضه می‌شود. کد منبع در دسترس است، اما این نرم‌افزار متن‌باز نیست. <a href="LICENSE"><bdi dir="ltr">LICENSE</bdi></a> استفادهٔ عملیاتی را فقط برای مقاصد غیرتجاری مجاز می‌کند: استفادهٔ شخصی، پژوهش و تدریس دانشگاهی، و استفادهٔ سازمان‌های غیرانتفاعی در فعالیت‌های غیرتجاری خودشان. هر استفادهٔ عملیاتی دیگر، از جمله استفاده توسط یا به نمایندگی از یک نهاد انتفاعی و استفادهٔ داخلی کسب‌وکار، به مجوز تجاری از دارندهٔ مجوز (<bdi dir="ltr">alisadeghiaghili@gmail.com</bdi>) نیاز دارد. در تاریخ تغییر مجوز، <bdi dir="ltr">2030-09-05</bdi>، یا در چهارمین سالگرد نخستین انتشار عمومی یک نسخه اگر زودتر فرا برسد، مجوز به <bdi dir="ltr">Apache License, Version 2.0</bdi> تغییر می‌کند. بج <bdi dir="ltr">BUSL-1.1</bdi> به معنای آن نیست که عرضهٔ فعلی هم‌اکنون تحت <bdi dir="ltr">Apache-2.0</bdi> مجوز دارد.</p>
 
 </div>

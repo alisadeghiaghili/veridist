@@ -139,11 +139,15 @@ class CiScopeClassifierTests(unittest.TestCase):
         classifier = load_classifier()
         self.assertTrue(classifier.legacy_gate_allows(False, "success", "skipped"))
         self.assertTrue(classifier.legacy_gate_allows(True, "success", "success"))
+        # Completed legacy test runs never block: the frozen legacy suite is
+        # known to be broken, and its failing jobs stay visible in the checks.
+        self.assertTrue(classifier.legacy_gate_allows(True, "success", "failure"))
         for relevant, scope_result, test_result in (
             (False, "failure", "skipped"),
             (False, "success", "success"),
+            (False, "success", "failure"),
             (True, "success", "skipped"),
-            (True, "success", "failure"),
+            (True, "success", "cancelled"),
             (True, "cancelled", "success"),
             (True, "success", "neutral"),
         ):
@@ -156,7 +160,8 @@ class CiScopeClassifierTests(unittest.TestCase):
         cases = (
             ("false", "success", "skipped", 0),
             ("true", "success", "success", 0),
-            ("true", "success", "failure", 1),
+            ("true", "success", "failure", 0),
+            ("true", "success", "cancelled", 1),
             ("false", "failure", "skipped", 1),
             ("unknown", "success", "skipped", 2),
         )

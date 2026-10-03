@@ -972,6 +972,21 @@ class BoundedBufferContractTests(unittest.TestCase):
             print('watchdog-ok')
             """
         )
+        # The subprocess budget covers interpreter start-up and the import as
+        # well as the scenario itself, whose own waits are at most 0.2 s.
+        # Start-up alone can approach a second on a loaded Windows host, so
+        # measure it once and allow a fixed margin for the scenario on top:
+        # a hang is still caught within seconds, independent of host speed.
+        started = time.perf_counter()
+        warmup = run(
+            [executable, "-c", "import threading, veridist.engine.delivery"],
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+        self.assertEqual(warmup.returncode, 0, warmup.stderr)
+        scenario_budget = 2 * (time.perf_counter() - started) + 1.0
         for scenario in (
             "init",
             "get-release",
@@ -987,7 +1002,7 @@ class BoundedBufferContractTests(unittest.TestCase):
                         [executable, "-c", program, scenario],
                         capture_output=True,
                         text=True,
-                        timeout=0.75,
+                        timeout=scenario_budget,
                         check=False,
                     )
                 except TimeoutExpired as error:
