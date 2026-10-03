@@ -294,7 +294,15 @@ Distribution Drift.
 ## Lizenz
 
 Veridist wird unter **Business Source License 1.1 (BUSL-1.1)** vertrieben.
-[LICENSE](https://github.com/alisadeghiaghili/veridist/blob/main/LICENSE) legt
-die bedingte zusätzliche Apache-2.0-Nutzungserlaubnis und das Umstellungsdatum
-fest. Der BUSL-1.1-Badge bedeutet nicht, dass die aktuelle Release
-uneingeschränkt unter Apache-2.0 lizenziert ist.
+Der Quelltext ist einsehbar, die Software ist jedoch nicht Open Source.
+[LICENSE](https://github.com/alisadeghiaghili/veridist/blob/main/LICENSE) erlaubt
+die produktive Nutzung nur für nichtkommerzielle Zwecke: private Nutzung,
+akademische Forschung und Lehre sowie Nutzung durch gemeinnützige
+Organisationen für ihre nichtkommerziellen Aktivitäten. Jede andere produktive
+Nutzung, auch durch oder im Auftrag eines gewinnorientierten Unternehmens und
+die interne betriebliche Nutzung, erfordert eine kommerzielle Lizenz des
+Lizenzgebers (alisadeghiaghili@gmail.com). Zum Umstellungsdatum 2030-09-05,
+oder zum vierten Jahrestag der ersten öffentlichen Verbreitung einer Version,
+falls dieser früher liegt, wechselt die Lizenz zu Apache License, Version 2.0.
+Der BUSL-1.1-Badge bedeutet nicht, dass die aktuelle Release heute unter
+Apache-2.0 lizenziert ist.

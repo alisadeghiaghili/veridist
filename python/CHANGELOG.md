@@ -187,6 +187,18 @@ Veridist release record.
 
 ### Changed
 
+- Replaced `LICENSE` with the canonical Business Source License 1.1 text and
+  set its parameters: Licensed Work veridist 2.0.0, a non-commercial-only
+  additional use grant (personal use, academic research and teaching, and
+  non-profit organisations' non-commercial activities; any other production
+  use, including internal business use, needs a commercial license), change
+  date 2030-09-05 and change license Apache License, Version 2.0. The previous
+  text was a modified template whose grant referred to Apache-2.0 terms and
+  allowed internal business analytics. The READMEs, `KNOWN_LIMITS`, and
+  `CONTRIBUTING.md` (en/fa/de where applicable) now state the grant
+  accurately and no longer imply that the package is open source or that
+  business use is free. The root and package copies of `LICENSE` are
+  byte-identical, and a test now enforces that.
 - Rebuilt the English, Persian, and German repository and package READMEs as
   progressive tutorials, from distribution modelling to a runnable lifetime
   analysis, result interpretation, supported APIs, and adoption guidance.

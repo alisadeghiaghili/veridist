@@ -178,3 +178,11 @@ for review.
 Until then, version `0.0.0.dev0` is mandatory.  Effort class: milestone;
 estimated work spans release engineering, portability, measurement,
 documentation, and adversarial quality review.
+
+### Amendment (2026-10)
+
+The license described above has been replaced. `LICENSE` is now the canonical
+Business Source License 1.1 text with a non-commercial-only Additional Use
+Grant, a Change Date of 2030-09-05 and Apache License, Version 2.0 as the
+Change License. The references to an "Apache-2.0 additional-use grant" in
+this record describe the earlier license and no longer apply.

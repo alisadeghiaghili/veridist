@@ -87,6 +87,80 @@ class PackageLandingContractTests(unittest.TestCase):
             (REPOSITORY_ROOT / "LICENSE").read_text(encoding="utf-8").splitlines(),
         )
 
+    def test_license_copies_are_byte_identical(self) -> None:
+        self.assertEqual(
+            (PYTHON_ROOT / "LICENSE").read_bytes(),
+            (REPOSITORY_ROOT / "LICENSE").read_bytes(),
+        )
+
+    def test_license_is_canonical_bsl_with_the_non_commercial_grant(self) -> None:
+        text = " ".join((PYTHON_ROOT / "LICENSE").read_text(encoding="utf-8").split())
+        for expected in (
+            "Business Source License 1.1",
+            "License text copyright (c) 2024 MariaDB plc, All Rights Reserved.",
+            '"Business Source License" is a trademark of MariaDB plc.',
+            "Licensor: Ali Sadeghi Aghili",
+            "Licensed Work: veridist 2.0.0 The Licensed Work is (c) 2026 Ali Sadeghi Aghili.",
+            (
+                "Additional Use Grant: You may make production use of the Licensed Work only "
+                "for non-commercial purposes: personal use, academic research and teaching, "
+                "and use by non-profit organisations for their non-commercial activities. "
+                "Any other production use, including use by or on behalf of a for-profit "
+                "entity and internal business use, requires a commercial license from the "
+                "Licensor."
+            ),
+            "Change Date: 2030-09-05",
+            "Change License: Apache License, Version 2.0",
+            "alisadeghiaghili@gmail.com",
+            "Covenants of Licensor",
+            "is not an Open Source license",
+            "make non-production use of the Licensed Work",
+        ):
+            with self.subTest(expected=expected):
+                self.assertIn(expected, text)
+        for stale in ("py-distfit-pro", "internal business analytics", "Apache-2.0 grant"):
+            with self.subTest(stale=stale):
+                self.assertNotIn(stale, text)
+
+    def test_license_descriptions_state_the_non_commercial_grant(self) -> None:
+        markers = {
+            "en": "non-commercial",
+            "fa": "غیرتجاری",
+            "de": "nichtkommerziell",
+        }
+        stale = (
+            "conditional Apache-2.0",
+            "Apache-2.0 additional-use grant",
+            "bedingte zusätzliche Apache-2.0",
+            "اعطای استفادهٔ اضافی تحت",
+            "internal business analytics",
+        )
+        documents = {
+            "en": (
+                REPOSITORY_ROOT / "README.md",
+                PYTHON_ROOT / "README.md",
+                PYTHON_ROOT / "KNOWN_LIMITS.md",
+            ),
+            "fa": (
+                REPOSITORY_ROOT / "README.fa.md",
+                PYTHON_ROOT / "README.fa.md",
+                PYTHON_ROOT / "KNOWN_LIMITS.fa.md",
+            ),
+            "de": (
+                REPOSITORY_ROOT / "README.de.md",
+                PYTHON_ROOT / "README.de.md",
+                PYTHON_ROOT / "KNOWN_LIMITS.de.md",
+            ),
+        }
+        for locale, paths in documents.items():
+            for path in paths:
+                content = path.read_text(encoding="utf-8")
+                with self.subTest(path=path.name, locale=locale):
+                    self.assertIn(markers[locale], content)
+                    self.assertIn("2030-09-05", content)
+                    for phrase in stale:
+                        self.assertNotIn(phrase, content)
+
     def test_all_three_package_readmes_link_each_other_and_install_from_pypi(self) -> None:
         for locale, path in README_PATHS.items():
             with self.subTest(locale=locale):
