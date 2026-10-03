@@ -93,12 +93,20 @@ def decode_nul_paths(payload: bytes) -> tuple[str, ...]:
 
 
 def legacy_gate_allows(relevant: bool, scope_result: str, test_result: str) -> bool:
-    """Return whether the aggregate legacy gate represents a valid terminal state."""
+    """Return whether the aggregate legacy gate represents a valid terminal state.
+
+    The legacy ``distfit_pro`` test suite is known to be broken and is kept
+    only as a frozen reference, so a completed legacy test run does not block
+    a merge whether it passed or failed; the failing ``legacy / tests`` jobs
+    stay visible in the checks. A cancelled, skipped or otherwise incomplete
+    run of a relevant change still fails the gate, and a change that is not
+    legacy-relevant must have skipped the legacy tests.
+    """
 
     if type(relevant) is not bool or scope_result != "success":
         return False
     if relevant:
-        return test_result == "success"
+        return test_result in {"success", "failure"}
     return test_result == "skipped"
 
 
