@@ -268,7 +268,7 @@ class MisuseTests(unittest.TestCase):
 
     def test_points_must_be_finite_built_in_reals(self) -> None:
         for call in (cdf, sf, logpdf):
-            for bad in (True, "1", None, 1 + 0j, [1.0]):
+            for bad in (True, "1", None, 1 + 0j, {1.0}):
                 with self.subTest(call=call.__name__, bad=bad), self.assertRaises(TypeError):
                     call("exponential", bad, rate=1.0)
             for bad in (math.nan, math.inf, -math.inf, 10**400):
@@ -330,7 +330,7 @@ class MisuseTests(unittest.TestCase):
     def test_deprecated_exponential_rate_errors_keep_their_historical_type(self) -> None:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            for bad in ("one", True, None, [1.0]):
+            for bad in ("one", True, None, {1.0}):
                 with self.subTest(bad=bad), self.assertRaises(ValueError):
                     cdf("exponential", 0.0, {"rate": bad})  # type: ignore[dict-item]
             with self.assertRaises(TypeError):

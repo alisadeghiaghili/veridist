@@ -11,6 +11,7 @@ from math import exp, expm1, fsum, isfinite, lgamma, log, log1p, pi, ulp
 from types import MappingProxyType
 from typing import Final, TypeAlias, cast
 
+from veridist.domain._numeric import is_real
 from veridist.families.registry import FAMILY_REGISTRY, FamilyId, FamilySpec, Operation
 
 
@@ -125,10 +126,10 @@ def _evaluate_validated_log_density(
 
 
 def _validate_observation(observation: object) -> float | None:
-    if type(observation) not in (int, float):
+    if not is_real(observation):
         return None
     try:
-        numeric = float(cast(int | float, observation))
+        numeric = float(cast(float, observation))
     except OverflowError:
         return None
     return numeric if isfinite(numeric) else None

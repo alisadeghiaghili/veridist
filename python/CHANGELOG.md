@@ -8,6 +8,12 @@ Veridist release record.
 
 ### Fixed
 
+- `cdf`, `sf` and `ppf` no longer raise `OverflowError` when an intermediate
+  `exp` or power overflows, for example the Gumbel CDF far in the left tail
+  (`cdf("gumbel_right", -800.0, location=0.0, scale=1.0)`), the Weibull CDF far
+  in the right tail, or a Weibull or lognormal quantile beyond the largest
+  float. They return the limiting value (`0`, `1` or `inf`), and scalar and
+  array evaluation agree.
 - Corrected the gamma family's `cdf`/`sf`/`ppf` for the continued-fraction
   branch (`x / scale >= shape + 1`), which a sign-destroying clamp
   (`max(abs(...), tiny)`) on the modified Lentz recurrence's intermediate
@@ -236,6 +242,27 @@ Veridist release record.
 - `veridist.families.fit(family, observations, /, **options)`, a dispatcher over
   all six families; an option the family does not accept raises `TypeError`
   naming it.
+- `logpdf`, `cdf`, `sf` and `ppf` evaluate arrays: the point and every
+  parameter may be a Python or numpy scalar, a 0-d array, or an array-like, and
+  are broadcast against each other. Scalar input still returns a Python
+  `float`; any array input returns a `float64` array of the broadcast shape
+  (empty shapes included). For arrays, `logpdf` is `-inf` element-wise outside
+  the support, a non-finite point raises `ValueError`, `ppf` needs every
+  probability strictly inside `(0, 1)`, and an invalid parameter element raises
+  `ValueError` naming the parameter and its first invalid flat index; a log-density
+  that binary64 cannot represent raises `ArithmeticError` naming the first flat
+  index. The exponential, Weibull-minimum and right-Gumbel families use
+  numpy-native kernels that mirror the scalar formulas (agreeing with the scalar
+  path to within a few ulp); the normal, lognormal and gamma families wrap the
+  verified scalar kernels element by element, so they equal the scalar results
+  exactly but are slow on large arrays (numpy has no `erfc` or incomplete gamma
+  function, and scipy is not a runtime dependency).
+- `lifetimes_from_arrays(time, event, /)` and `values_from_arrays(value, event, /)`
+  in `veridist.domain`: build the tuple of `ExactLifetime`/`RightCensoredLifetime`
+  (or `ExactValue`/`RightCensoredValue`) from two equal-length one-dimensional
+  array-likes, where `event` is boolean or integer 0/1 (true means the event was
+  observed). The columns are validated as arrays first, and the error names the
+  first bad row; the result equals the row-by-row construction.
 
 ### Deprecated
 
@@ -410,6 +437,20 @@ Veridist release record.
   instead of building a `Decimal` first; both round correctly, so every literal
   that parsed before still yields the same value, and the rejection of a
   positive literal that underflows to zero is unchanged.
+- Public entry points accept numpy real scalars (`numpy.float32`, `numpy.int64`
+  and so on) wherever they accepted a Python `int` or `float`, and still reject
+  `bool` and `numpy.bool_`: the point and parameters of `logpdf`/`cdf`/`sf`/
+  `ppf`/`sample` and of `evaluate_log_density`, the `size` of `sample`, the
+  arguments of `information_criteria`, `compare_models`, `summarize_calibration`
+  and `refit_monte_carlo_gof`, `fixed_shape` and the integer `frequency_weights`
+  of the fits, and the values of the lifetime observation types. The error text of
+  these checks no longer says "built-in". As before, `information_criteria` and
+  `compare_models` take their likelihood, `aic`, `p_value` and probabilities as
+  floats, not integers.
+- A list or tuple passed as a point or parameter of `logpdf`/`cdf`/`sf`/`ppf` is
+  now an array-like and is evaluated element-wise instead of raising
+  `TypeError`; a probability that is not a real number still raises
+  `ValueError`.
 
 ### Documentation
 

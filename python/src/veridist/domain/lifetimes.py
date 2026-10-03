@@ -6,9 +6,13 @@ from dataclasses import dataclass
 from decimal import Decimal
 from math import isfinite
 
+from veridist.domain._numeric import is_real
+
 
 def _finite_non_negative_time(value: float | Decimal | int) -> float:
-    if isinstance(value, bool) or not isinstance(value, float | Decimal | int):
+    """Return a finite non-negative time as ``float`` (Python or numpy reals, or ``Decimal``)."""
+
+    if not (is_real(value) or isinstance(value, Decimal)):
         raise TypeError("time must be a finite numeric value")
     try:
         numeric = float(value)

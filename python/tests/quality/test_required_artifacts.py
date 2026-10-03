@@ -26,7 +26,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
     def test_manifest_records_the_authoritative_production_file_count(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         production_count = len(manifest["production_files"])
-        self.assertEqual(production_count, 38)
+        self.assertEqual(production_count, 41)
         self.assertIn("src/veridist/engine/streaming.py", manifest["production_files"])
         self.assertEqual(
             manifest["expected_denominators"]["src/veridist/engine/streaming.py"],

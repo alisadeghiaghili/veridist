@@ -21,10 +21,16 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
   record is tolerated only when it is the last thing in the file (for
   example a trailing blank line an editor or spreadsheet added); a blank
   record anywhere else is still a `blank_record` failure.
-- `SCALAR-FAMILIES`: normal, gamma, Weibull-minimum, lognormal, and
-  right-Gumbel expose scalar log-density, CDF, survival, quantile, and sampling
-  operations. They do not expose array evaluation, a uniform fitting API, or
-  inference for every registered family.
+- `SCALAR-FAMILIES`: normal, gamma, Weibull-minimum, lognormal, right-Gumbel,
+  and exponential expose log-density, CDF, survival, quantile, and sampling
+  operations. `logpdf`, `cdf`, `sf`, and `ppf` also evaluate numpy arrays,
+  broadcasting the point against array-valued parameters; scalar input still
+  returns a Python `float`. The exponential, Weibull-minimum, and right-Gumbel
+  families use numpy-native kernels. The normal, lognormal, and gamma families
+  wrap the verified scalar kernels element by element: the results equal the
+  scalar path exactly, but large arrays are slow, because numpy has no `erfc`
+  or incomplete gamma function and Veridist has no scipy runtime dependency.
+  Inference is not available for every registered family.
 - `STREAM-SOURCE`: `IterableDataSource` adapts caller-owned chunk iterables.
   The package bundles no Parquet, Arrow, dataframe, database, or network
   adapter. Durable resume is limited to the strict lifetime CSV path and local
