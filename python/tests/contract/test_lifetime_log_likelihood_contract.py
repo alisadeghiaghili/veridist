@@ -55,10 +55,12 @@ class LifetimeReducerSurfaceTests(unittest.TestCase):
         self.assertNotIn("reduce_lifetime_log_likelihood_chunks", veridist.__all__)
         self.assertFalse(hasattr(veridist, "reduce_lifetime_log_likelihood_chunks"))
 
-    def test_the_admitted_families_are_exactly_the_three_lifetime_families(self) -> None:
+    def test_the_admitted_families_are_exactly_the_four_lifetime_families(self) -> None:
         self.assertEqual(
             SUPPORTED_LIFETIME_FAMILIES,
-            frozenset({FamilyId.WEIBULL_MIN, FamilyId.LOGNORMAL, FamilyId.GAMMA}),
+            frozenset(
+                {FamilyId.EXPONENTIAL, FamilyId.WEIBULL_MIN, FamilyId.LOGNORMAL, FamilyId.GAMMA}
+            ),
         )
 
 
@@ -274,6 +276,8 @@ class LifetimeReducerFailureTests(unittest.TestCase):
 
 
 def _random_parameters(family: FamilyId, rng: random.Random) -> dict[str, float]:
+    if family is FamilyId.EXPONENTIAL:
+        return {"rate": 10.0 ** rng.uniform(-6, 6)}
     if family is FamilyId.WEIBULL_MIN:
         return {"shape": 10.0 ** rng.uniform(-2, 2), "scale": 10.0 ** rng.uniform(-5, 5)}
     if family is FamilyId.LOGNORMAL:

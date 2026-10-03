@@ -1,7 +1,8 @@
 """Immutable metadata contracts for evaluated distribution families.
 
-This module deliberately declares only family identity, parameters, and the
-single future log-density operation.  It performs no numerical evaluation.
+This module declares family identity, canonical parameters, the support
+convention, and which scalar operations a family offers.  It performs no
+numerical evaluation.
 """
 
 from __future__ import annotations
@@ -25,12 +26,31 @@ class FamilyId(StrEnum):
     WEIBULL_MIN = "weibull_min"
     LOGNORMAL = "lognormal"
     GUMBEL_RIGHT = "gumbel_right"
+    EXPONENTIAL = "exponential"
 
 
 class Operation(StrEnum):
     """Operations that a family may explicitly support."""
 
     LOGPDF = "logpdf"
+    CDF = "cdf"
+    SF = "sf"
+    PPF = "ppf"
+    SAMPLE = "sample"
+    FIT = "fit"
+
+
+class Support(StrEnum):
+    """Closed support conventions shared by the scalar operations."""
+
+    REAL_LINE = "real_line"
+    """Every finite real value is inside the support."""
+
+    POSITIVE = "positive"
+    """The open interval ``(0, inf)``; zero is outside the support."""
+
+    NON_NEGATIVE = "non_negative"
+    """The closed interval ``[0, inf)``; zero is inside the support."""
 
 
 class ParameterRole(StrEnum):
@@ -71,7 +91,20 @@ class ParameterSpec:
 
 @dataclass(frozen=True, slots=True)
 class FamilySpec:
-    """Immutable operation-level metadata for exactly one family."""
+    """Immutable operation-level metadata for exactly one family.
+
+    **Support convention.** The log-density support is declared per family
+    (:attr:`support`, with :meth:`contains` as the membership test), and a point
+    outside it is a typed ``support_violation`` in ``evaluate_log_density`` and
+    ``-inf`` in ``logpdf``.  Families without a fixed location have the whole
+    real line.  ``gamma``, ``weibull_min`` and ``lognormal`` have the open
+    support ``(0, inf)``: their density at zero is ``0`` or infinite depending
+    on the shape, so zero is excluded.  ``exponential`` has the closed support
+    ``[0, inf)``: its density at zero is the finite ``rate``, so the
+    log-density there is ``log(rate)``.  The cumulative operations are defined
+    on the whole real line in every fixed-location family: ``cdf`` is ``0`` and
+    ``sf`` is ``1`` for ``x <= 0``.
+    """
 
     id: FamilyId
     aliases: tuple[str, ...]
@@ -79,6 +112,7 @@ class FamilySpec:
     fixed_location: float | None
     planned_operations: frozenset[Operation]
     available_operations: frozenset[Operation]
+    declared_support: Support | None = None
 
     def __post_init__(self) -> None:
         if type(self.id) is not FamilyId:
@@ -109,6 +143,11 @@ class FamilySpec:
             raise TypeError("planned_operations must be a non-empty frozenset")
         if any(type(operation) is not Operation for operation in self.planned_operations):
             raise TypeError("planned_operations must contain Operation values")
+        if self.declared_support is not None:
+            if type(self.declared_support) is not Support:
+                raise TypeError("declared_support must be a Support or None")
+            if (self.declared_support is Support.REAL_LINE) != (self.fixed_location is None):
+                raise ValueError("only free-location families have the real line as support")
         if type(self.available_operations) is not frozenset:
             raise TypeError("available_operations must be a frozenset")
         if any(type(operation) is not Operation for operation in self.available_operations):
@@ -119,6 +158,28 @@ class FamilySpec:
         """Return the declared parameter count, never a caller mapping length."""
 
         return len(self.parameters)
+
+    @property
+    def support(self) -> Support:
+        """Return the log-density support: the declared one, else derived from the location.
+
+        Without ``declared_support``, a family with no fixed location has the
+        real line and a zero-location family has the open ``(0, inf)``.
+        """
+
+        if self.declared_support is not None:
+            return self.declared_support
+        return Support.REAL_LINE if self.fixed_location is None else Support.POSITIVE
+
+    def contains(self, x: float) -> bool:
+        """Return whether the finite point ``x`` lies inside the log-density support."""
+
+        support = self.support
+        if support is Support.REAL_LINE:
+            return True
+        if support is Support.NON_NEGATIVE:
+            return x >= 0.0
+        return x > 0.0
 
     def supports(self, operation: Operation) -> bool:
         """Return whether an operation has an evaluator available now."""
@@ -215,9 +276,21 @@ class FamilyRegistry:
         except KeyError as error:
             raise ValueError("unknown evaluated family") from error
 
+    def lookup(self, family: object) -> FamilySpec:
+        """Resolve a :class:`FamilyId`, or its string value (id or declared alias).
 
-_PLANNED_LOGPDF: Final = frozenset({Operation.LOGPDF})
-_AVAILABLE_LOGPDF: Final = frozenset({Operation.LOGPDF})
+        Anything that is neither raises ``TypeError``; an unknown name raises
+        ``ValueError``.
+        """
+
+        if isinstance(family, FamilyId):
+            return self._families[family]
+        if type(family) is str:
+            return self.resolve(family)
+        raise TypeError("family must be a FamilyId or its string value")
+
+
+_ALL_OPERATIONS: Final = frozenset(Operation)
 _FAMILY_SPECS: Final = (
     FamilySpec(
         FamilyId.NORMAL,
@@ -227,8 +300,8 @@ _FAMILY_SPECS: Final = (
             ParameterSpec("sigma", ParameterRole.POSITIVE),
         ),
         None,
-        _PLANNED_LOGPDF,
-        _AVAILABLE_LOGPDF,
+        _ALL_OPERATIONS,
+        _ALL_OPERATIONS,
     ),
     FamilySpec(
         FamilyId.GAMMA,
@@ -238,8 +311,8 @@ _FAMILY_SPECS: Final = (
             ParameterSpec("scale", ParameterRole.POSITIVE),
         ),
         0.0,
-        _PLANNED_LOGPDF,
-        _AVAILABLE_LOGPDF,
+        _ALL_OPERATIONS,
+        _ALL_OPERATIONS,
     ),
     FamilySpec(
         FamilyId.WEIBULL_MIN,
@@ -249,8 +322,8 @@ _FAMILY_SPECS: Final = (
             ParameterSpec("scale", ParameterRole.POSITIVE),
         ),
         0.0,
-        _PLANNED_LOGPDF,
-        _AVAILABLE_LOGPDF,
+        _ALL_OPERATIONS,
+        _ALL_OPERATIONS,
     ),
     FamilySpec(
         FamilyId.LOGNORMAL,
@@ -260,8 +333,8 @@ _FAMILY_SPECS: Final = (
             ParameterSpec("sigma_log", ParameterRole.POSITIVE),
         ),
         0.0,
-        _PLANNED_LOGPDF,
-        _AVAILABLE_LOGPDF,
+        _ALL_OPERATIONS,
+        _ALL_OPERATIONS,
     ),
     FamilySpec(
         FamilyId.GUMBEL_RIGHT,
@@ -271,8 +344,17 @@ _FAMILY_SPECS: Final = (
             ParameterSpec("scale", ParameterRole.POSITIVE),
         ),
         None,
-        _PLANNED_LOGPDF,
-        _AVAILABLE_LOGPDF,
+        _ALL_OPERATIONS,
+        _ALL_OPERATIONS,
+    ),
+    FamilySpec(
+        FamilyId.EXPONENTIAL,
+        (),
+        (ParameterSpec("rate", ParameterRole.POSITIVE),),
+        0.0,
+        _ALL_OPERATIONS,
+        _ALL_OPERATIONS,
+        Support.NON_NEGATIVE,
     ),
 )
 
@@ -293,5 +375,6 @@ __all__ = [
     "Operation",
     "ParameterRole",
     "ParameterSpec",
+    "Support",
     "list_families",
 ]

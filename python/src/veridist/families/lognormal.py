@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections import Counter
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from math import erfc, exp, fsum, isfinite, log, log1p, pi, sqrt
+from types import MappingProxyType
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
 from veridist.families._reliability import (
@@ -15,6 +16,7 @@ from veridist.families._reliability import (
     expand_bracket,
     positive_support,
 )
+from veridist.families.registry import FamilyId
 
 _HALF_LOG_2PI = 0.5 * log(2.0 * pi)
 _SQRT_2 = sqrt(2.0)
@@ -44,7 +46,7 @@ class LognormalFitFailure:
 
     ``converged`` is always ``False`` and ``restart_failures`` is always ``0``:
     a failure never ran an interior optimization to convergence, and no restart
-    strategy is attempted.
+    strategy is attempted.  Satisfies :class:`~veridist.families.results.FitFailure`.
     """
 
     code: LognormalFitFailureCode
@@ -55,6 +57,12 @@ class LognormalFitFailure:
     converged: bool = False
     restart_failures: int = 0
 
+    @property
+    def family(self) -> FamilyId:
+        """The family this failure belongs to."""
+
+        return FamilyId.LOGNORMAL
+
 
 @dataclass(frozen=True, slots=True)
 class LognormalFitSuccess:
@@ -63,7 +71,8 @@ class LognormalFitSuccess:
     ``converged`` is always ``True``: a result that only exists at the edge of
     the search range is reported as :attr:`LognormalFitFailureCode.BOUNDARY_SOLUTION`
     instead of a success. ``restart_failures`` is always ``0`` because the
-    deterministic golden-section search never restarts.
+    deterministic golden-section search never restarts.  Satisfies
+    :class:`~veridist.families.results.FitSuccess`.
     """
 
     mu_log: float
@@ -75,7 +84,7 @@ class LognormalFitSuccess:
     converged: bool = True
     restart_failures: int = 0
     complete: bool = True
-    family: str = "lognormal"
+    family: FamilyId = FamilyId.LOGNORMAL
     location: float = 0.0
 
     def __post_init__(self) -> None:
@@ -83,6 +92,15 @@ class LognormalFitSuccess:
             raise ValueError("lognormal location and scale must be finite, with positive scale")
         if not isfinite(self.log_likelihood):
             raise ValueError("log likelihood must be finite")
+        if self.family != FamilyId.LOGNORMAL:
+            raise ValueError("a lognormal fit result belongs to the lognormal family")
+        object.__setattr__(self, "family", FamilyId.LOGNORMAL)
+
+    @property
+    def parameters(self) -> Mapping[str, float]:
+        """The fitted parameters under their canonical registry names, read-only."""
+
+        return MappingProxyType({"mu_log": self.mu_log, "sigma_log": self.sigma_log})
 
 
 LognormalFit = LognormalFitSuccess | LognormalFitFailure

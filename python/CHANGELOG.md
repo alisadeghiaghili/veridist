@@ -141,6 +141,10 @@ Veridist release record.
   single-pass source to more than one thread when they acquired it at the same
   time. Acquisition is now serialized with a lock: exactly one caller receives
   the iterator and the others get `PASS_BUDGET_EXCEEDED`.
+- `cdf`, `sf`, `ppf` and `sample` called with a declared family alias
+  (`"gaussian"`, `"weibull"`, `"gumbel"`) passed registry resolution and then
+  failed with an `AssertionError`; the aliases now work like the canonical
+  names.
 
 ### Added
 
@@ -177,6 +181,61 @@ Veridist release record.
   expansion that does not converge (very large shape), is a typed failure.
   Checked against `mpmath` and against the Weibull and lognormal fits'
   reported log-likelihood. It is not exported from the top-level package.
+- `FamilyId.EXPONENTIAL` (parameter `rate`, fixed location zero), registered
+  with every operation: log-density, `cdf`, `sf`, `ppf`, `sample` and `fit`.
+  `Operation` gains `CDF`, `SF`, `PPF`, `SAMPLE` and `FIT`, which every family now
+  advertises, and `FamilySpec.support` (with `FamilySpec.contains`) declares the
+  log-density support per family: `gamma`, `weibull_min` and `lognormal` keep
+  the open support `(0, inf)`, so `x <= 0` is a `support_violation` (and `-inf`
+  in `logpdf`), while the exponential has the closed support `[0, inf)`
+  (`Support.NON_NEGATIVE`), so its log-density at zero is `log(rate)` and only
+  `x < 0` is outside it. A zero time is therefore valid for the exponential
+  reducer, which reproduces `fit_exponential`'s log-likelihood on samples that
+  contain `ExactLifetime(0.0)` or `RightCensoredLifetime(0.0)`. For every
+  fixed-location family `cdf` is `0` and `sf` is `1` for `x <= 0`.
+  `evaluate_log_density`,
+  `reduce_log_likelihood_chunks` and `reduce_lifetime_log_likelihood_chunks`
+  all accept it.
+- One calling convention for the scalar operations in
+  `veridist.statistics.distributions`: `logpdf(family, x, /, **parameters)`,
+  `cdf`, `sf`, `ppf(family, q, /, **parameters)` and
+  `sample(family, size, /, *, rng, **parameters)`. `family` is a `FamilyId` or
+  its string value (a declared alias such as `"weibull"` also resolves);
+  anything else raises `TypeError` and an unknown name `ValueError`. `logpdf`
+  returns `-inf` outside the support, raises `ValueError` for a non-finite `x`
+  and `ArithmeticError` when the value is not representable.
+- `ExactValue` and `RightCensoredValue` in `veridist.domain`: finite real
+  observations (negative values allowed; `bool`, non-finite and non-real values
+  are rejected) for the families on the whole real line. The lifetime fits
+  (`EXPONENTIAL`, `WEIBULL_MIN`, `LOGNORMAL`, `GAMMA`) take only the lifetime
+  types and the real-line fits (`NORMAL`, `GUMBEL_RIGHT`) only the real-valued
+  types; the other pair raises `TypeError`.
+- `fit_normal`, `fit_gamma` and `fit_gumbel_right`, each with right censoring,
+  `frequency_weights`, and the same guarantees as the Weibull and lognormal
+  fits: bracket expansion with hard limits, `BOUNDARY_SOLUTION`,
+  `DEGENERATE_SAMPLE` and `OPTIMIZER_EXHAUSTED` failures instead of a boundary
+  reported as converged, and equivariance under location-scale (normal,
+  Gumbel) or scale (gamma) changes. `fit_normal` without censoring is closed
+  form and reports the maximum-likelihood `sigma` (divisor `n`), not the
+  unbiased estimate (divisor `n - 1`). Agreement with `scipy` references is
+  better than a relative `1e-6`.
+- `veridist.statistics.reduce_value_log_likelihood_chunks`, the censored
+  log-likelihood reducer for `NORMAL` and `GUMBEL_RIGHT` over `ExactValue` and
+  `RightCensoredValue`; `reduce_lifetime_log_likelihood_chunks` now also admits
+  `EXPONENTIAL`. At each fit's parameters the matching reducer reproduces the
+  fit's `log_likelihood` to a relative `1e-12`.
+- A common fit-result interface: the `FitSuccess` and `FitFailure`
+  `runtime_checkable` protocols in `veridist.families`. Every success exposes
+  `family: FamilyId`, a read-only `parameters` mapping with the canonical
+  registry names, `log_likelihood`, `observation_count`, `event_count`,
+  `censored_count` and `converged`; every failure exposes `family`, `code` and
+  the counts. The family-specific attributes (`rate`, `shape`, `scale`,
+  `mu_log`, `sigma_log`, `mu`, `sigma`, `location`) are unchanged, and the
+  `family` attribute of the existing results is now a `FamilyId`, which still
+  compares equal to its string value.
+- `veridist.families.fit(family, observations, /, **options)`, a dispatcher over
+  all six families; an option the family does not accept raises `TypeError`
+  naming it.
 
 ### Deprecated
 
@@ -184,6 +243,13 @@ Veridist release record.
   deprecated in favor of the offset form `(row_start, payload)`. The legacy
   form still works but emits `DeprecationWarning`, and it can only recognize
   a replay of the single most recently committed chunk.
+- Passing the parameters of `cdf`, `sf`, `ppf` as a mapping
+  (`cdf("gamma", x, {"shape": 2.0, "scale": 1.0})`) and the
+  `sample(family, size, parameters, rng)` form are deprecated in favour of the
+  keyword form (`cdf("gamma", x, shape=2.0, scale=1.0)`,
+  `sample(family, size, rng=rng, shape=2.0, scale=1.0)`). The old forms return
+  the identical result but emit `DeprecationWarning`; they will be removed in
+  3.0.
 
 ### Changed
 

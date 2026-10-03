@@ -11,6 +11,7 @@ from typing import Final
 
 from veridist.domain.lifetimes import LifetimeObservation
 from veridist.engine.streaming import StreamSource, iter_stream
+from veridist.families.registry import FamilyId
 from veridist.statistics.exponential import (
     ExponentialReductionState,
     _ReductionOverflow,
@@ -103,7 +104,12 @@ class ExponentialFitProvenance:
 
 @dataclass(frozen=True, slots=True)
 class ExponentialFitSuccess:
-    """A finite rate-only exponential MLE with declared capability facts."""
+    """A finite rate-only exponential MLE with declared capability facts.
+
+    Satisfies :class:`~veridist.families.results.FitSuccess`: ``parameters`` is
+    ``{"rate": rate}`` and ``converged`` is always ``True`` (the closed-form MLE
+    has no optimizer).
+    """
 
     rate: float
     observation_count: int
@@ -113,7 +119,7 @@ class ExponentialFitSuccess:
     log_likelihood: float
     censored_count: int
     provenance: ExponentialFitProvenance = ExponentialFitProvenance()
-    family: str = "exponential"
+    family: FamilyId = FamilyId.EXPONENTIAL
     parameterization: str = "rate"
     location: float = 0.0
     inference: str = "not_provided"
@@ -149,16 +155,44 @@ class ExponentialFitSuccess:
             or self.censoring_assumption != "independent_right_censoring"
         ):
             raise ValueError("exponential capability facts are fixed by the vertical contract")
+        object.__setattr__(self, "family", FamilyId.EXPONENTIAL)
+
+    @property
+    def parameters(self) -> Mapping[str, float]:
+        """The fitted parameters under their canonical registry names, read-only."""
+
+        return MappingProxyType({"rate": self.rate})
+
+    @property
+    def converged(self) -> bool:
+        """Always ``True``: the closed-form estimate involves no iteration."""
+
+        return True
 
 
 @dataclass(frozen=True, slots=True)
 class ExponentialFitFailure:
-    """A typed statistical non-estimate, distinct from an engine failure."""
+    """A typed statistical non-estimate, distinct from an engine failure.
+
+    Satisfies :class:`~veridist.families.results.FitFailure`.
+    """
 
     code: ExponentialFitFailureCode
     observation_count: int
     event_count: int
     total_time: float | None
+
+    @property
+    def family(self) -> FamilyId:
+        """The family this failure belongs to."""
+
+        return FamilyId.EXPONENTIAL
+
+    @property
+    def censored_count(self) -> int:
+        """The number of right-censored observations offered."""
+
+        return self.observation_count - self.event_count
 
     def __post_init__(self) -> None:
         if type(self.code) is not ExponentialFitFailureCode:
