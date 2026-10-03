@@ -1,32 +1,48 @@
-"""Scalar CDF, survival, quantile, and sampling operations for v1 families."""
+"""Scalar log-density, CDF, survival, quantile and sampling for the registry families.
+
+Every operation has one calling convention: the family (a
+:class:`~veridist.families.registry.FamilyId` or its string value) and the
+point are positional, and the canonical parameters are keywords::
+
+    logpdf("weibull_min", 2.0, shape=1.5, scale=3.0)
+    cdf(FamilyId.GAMMA, 2.0, shape=2.0, scale=1.0)
+    ppf("normal", 0.975, mu=0.0, sigma=1.0)
+    sample("exponential", 100, rng=generator, rate=0.5)
+
+The earlier forms that passed the parameters as a mapping
+(``cdf(family, x, {"rate": 1.0})`` and
+``sample(family, size, parameters, rng)``) still work and return the identical
+result, but emit a :class:`DeprecationWarning`; they will be removed in 3.0.
+"""
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+import warnings
+from collections.abc import Callable, Mapping
 from importlib import import_module
-from math import copysign, erfc, exp, expm1, fsum, isfinite, lgamma, log, log1p, sqrt
-from typing import cast
+from math import copysign, erfc, exp, expm1, fsum, inf, isfinite, lgamma, log, log1p, sqrt
+from types import MappingProxyType
+from typing import Any, Final, TypeAlias, cast, overload
 
-from veridist.families.registry import FAMILY_REGISTRY
+from veridist.families.registry import (
+    FAMILY_REGISTRY,
+    FamilyId,
+    FamilySpec,
+    Operation,
+)
+from veridist.statistics.log_density import (
+    LogDensityErrorCode,
+    LogDensitySuccess,
+    _evaluate_validated_log_density,
+)
 
 _SQRT_TWO = sqrt(2.0)
 _SQRT_TWO_PI = sqrt(2.0 * 3.141592653589793)
 
-
-def _parameters(family: str, parameters: Mapping[str, object]) -> Mapping[str, float]:
-    if not isinstance(parameters, Mapping):
-        raise TypeError("parameters must be a mapping")
-    if family == "exponential":
-        if set(parameters) != {"rate"}:
-            raise TypeError("parameter keys must equal the canonical parameter tuple")
-        rate = parameters["rate"]
-        if type(rate) not in {int, float}:
-            raise ValueError("rate must be finite and positive")
-        numeric_rate = float(cast(int | float, rate))
-        if not isfinite(numeric_rate) or numeric_rate <= 0.0:
-            raise ValueError("rate must be finite and positive")
-        return {"rate": numeric_rate}
-    return FAMILY_REGISTRY.resolve(family).validate_parameters(**dict(parameters))
+_Parameters: TypeAlias = Mapping[str, float]
+_Kernel: TypeAlias = Callable[[float, _Parameters], float]
+_Sampler: TypeAlias = Callable[[Any, int, _Parameters], Any]
+_MISSING: Final = object()
 
 
 def _probability(value: float) -> None:
@@ -39,10 +55,56 @@ def _probability(value: float) -> None:
 def _finite_scalar(value: object) -> float:
     if type(value) not in {int, float}:
         raise TypeError("value must be a built-in real number")
-    numeric = float(cast(int | float, value))
+    try:
+        numeric = float(cast(int | float, value))
+    except OverflowError as error:
+        raise ValueError("value must be finite") from error
     if not isfinite(numeric):
         raise ValueError("value must be finite")
     return numeric
+
+
+def _call_parameters(
+    operation: str, args: tuple[object, ...], keywords: Mapping[str, object]
+) -> tuple[Mapping[str, object], bool]:
+    """Return the parameter mapping and whether the deprecated mapping form was used.
+
+    The deprecated form passes the parameters as one mapping, positionally or as
+    ``parameters=``.  It is detected by shape alone (no canonical parameter is
+    named ``parameters``), warns, and is otherwise handled exactly like the
+    keyword form.
+    """
+
+    if args:
+        if len(args) != 1 or keywords:
+            raise TypeError(f"{operation}() takes the parameters as keyword arguments")
+        legacy: object = args[0]
+    elif set(keywords) == {"parameters"} and isinstance(keywords["parameters"], Mapping):
+        legacy = keywords["parameters"]
+    else:
+        return keywords, False
+    warnings.warn(
+        f"{operation}(): passing the parameters as a mapping is deprecated and will be "
+        "removed in 3.0; pass them as keyword arguments instead",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    if not isinstance(legacy, Mapping):
+        raise TypeError("parameters must be a mapping")
+    return legacy, True
+
+
+def _validated_parameters(
+    spec: FamilySpec, parameters: Mapping[str, object], legacy: bool
+) -> _Parameters:
+    try:
+        return spec.validate_parameters(**dict(parameters))
+    except TypeError:
+        # The deprecated form reported a non-numeric exponential ``rate`` as a
+        # ValueError; keep that for the callers that still use it.
+        if legacy and spec.id is FamilyId.EXPONENTIAL and set(parameters) == {"rate"}:
+            raise ValueError("rate must be finite and positive") from None
+        raise
 
 
 _GAMMA_FPMIN = 1e-300
@@ -204,57 +266,62 @@ def _log_regularized_gamma_q(shape: float, value: float, log_value: float) -> fl
     return log1p(-lower)
 
 
-def cdf(family: str, value: object, parameters: Mapping[str, object]) -> float:
-    """Return one finite scalar cumulative probability for a registered family."""
-
-    point = _finite_scalar(value)
-    parameter = _parameters(family, parameters)
-    if family == "exponential":
-        return 0.0 if point < 0.0 else -expm1(-parameter["rate"] * point)
-    if family == "normal":
-        return 0.5 * erfc(-(point - parameter["mu"]) / (parameter["sigma"] * _SQRT_TWO))
-    if family == "gamma":
-        lower, _ = _regularized_gamma_pq(parameter["shape"], point / parameter["scale"])
-        return lower
-    if family == "weibull_min":
-        if point <= 0.0:
-            return 0.0
-        return -expm1(-((point / parameter["scale"]) ** parameter["shape"]))
-    if family == "lognormal":
-        if point <= 0.0:
-            return 0.0
-        return 0.5 * erfc(
-            -(log(point) - parameter["mu_log"]) / (parameter["sigma_log"] * _SQRT_TWO)
-        )
-    if family == "gumbel_right":
-        return exp(-exp(-(point - parameter["location"]) / parameter["scale"]))
-    raise AssertionError("registry resolution must reject unknown families")  # pragma: no cover
 
 
-def sf(family: str, value: object, parameters: Mapping[str, object]) -> float:
-    """Return the stable scalar survival probability for a registered family."""
+def _exponential_cdf(point: float, parameter: _Parameters) -> float:
+    return 0.0 if point < 0.0 else -expm1(-parameter["rate"] * point)
 
-    point = _finite_scalar(value)
-    parameter = _parameters(family, parameters)
-    if family == "exponential":
-        return 1.0 if point < 0.0 else exp(-parameter["rate"] * point)
-    if family == "normal":
-        return 0.5 * erfc((point - parameter["mu"]) / (parameter["sigma"] * _SQRT_TWO))
-    if family == "gamma":
-        _, upper = _regularized_gamma_pq(parameter["shape"], point / parameter["scale"])
-        return upper
-    if family == "weibull_min":
-        return 1.0 if point <= 0.0 else exp(-((point / parameter["scale"]) ** parameter["shape"]))
-    if family == "lognormal":
-        return (
-            1.0
-            if point <= 0.0
-            else 0.5
-            * erfc((log(point) - parameter["mu_log"]) / (parameter["sigma_log"] * _SQRT_TWO))
-        )
-    if family == "gumbel_right":
-        return -expm1(-exp(-(point - parameter["location"]) / parameter["scale"]))
-    raise AssertionError("registry resolution must reject unknown families")  # pragma: no cover
+
+def _normal_cdf(point: float, parameter: _Parameters) -> float:
+    return 0.5 * erfc(-(point - parameter["mu"]) / (parameter["sigma"] * _SQRT_TWO))
+
+
+def _gamma_cdf(point: float, parameter: _Parameters) -> float:
+    lower, _ = _regularized_gamma_pq(parameter["shape"], point / parameter["scale"])
+    return lower
+
+
+def _weibull_min_cdf(point: float, parameter: _Parameters) -> float:
+    if point <= 0.0:
+        return 0.0
+    return -expm1(-((point / parameter["scale"]) ** parameter["shape"]))
+
+
+def _lognormal_cdf(point: float, parameter: _Parameters) -> float:
+    if point <= 0.0:
+        return 0.0
+    return 0.5 * erfc(-(log(point) - parameter["mu_log"]) / (parameter["sigma_log"] * _SQRT_TWO))
+
+
+def _gumbel_right_cdf(point: float, parameter: _Parameters) -> float:
+    return exp(-exp(-(point - parameter["location"]) / parameter["scale"]))
+
+
+def _exponential_sf(point: float, parameter: _Parameters) -> float:
+    return 1.0 if point < 0.0 else exp(-parameter["rate"] * point)
+
+
+def _normal_sf(point: float, parameter: _Parameters) -> float:
+    return 0.5 * erfc((point - parameter["mu"]) / (parameter["sigma"] * _SQRT_TWO))
+
+
+def _gamma_sf(point: float, parameter: _Parameters) -> float:
+    _, upper = _regularized_gamma_pq(parameter["shape"], point / parameter["scale"])
+    return upper
+
+
+def _weibull_min_sf(point: float, parameter: _Parameters) -> float:
+    return 1.0 if point <= 0.0 else exp(-((point / parameter["scale"]) ** parameter["shape"]))
+
+
+def _lognormal_sf(point: float, parameter: _Parameters) -> float:
+    if point <= 0.0:
+        return 1.0
+    return 0.5 * erfc((log(point) - parameter["mu_log"]) / (parameter["sigma_log"] * _SQRT_TWO))
+
+
+def _gumbel_right_sf(point: float, parameter: _Parameters) -> float:
+    return -expm1(-exp(-(point - parameter["location"]) / parameter["scale"]))
 
 
 def _normal_ppf(probability: float) -> float:
@@ -315,7 +382,7 @@ _TINY_POSITIVE = 5e-324  # smallest positive (subnormal) built-in float
 
 
 def _inverse_by_bisection(
-    family: str, probability: float, parameters: Mapping[str, object]
+    cdf_kernel: _Kernel, sf_kernel: _Kernel, probability: float, parameters: _Parameters
 ) -> float:
     """Locate a quantile by bisection for families without a closed-form inverse.
 
@@ -327,14 +394,14 @@ def _inverse_by_bisection(
     (bisecting the logarithm of ``x``, a relative-tolerance stop) instead.
     """
 
-    if cdf(family, _TINY_POSITIVE, parameters) >= probability:
+    if cdf_kernel(_TINY_POSITIVE, parameters) >= probability:
         # No representable positive value is small enough to be closer to the
         # true (unrepresentable) root than zero is; zero is the correctly
         # rounded answer.
         return 0.0
     upper = 1.0
     for _ in range(2048):
-        if cdf(family, upper, parameters) >= probability:
+        if cdf_kernel(upper, parameters) >= probability:
             break
         upper *= 2.0
     else:  # pragma: no cover - finite distribution support guarantees a bracket
@@ -352,61 +419,246 @@ def _inverse_by_bisection(
         complement = 1.0 - probability
         for _ in range(200):
             midpoint = exp(0.5 * (log(lower) + log(upper)))
-            if sf(family, midpoint, parameters) > complement:
+            if sf_kernel(midpoint, parameters) > complement:
                 lower = midpoint
             else:
                 upper = midpoint
     else:
         for _ in range(200):
             midpoint = exp(0.5 * (log(lower) + log(upper)))
-            if cdf(family, midpoint, parameters) < probability:
+            if cdf_kernel(midpoint, parameters) < probability:
                 lower = midpoint
             else:
                 upper = midpoint
     return (lower + upper) / 2.0
 
 
-def ppf(family: str, probability: float, parameters: Mapping[str, object]) -> float:
-    """Return a scalar quantile for a strictly interior probability."""
-
-    _probability(probability)
-    parameter = _parameters(family, parameters)
-    if family == "exponential":
-        return -log1p(-probability) / parameter["rate"]
-    if family == "normal":
-        return parameter["mu"] + parameter["sigma"] * _normal_ppf(probability)
-    if family == "weibull_min":
-        return float(parameter["scale"] * (-log1p(-probability)) ** (1.0 / parameter["shape"]))
-    if family == "lognormal":
-        return exp(parameter["mu_log"] + parameter["sigma_log"] * _normal_ppf(probability))
-    if family == "gumbel_right":
-        return parameter["location"] - parameter["scale"] * log(-log(probability))
-    return _inverse_by_bisection(family, probability, parameter)
+def _exponential_ppf(probability: float, parameter: _Parameters) -> float:
+    return -log1p(-probability) / parameter["rate"]
 
 
-def sample(family: str, size: int, parameters: Mapping[str, object], rng: object) -> object:
-    """Sample with only the caller-owned NumPy generator as a randomness source."""
+def _normal_quantile(probability: float, parameter: _Parameters) -> float:
+    return parameter["mu"] + parameter["sigma"] * _normal_ppf(probability)
+
+
+def _gamma_ppf(probability: float, parameter: _Parameters) -> float:
+    return _inverse_by_bisection(_gamma_cdf, _gamma_sf, probability, parameter)
+
+
+def _weibull_min_ppf(probability: float, parameter: _Parameters) -> float:
+    return float(parameter["scale"] * (-log1p(-probability)) ** (1.0 / parameter["shape"]))
+
+
+def _lognormal_ppf(probability: float, parameter: _Parameters) -> float:
+    return exp(parameter["mu_log"] + parameter["sigma_log"] * _normal_ppf(probability))
+
+
+def _gumbel_right_ppf(probability: float, parameter: _Parameters) -> float:
+    return parameter["location"] - parameter["scale"] * log(-log(probability))
+
+
+def _exponential_sample(rng: Any, size: int, parameter: _Parameters) -> Any:
+    return rng.exponential(1.0 / parameter["rate"], size=size)
+
+
+def _normal_sample(rng: Any, size: int, parameter: _Parameters) -> Any:
+    return rng.normal(parameter["mu"], parameter["sigma"], size=size)
+
+
+def _gamma_sample(rng: Any, size: int, parameter: _Parameters) -> Any:
+    return rng.gamma(parameter["shape"], parameter["scale"], size=size)
+
+
+def _weibull_min_sample(rng: Any, size: int, parameter: _Parameters) -> Any:
+    return parameter["scale"] * rng.weibull(parameter["shape"], size=size)
+
+
+def _lognormal_sample(rng: Any, size: int, parameter: _Parameters) -> Any:
+    return rng.lognormal(parameter["mu_log"], parameter["sigma_log"], size=size)
+
+
+def _gumbel_right_sample(rng: Any, size: int, parameter: _Parameters) -> Any:
+    return rng.gumbel(parameter["location"], parameter["scale"], size=size)
+
+
+_CDF: Final[Mapping[FamilyId, _Kernel]] = MappingProxyType(
+    {
+        FamilyId.NORMAL: _normal_cdf,
+        FamilyId.GAMMA: _gamma_cdf,
+        FamilyId.WEIBULL_MIN: _weibull_min_cdf,
+        FamilyId.LOGNORMAL: _lognormal_cdf,
+        FamilyId.GUMBEL_RIGHT: _gumbel_right_cdf,
+        FamilyId.EXPONENTIAL: _exponential_cdf,
+    }
+)
+_SF: Final[Mapping[FamilyId, _Kernel]] = MappingProxyType(
+    {
+        FamilyId.NORMAL: _normal_sf,
+        FamilyId.GAMMA: _gamma_sf,
+        FamilyId.WEIBULL_MIN: _weibull_min_sf,
+        FamilyId.LOGNORMAL: _lognormal_sf,
+        FamilyId.GUMBEL_RIGHT: _gumbel_right_sf,
+        FamilyId.EXPONENTIAL: _exponential_sf,
+    }
+)
+_PPF: Final[Mapping[FamilyId, _Kernel]] = MappingProxyType(
+    {
+        FamilyId.NORMAL: _normal_quantile,
+        FamilyId.GAMMA: _gamma_ppf,
+        FamilyId.WEIBULL_MIN: _weibull_min_ppf,
+        FamilyId.LOGNORMAL: _lognormal_ppf,
+        FamilyId.GUMBEL_RIGHT: _gumbel_right_ppf,
+        FamilyId.EXPONENTIAL: _exponential_ppf,
+    }
+)
+_SAMPLE: Final[Mapping[FamilyId, _Sampler]] = MappingProxyType(
+    {
+        FamilyId.NORMAL: _normal_sample,
+        FamilyId.GAMMA: _gamma_sample,
+        FamilyId.WEIBULL_MIN: _weibull_min_sample,
+        FamilyId.LOGNORMAL: _lognormal_sample,
+        FamilyId.GUMBEL_RIGHT: _gumbel_right_sample,
+        FamilyId.EXPONENTIAL: _exponential_sample,
+    }
+)
+_TABLES: Final[Mapping[Operation, Mapping[FamilyId, Any]]] = MappingProxyType(
+    {
+        Operation.CDF: _CDF,
+        Operation.SF: _SF,
+        Operation.PPF: _PPF,
+        Operation.SAMPLE: _SAMPLE,
+    }
+)
+
+
+def _verify_operation_tables(
+    registry: Mapping[FamilyId, FamilySpec], tables: Mapping[Operation, Mapping[FamilyId, Any]]
+) -> None:
+    """Fail at import if an advertised operation lacks a kernel, or the reverse."""
+
+    for operation, table in tables.items():
+        advertised = {family for family, spec in registry.items() if spec.supports(operation)}
+        if set(table) != advertised:
+            raise RuntimeError(f"{operation.value} kernels must exactly match the family registry")
+
+
+_verify_operation_tables(FAMILY_REGISTRY.families, _TABLES)
+
+
+def logpdf(family: FamilyId | str, x: object, /, **parameters: object) -> float:
+    """Return the log-density of ``family`` at the finite scalar ``x``.
+
+    The result is ``-inf`` outside the family's support: ``x <= 0`` for
+    ``gamma``, ``weibull_min`` and ``lognormal``, ``x < 0`` for ``exponential``
+    (whose log-density at zero is ``log(rate)``), see
+    :attr:`~veridist.families.registry.FamilySpec.support`.  A non-finite ``x``
+    raises ``ValueError`` and a non-real or ``bool`` ``x`` raises ``TypeError``.
+    A value that binary64 cannot represent (an overflowing intermediate)
+    raises ``ArithmeticError``.  Use
+    :func:`veridist.statistics.log_density.evaluate_log_density` for the typed,
+    non-raising result.
+    """
+
+    point = _finite_scalar(x)
+    spec = FAMILY_REGISTRY.lookup(family)
+    validated = spec.validate_parameters(**parameters)
+    evaluated = _evaluate_validated_log_density(spec.id, validated, point)
+    if isinstance(evaluated, LogDensitySuccess):
+        return evaluated.log_density
+    if evaluated.code is LogDensityErrorCode.SUPPORT_VIOLATION:
+        return -inf
+    raise ArithmeticError(
+        f"the {spec.id.value} log-density is not representable ({evaluated.code.value})"
+    )
+
+
+@overload
+def cdf(family: FamilyId | str, x: object, /, **parameters: object) -> float: ...
+@overload
+def cdf(family: str, value: object, parameters: Mapping[str, object], /) -> float: ...
+def cdf(family: FamilyId | str, x: object, /, *args: object, **parameters: object) -> float:
+    """Return the cumulative probability ``P(X <= x)`` for one finite scalar ``x``.
+
+    ``cdf(family, x, **parameters)``; the mapping form
+    ``cdf(family, x, {...})`` is deprecated.
+    """
+
+    point = _finite_scalar(x)
+    mapping, legacy = _call_parameters("cdf", args, parameters)
+    spec = FAMILY_REGISTRY.lookup(family)
+    return _CDF[spec.id](point, _validated_parameters(spec, mapping, legacy))
+
+
+@overload
+def sf(family: FamilyId | str, x: object, /, **parameters: object) -> float: ...
+@overload
+def sf(family: str, value: object, parameters: Mapping[str, object], /) -> float: ...
+def sf(family: FamilyId | str, x: object, /, *args: object, **parameters: object) -> float:
+    """Return the stable survival probability ``P(X > x)`` for one finite scalar ``x``.
+
+    ``sf(family, x, **parameters)``; the mapping form ``sf(family, x, {...})`` is
+    deprecated.
+    """
+
+    point = _finite_scalar(x)
+    mapping, legacy = _call_parameters("sf", args, parameters)
+    spec = FAMILY_REGISTRY.lookup(family)
+    return _SF[spec.id](point, _validated_parameters(spec, mapping, legacy))
+
+
+@overload
+def ppf(family: FamilyId | str, q: float, /, **parameters: object) -> float: ...
+@overload
+def ppf(family: str, probability: float, parameters: Mapping[str, object], /) -> float: ...
+def ppf(family: FamilyId | str, q: float, /, *args: object, **parameters: object) -> float:
+    """Return the quantile for a strictly interior probability ``q``.
+
+    ``ppf(family, q, **parameters)``; the mapping form ``ppf(family, q, {...})``
+    is deprecated.
+    """
+
+    _probability(q)
+    mapping, legacy = _call_parameters("ppf", args, parameters)
+    spec = FAMILY_REGISTRY.lookup(family)
+    return _PPF[spec.id](q, _validated_parameters(spec, mapping, legacy))
+
+
+@overload
+def sample(family: FamilyId | str, size: int, /, *, rng: object, **parameters: object) -> Any: ...
+@overload
+def sample(
+    family: str, size: int, parameters: Mapping[str, object], rng: object, /
+) -> Any: ...
+def sample(
+    family: FamilyId | str,
+    size: int,
+    /,
+    *args: object,
+    rng: object = _MISSING,
+    **parameters: object,
+) -> Any:
+    """Draw ``size`` values using only the caller-owned ``numpy.random.Generator`` ``rng``.
+
+    ``sample(family, size, rng=generator, **parameters)``; the form
+    ``sample(family, size, parameters, rng)`` is deprecated.
+    """
 
     np = import_module("numpy")
 
     if isinstance(size, bool) or not isinstance(size, int) or size < 0:
         raise ValueError("size must be a non-negative built-in integer")
+    if len(args) == 2:
+        if rng is not _MISSING:
+            raise TypeError("sample() got the generator twice")
+        rng = args[1]
+        args = args[:1]
+    mapping, legacy = _call_parameters("sample", args, parameters)
+    if rng is _MISSING:
+        raise TypeError("sample() requires the keyword argument rng")
     if not isinstance(rng, np.random.Generator):
         raise TypeError("rng must be a numpy.random.Generator")
-    parameter = _parameters(family, parameters)
-    if family == "exponential":
-        return rng.exponential(1.0 / parameter["rate"], size=size)
-    if family == "normal":
-        return rng.normal(parameter["mu"], parameter["sigma"], size=size)
-    if family == "gamma":
-        return rng.gamma(parameter["shape"], parameter["scale"], size=size)
-    if family == "weibull_min":
-        return parameter["scale"] * rng.weibull(parameter["shape"], size=size)
-    if family == "lognormal":
-        return rng.lognormal(parameter["mu_log"], parameter["sigma_log"], size=size)
-    if family == "gumbel_right":
-        return rng.gumbel(parameter["location"], parameter["scale"], size=size)
-    raise AssertionError("registry resolution must reject unknown families")  # pragma: no cover
+    spec = FAMILY_REGISTRY.lookup(family)
+    return _SAMPLE[spec.id](rng, size, _validated_parameters(spec, mapping, legacy))
 
 
-__all__ = ["cdf", "ppf", "sample", "sf"]
+__all__ = ["cdf", "logpdf", "ppf", "sample", "sf"]

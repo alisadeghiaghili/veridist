@@ -111,7 +111,7 @@ def _evaluate_validated_log_density(
     numeric_observation = _validate_observation(observation)
     if numeric_observation is None:
         return LogDensityFailure(family, LogDensityErrorCode.NONFINITE_OBSERVATION)
-    if specification.fixed_location == 0.0 and numeric_observation <= 0.0:
+    if not specification.contains(numeric_observation):
         return LogDensityFailure(family, LogDensityErrorCode.SUPPORT_VIOLATION)
     try:
         candidate = _DISPATCH[family](numeric_observation, parameters)
@@ -202,6 +202,17 @@ def _gumbel_right(observation: float, parameters: Mapping[str, float]) -> float:
     if abs(z) <= 0.5:
         return -log(scale) - 1.0 - (z + expm1(-z))
     return -log(scale) - z - exp(-z)
+
+
+def _exponential(observation: float, parameters: Mapping[str, float]) -> float:
+    """Return ``log(rate) - rate * observation``; at ``0`` this is ``log(rate)``.
+
+    The registry support gate (``observation >= 0`` for the exponential) is
+    applied by the caller.
+    """
+
+    rate = parameters["rate"]
+    return log(rate) - _finite_intermediate(rate * observation)
 
 
 def _finite_intermediate(value: float) -> float:
@@ -336,6 +347,7 @@ _DISPATCH: Final[Mapping[FamilyId, _Evaluator]] = MappingProxyType(
         FamilyId.WEIBULL_MIN: _weibull_min,
         FamilyId.LOGNORMAL: _lognormal,
         FamilyId.GUMBEL_RIGHT: _gumbel_right,
+        FamilyId.EXPONENTIAL: _exponential,
     }
 )
 

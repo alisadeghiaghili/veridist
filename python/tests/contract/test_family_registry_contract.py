@@ -31,11 +31,12 @@ class FamilyRegistryContractTests(unittest.TestCase):
                 FamilyId.WEIBULL_MIN,
                 FamilyId.LOGNORMAL,
                 FamilyId.GUMBEL_RIGHT,
+                FamilyId.EXPONENTIAL,
             ),
         )
         self.assertEqual(
             tuple(family.id.value for family in list_families()),
-            ("normal", "gamma", "weibull_min", "lognormal", "gumbel_right"),
+            ("normal", "gamma", "weibull_min", "lognormal", "gumbel_right", "exponential"),
         )
         self.assertEqual(tuple(FAMILY_REGISTRY), tuple(family.id for family in list_families()))
         self.assertEqual(list_families(), list_families())
@@ -83,6 +84,7 @@ class FamilyRegistryContractTests(unittest.TestCase):
             "weibull_min": (("shape", "scale"), 2, 0.0),
             "lognormal": (("mu_log", "sigma_log"), 2, 0.0),
             "gumbel_right": (("location", "scale"), 2, None),
+            "exponential": (("rate",), 1, 0.0),
         }
         for identifier, (names, free_count, fixed_location) in expected.items():
             with self.subTest(identifier=identifier):
@@ -90,8 +92,8 @@ class FamilyRegistryContractTests(unittest.TestCase):
                 self.assertEqual(tuple(parameter.name for parameter in family.parameters), names)
                 self.assertEqual(family.free_parameter_count, free_count)
                 self.assertEqual(family.fixed_location, fixed_location)
-                self.assertEqual(family.planned_operations, frozenset({Operation.LOGPDF}))
-                self.assertEqual(family.available_operations, frozenset({Operation.LOGPDF}))
+                self.assertEqual(family.planned_operations, frozenset(Operation))
+                self.assertEqual(family.available_operations, frozenset(Operation))
                 self.assertTrue(family.plans(Operation.LOGPDF))
                 self.assertTrue(family.supports(Operation.LOGPDF))
 

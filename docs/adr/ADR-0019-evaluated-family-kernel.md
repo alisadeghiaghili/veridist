@@ -204,3 +204,30 @@ threshold, legacy isolation is green, and the ADR is reconciled with the
 capability matrix.  Acceptance of this registry does not accept numerical
 evaluators, fitting, censoring, or large-data claims.  Effort class: medium,
 as the first tranche of the family-evaluation-kernel milestone.
+
+### Amendment (2026-10)
+
+The registry described above has since grown, and its scalar surface is no
+longer log-density only:
+
+- It now declares six canonical families: `exponential` (parameter `rate`,
+  fixed location zero) joins the five above, appended after `gumbel_right`.
+  The support of the log-density is declared per family. `gamma`,
+  `weibull_min` and `lognormal` keep the open support `(0, inf)`, because
+  their density at zero is `0` or infinite depending on the shape, while
+  `exponential` has the closed support `[0, inf)`, because its density at
+  zero is the finite `rate`. The cumulative operations remain defined on the
+  whole real line: `cdf` is `0` and `sf` is `1` for `x <= 0`.
+- It declares and dispatches `cdf`, `sf`, `ppf`, `sample` and `fit` for every
+  family, in addition to `logpdf`, through one keyword calling convention:
+  `logpdf/cdf/sf/ppf(family, x, /, **parameters)` and
+  `sample(family, size, /, *, rng, **parameters)`, with the family given as a
+  `FamilyId` or its string value.
+- The earlier forms that passed the parameters as a mapping, and
+  `sample(family, size, parameters, rng)`, are deprecated; they return the
+  identical result, emit `DeprecationWarning`, and are planned for removal in
+  3.0.
+
+The statements above that the registry provides no CDF, PPF, SF or fitting,
+and that it has exactly five families, describe the original tranche and no
+longer apply.

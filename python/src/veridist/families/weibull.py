@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import StrEnum
 from math import exp, fsum, isfinite, log
+from types import MappingProxyType
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
 from veridist.families._reliability import admitted_observations, expand_bracket, positive_support
+from veridist.families.registry import FamilyId
 
 #: Starting and hard-limit half-widths for the log-shape search (natural log units).
 _LOG_SHAPE_BOUNDS = (-6.0, 6.0)
@@ -32,7 +34,7 @@ class WeibullFitFailure:
 
     ``converged`` is always ``False`` and ``restart_failures`` is always ``0``:
     a failure never ran an interior optimization to convergence, and no restart
-    strategy is attempted.
+    strategy is attempted.  Satisfies :class:`~veridist.families.results.FitFailure`.
     """
 
     code: WeibullFitFailureCode
@@ -43,6 +45,12 @@ class WeibullFitFailure:
     converged: bool = False
     restart_failures: int = 0
 
+    @property
+    def family(self) -> FamilyId:
+        """The family this failure belongs to."""
+
+        return FamilyId.WEIBULL_MIN
+
 
 @dataclass(frozen=True, slots=True)
 class WeibullFitSuccess:
@@ -51,7 +59,8 @@ class WeibullFitSuccess:
     ``converged`` is always ``True``: a result that only exists at the edge of
     the search range is reported as :attr:`WeibullFitFailureCode.BOUNDARY_SOLUTION`
     instead of a success. ``restart_failures`` is always ``0`` because the
-    deterministic golden-section search never restarts.
+    deterministic golden-section search never restarts.  Satisfies
+    :class:`~veridist.families.results.FitSuccess`.
     """
 
     shape: float
@@ -63,7 +72,7 @@ class WeibullFitSuccess:
     converged: bool = True
     restart_failures: int = 0
     complete: bool = True
-    family: str = "weibull_min"
+    family: FamilyId = FamilyId.WEIBULL_MIN
     location: float = 0.0
 
     def __post_init__(self) -> None:
@@ -71,6 +80,15 @@ class WeibullFitSuccess:
             raise ValueError("shape must be finite and positive")
         if not (isfinite(self.scale) and self.scale > 0.0 and isfinite(self.log_likelihood)):
             raise ValueError("scale and log likelihood must be finite")
+        if self.family != FamilyId.WEIBULL_MIN:
+            raise ValueError("a Weibull fit result belongs to the weibull_min family")
+        object.__setattr__(self, "family", FamilyId.WEIBULL_MIN)
+
+    @property
+    def parameters(self) -> Mapping[str, float]:
+        """The fitted parameters under their canonical registry names, read-only."""
+
+        return MappingProxyType({"shape": self.shape, "scale": self.scale})
 
 
 WeibullFit = WeibullFitSuccess | WeibullFitFailure
