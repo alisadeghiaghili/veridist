@@ -7,6 +7,9 @@ from dataclasses import dataclass
 from enum import StrEnum
 from importlib import import_module
 from math import expm1, isfinite, log, sqrt
+from typing import cast
+
+from veridist.domain._numeric import is_float, is_integer
 
 
 class GofStatistic(StrEnum):
@@ -77,22 +80,24 @@ class BootstrapInterval:
 def information_criteria(
     *, log_likelihood: float, sample_size: int, free_parameters: int
 ) -> InformationCriteria:
-    """Compute AIC/BIC from an explicit declared free-parameter count."""
+    """Compute AIC/BIC from an explicit declared free-parameter count.
 
-    if type(log_likelihood) is not float or not isfinite(log_likelihood):
-        raise ValueError("log_likelihood must be a finite built-in float")
-    if isinstance(sample_size, bool) or not isinstance(sample_size, int) or sample_size < 1:
-        raise ValueError("sample_size must be a positive built-in integer")
-    if (
-        isinstance(free_parameters, bool)
-        or not isinstance(free_parameters, int)
-        or free_parameters < 0
-    ):
-        raise ValueError("free_parameters must be a non-negative built-in integer")
+    ``log_likelihood`` is a finite real scalar and the two counts are integers;
+    Python and numpy scalars are accepted alike, ``bool`` never is.
+    """
+
+    if not is_float(log_likelihood) or not isfinite(log_likelihood):
+        raise ValueError("log_likelihood must be a finite real float")
+    if not is_integer(sample_size) or sample_size < 1:
+        raise ValueError("sample_size must be a positive integer")
+    if not is_integer(free_parameters) or free_parameters < 0:
+        raise ValueError("free_parameters must be a non-negative integer")
+    value = float(log_likelihood)
+    count = int(free_parameters)
     return InformationCriteria(
-        -2.0 * log_likelihood + 2.0 * free_parameters,
-        -2.0 * log_likelihood + free_parameters * log(sample_size),
-        free_parameters,
+        -2.0 * value + 2.0 * count,
+        -2.0 * value + count * log(int(sample_size)),
+        count,
     )
 
 
@@ -145,10 +150,11 @@ def refit_monte_carlo_gof(
         or any(type(statistic) is not GofStatistic for statistic in statistics)
     ):
         raise TypeError("statistics must be a non-empty frozenset of GofStatistic values")
-    if isinstance(replicates, bool) or not isinstance(replicates, int) or replicates < 1:
-        raise ValueError("replicates must be a positive built-in integer")
+    if not is_integer(replicates) or replicates < 1:
+        raise ValueError("replicates must be a positive integer")
     if not isinstance(rng, np.random.Generator):
         raise TypeError("rng must be a numpy.random.Generator")
+    replicates = int(replicates)
     values = tuple(observations)
     observed = _empirical_statistics(values)
     requested = tuple(sorted(statistics, key=str))
@@ -204,8 +210,9 @@ def compare_models(
     that they were not.
     """
 
-    if type(adequacy_threshold) is not float or not 0.0 <= adequacy_threshold <= 1.0:
-        raise ValueError("adequacy_threshold must be a built-in probability")
+    if not is_float(adequacy_threshold) or not 0.0 <= adequacy_threshold <= 1.0:
+        raise ValueError("adequacy_threshold must be a real probability")
+    threshold = float(adequacy_threshold)
     admitted: list[tuple[float, str]] = []
     for candidate in candidates:
         if not isinstance(candidate, Mapping):
@@ -215,12 +222,13 @@ def compare_models(
             candidate.get("aic"),
             candidate.get("p_value"),
         )
-        if type(family) is not str or type(aic) is not float or type(p_value) is not float:
-            raise TypeError("candidate family, aic, and p_value must be built-in values")
-        if not isfinite(aic) or not isfinite(p_value):
+        if type(family) is not str or not is_float(aic) or not is_float(p_value):
+            raise TypeError("candidate family must be a string and aic and p_value real floats")
+        numeric_aic, numeric_p_value = float(cast(float, aic)), float(cast(float, p_value))
+        if not isfinite(numeric_aic) or not isfinite(numeric_p_value):
             raise ValueError("candidate evidence must be finite")
-        if p_value >= adequacy_threshold:
-            admitted.append((aic, family))
+        if numeric_p_value >= threshold:
+            admitted.append((numeric_aic, family))
     if not admitted:
         return ModelSelection(SelectionCode.NONE_ADEQUATE, None)
     return ModelSelection(SelectionCode.SELECTED, min(admitted)[1])
@@ -231,17 +239,18 @@ def summarize_calibration(
 ) -> CalibrationSummary:
     """Report a binomial calibration rate and its declared binomial uncertainty."""
 
-    if isinstance(rejections, bool) or not isinstance(rejections, int) or rejections < 0:
-        raise ValueError("rejections must be a non-negative built-in integer")
-    if isinstance(replicates, bool) or not isinstance(replicates, int) or replicates < 1:
-        raise ValueError("replicates must be a positive built-in integer")
+    if not is_integer(rejections) or rejections < 0:
+        raise ValueError("rejections must be a non-negative integer")
+    if not is_integer(replicates) or replicates < 1:
+        raise ValueError("replicates must be a positive integer")
     if rejections > replicates:
         raise ValueError("rejections cannot exceed replicates")
-    if type(nominal_alpha) is not float or not 0.0 < nominal_alpha < 1.0:
-        raise ValueError("nominal_alpha must be a built-in interior probability")
+    if not is_float(nominal_alpha) or not 0.0 < nominal_alpha < 1.0:
+        raise ValueError("nominal_alpha must be a real interior probability")
+    alpha = float(nominal_alpha)
     return CalibrationSummary(
-        rejections / replicates,
-        sqrt(nominal_alpha * (1.0 - nominal_alpha) / replicates),
+        int(rejections) / int(replicates),
+        sqrt(alpha * (1.0 - alpha) / int(replicates)),
     )
 
 

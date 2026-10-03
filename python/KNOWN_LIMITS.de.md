@@ -22,10 +22,17 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
   das Letzte in der Datei ist (zum Beispiel eine abschließende Leerzeile,
   die ein Editor oder eine Tabellenkalkulation angehängt hat); eine leere
   Zeile an anderer Stelle bleibt ein `blank_record`-Fehler.
-- `SCALAR-FAMILIES`: Normal-, Gamma-, Weibull-Minimum-, Lognormal- und
-  Rechts-Gumbel-Familien bieten skalare Log-Dichte-, CDF-, Survival-, Quantil-
-  und Sampling-Operationen. Arrays, eine einheitliche Fit-API und Inferenz für
-  jede registrierte Familie fehlen.
+- `SCALAR-FAMILIES`: Normal-, Gamma-, Weibull-Minimum-, Lognormal-,
+  Rechts-Gumbel- und Exponentialfamilien bieten Log-Dichte-, CDF-, Survival-,
+  Quantil- und Sampling-Operationen. `logpdf`, `cdf`, `sf` und `ppf` werten
+  auch numpy-Arrays aus und führen Broadcasting zwischen dem Punkt und
+  arraywertigen Parametern durch; skalare Eingaben liefern weiterhin einen
+  Python-`float`. Exponential, Weibull-Minimum und Rechts-Gumbel nutzen
+  numpy-native Kerne. Normal, Lognormal und Gamma rufen die verifizierten
+  skalaren Kerne Element für Element auf: Die Ergebnisse sind mit dem
+  skalaren Pfad identisch, aber bei großen Arrays langsam, weil numpy weder
+  `erfc` noch die unvollständige Gammafunktion kennt und Veridist scipy nicht
+  als Laufzeitabhängigkeit hat. Inferenz für jede registrierte Familie fehlt.
 - `STREAM-SOURCE`: `IterableDataSource` adaptiert Chunk-Iterables des Aufrufers.
   Das Paket enthält keinen Parquet-, Arrow-, Dataframe-, Datenbank- oder
   Netzwerkadapter. Dauerhafte Fortsetzung ist auf den strikten Lebensdauer-CSV-

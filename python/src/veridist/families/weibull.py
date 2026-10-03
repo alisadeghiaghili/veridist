@@ -8,6 +8,7 @@ from enum import StrEnum
 from math import exp, fsum, isfinite, log
 from types import MappingProxyType
 
+from veridist.domain._numeric import is_real
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
 from veridist.families._reliability import admitted_observations, expand_bracket, positive_support
 from veridist.families.registry import FamilyId
@@ -177,8 +178,8 @@ def fit_weibull(
                 return failure(WeibullFitFailureCode.BOUNDARY_SOLUTION)
             shape = exp(log_shape)
         else:
-            if isinstance(fixed_shape, bool) or not isinstance(fixed_shape, int | float):
-                raise TypeError("fixed_shape must be a positive built-in real or None")
+            if not is_real(fixed_shape):
+                raise TypeError("fixed_shape must be a positive real number or None")
             shape = float(fixed_shape)
             if not isfinite(shape) or shape <= 0.0:
                 raise ValueError("fixed_shape must be finite and positive")

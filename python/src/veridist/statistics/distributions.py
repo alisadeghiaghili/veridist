@@ -9,6 +9,14 @@ point are positional, and the canonical parameters are keywords::
     ppf("normal", 0.975, mu=0.0, sigma=1.0)
     sample("exponential", 100, rng=generator, rate=0.5)
 
+``logpdf``, ``cdf``, ``sf`` and ``ppf`` also take numpy arrays (or any array-like) for
+the point and for every parameter, broadcast against each other.  With only
+scalar operands (Python or numpy real scalars, or 0-d arrays) the result is a
+Python ``float``; otherwise it is a ``float64`` ndarray of the broadcast shape.
+The exponential, Weibull and right-Gumbel families are evaluated by numpy-native
+kernels; the normal, lognormal and gamma families wrap the verified scalar kernels
+element by element, so they match the scalar result exactly but are not fast.
+
 The earlier forms that passed the parameters as a mapping
 (``cdf(family, x, {"rate": 1.0})`` and
 ``sample(family, size, parameters, rng)``) still work and return the identical
@@ -20,16 +28,18 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping
 from importlib import import_module
-from math import copysign, erfc, exp, expm1, fsum, inf, isfinite, lgamma, log, log1p, sqrt
+from math import copysign, erfc, exp, expm1, fsum, inf, isfinite, lgamma, log, log1p, nan, sqrt
 from types import MappingProxyType
-from typing import Any, Final, TypeAlias, cast, overload
+from typing import Any, Final, TypeAlias, overload
 
+from veridist.domain._numeric import is_integer
 from veridist.families.registry import (
     FAMILY_REGISTRY,
     FamilyId,
     FamilySpec,
     Operation,
 )
+from veridist.statistics import _vectorized as _vec
 from veridist.statistics.log_density import (
     LogDensityErrorCode,
     LogDensitySuccess,
@@ -45,23 +55,38 @@ _Sampler: TypeAlias = Callable[[Any, int, _Parameters], Any]
 _MISSING: Final = object()
 
 
-def _probability(value: float) -> None:
-    if type(value) is not float or not isfinite(value) or not 0.0 < value < 1.0:
-        raise ValueError(
-            "probability must be a finite built-in float strictly between zero and one"
-        )
+_PROBABILITY_MESSAGE: Final = "probability must be a finite real strictly between zero and one"
 
 
-def _finite_scalar(value: object) -> float:
-    if type(value) not in {int, float}:
-        raise TypeError("value must be a built-in real number")
+def _probability(value: object) -> Any:
+    """Return a scalar probability as ``float`` or an array validated element-wise.
+
+    Every element must lie strictly inside ``(0, 1)``.  Any other kind of value is a
+    ``ValueError`` too, as it always was for a probability.
+    """
+
     try:
-        numeric = float(cast(int | float, value))
-    except OverflowError as error:
-        raise ValueError("value must be finite") from error
-    if not isfinite(numeric):
-        raise ValueError("value must be finite")
-    return numeric
+        probability = _vec.coerce(value, "probability")
+    except TypeError:
+        raise ValueError(_PROBABILITY_MESSAGE) from None
+    if isinstance(probability, float):
+        if not 0.0 < probability < 1.0:  # NaN and the infinities fail this too
+            raise ValueError(_PROBABILITY_MESSAGE)
+        return probability
+    _vec.require_probability(probability, "q")
+    return probability
+
+
+def _finite_point(value: object) -> Any:
+    """Return a finite scalar point as ``float`` or an array validated element-wise."""
+
+    point = _vec.coerce(value, "value")
+    if isinstance(point, float):
+        if not isfinite(point):
+            raise ValueError("value must be finite")
+        return point
+    _vec.require_finite(point, "x")
+    return point
 
 
 def _call_parameters(
@@ -96,9 +121,9 @@ def _call_parameters(
 
 def _validated_parameters(
     spec: FamilySpec, parameters: Mapping[str, object], legacy: bool
-) -> _Parameters:
+) -> Mapping[str, Any]:
     try:
-        return spec.validate_parameters(**dict(parameters))
+        return _vec.validated_parameters(spec, parameters)
     except TypeError:
         # The deprecated form reported a non-numeric exponential ``rate`` as a
         # ValueError; keep that for the callers that still use it.
@@ -281,10 +306,28 @@ def _gamma_cdf(point: float, parameter: _Parameters) -> float:
     return lower
 
 
+def _exp_or_inf(value: float) -> float:
+    """Return ``exp(value)``, saturating to ``inf`` instead of raising on overflow."""
+
+    try:
+        return exp(value)
+    except OverflowError:
+        return inf
+
+
+def _pow_or_inf(base: float, exponent: float) -> float:
+    """Return ``base ** exponent`` for ``base >= 0``, saturating to ``inf`` on overflow."""
+
+    try:
+        return float(base**exponent)
+    except OverflowError:
+        return inf
+
+
 def _weibull_min_cdf(point: float, parameter: _Parameters) -> float:
     if point <= 0.0:
         return 0.0
-    return -expm1(-((point / parameter["scale"]) ** parameter["shape"]))
+    return -expm1(-_pow_or_inf(point / parameter["scale"], parameter["shape"]))
 
 
 def _lognormal_cdf(point: float, parameter: _Parameters) -> float:
@@ -294,7 +337,7 @@ def _lognormal_cdf(point: float, parameter: _Parameters) -> float:
 
 
 def _gumbel_right_cdf(point: float, parameter: _Parameters) -> float:
-    return exp(-exp(-(point - parameter["location"]) / parameter["scale"]))
+    return exp(-_exp_or_inf(-(point - parameter["location"]) / parameter["scale"]))
 
 
 def _exponential_sf(point: float, parameter: _Parameters) -> float:
@@ -311,7 +354,9 @@ def _gamma_sf(point: float, parameter: _Parameters) -> float:
 
 
 def _weibull_min_sf(point: float, parameter: _Parameters) -> float:
-    return 1.0 if point <= 0.0 else exp(-((point / parameter["scale"]) ** parameter["shape"]))
+    if point <= 0.0:
+        return 1.0
+    return exp(-_pow_or_inf(point / parameter["scale"], parameter["shape"]))
 
 
 def _lognormal_sf(point: float, parameter: _Parameters) -> float:
@@ -321,7 +366,7 @@ def _lognormal_sf(point: float, parameter: _Parameters) -> float:
 
 
 def _gumbel_right_sf(point: float, parameter: _Parameters) -> float:
-    return -expm1(-exp(-(point - parameter["location"]) / parameter["scale"]))
+    return -expm1(-_exp_or_inf(-(point - parameter["location"]) / parameter["scale"]))
 
 
 def _normal_ppf(probability: float) -> float:
@@ -446,11 +491,11 @@ def _gamma_ppf(probability: float, parameter: _Parameters) -> float:
 
 
 def _weibull_min_ppf(probability: float, parameter: _Parameters) -> float:
-    return float(parameter["scale"] * (-log1p(-probability)) ** (1.0 / parameter["shape"]))
+    return parameter["scale"] * _pow_or_inf(-log1p(-probability), 1.0 / parameter["shape"])
 
 
 def _lognormal_ppf(probability: float, parameter: _Parameters) -> float:
-    return exp(parameter["mu_log"] + parameter["sigma_log"] * _normal_ppf(probability))
+    return _exp_or_inf(parameter["mu_log"] + parameter["sigma_log"] * _normal_ppf(probability))
 
 
 def _gumbel_right_ppf(probability: float, parameter: _Parameters) -> float:
@@ -545,23 +590,91 @@ def _verify_operation_tables(
 _verify_operation_tables(FAMILY_REGISTRY.families, _TABLES)
 
 
-def logpdf(family: FamilyId | str, x: object, /, **parameters: object) -> float:
-    """Return the log-density of ``family`` at the finite scalar ``x``.
+def _logpdf_kernel(family: FamilyId) -> _vec.ScalarKernel:
+    """Return the scalar log-density as a kernel.
 
-    The result is ``-inf`` outside the family's support: ``x <= 0`` for
-    ``gamma``, ``weibull_min`` and ``lognormal``, ``x < 0`` for ``exponential``
-    (whose log-density at zero is ``log(rate)``), see
-    :attr:`~veridist.families.registry.FamilySpec.support`.  A non-finite ``x``
-    raises ``ValueError`` and a non-real or ``bool`` ``x`` raises ``TypeError``.
-    A value that binary64 cannot represent (an overflowing intermediate)
-    raises ``ArithmeticError``.  Use
-    :func:`veridist.statistics.log_density.evaluate_log_density` for the typed,
-    non-raising result.
+    The kernel gives the finite value, ``-inf`` outside the support and NaN for
+    a value that binary64 cannot represent.
     """
 
-    point = _finite_scalar(x)
+    def kernel(point: float, parameters: _Parameters) -> float:
+        evaluated = _evaluate_validated_log_density(family, parameters, point)
+        if isinstance(evaluated, LogDensitySuccess):
+            return evaluated.log_density
+        if evaluated.code is LogDensityErrorCode.SUPPORT_VIOLATION:
+            return -inf
+        return nan
+
+    return kernel
+
+
+def _array_table(
+    native: Mapping[FamilyId, _vec.ArrayKernel], scalar: Mapping[FamilyId, _vec.ScalarKernel]
+) -> Mapping[FamilyId, _vec.ArrayKernel]:
+    """Use the numpy-native kernel where there is one, else wrap the scalar kernel."""
+
+    table: dict[FamilyId, _vec.ArrayKernel] = {}
+    for family, kernel in scalar.items():
+        names = tuple(parameter.name for parameter in FAMILY_REGISTRY.families[family].parameters)
+        table[family] = native[family] if family in native else _vec.wrap_scalar(kernel, names)
+    return MappingProxyType(table)
+
+
+_ARRAY: Final[Mapping[Operation, Mapping[FamilyId, _vec.ArrayKernel]]] = MappingProxyType(
+    {
+        Operation.LOGPDF: _array_table(
+            _vec.NATIVE_LOGPDF, {family: _logpdf_kernel(family) for family in FamilyId}
+        ),
+        Operation.CDF: _array_table(_vec.NATIVE_CDF, _CDF),
+        Operation.SF: _array_table(_vec.NATIVE_SF, _SF),
+        Operation.PPF: _array_table(_vec.NATIVE_PPF, _PPF),
+    }
+)
+_verify_operation_tables(FAMILY_REGISTRY.families, _ARRAY)
+
+
+def _evaluate_array(
+    operation: Operation,
+    spec: FamilySpec,
+    point: Any,
+    parameters: Mapping[str, Any],
+) -> tuple[Any, Any]:
+    """Broadcast the operands and evaluate ``operation``: ``(broadcast point, float64 values)``."""
+
+    broadcast_point, broadcast_parameters = _vec.broadcast(point, parameters)
+    kernel = _ARRAY[operation][spec.id]
+    if spec.id in _vec.NATIVE_FAMILIES:
+        return broadcast_point, _vec.evaluate_native(kernel, broadcast_point, broadcast_parameters)
+    return broadcast_point, kernel(broadcast_point, broadcast_parameters)
+
+
+def logpdf(family: FamilyId | str, x: object, /, **parameters: object) -> Any:
+    """Return the log-density of ``family`` at the finite point ``x``.
+
+    ``x`` and every parameter may be a real scalar (Python or numpy; a ``bool`` is
+    rejected) or an array-like, broadcast against each other.  Scalar operands
+    give a Python ``float``; otherwise the result is a ``float64`` array of the
+    broadcast shape.
+
+    The result is ``-inf`` outside the family's support (element-wise for
+    arrays): ``x <= 0`` for ``gamma``, ``weibull_min`` and ``lognormal``,
+    ``x < 0`` for ``exponential`` (whose log-density at zero is ``log(rate)``),
+    see :attr:`~veridist.families.registry.FamilySpec.support`.  A non-finite
+    ``x`` (any element) raises ``ValueError``, and a non-real or ``bool`` ``x``
+    raises ``TypeError``.  Invalid parameters raise ``ValueError``; for an array
+    parameter the message names the parameter and its first invalid flat index.
+    A value that binary64 cannot represent (an overflowing intermediate) raises
+    ``ArithmeticError``.  Use
+    :func:`veridist.statistics.log_density.evaluate_log_density` for the typed,
+    non-raising scalar result.
+    """
+
+    point = _finite_point(x)
     spec = FAMILY_REGISTRY.lookup(family)
-    validated = spec.validate_parameters(**parameters)
+    validated = _vec.validated_parameters(spec, parameters)
+    if not _vec.is_scalar_call(point, validated):
+        broadcast_point, raw = _evaluate_array(Operation.LOGPDF, spec, point, validated)
+        return _vec.finish_logpdf(spec, broadcast_point, raw)
     evaluated = _evaluate_validated_log_density(spec.id, validated, point)
     if isinstance(evaluated, LogDensitySuccess):
         return evaluated.log_density
@@ -572,55 +685,71 @@ def logpdf(family: FamilyId | str, x: object, /, **parameters: object) -> float:
     )
 
 
+def _evaluate(
+    operation: Operation,
+    tables: Mapping[FamilyId, _Kernel],
+    family: FamilyId | str,
+    point: Any,
+    mapping: Mapping[str, object],
+    legacy: bool,
+) -> Any:
+    spec = FAMILY_REGISTRY.lookup(family)
+    validated = _validated_parameters(spec, mapping, legacy)
+    if _vec.is_scalar_call(point, validated):
+        return tables[spec.id](point, validated)
+    return _evaluate_array(operation, spec, point, validated)[1]
+
+
 @overload
-def cdf(family: FamilyId | str, x: object, /, **parameters: object) -> float: ...
+def cdf(family: FamilyId | str, x: object, /, **parameters: object) -> Any: ...
 @overload
-def cdf(family: str, value: object, parameters: Mapping[str, object], /) -> float: ...
-def cdf(family: FamilyId | str, x: object, /, *args: object, **parameters: object) -> float:
-    """Return the cumulative probability ``P(X <= x)`` for one finite scalar ``x``.
+def cdf(family: str, value: object, parameters: Mapping[str, object], /) -> Any: ...
+def cdf(family: FamilyId | str, x: object, /, *args: object, **parameters: object) -> Any:
+    """Return the cumulative probability ``P(X <= x)``.
 
     ``cdf(family, x, **parameters)``; the mapping form
-    ``cdf(family, x, {...})`` is deprecated.
+    ``cdf(family, x, {...})`` is deprecated.  ``x`` and the parameters follow the
+    scalar and array rules of :func:`logpdf`.
     """
 
-    point = _finite_scalar(x)
+    point = _finite_point(x)
     mapping, legacy = _call_parameters("cdf", args, parameters)
-    spec = FAMILY_REGISTRY.lookup(family)
-    return _CDF[spec.id](point, _validated_parameters(spec, mapping, legacy))
+    return _evaluate(Operation.CDF, _CDF, family, point, mapping, legacy)
 
 
 @overload
-def sf(family: FamilyId | str, x: object, /, **parameters: object) -> float: ...
+def sf(family: FamilyId | str, x: object, /, **parameters: object) -> Any: ...
 @overload
-def sf(family: str, value: object, parameters: Mapping[str, object], /) -> float: ...
-def sf(family: FamilyId | str, x: object, /, *args: object, **parameters: object) -> float:
-    """Return the stable survival probability ``P(X > x)`` for one finite scalar ``x``.
+def sf(family: str, value: object, parameters: Mapping[str, object], /) -> Any: ...
+def sf(family: FamilyId | str, x: object, /, *args: object, **parameters: object) -> Any:
+    """Return the stable survival probability ``P(X > x)``.
 
     ``sf(family, x, **parameters)``; the mapping form ``sf(family, x, {...})`` is
-    deprecated.
+    deprecated.  ``x`` and the parameters follow the scalar and array rules of
+    :func:`logpdf`.
     """
 
-    point = _finite_scalar(x)
+    point = _finite_point(x)
     mapping, legacy = _call_parameters("sf", args, parameters)
-    spec = FAMILY_REGISTRY.lookup(family)
-    return _SF[spec.id](point, _validated_parameters(spec, mapping, legacy))
+    return _evaluate(Operation.SF, _SF, family, point, mapping, legacy)
 
 
 @overload
-def ppf(family: FamilyId | str, q: float, /, **parameters: object) -> float: ...
+def ppf(family: FamilyId | str, q: object, /, **parameters: object) -> Any: ...
 @overload
-def ppf(family: str, probability: float, parameters: Mapping[str, object], /) -> float: ...
-def ppf(family: FamilyId | str, q: float, /, *args: object, **parameters: object) -> float:
+def ppf(family: str, probability: object, parameters: Mapping[str, object], /) -> Any: ...
+def ppf(family: FamilyId | str, q: object, /, *args: object, **parameters: object) -> Any:
     """Return the quantile for a strictly interior probability ``q``.
 
     ``ppf(family, q, **parameters)``; the mapping form ``ppf(family, q, {...})``
-    is deprecated.
+    is deprecated.  ``q`` may be an array: every element must lie strictly
+    inside ``(0, 1)``, otherwise ``ValueError`` names the first invalid flat
+    index.  The parameters follow the scalar and array rules of :func:`logpdf`.
     """
 
-    _probability(q)
+    probability = _probability(q)
     mapping, legacy = _call_parameters("ppf", args, parameters)
-    spec = FAMILY_REGISTRY.lookup(family)
-    return _PPF[spec.id](q, _validated_parameters(spec, mapping, legacy))
+    return _evaluate(Operation.PPF, _PPF, family, probability, mapping, legacy)
 
 
 @overload
@@ -640,13 +769,14 @@ def sample(
     """Draw ``size`` values using only the caller-owned ``numpy.random.Generator`` ``rng``.
 
     ``sample(family, size, rng=generator, **parameters)``; the form
-    ``sample(family, size, parameters, rng)`` is deprecated.
+    ``sample(family, size, parameters, rng)`` is deprecated.  ``size`` may be a
+    Python or numpy integer and the parameters may be Python or numpy scalars.
     """
 
     np = import_module("numpy")
 
-    if isinstance(size, bool) or not isinstance(size, int) or size < 0:
-        raise ValueError("size must be a non-negative built-in integer")
+    if not is_integer(size) or int(size) < 0:
+        raise ValueError("size must be a non-negative integer")
     if len(args) == 2:
         if rng is not _MISSING:
             raise TypeError("sample() got the generator twice")
@@ -658,7 +788,10 @@ def sample(
     if not isinstance(rng, np.random.Generator):
         raise TypeError("rng must be a numpy.random.Generator")
     spec = FAMILY_REGISTRY.lookup(family)
-    return _SAMPLE[spec.id](rng, size, _validated_parameters(spec, mapping, legacy))
+    scalars = _validated_parameters(spec, mapping, legacy)
+    if not all(isinstance(value, float) for value in scalars.values()):
+        raise TypeError("sample() takes scalar parameters")
+    return _SAMPLE[spec.id](rng, int(size), scalars)
 
 
 __all__ = ["cdf", "logpdf", "ppf", "sample", "sf"]

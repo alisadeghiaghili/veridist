@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterable, Sequence
 from math import exp, inf, isfinite
 from typing import TypeVar
 
+from veridist.domain._numeric import is_integer
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation, RightCensoredLifetime
 from veridist.domain.values import ExactValue, RealObservation, RightCensoredValue
 from veridist.engine.errors import CapabilityCode, CapabilityError
@@ -93,9 +94,9 @@ def _admit(
         raise ValueError("frequency_weights must match observations")
     expanded: list[_Observation] = []
     for value, weight in zip(values, weights, strict=True):
-        if isinstance(weight, bool) or not isinstance(weight, int) or weight < 0:
-            raise TypeError("frequency_weights must be non-negative built-in integers")
-        expanded.extend((value,) * weight)
+        if not is_integer(weight) or weight < 0:
+            raise TypeError("frequency_weights must be non-negative integers")
+        expanded.extend((value,) * int(weight))
     return tuple(expanded)
 
 

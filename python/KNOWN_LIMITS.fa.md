@@ -31,7 +31,8 @@
   <li><strong>سانسور چپ، سانسور فاصله‌ای و دادهٔ برش‌خورده</strong><sup id="fnref-censoring-truncation"><a href="#fn-censoring-truncation">۳</a></sup></li>
   <li><strong>متغیرهای کمکی</strong><sup id="fnref-covariates"><a href="#fn-covariates">۴</a></sup> مانند دما و فشار</li>
   <li><strong>وزن تحلیلی و پارامتر مکان آزاد</strong><sup id="fnref-weights-location"><a href="#fn-weights-location">۵</a></sup></li>
-  <li>ورودی آرایه‌ای، آداپتور آماده برای Parquet، Arrow، دیتافریم، پایگاه داده یا شبکه</li>
+  <li>آداپتور آماده برای Parquet، Arrow، دیتافریم، پایگاه داده یا شبکه</li>
+  <li>هستهٔ سریع آرایه‌ای برای خانواده‌های نرمال، لگ‌نرمال و گاما: ارزیابی آرایه‌ای وجود دارد (<code dir="ltr">logpdf</code>، <code dir="ltr">cdf</code>، <code dir="ltr">sf</code> و <code dir="ltr">ppf</code> آرایهٔ <bdi dir="ltr">numpy</bdi> می‌پذیرند و نقطه را با پارامترهای آرایه‌ای هم‌پخش می‌کنند؛ ورودی اسکالر همچنان <code dir="ltr">float</code> برمی‌گرداند)، اما فقط نمایی، وایبول کمینه و گامبل راست هستهٔ بومی <bdi dir="ltr">numpy</bdi> دارند. آن سه خانواده هستهٔ اسکالرِ راستی‌آزمایی‌شده را عنصر به عنصر فرا می‌خوانند؛ نتیجه با مسیر اسکالر دقیقاً یکی است، اما روی آرایه‌های بزرگ کند است، چون <bdi dir="ltr">numpy</bdi> تابع <code dir="ltr">erfc</code> یا گامای ناقص ندارد و <bdi dir="ltr">scipy</bdi> وابستگی زمان اجرای <bdi dir="ltr">Veridist</bdi> نیست.</li>
   <li>ذخیرهٔ وضعیت میان چند رایانه</li>
   <li>استنباط آماری برای همهٔ توزیع‌ها و سنجش پایداری انتخاب مدل با <strong>بوت‌استرپ</strong><sup id="fnref-bootstrap"><a href="#fn-bootstrap">۶</a></sup></li>
 </ul>

@@ -15,6 +15,8 @@ from math import isfinite
 from types import MappingProxyType
 from typing import Final, cast
 
+from veridist.domain._numeric import is_real
+
 _TOKEN = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
@@ -74,12 +76,12 @@ class ParameterSpec:
             raise TypeError("parameter role must be a ParameterRole")
 
     def validate(self, value: object) -> float:
-        """Validate a built-in finite real value for this parameter."""
+        """Validate a finite real scalar (Python or numpy, never a bool) for this parameter."""
 
-        if type(value) not in (int, float):
-            raise TypeError(f"{self.name} must be a built-in real number")
+        if not is_real(value):
+            raise TypeError(f"{self.name} must be a real number")
         try:
-            numeric = float(cast(int | float, value))
+            numeric = float(cast(float, value))
         except OverflowError as error:
             raise ValueError(f"{self.name} must be finite") from error
         if not isfinite(numeric):
