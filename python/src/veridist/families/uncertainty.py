@@ -1,6 +1,6 @@
 """Parameter and derived-quantity uncertainty for every fit, from one shared implementation.
 
-A fit success exposes ``result.uncertainty``: a :class:`FitUncertainty` or, when the
+A fit success exposes ``result.uncertainty()``: a :class:`FitUncertainty` or, when the
 observed information cannot be inverted, an :class:`UncertaintyUnavailable` that says
 why.  The computation is lazy (nothing is paid until ``uncertainty`` is read) and cached
 on the result.

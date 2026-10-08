@@ -323,7 +323,7 @@ class CoverageCalibration(unittest.TestCase):
                     family, exact, limits, use_newton=censored and family in NEWTON_FAMILIES
                 )
                 fallbacks += fell_back
-                uncertainty = None if result is None else result.uncertainty
+                uncertainty = None if result is None else result.uncertainty()
                 if not isinstance(uncertainty, FitUncertainty):
                     skipped += 1
                     continue

@@ -108,7 +108,6 @@ class LognormalFitSuccess:
 
         return MappingProxyType({"mu_log": self.mu_log, "sigma_log": self.sigma_log})
 
-    @property
     def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
         """Covariance, standard errors and confidence intervals of the fit, computed lazily.
 

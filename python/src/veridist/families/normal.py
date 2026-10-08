@@ -115,7 +115,6 @@ class NormalFitSuccess:
 
         return MappingProxyType({"mu": self.mu, "sigma": self.sigma})
 
-    @property
     def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
         """Covariance, standard errors and confidence intervals of the fit, computed lazily.
 

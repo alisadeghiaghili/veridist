@@ -97,7 +97,6 @@ class WeibullFitSuccess:
 
         return MappingProxyType({"shape": self.shape, "scale": self.scale})
 
-    @property
     def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
         """Covariance, standard errors and confidence intervals of the fit, computed lazily.
 

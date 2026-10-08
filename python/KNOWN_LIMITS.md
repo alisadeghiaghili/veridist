@@ -46,7 +46,7 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
 - `INFERENCE-EXP`: refit Monte Carlo KS/AD/CvM and adequacy-gated selection are
   limited to finite positive uncensored exponential samples. There is no
   bootstrap selection stability or calibration claim outside the tested grid.
-- `FIT-UNCERTAINTY`: every fit success reports `result.uncertainty`: the
+- `FIT-UNCERTAINTY`: every fit success reports `result.uncertainty()`: the
   covariance and standard errors from the observed information at the estimate,
   Wald and profile-likelihood confidence intervals (and, for uncensored
   exponential data, the exact chi-square interval), and the mean, quantiles

@@ -263,7 +263,7 @@ Veridist release record.
   array-likes, where `event` is boolean or integer 0/1 (true means the event was
   observed). The columns are validated as arrays first, and the error names the
   first bad row; the result equals the row-by-row construction.
-- `FitSuccess.uncertainty`, on every fit success (all six families, with right
+- `FitSuccess.uncertainty()`, on every fit success (all six families, with right
   censoring): a `FitUncertainty` with the `covariance` (the inverse observed
   information at the estimate, in the canonical parameter order), the
   `standard_errors`, and `confidence_intervals(level=0.95, method=...)`.

@@ -520,7 +520,7 @@ class UncertaintyReferenceTests(unittest.TestCase):
     def _uncertainty(self, family: str, setting: str) -> tuple[Any, FitUncertainty]:
         result = fit(family, _observations(family, setting))
         self.assertIsInstance(result, FitSuccess)
-        uncertainty = result.uncertainty  # type: ignore[union-attr]
+        uncertainty = result.uncertainty()  # type: ignore[union-attr]
         self.assertIsInstance(uncertainty, FitUncertainty)
         return result, uncertainty
 

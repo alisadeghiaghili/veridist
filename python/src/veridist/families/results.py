@@ -62,7 +62,6 @@ class FitSuccess(Protocol):
     @property
     def converged(self) -> bool: ...
 
-    @property
     def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable: ...
 
 

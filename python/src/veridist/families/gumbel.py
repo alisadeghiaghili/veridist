@@ -115,7 +115,6 @@ class GumbelFitSuccess:
 
         return MappingProxyType({"location": self.location, "scale": self.scale})
 
-    @property
     def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
         """Covariance, standard errors and confidence intervals of the fit, computed lazily.
 

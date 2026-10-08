@@ -59,7 +59,7 @@ def _observations(family: FamilyId, *, censored: bool) -> list[object]:
 def _uncertainty(family: FamilyId, *, censored: bool = False) -> tuple[FitSuccess, FitUncertainty]:
     result = fit(family, _observations(family, censored=censored))
     assert isinstance(result, FitSuccess)
-    uncertainty = result.uncertainty
+    uncertainty = result.uncertainty()
     assert isinstance(uncertainty, FitUncertainty)
     return result, uncertainty
 
@@ -129,10 +129,22 @@ class UncertaintyObjectContract(unittest.TestCase):
         with mock.patch.object(
             module, "compute_uncertainty", wraps=module.compute_uncertainty
         ) as spy:
-            first = result.uncertainty
-            second = result.uncertainty
+            first = result.uncertainty()
+            second = result.uncertainty()
         self.assertEqual(spy.call_count, 1)
         self.assertEqual(first, second)
+
+    def test_protocol_membership_check_does_not_compute_uncertainty(self) -> None:
+        # Runtime protocol checks evaluate data members with getattr on some
+        # Python versions; uncertainty is a method so that isinstance stays cheap.
+        result = fit_weibull(_observations(FamilyId.WEIBULL_MIN, censored=True))
+        import veridist.families.uncertainty as module
+
+        with mock.patch.object(
+            module, "compute_uncertainty", wraps=module.compute_uncertainty
+        ) as spy:
+            self.assertIsInstance(result, FitSuccess)
+        self.assertEqual(spy.call_count, 0)
 
     def test_a_failure_has_no_uncertainty_and_is_not_a_success(self) -> None:
         failure = fit(FamilyId.WEIBULL_MIN, [])
@@ -150,7 +162,7 @@ class UncertaintyObjectContract(unittest.TestCase):
             [v for v, w in zip(values, weights, strict=True) for _ in range(w)],
         )
         assert isinstance(weighted, FitSuccess) and isinstance(repeated, FitSuccess)
-        left, right = weighted.uncertainty, repeated.uncertainty
+        left, right = weighted.uncertainty(), repeated.uncertainty()
         assert isinstance(left, FitUncertainty) and isinstance(right, FitUncertainty)
         for i in range(2):
             for j in range(2):
@@ -279,7 +291,7 @@ class ExactIntervalContract(unittest.TestCase):
     def test_exact_interval_for_uncensored_exponential_data(self) -> None:
         result = fit_exponential([ExactLifetime(t) for t in (1.0, 2.0, 4.0, 8.0, 3.0)])
         assert isinstance(result, FitSuccess)
-        uncertainty = result.uncertainty
+        uncertainty = result.uncertainty()
         assert isinstance(uncertainty, FitUncertainty)
         interval = uncertainty.confidence_intervals(0.95, "exact")["rate"]
         # 2 * rate * T ~ chi-square(2 r) with r = 5 events and T = 18:
@@ -296,7 +308,7 @@ class ExactIntervalContract(unittest.TestCase):
             [ExactLifetime(1.0), ExactLifetime(4.0), RightCensoredLifetime(6.0)]
         )
         assert isinstance(result, FitSuccess)
-        uncertainty = result.uncertainty
+        uncertainty = result.uncertainty()
         assert isinstance(uncertainty, FitUncertainty)
         with self.assertRaises(ValueError) as caught:
             uncertainty.confidence_intervals(0.95, "exact")
@@ -315,7 +327,7 @@ class ExactIntervalContract(unittest.TestCase):
     def test_exact_derived_intervals_are_the_decreasing_images_of_the_rate_interval(self) -> None:
         result = fit_exponential([ExactLifetime(t) for t in (1.0, 2.0, 4.0, 8.0, 3.0)])
         assert isinstance(result, FitSuccess)
-        uncertainty = result.uncertainty
+        uncertainty = result.uncertainty()
         assert isinstance(uncertainty, FitUncertainty)
         low, high = uncertainty.confidence_intervals(0.9, "exact")["rate"]
         mean = uncertainty.mean(0.9, "exact")
@@ -455,7 +467,7 @@ class UncertaintyUnavailableContract(unittest.TestCase):
     def test_a_fixed_weibull_shape_has_no_uncertainty(self) -> None:
         result = fit_weibull(_observations(FamilyId.WEIBULL_MIN, censored=True), fixed_shape=1.7)
         assert isinstance(result, FitSuccess)
-        unavailable = result.uncertainty
+        unavailable = result.uncertainty()
         self.assertIsInstance(unavailable, UncertaintyUnavailable)
         assert isinstance(unavailable, UncertaintyUnavailable)
         self.assertIs(unavailable.reason, UncertaintyUnavailableReason.FIXED_PARAMETER)
@@ -463,7 +475,7 @@ class UncertaintyUnavailableContract(unittest.TestCase):
 
     def test_a_result_built_without_a_fit_has_no_data(self) -> None:
         result = WeibullFitSuccess(1.5, 4.0, -10.0, 5, 4, 1)
-        unavailable = result.uncertainty
+        unavailable = result.uncertainty()
         assert isinstance(unavailable, UncertaintyUnavailable)
         self.assertIs(unavailable.reason, UncertaintyUnavailableReason.NO_DATA)
 
@@ -471,11 +483,11 @@ class UncertaintyUnavailableContract(unittest.TestCase):
         template = fit_weibull(_observations(FamilyId.WEIBULL_MIN, censored=True))
         assert isinstance(template, WeibullFitSuccess)
         far_scale = dataclasses.replace(template, scale=1e6)
-        unavailable = far_scale.uncertainty
+        unavailable = far_scale.uncertainty()
         assert isinstance(unavailable, UncertaintyUnavailable)
         self.assertIs(unavailable.reason, UncertaintyUnavailableReason.NOT_POSITIVE_DEFINITE)
         overflowing = dataclasses.replace(template, shape=1e6)
-        unavailable = overflowing.uncertainty
+        unavailable = overflowing.uncertainty()
         assert isinstance(unavailable, UncertaintyUnavailable)
         self.assertIs(unavailable.reason, UncertaintyUnavailableReason.NOT_COMPUTABLE)
 
@@ -483,11 +495,11 @@ class UncertaintyUnavailableContract(unittest.TestCase):
         template = fit_weibull(_observations(FamilyId.WEIBULL_MIN, censored=True))
         assert isinstance(template, WeibullFitSuccess)
         changed = dataclasses.replace(template, scale=template.scale * 1.01)
-        original = template.uncertainty
-        other = changed.uncertainty
+        original = template.uncertainty()
+        other = changed.uncertainty()
         assert isinstance(original, FitUncertainty) and isinstance(other, FitUncertainty)
         self.assertNotEqual(original.estimates, other.estimates)
-        self.assertEqual(template.uncertainty, original)
+        self.assertEqual(template.uncertainty(), original)
 
     def test_reasons_are_stable_strings(self) -> None:
         self.assertEqual(

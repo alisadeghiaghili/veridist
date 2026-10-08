@@ -52,7 +52,7 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
   gelten nur für endliche positive unzensierte Exponentialstichproben. Es gibt
   keine Bootstrap-Auswahlstabilität oder Kalibrierungsbehauptung außerhalb des
   geprüften Gitters.
-- `FIT-UNCERTAINTY`: Jeder erfolgreiche Fit liefert `result.uncertainty`: die
+- `FIT-UNCERTAINTY`: Jeder erfolgreiche Fit liefert `result.uncertainty()`: die
   Kovarianz und die Standardfehler aus der beobachteten Information an der
   Schätzung, Wald- und Profil-Likelihood-Konfidenzintervalle (bei
   unzensierten Exponentialdaten zusätzlich das exakte Chi-Quadrat-Intervall)

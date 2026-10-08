@@ -168,7 +168,6 @@ class ExponentialFitSuccess:
 
         return MappingProxyType({"rate": self.rate})
 
-    @property
     def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
         """Covariance, standard errors and confidence intervals of the fit.
 
