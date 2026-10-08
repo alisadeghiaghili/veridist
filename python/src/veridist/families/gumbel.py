@@ -14,12 +14,14 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from math import exp, expm1, fsum, isfinite, log, log1p
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from veridist.domain.values import ExactValue, RealObservation
+from veridist.families._evidence import FitEvidence
 from veridist.families._reliability import (
     admitted_real_observations,
     exp_or_inf,
@@ -28,6 +30,9 @@ from veridist.families._reliability import (
     maximize_nested,
 )
 from veridist.families.registry import FamilyId
+
+if TYPE_CHECKING:
+    from veridist.families.uncertainty import FitUncertainty, UncertaintyUnavailable
 
 #: Starting and hard-limit bounds for the log-scale and the location, in units of the
 #: largest deviation of any observation from the mean of the exact values.
@@ -90,6 +95,7 @@ class GumbelFitSuccess:
     converged: bool = True
     restart_failures: int = 0
     complete: bool = True
+    _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.location) and isfinite(self.scale) and self.scale > 0.0):
@@ -108,6 +114,15 @@ class GumbelFitSuccess:
         """The fitted parameters under their canonical registry names, read-only."""
 
         return MappingProxyType({"location": self.location, "scale": self.scale})
+
+    def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
+        """Covariance, standard errors and confidence intervals of the fit, computed lazily.
+
+        An :class:`~veridist.families.uncertainty.UncertaintyUnavailable` (never an exception)
+        when the observed information cannot be inverted.
+        """
+
+        return self._evidence.uncertainty(self.family, self.parameters)
 
 
 GumbelFit = GumbelFitSuccess | GumbelFitFailure
@@ -259,7 +274,15 @@ def fit_gumbel_right(
         scale = peak * scale_standardized
         likelihood = _log_likelihood(values, location, scale)
         # The result class rejects a non-finite or non-positive estimate.
-        return GumbelFitSuccess(location, scale, likelihood, count, events, count - events)
+        return GumbelFitSuccess(
+            location,
+            scale,
+            likelihood,
+            count,
+            events,
+            count - events,
+            _evidence=FitEvidence(exact, censored),
+        )
     except (ArithmeticError, OverflowError, ValueError):
         return failure(GumbelFitFailureCode.OPTIMIZER_EXHAUSTED)
 

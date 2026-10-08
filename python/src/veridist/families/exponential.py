@@ -12,6 +12,11 @@ from typing import Final
 from veridist.domain.lifetimes import LifetimeObservation
 from veridist.engine.streaming import StreamSource, iter_stream
 from veridist.families.registry import FamilyId
+from veridist.families.uncertainty import (
+    FitUncertainty,
+    UncertaintyUnavailable,
+    exponential_uncertainty,
+)
 from veridist.statistics.exponential import (
     ExponentialReductionState,
     _ReductionOverflow,
@@ -162,6 +167,18 @@ class ExponentialFitSuccess:
         """The fitted parameters under their canonical registry names, read-only."""
 
         return MappingProxyType({"rate": self.rate})
+
+    def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
+        """Covariance, standard errors and confidence intervals of the fit.
+
+        Computed from the sufficient statistics (event count and total time), so nothing
+        beyond them is retained.  Besides the Wald and profile intervals, uncensored data
+        also admit ``method="exact"``.
+        """
+
+        return exponential_uncertainty(
+            self.rate, self.event_count, self.total_time, self.censored_count
+        )
 
     @property
     def converged(self) -> bool:
