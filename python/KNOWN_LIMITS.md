@@ -46,6 +46,25 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
 - `INFERENCE-EXP`: refit Monte Carlo KS/AD/CvM and adequacy-gated selection are
   limited to finite positive uncensored exponential samples. There is no
   bootstrap selection stability or calibration claim outside the tested grid.
+- `FIT-UNCERTAINTY`: every fit success reports `result.uncertainty`: the
+  covariance and standard errors from the observed information at the estimate,
+  Wald and profile-likelihood confidence intervals (and, for uncensored
+  exponential data, the exact chi-square interval), and the mean, quantiles
+  (B-lives) and survival probability with intervals. The numbers are
+  large-sample results and assume independent right censoring, an interior
+  maximum-likelihood estimate and a positive-definite information matrix;
+  Wald intervals also need a sample large enough for the likelihood to be
+  roughly quadratic. A profile interval can be unbounded on one side (reported
+  as `inf`, or `0` for a positive parameter, with a flag). When the information
+  is singular or not positive definite, or the Weibull shape was fixed,
+  `uncertainty` is an `UncertaintyUnavailable` value with a reason instead of
+  numbers. Profile intervals for derived quantities exist only for the
+  exponential and Weibull families. Seeded simulations (n = 30 uncensored and
+  n = 60 with about 30% right censoring, at least 400 replicates per family and
+  setting) gave coverage of the 95% intervals between about 92% and 96%;
+  nothing is claimed outside that grid. A fit keeps its observed values (the
+  exponential fit only its sufficient statistics) so that intervals can be
+  computed on demand.
 - `MEMORY-BOUND`: the delivery bound covers queued payload and active consumer
   leases until explicit release. It is a logical retained-payload bound, not a
   portable RSS ceiling.

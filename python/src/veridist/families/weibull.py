@@ -3,15 +3,20 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from math import exp, fsum, isfinite, log
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from veridist.domain._numeric import is_real
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
+from veridist.families._evidence import FitEvidence
 from veridist.families._reliability import admitted_observations, expand_bracket, positive_support
 from veridist.families.registry import FamilyId
+
+if TYPE_CHECKING:
+    from veridist.families.uncertainty import FitUncertainty, UncertaintyUnavailable
 
 #: Starting and hard-limit half-widths for the log-shape search (natural log units).
 _LOG_SHAPE_BOUNDS = (-6.0, 6.0)
@@ -75,6 +80,7 @@ class WeibullFitSuccess:
     complete: bool = True
     family: FamilyId = FamilyId.WEIBULL_MIN
     location: float = 0.0
+    _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.shape) and self.shape > 0.0):
@@ -90,6 +96,16 @@ class WeibullFitSuccess:
         """The fitted parameters under their canonical registry names, read-only."""
 
         return MappingProxyType({"shape": self.shape, "scale": self.scale})
+
+    @property
+    def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
+        """Covariance, standard errors and confidence intervals of the fit, computed lazily.
+
+        An :class:`~veridist.families.uncertainty.UncertaintyUnavailable` (never an exception)
+        when the observed information cannot be inverted.
+        """
+
+        return self._evidence.uncertainty(self.family, self.parameters)
 
 
 WeibullFit = WeibullFitSuccess | WeibullFitFailure
@@ -190,7 +206,14 @@ def fit_weibull(
         return failure(WeibullFitFailureCode.OPTIMIZER_EXHAUSTED)
     if not (isfinite(scale) and scale > 0.0 and isfinite(likelihood)):
         return failure(WeibullFitFailureCode.OPTIMIZER_EXHAUSTED)
-    return WeibullFitSuccess(shape, scale, likelihood, count, events, count - events)
+    evidence = FitEvidence(
+        tuple(float(value.time) for value in values if type(value) is ExactLifetime),
+        tuple(float(value.time) for value in values if type(value) is not ExactLifetime),
+        () if fixed_shape is None else ("shape",),
+    )
+    return WeibullFitSuccess(
+        shape, scale, likelihood, count, events, count - events, _evidence=evidence
+    )
 
 
 __all__ = [

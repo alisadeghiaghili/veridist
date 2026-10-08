@@ -12,12 +12,14 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from math import exp, fsum, isfinite, log, pi, sqrt
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from veridist.domain.values import ExactValue, RealObservation
+from veridist.families._evidence import FitEvidence
 from veridist.families._reliability import (
     admitted_real_observations,
     is_degenerate_sample,
@@ -25,6 +27,9 @@ from veridist.families._reliability import (
 )
 from veridist.families.lognormal import _log_normal_sf
 from veridist.families.registry import FamilyId
+
+if TYPE_CHECKING:
+    from veridist.families.uncertainty import FitUncertainty, UncertaintyUnavailable
 
 _HALF_LOG_2PI = 0.5 * log(2.0 * pi)
 
@@ -90,6 +95,7 @@ class NormalFitSuccess:
     converged: bool = True
     restart_failures: int = 0
     complete: bool = True
+    _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.mu) and isfinite(self.sigma) and self.sigma > 0.0):
@@ -108,6 +114,16 @@ class NormalFitSuccess:
         """The fitted parameters under their canonical registry names, read-only."""
 
         return MappingProxyType({"mu": self.mu, "sigma": self.sigma})
+
+    @property
+    def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
+        """Covariance, standard errors and confidence intervals of the fit, computed lazily.
+
+        An :class:`~veridist.families.uncertainty.UncertaintyUnavailable` (never an exception)
+        when the observed information cannot be inverted.
+        """
+
+        return self._evidence.uncertainty(self.family, self.parameters)
 
 
 NormalFit = NormalFitSuccess | NormalFitFailure
@@ -221,7 +237,15 @@ def fit_normal(
             sigma = peak * exp(log_sigma)
         likelihood = _log_likelihood(values, mu, sigma)
         # The result class rejects a non-finite or non-positive estimate.
-        return NormalFitSuccess(mu, sigma, likelihood, count, events, count - events)
+        return NormalFitSuccess(
+            mu,
+            sigma,
+            likelihood,
+            count,
+            events,
+            count - events,
+            _evidence=FitEvidence(exact, censored),
+        )
     except (ArithmeticError, OverflowError, ValueError):
         return failure(NormalFitFailureCode.OPTIMIZER_EXHAUSTED)
 

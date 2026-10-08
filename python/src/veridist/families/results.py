@@ -15,9 +15,12 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from enum import StrEnum
-from typing import Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 from veridist.families.registry import FamilyId
+
+if TYPE_CHECKING:
+    from veridist.families.uncertainty import FitUncertainty, UncertaintyUnavailable
 
 
 @runtime_checkable
@@ -31,6 +34,11 @@ class FitSuccess(Protocol):
     ``event_count`` is the number of exact observations and ``censored_count``
     the number of right-censored ones, so
     ``observation_count == event_count + censored_count``.
+
+    ``uncertainty`` is the covariance, standard errors, confidence intervals and derived
+    quantities of the fit (see :mod:`veridist.families.uncertainty`), computed on first access;
+    it is an :class:`~veridist.families.uncertainty.UncertaintyUnavailable` value, never an
+    exception, when the observed information cannot be inverted.
     """
 
     @property
@@ -53,6 +61,9 @@ class FitSuccess(Protocol):
 
     @property
     def converged(self) -> bool: ...
+
+    @property
+    def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable: ...
 
 
 @runtime_checkable

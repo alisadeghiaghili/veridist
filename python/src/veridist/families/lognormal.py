@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from math import erfc, exp, fsum, isfinite, log, log1p, pi, sqrt
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
+from veridist.families._evidence import FitEvidence
 from veridist.families._reliability import (
     admitted_observations,
     bounded_maximize,
@@ -17,6 +19,9 @@ from veridist.families._reliability import (
     positive_support,
 )
 from veridist.families.registry import FamilyId
+
+if TYPE_CHECKING:
+    from veridist.families.uncertainty import FitUncertainty, UncertaintyUnavailable
 
 _HALF_LOG_2PI = 0.5 * log(2.0 * pi)
 _SQRT_2 = sqrt(2.0)
@@ -86,6 +91,7 @@ class LognormalFitSuccess:
     complete: bool = True
     family: FamilyId = FamilyId.LOGNORMAL
     location: float = 0.0
+    _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.mu_log) and isfinite(self.sigma_log) and self.sigma_log > 0.0):
@@ -101,6 +107,16 @@ class LognormalFitSuccess:
         """The fitted parameters under their canonical registry names, read-only."""
 
         return MappingProxyType({"mu_log": self.mu_log, "sigma_log": self.sigma_log})
+
+    @property
+    def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
+        """Covariance, standard errors and confidence intervals of the fit, computed lazily.
+
+        An :class:`~veridist.families.uncertainty.UncertaintyUnavailable` (never an exception)
+        when the observed information cannot be inverted.
+        """
+
+        return self._evidence.uncertainty(self.family, self.parameters)
 
 
 LognormalFit = LognormalFitSuccess | LognormalFitFailure
@@ -246,7 +262,13 @@ def fit_lognormal(
         return failure(LognormalFitFailureCode.OPTIMIZER_EXHAUSTED)
     if not (isfinite(mu) and isfinite(sigma) and sigma > 0.0 and isfinite(likelihood)):
         return failure(LognormalFitFailureCode.OPTIMIZER_EXHAUSTED)
-    return LognormalFitSuccess(mu, sigma, likelihood, count, events, count - events)
+    evidence = FitEvidence(
+        tuple(float(value.time) for value in values if type(value) is ExactLifetime),
+        tuple(float(value.time) for value in values if type(value) is not ExactLifetime),
+    )
+    return LognormalFitSuccess(
+        mu, sigma, likelihood, count, events, count - events, _evidence=evidence
+    )
 
 
 __all__ = [

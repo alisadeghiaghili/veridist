@@ -52,6 +52,27 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
   gelten nur für endliche positive unzensierte Exponentialstichproben. Es gibt
   keine Bootstrap-Auswahlstabilität oder Kalibrierungsbehauptung außerhalb des
   geprüften Gitters.
+- `FIT-UNCERTAINTY`: Jeder erfolgreiche Fit liefert `result.uncertainty`: die
+  Kovarianz und die Standardfehler aus der beobachteten Information an der
+  Schätzung, Wald- und Profil-Likelihood-Konfidenzintervalle (bei
+  unzensierten Exponentialdaten zusätzlich das exakte Chi-Quadrat-Intervall)
+  sowie Mittelwert, Quantile (B-Lebensdauern) und Überlebenswahrscheinlichkeit
+  mit Intervallen. Die Zahlen sind Großstichprobenergebnisse und setzen
+  unabhängige Rechtszensierung, eine innere Maximum-Likelihood-Schätzung und
+  eine positiv definite Informationsmatrix voraus; Wald-Intervalle brauchen
+  zudem eine Stichprobe, die groß genug ist, damit die Likelihood annähernd
+  quadratisch ist. Ein Profil-Intervall kann auf einer Seite unbeschränkt sein
+  (ausgewiesen als `inf`, bei einem positiven Parameter als `0`, mit einem
+  Kennzeichen). Ist die Information singulär oder nicht positiv definit oder
+  wurde der Weibull-Formparameter festgelegt, ist `uncertainty` ein
+  `UncertaintyUnavailable`-Wert mit einem Grund statt Zahlen. Profil-Intervalle
+  für abgeleitete Größen gibt es nur für Exponential- und Weibull-Familie.
+  Simulationen mit festem Seed (n = 30 unzensiert und n = 60 mit etwa 30 %
+  Rechtszensierung, mindestens 400 Wiederholungen je Familie und Setting)
+  ergaben eine Überdeckung der 95-%-Intervalle zwischen etwa 92 % und 96 %;
+  außerhalb dieses Gitters wird nichts behauptet. Ein Fit behält seine
+  beobachteten Werte (der Exponential-Fit nur seine suffizienten Statistiken),
+  damit Intervalle bei Bedarf berechnet werden können.
 - `MEMORY-BOUND`: Die Liefergrenze umfasst Nutzdaten in der Warteschlange und
   aktive Verbraucher-Leases bis zur ausdrücklichen Freigabe. Sie ist eine
   logische Grenze für gehaltene Nutzdaten, keine portable RSS-Obergrenze.

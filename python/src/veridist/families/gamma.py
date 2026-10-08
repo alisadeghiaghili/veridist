@@ -12,12 +12,14 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable, Iterable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from math import exp, fsum, isfinite, lgamma, log, pi
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
+from veridist.families._evidence import FitEvidence
 from veridist.families._reliability import (
     admitted_observations,
     expand_bracket,
@@ -26,6 +28,9 @@ from veridist.families._reliability import (
     positive_support,
 )
 from veridist.families.registry import FamilyId
+
+if TYPE_CHECKING:
+    from veridist.families.uncertainty import FitUncertainty, UncertaintyUnavailable
 from veridist.statistics.distributions import _log_regularized_gamma_q
 from veridist.statistics.log_density import _stirling_error
 
@@ -93,6 +98,7 @@ class GammaFitSuccess:
     restart_failures: int = 0
     complete: bool = True
     location: float = 0.0
+    _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.shape) and self.shape > 0.0):
@@ -111,6 +117,16 @@ class GammaFitSuccess:
         """The fitted parameters under their canonical registry names, read-only."""
 
         return MappingProxyType({"shape": self.shape, "scale": self.scale})
+
+    @property
+    def uncertainty(self) -> FitUncertainty | UncertaintyUnavailable:
+        """Covariance, standard errors and confidence intervals of the fit, computed lazily.
+
+        An :class:`~veridist.families.uncertainty.UncertaintyUnavailable` (never an exception)
+        when the observed information cannot be inverted.
+        """
+
+        return self._evidence.uncertainty(self.family, self.parameters)
 
 
 GammaFit = GammaFitSuccess | GammaFitFailure
@@ -263,7 +279,15 @@ def fit_gamma(
         scale = scale_standardized * mean
         likelihood = _log_likelihood(values, shape, scale)
         # The result class rejects a non-finite or non-positive estimate.
-        return GammaFitSuccess(shape, scale, likelihood, count, events, count - events)
+        return GammaFitSuccess(
+            shape,
+            scale,
+            likelihood,
+            count,
+            events,
+            count - events,
+            _evidence=FitEvidence(exact, censored),
+        )
     except (ArithmeticError, OverflowError, ValueError):
         return failure(GammaFitFailureCode.OPTIMIZER_EXHAUSTED)
 

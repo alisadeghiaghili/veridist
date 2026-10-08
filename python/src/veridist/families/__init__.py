@@ -39,6 +39,13 @@ from veridist.families.normal import (
     fit_normal,
 )
 from veridist.families.results import FitFailure, FitSuccess
+from veridist.families.uncertainty import (
+    DerivedEstimate,
+    FitUncertainty,
+    ParameterInterval,
+    UncertaintyUnavailable,
+    UncertaintyUnavailableReason,
+)
 from veridist.families.weibull import (
     WeibullFit,
     WeibullFitFailure,
@@ -48,6 +55,7 @@ from veridist.families.weibull import (
 )
 
 __all__ = [
+    "DerivedEstimate",
     "ExponentialFit",
     "ExponentialFitFailure",
     "ExponentialFitFailureCode",
@@ -55,6 +63,7 @@ __all__ = [
     "ExponentialFitSuccess",
     "FitFailure",
     "FitSuccess",
+    "FitUncertainty",
     "GammaFit",
     "GammaFitFailure",
     "GammaFitFailureCode",
@@ -71,6 +80,9 @@ __all__ = [
     "NormalFitFailure",
     "NormalFitFailureCode",
     "NormalFitSuccess",
+    "ParameterInterval",
+    "UncertaintyUnavailable",
+    "UncertaintyUnavailableReason",
     "WeibullFit",
     "WeibullFitFailure",
     "WeibullFitFailureCode",

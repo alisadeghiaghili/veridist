@@ -263,6 +263,32 @@ Veridist release record.
   array-likes, where `event` is boolean or integer 0/1 (true means the event was
   observed). The columns are validated as arrays first, and the error names the
   first bad row; the result equals the row-by-row construction.
+- `FitSuccess.uncertainty`, on every fit success (all six families, with right
+  censoring): a `FitUncertainty` with the `covariance` (the inverse observed
+  information at the estimate, in the canonical parameter order), the
+  `standard_errors`, and `confidence_intervals(level=0.95, method=...)`.
+  `method="wald"` forms intervals for positive parameters on the log scale, so
+  they never contain a non-positive value; `method="profile"` inverts the
+  profile likelihood by bounded root finding and reports a side that never
+  crosses as `inf` (or `0`) with an `interval_details` flag; `method="exact"`
+  gives the chi-square interval for the exponential rate on uncensored data
+  and raises `ValueError` with censoring. The result is computed on first
+  access and cached. When the observed information is singular or not
+  positive definite, a Weibull shape was fixed, or the result carries no data,
+  `uncertainty` is an `UncertaintyUnavailable` value with a stable `reason`
+  instead of an exception. The Hessians are analytic (exponential, Weibull,
+  normal, lognormal, right Gumbel, and the exact part of gamma); the gamma
+  shape derivative of the censored term is a Richardson-extrapolated central
+  difference. A fit now keeps its observed values (the exponential fit only its
+  sufficient statistics) to support this.
+- `FitUncertainty.mean()`, `.quantile(p)` and `.survival(t)`: the mean (MTTF),
+  the quantile (the B-life: `quantile(0.1)` is B10) and the survival
+  probability, each as a frozen `DerivedEstimate` with `estimate`, `lower`,
+  `upper`, `method` and `level`. Wald intervals use the delta method on the log
+  scale (positive quantities), the logit scale (survival) or the identity scale
+  (real-line quantities); `method="profile"` is available for the exponential
+  and Weibull families and raises `NotImplementedError` naming
+  `method="wald"` elsewhere.
 
 ### Deprecated
 
