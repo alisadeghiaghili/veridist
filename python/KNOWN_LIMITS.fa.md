@@ -1,10 +1,10 @@
-<h1 dir="rtl" align="right">محدودیت‌های شناخته‌شدهٔ <bdi dir="ltr">Veridist</bdi> ۲٫۰</h1>
+<h1 dir="rtl" align="right">محدودیت‌های شناخته‌شدهٔ <bdi dir="ltr">Veridist</bdi> ۲٫۱</h1>
 
 <p dir="rtl" align="right"><a href="KNOWN_LIMITS.md">English</a> | <a href="KNOWN_LIMITS.fa.md">فارسی</a> | <a href="KNOWN_LIMITS.de.md">Deutsch</a></p>
 
 <!-- CI contract IDs: `FIT-CSV-EXP` `CSV-STRICT` `SCALAR-FAMILIES` `LL-CENSORED` `DEPRECATED-FORMS` `STREAM-SOURCE` `MEMORY-BOUND` `SCALE-EVIDENCE` `LICENSE` `SOURCE-MUTATION-STAT` `CONTEXT-REDACTION` -->
 
-<p dir="rtl" align="right">این صفحه مرزهای نسخهٔ <bdi dir="ltr">2.0.0</bdi> را به زبان ساده توضیح می‌دهد. اگر کاری در این فهرست نیامده، نباید آن را قابلیت پشتیبانی‌شده فرض کرد.</p>
+<p dir="rtl" align="right">این صفحه مرزهای نسخهٔ <bdi dir="ltr">2.1.0</bdi> را به زبان ساده توضیح می‌دهد. اگر کاری در این فهرست نیامده، نباید آن را قابلیت پشتیبانی‌شده فرض کرد.</p>
 
 <h2 dir="rtl" align="right">این محدودیت‌ها در کاربردهای رایج چه معنایی دارند؟</h2>
 

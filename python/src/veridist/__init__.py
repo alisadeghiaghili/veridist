@@ -6,7 +6,7 @@ package imports only the standard library; ``numpy`` is loaded on first use of
 an array operation.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 
 from veridist.adapters.csv_lifetimes import CsvLifetimeLimits, CsvLifetimeSchema
 from veridist.domain.arrays import lifetimes_from_arrays, values_from_arrays
