@@ -136,7 +136,7 @@ Diese Beispiele teilen eine statistische Struktur, nicht dieselbe fachliche Bede
 
 Distribution Fitting kann Kandidaten anpassen, ihre Parameter schätzen und ihre Eignung vergleichen. Der beste Rang ist nicht automatisch die wahre datenerzeugende Verteilung; möglicherweise ist kein Kandidat ausreichend.
 
-Automatische Rangfolgen zwischen den aktuellen Fit-Familien sind ein Zukunftsziel. Die vorhandene Inferenz und angemessenheitsgesteuerte Auswahl gelten enger: für endliche, positive, unzensierte Exponentialstichproben. Die [Funktionsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.de.md) dokumentiert den genauen Vertrag.
+Automatische Rangfolgen zwischen den aktuellen Fit-Familien sind ein Zukunftsziel. Die vorhandene Inferenz und angemessenheitsgesteuerte Auswahl decken alle sechs Familien ab, jedoch nur für endliche, unzensierte Stichproben im Arbeitsspeicher; eine Familie, die die Angemessenheitsprüfung besteht, wurde nicht verworfen, ist damit aber nicht das wahre Modell. Die [Funktionsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.de.md) dokumentiert den genauen Vertrag.
 
 ## Mit eigenen Daten arbeiten
 
@@ -173,9 +173,11 @@ Die Lebensdauerfamilien (Exponential, Weibull-Minimum, Lognormal und Gamma) verw
 
 ### Modellbewertung
 
-Endliche positive unzensierte Exponentialstichproben unterstützen Refit-Monte-
-Carlo-KS/AD/CvM, AIC/BIC und adequacy-gesteuerte Auswahl mit einem
-aufrufereigenen Generator. Inferenz ist enger als Fitting; die
+Endliche, unzensierte Stichproben unterstützen Refit-Monte-Carlo-KS/AD/CvM
+für alle sechs Familien (`refit_monte_carlo_gof`) sowie AIC/BIC und
+angemessenheitsgesteuerte Auswahl zwischen Familien (`assess_families`), jeweils
+mit einem aufrufereigenen Generator. Inferenz ist enger als Fitting: zensierte
+Beobachtungen werden nicht unterstützt; der
 [Capability Guide](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.de.md)
 dokumentiert den genauen Umfang.
 
@@ -240,7 +242,7 @@ und statistische Korrektheit:
   Vergleichsmaßen, Angemessenheitsinformation und einem expliziten Ergebnis,
   wenn kein Modell passt.
 - **Breitere statistische Bewertung:** Gütewerkzeuge auf
-  weitere Familien und Beobachtungsbedingungen ausdehnen.
+  zensierte Beobachtungen und weitere Beobachtungsbedingungen ausdehnen.
 - **Effizientere Verarbeitung großer Daten:** Laufzeit und Speicher mit
   reproduzierbaren Experimenten messen und verbessern.
 - **Praktische Vignetten:** Von einer realen Frage über Daten zur Interpretation

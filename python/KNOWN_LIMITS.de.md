@@ -6,7 +6,7 @@ Dieses Dokument definiert die Release-Grenze 2.0 für Paketversion `2.0.0`.
 
 - Teams für Zuverlässigkeit, Gesundheit, Kredit, Versicherung, digitale Produkte und Betrieb können ein klar definiertes Time-to-Event-Ergebnis modellieren, wenn die dokumentierten Annahmen gelten. Die aktuellen Modelle passen dieses Ergebnis nicht an Kunden-, Patienten-, Maschinen- oder Umweltmerkmale an.
 - Betrugs- und Cybersicherheitsteams können unterstützte skalare Verteilungsberechnungen verwenden, um unter einem bereits festgelegten Referenzmodell ein Signal zu erzeugen. Veridist trainiert keinen Klassifikator, wählt keine Alarmschwelle, verarbeitet keine Feedback-Labels und stellt keinen Adapter für produktive Ereignisströme bereit.
-- Teams aus Finanzen, Versicherung, Fertigung und Lieferketten können jede der sechs registrierten Familien an ihre Beobachtungen anpassen. Eine Familie muss weiterhin separat begründet werden: Anpassung und Unsicherheitsangabe ordnen keine Familien, und Anpassungsgütetests sowie Modellauswahl gibt es nur für den Exponentialfall (`INFERENCE-EXP`).
+- Teams aus Finanzen, Versicherung, Fertigung und Lieferketten können jede der sechs registrierten Familien an ihre Beobachtungen anpassen. Eine Familie muss weiterhin separat begründet werden: Anpassung und Unsicherheitsangabe ordnen keine Familien, und Anpassungsgütetests sowie angemessenheitsgesteuerte Modellauswahl decken nur endliche, unzensierte Stichproben ab (`INFERENCE-GOF`).
 - In jedem Bereich benötigt die Modellausgabe weiterhin fachliche Validierung, angemessene Stichproben, eine Analyse der Entscheidungskosten und alle erforderlichen rechtlichen, klinischen, sicherheitsbezogenen oder regulatorischen Prüfungen.
 
 - `FIT-CSV-EXP`: Der strikte CSV-Pfad passt nur ein Exponentialmodell mit
@@ -31,7 +31,7 @@ Dieses Dokument definiert die Release-Grenze 2.0 für Paketversion `2.0.0`.
   skalaren Kerne Element für Element auf: Die Ergebnisse sind mit dem
   skalaren Pfad identisch, aber bei großen Arrays langsam, weil numpy weder
   `erfc` noch die unvollständige Gammafunktion kennt und Veridist scipy nicht
-  als Laufzeitabhängigkeit hat. Anpassungsgütetests und Modellauswahl sind nicht für jede registrierte Familie verfügbar (siehe `INFERENCE-EXP`).
+  als Laufzeitabhängigkeit hat. Anpassungsgütetests und Modellauswahl werden unter `INFERENCE-GOF` beschrieben.
 - `STREAM-SOURCE`: `IterableDataSource` adaptiert Chunk-Iterables des Aufrufers.
   Das Paket enthält keinen Parquet-, Arrow-, Dataframe-, Datenbank- oder
   Netzwerkadapter. Dauerhafte Fortsetzung ist auf den strikten Lebensdauer-CSV-
@@ -47,10 +47,28 @@ Dieses Dokument definiert die Release-Grenze 2.0 für Paketversion `2.0.0`.
   wird, statt ein zweites Mal angewendet zu werden; die veraltete reine
   `bytes`-Form ist deprecated, gibt eine Warnung aus und kann eine
   Wiederholung im Allgemeinen nicht erkennen.
-- `INFERENCE-EXP`: Refit-Monte-Carlo-KS/AD/CvM und adequacy-gesteuerte Auswahl
-  gelten nur für endliche positive unzensierte Exponentialstichproben. Es gibt
-  keine Bootstrap-Auswahlstabilität oder Kalibrierungsbehauptung außerhalb des
-  geprüften Gitters.
+- `INFERENCE-GOF`: Der Refit-Monte-Carlo-Anpassungsgütetest mit KS/AD/CvM
+  (`refit_monte_carlo_gof`) und die angemessenheitsgesteuerte Auswahl zwischen
+  Familien (`assess_families`) decken alle sechs registrierten Familien ab, für
+  endliche, exakt beobachtete Stichproben im Arbeitsspeicher: streng positive
+  Werte für die Lebensdauerfamilien, beliebige reelle Werte für die Normal-
+  und die Rechts-Gumbel-Familie und mindestens drei Beobachtungen für jede
+  Familie außer der Exponentialfamilie, die eine benötigt. Zensierte
+  Beobachtungen werden mit `TypeError` abgelehnt; Anpassungsgütetests für
+  zensierte Daten gibt es nicht. Lässt sich die beobachtete Stichprobe nicht
+  anpassen, benennt `GofFitError` den Fehlercode, und es wird kein p-Wert
+  berechnet; eine Wiederholung, deren Neuanpassung scheitert, wird in
+  `failed_replicates` gezählt und nicht erneut versucht. Ein p-Wert ist eine
+  Monte-Carlo-Schätzung mit binomialem Standardfehler, und der Aufwand ist die
+  Zahl der Wiederholungen mal dem Aufwand einer Anpassung (eine Bewertung
+  fügt je Familie einen solchen Lauf hinzu). Das Bestehen der
+  Angemessenheitsprüfung bedeutet nur, dass eine Familie nicht verworfen
+  wurde, nicht dass sie das wahre Modell ist, und das AIC ordnet nur die
+  verglichenen Familien. Der Kalibrierungsnachweis ist eine Simulation mit
+  festem Seed auf einem deklarierten Gitter (Stichprobenumfänge 30 und 100, für
+  jede nicht exponentielle Familie ein oder zwei Parameterwerte, nominelles
+  Niveau 0,10); außerhalb davon wird nichts behauptet. Eine
+  Bootstrap-Auswahlstabilität gibt es nicht.
 - `FIT-UNCERTAINTY`: Jeder erfolgreiche Fit liefert `result.uncertainty()`: die
   Kovarianz und die Standardfehler aus der beobachteten Information an der
   Schätzung, Wald- und Profil-Likelihood-Konfidenzintervalle (bei

@@ -78,7 +78,7 @@ class V1InferenceSelectionTests(unittest.TestCase):
             "rng": generator,
         }
         invalid = (
-            {**common, "family": "normal"},
+            {**common, "family": "cauchy"},
             {**common, "statistics": frozenset()},
             {**common, "statistics": frozenset({"KS"})},
             {**common, "replicates": 0},
@@ -90,6 +90,18 @@ class V1InferenceSelectionTests(unittest.TestCase):
         for arguments in invalid:
             with self.subTest(arguments=arguments), self.assertRaises((TypeError, ValueError)):
                 refit_monte_carlo_gof(**arguments)
+
+        # An unknown family is a ValueError naming the family problem.
+        with self.assertRaisesRegex(ValueError, "unknown evaluated family"):
+            refit_monte_carlo_gof(**{**common, "family": "cauchy"})
+        # A two-parameter family needs at least three observations; two are
+        # enough for the exponential cell, which has one parameter.
+        for family in ("normal", "gamma", "weibull_min", "lognormal", "gumbel_right"):
+            with self.subTest(family=family), self.assertRaisesRegex(
+                ValueError, "at least 3 observations"
+            ):
+                refit_monte_carlo_gof(**{**common, "family": family})
+        self.assertEqual(refit_monte_carlo_gof(**common).successful_replicates, 1)
 
         observed = inference._empirical_statistics((0.5, 1.0))
         with patch.object(

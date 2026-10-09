@@ -4,6 +4,59 @@ This changelog covers only the nested `veridist` package. The repository-root
 legacy changelog describes the frozen `distfit_pro` history and is not a
 Veridist release record.
 
+## [Unreleased]
+
+### Added
+
+- `refit_monte_carlo_gof` now tests all six registered families, not only the
+  exponential: `family` is a `FamilyId` or its string value. For `normal`,
+  `gamma`, `weibull_min`, `lognormal` and `gumbel_right` it fits the observed
+  sample with the library's own fit, draws each replicate from the fitted model
+  with the caller's `numpy.random.Generator`, refits it, and evaluates the
+  KS/AD/CvM statistics against the refit model's CDF. The p-value, Monte Carlo
+  standard error and interval are computed as before. A replicate whose refit
+  fails (a `FitFailure`, no convergence, or an `ArithmeticError` or
+  `ValueError`) is counted in `failed_replicates`, never retried. The
+  observations are plain, finite, exactly observed numbers: strictly positive
+  for the lifetime families, any real number for `normal` and `gumbel_right`,
+  and at least three observations for every family except `exponential`.
+  The exponential cell is unchanged and its results are bit-identical.
+- `GofFitError`, a `VeridistError` and `RuntimeError`, raised when the observed
+  sample cannot be fitted (or its fitted CDF cannot be evaluated); its `family`
+  and `code` attributes name the failure and no p-value is computed.
+- `assess_families`, with the frozen results `FamilyAssessment` and
+  `FamilyCandidate`: it fits several families (by default every registered
+  family whose support contains the sample) to one sample and reports, per
+  family, the log-likelihood, the number of free parameters, AIC and BIC, the
+  refit Monte Carlo result for one statistic, and whether the p-value reaches
+  `adequacy_threshold`. A family that cannot be assessed is listed with its
+  failure code (`INVALID_SUPPORT`, `SAMPLE_TOO_SMALL`, a fit failure code,
+  `NOT_CONVERGED` or `NOT_REPRESENTABLE`). The selection is the lowest-AIC
+  family among those not rejected, or `NONE_ADEQUATE`. One generator is used
+  sequentially in family order, so a seed reproduces the result.
+- Seeded size and power evidence for the multi-family cell in
+  `tests/statistical/test_refit_gof_calibration.py` (rejection rate at level
+  0.10 on a declared grid of sample sizes 30 and 100), reference values for the
+  EDF statistics, and golden values pinning the exponential cell.
+
+### Changed
+
+- `refit_monte_carlo_gof` rejects observations that are not plain real numbers
+  (for example lifetime or value objects, censored or not) with a `TypeError`
+  saying that censored goodness-of-fit is not supported, and a `family` that is
+  neither a `FamilyId` nor a string with a `TypeError` (it was a `ValueError`).
+  An unknown family name still raises `ValueError`, and a sample of fewer than
+  three observations is rejected for every family except `exponential`.
+
+### Documentation
+
+- The README files, the capability guide, the known-limits files and the
+  documentation home page no longer describe goodness-of-fit and selection as
+  exponential-only; the known-limits entry `INFERENCE-EXP` is now
+  `INFERENCE-GOF` and states the scope, the minimum sample sizes, the cost and
+  the calibration grid. The API guide has a new section with a runnable
+  example, in English, Persian and German.
+
 ## [2.0.0] - 2026-10-09
 
 ### Fixed

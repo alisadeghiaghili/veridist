@@ -6,7 +6,7 @@ This document defines the 2.0 release boundary for package version `2.0.0`.
 
 - Reliability, health, credit, insurance, digital-product, and operations teams can model one clearly defined time-to-event outcome when the documented assumptions apply. The current models do not adjust that outcome for customer, patient, machine, or environmental characteristics.
 - Fraud and cybersecurity teams can use supported scalar distribution calculations to create a signal under an already specified reference model. Veridist does not train a classifier, select an alert threshold, process feedback labels, or supply a production event-stream adapter.
-- Finance, insurance, manufacturing, and supply-chain teams can fit any of the six registered families to their observations. A family still has to be justified separately: fitting and uncertainty reporting do not rank families, and goodness-of-fit tests and model selection exist only for the exponential case (`INFERENCE-EXP`).
+- Finance, insurance, manufacturing, and supply-chain teams can fit any of the six registered families to their observations. A family still has to be justified separately: fitting and uncertainty reporting do not rank families, and goodness-of-fit tests and adequacy-gated model selection cover only finite, uncensored samples (`INFERENCE-GOF`).
 - In every field, model output still needs domain validation, appropriate sampling, decision-cost analysis, and any required legal, clinical, safety, or regulatory review.
 
 - `FIT-CSV-EXP`: the strict CSV path fits only a fixed-location, rate-only
@@ -29,7 +29,7 @@ This document defines the 2.0 release boundary for package version `2.0.0`.
   wrap the verified scalar kernels element by element: the results equal the
   scalar path exactly, but large arrays are slow, because numpy has no `erfc`
   or incomplete gamma function and Veridist has no scipy runtime dependency.
-  Goodness-of-fit tests and model selection are not available for every registered family (see `INFERENCE-EXP`).
+  Goodness-of-fit tests and model selection are described under `INFERENCE-GOF`.
 - `STREAM-SOURCE`: `IterableDataSource` adapts caller-owned chunk iterables.
   The package bundles no Parquet, Arrow, dataframe, database, or network
   adapter. Durable resume is limited to the strict lifetime CSV path and local
@@ -42,9 +42,24 @@ This document defines the 2.0 release boundary for package version `2.0.0`.
   `(row_start, payload)` so a replayed chunk is recognized by its row range
   and skipped instead of being applied a second time; the legacy bare-`bytes`
   form is deprecated, emits a warning, and cannot generally detect a replay.
-- `INFERENCE-EXP`: refit Monte Carlo KS/AD/CvM and adequacy-gated selection are
-  limited to finite positive uncensored exponential samples. There is no
-  bootstrap selection stability or calibration claim outside the tested grid.
+- `INFERENCE-GOF`: refit Monte Carlo KS/AD/CvM goodness-of-fit
+  (`refit_monte_carlo_gof`) and adequacy-gated selection among families
+  (`assess_families`) cover all six registered families, for finite, exactly
+  observed samples held in memory: strictly positive values for the lifetime
+  families, any real value for the normal and right-Gumbel families, and at
+  least three observations for every family except the exponential, which needs
+  one. Censored observations are rejected with `TypeError`; goodness-of-fit for
+  censored data is not available. If the observed sample cannot be fitted,
+  `GofFitError` names the failure code and no p-value is computed; a replicate
+  whose refit fails is counted in `failed_replicates`, not retried. A p-value is
+  a Monte Carlo estimate with a binomial standard error, and the cost is the
+  number of replicates times the cost of one fit (an assessment adds one such
+  run per family). Passing the adequacy gate means a family was not rejected,
+  not that it is the true model, and AIC ranks only the families compared. The
+  calibration evidence is a seeded simulation on a declared grid only
+  (sample sizes 30 and 100, one or two parameter settings for each
+  non-exponential family, nominal level 0.10); nothing is claimed outside it.
+  There is no bootstrap selection stability.
 - `FIT-UNCERTAINTY`: every fit success reports `result.uncertainty()`: the
   covariance and standard errors from the observed information at the estimate,
   Wald and profile-likelihood confidence intervals (and, for uncensored

@@ -214,6 +214,56 @@ print(round(b10.estimate, 1), round(b10.lower, 1), round(b10.upper, 1))
 
 When the observed information is singular, a Weibull shape was fixed, or the result carries no data, `uncertainty()` returns an `UncertaintyUnavailable` value with a stable `reason` instead of raising. Check the type before reading intervals.
 
+## Check how well a family fits your sample
+
+`refit_monte_carlo_gof` in `veridist.inference` tests whether a sample is consistent with one of the six families, using the Kolmogorov-Smirnov (`KS`), Anderson-Darling (`AD`), or Cramér-von Mises (`CVM`) statistic. It fits the family to your sample, draws `replicates` samples of the same size from that fitted model with your numpy generator, refits every one, and reports how often the refit statistic reaches the observed one. Refitting every replicate is what keeps the p-value honest about the estimated parameters. The observations are plain, finite, exactly observed numbers: strictly positive for the lifetime families, any real number for `normal` and `gumbel_right`, and at least three of them for every family except `exponential`. Censored observations raise `TypeError`.
+
+If the family cannot be fitted to your sample, `GofFitError` names the failure code and no p-value is computed. A replicate whose refit fails is counted in `failed_replicates`; it is neither retried nor hidden. `assess_families` fits several families to the same sample, reports the log-likelihood, AIC, BIC, and p-value of each, and selects the lowest-AIC family that was not rejected, or returns `NONE_ADEQUATE`. One generator drives the families in the order given, so the same seed reproduces the result. The cost is the number of replicates times the cost of one fit, for every family assessed.
+
+```python
+import numpy as np
+from veridist.inference import GofStatistic, assess_families, refit_monte_carlo_gof
+
+hours = [
+    140.0, 22.0, 7052.0, 306.0, 390.0, 109.0, 162.0, 246.0, 199.0, 60.0,
+    373.0, 310.0, 124.0, 50.0, 40.0, 33.0, 225.0, 88.0, 548.0, 39.0,
+]
+rng = np.random.default_rng(2024)
+
+test = refit_monte_carlo_gof(
+    observations=hours,
+    family="lognormal",
+    statistics=frozenset({GofStatistic.AD}),
+    replicates=199,
+    rng=rng,
+)
+print(test.requested_replicates, test.failed_replicates)
+print(test.p_values[GofStatistic.AD] >= 0.05)
+
+result = assess_families(
+    observations=hours,
+    families=["lognormal", "weibull_min", "gamma", "normal", "exponential"],
+    replicates=99,
+    rng=rng,
+)
+for row in result.candidates:
+    print(f"{row.family.value} {row.aic:.1f} {row.adequate}")
+print(result.selection.code.value, result.selection.selected_family)
+```
+
+```text
+199 0
+True
+lognormal 271.4 True
+weibull_min 281.1 False
+gamma 286.7 False
+normal 353.4 False
+exponential 292.6 False
+SELECTED lognormal
+```
+
+Passing the adequacy check means a family was not rejected at that threshold. It does not show that the family is the true model, and a small sample can fail to reject a poor one. Here only the lognormal family passes, and its AIC is about 10 points below the next family's, so it is selected clearly; the other four are rejected. The calibration evidence is a seeded simulation on a declared grid only; see <a href="../../KNOWN_LIMITS.md">known limits</a> for the exact scope.
+
 ## Saving progress and continuing a calculation
 
 For data that your program has already split into small JSON chunks, import `fit_exponential_checkpointed_chunks` from the `veridist` package. The function processes each chunk separately and stores the sufficient statistics<sup id="fnref-sufficient-statistics"><a href="#fn-sufficient-statistics">19</a></sup> needed to continue the calculation; it does not store a copy of the original data rows in the state file.

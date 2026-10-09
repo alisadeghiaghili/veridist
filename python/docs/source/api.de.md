@@ -214,6 +214,56 @@ print(round(b10.estimate, 1), round(b10.lower, 1), round(b10.upper, 1))
 
 Wenn die beobachtete Information singulär ist, ein Weibull-Formparameter festgelegt wurde oder das Ergebnis keine Daten enthält, gibt `uncertainty()` statt einer Ausnahme einen Wert `UncertaintyUnavailable` mit einem stabilen `reason` zurück. Prüfen Sie den Typ, bevor Sie Intervalle lesen.
 
+## Prüfen, wie gut eine Familie zu Ihrer Stichprobe passt
+
+`refit_monte_carlo_gof` in `veridist.inference` prüft, ob eine Stichprobe mit einer der sechs Familien vereinbar ist, mit der Kolmogorov-Smirnov- (`KS`), der Anderson-Darling- (`AD`) oder der Cramér-von-Mises-Statistik (`CVM`). Die Funktion passt die Familie an Ihre Stichprobe an, zieht mit Ihrem numpy-Generator `replicates` gleich große Stichproben aus diesem angepassten Modell, passt jede erneut an und meldet, wie oft die Statistik der erneuten Anpassung die beobachtete erreicht. Die erneute Anpassung jeder Wiederholung hält den p-Wert ehrlich gegenüber den geschätzten Parametern. Die Beobachtungen sind einfache, endliche, exakt beobachtete Zahlen: streng positiv für die Lebensdauerfamilien, beliebige reelle Zahlen für `normal` und `gumbel_right` und mindestens drei für jede Familie außer `exponential`. Zensierte Beobachtungen lösen `TypeError` aus.
+
+Lässt sich die Familie nicht an Ihre Stichprobe anpassen, benennt `GofFitError` den Fehlercode, und es wird kein p-Wert berechnet. Eine Wiederholung, deren erneute Anpassung scheitert, wird in `failed_replicates` gezählt; sie wird weder wiederholt noch verborgen. `assess_families` passt mehrere Familien an dieselbe Stichprobe an, meldet Log-Likelihood, AIC, BIC und p-Wert jeder Familie und wählt die Familie mit dem kleinsten AIC, die nicht verworfen wurde, oder liefert `NONE_ADEQUATE`. Ein Generator steuert die Familien in der angegebenen Reihenfolge, sodass derselbe Seed das Ergebnis reproduziert. Der Aufwand ist für jede bewertete Familie die Zahl der Wiederholungen mal dem Aufwand einer Anpassung.
+
+```python
+import numpy as np
+from veridist.inference import GofStatistic, assess_families, refit_monte_carlo_gof
+
+hours = [
+    140.0, 22.0, 7052.0, 306.0, 390.0, 109.0, 162.0, 246.0, 199.0, 60.0,
+    373.0, 310.0, 124.0, 50.0, 40.0, 33.0, 225.0, 88.0, 548.0, 39.0,
+]
+rng = np.random.default_rng(2024)
+
+test = refit_monte_carlo_gof(
+    observations=hours,
+    family="lognormal",
+    statistics=frozenset({GofStatistic.AD}),
+    replicates=199,
+    rng=rng,
+)
+print(test.requested_replicates, test.failed_replicates)
+print(test.p_values[GofStatistic.AD] >= 0.05)
+
+result = assess_families(
+    observations=hours,
+    families=["lognormal", "weibull_min", "gamma", "normal", "exponential"],
+    replicates=99,
+    rng=rng,
+)
+for row in result.candidates:
+    print(f"{row.family.value} {row.aic:.1f} {row.adequate}")
+print(result.selection.code.value, result.selection.selected_family)
+```
+
+```text
+199 0
+True
+lognormal 271.4 True
+weibull_min 281.1 False
+gamma 286.7 False
+normal 353.4 False
+exponential 292.6 False
+SELECTED lognormal
+```
+
+Das Bestehen der Angemessenheitsprüfung bedeutet, dass eine Familie bei dieser Schwelle nicht verworfen wurde. Es zeigt nicht, dass die Familie das wahre Modell ist, und eine kleine Stichprobe kann ein schlechtes Modell möglicherweise nicht verwerfen. Hier besteht nur die Lognormalfamilie, und ihr AIC liegt etwa 10 Punkte unter dem der nächsten Familie, sodass sie eindeutig gewählt wird; die anderen vier werden verworfen. Der Kalibrierungsnachweis ist nur eine Simulation mit festem Seed auf einem deklarierten Gitter; den genauen Umfang nennen die <a href="../../KNOWN_LIMITS.de.md">bekannten Grenzen</a>.
+
 ## Fortschritt speichern und eine Berechnung fortsetzen
 
 Für Daten, die Ihr Programm bereits in kleine JSON-Abschnitte aufgeteilt hat, importieren Sie `fit_exponential_checkpointed_chunks` aus dem Paket `veridist`. Die Funktion verarbeitet jeden Abschnitt einzeln und speichert die hinreichenden Statistiken<sup id="fnref-sufficient-statistics"><a href="#fn-sufficient-statistics">19</a></sup>, die zum Fortsetzen der Berechnung nötig sind; sie speichert keine Kopie der ursprünglichen Datenzeilen in der Zustandsdatei.

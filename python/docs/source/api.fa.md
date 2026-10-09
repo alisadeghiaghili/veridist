@@ -218,6 +218,56 @@ print(round(b10.estimate, 1), round(b10.lower, 1), round(b10.upper, 1))
 
 <p dir="rtl" align="right">وقتی اطلاعات مشاهده‌شده منفرد است، شکل Weibull ثابت شده یا نتیجه داده‌ای ندارد، <code dir="ltr">uncertainty()</code> به‌جای ایجاد استثنا یک مقدار <code dir="ltr">UncertaintyUnavailable</code> با <code dir="ltr">reason</code> پایدار برمی‌گرداند. پیش از خواندن بازه‌ها نوع را بررسی کنید.</p>
 
+<h2 dir="rtl" align="right">بررسی میزان سازگاری یک خانواده با نمونهٔ شما</h2>
+
+<p dir="rtl" align="right"><code dir="ltr">refit_monte_carlo_gof</code> در <code dir="ltr">veridist.inference</code> بررسی می‌کند که یک نمونه با یکی از شش خانواده سازگار است یا نه؛ آماره‌ای که به کار می‌رود کولموگروف-اسمیرنوف (<code dir="ltr">KS</code>)، اندرسون-دارلینگ (<code dir="ltr">AD</code>) یا کرامر-فون میزس (<code dir="ltr">CVM</code>) است. این تابع خانواده را روی نمونهٔ شما برازش می‌دهد، با مولد numpy شما <code dir="ltr">replicates</code> نمونهٔ هم‌اندازه از همان مدل برازش‌شده می‌کشد، هر کدام را دوباره برازش می‌دهد و گزارش می‌کند که آمارهٔ برازش مجدد چند بار به آمارهٔ مشاهده‌شده می‌رسد. همین برازش مجددِ هر تکرار است که مقدار p را نسبت به پارامترهای برآوردشده صادقانه نگه می‌دارد. مشاهدات باید عددهای ساده، متناهی و دقیقاً مشاهده‌شده باشند: برای خانواده‌های طول عمر کاملاً مثبت، برای <code dir="ltr">normal</code> و <code dir="ltr">gumbel_right</code> هر عدد حقیقی، و برای هر خانواده جز <code dir="ltr">exponential</code> دست‌کم سه مشاهده. مشاهدات سانسورشده <code dir="ltr">TypeError</code> ایجاد می‌کنند.</p>
+
+<p dir="rtl" align="right">اگر خانواده روی نمونهٔ شما برازش نشود، <code dir="ltr">GofFitError</code> کد شکست را نام می‌برد و هیچ مقدار p محاسبه نمی‌شود. تکراری که برازش مجددش شکست بخورد در <code dir="ltr">failed_replicates</code> شمرده می‌شود؛ نه دوباره تلاش می‌شود و نه پنهان می‌ماند. <code dir="ltr">assess_families</code> چند خانواده را روی همان نمونه برازش می‌دهد، لگاریتم درست‌نمایی، <bdi dir="ltr">AIC</bdi>، <bdi dir="ltr">BIC</bdi> و مقدار p هر کدام را گزارش می‌کند و خانواده‌ای را که کمترین <bdi dir="ltr">AIC</bdi> را دارد و رد نشده است برمی‌گزیند، یا <code dir="ltr">NONE_ADEQUATE</code> برمی‌گرداند. یک مولد، خانواده‌ها را به همان ترتیبی که داده‌اید پیش می‌برد، پس بذر یکسان همان نتیجه را بازتولید می‌کند. هزینه، برای هر خانوادهٔ ارزیابی‌شده، برابر است با شمار تکرارها ضرب در هزینهٔ یک برازش.</p>
+
+```python
+import numpy as np
+from veridist.inference import GofStatistic, assess_families, refit_monte_carlo_gof
+
+hours = [
+    140.0, 22.0, 7052.0, 306.0, 390.0, 109.0, 162.0, 246.0, 199.0, 60.0,
+    373.0, 310.0, 124.0, 50.0, 40.0, 33.0, 225.0, 88.0, 548.0, 39.0,
+]
+rng = np.random.default_rng(2024)
+
+test = refit_monte_carlo_gof(
+    observations=hours,
+    family="lognormal",
+    statistics=frozenset({GofStatistic.AD}),
+    replicates=199,
+    rng=rng,
+)
+print(test.requested_replicates, test.failed_replicates)
+print(test.p_values[GofStatistic.AD] >= 0.05)
+
+result = assess_families(
+    observations=hours,
+    families=["lognormal", "weibull_min", "gamma", "normal", "exponential"],
+    replicates=99,
+    rng=rng,
+)
+for row in result.candidates:
+    print(f"{row.family.value} {row.aic:.1f} {row.adequate}")
+print(result.selection.code.value, result.selection.selected_family)
+```
+
+```text
+199 0
+True
+lognormal 271.4 True
+weibull_min 281.1 False
+gamma 286.7 False
+normal 353.4 False
+exponential 292.6 False
+SELECTED lognormal
+```
+
+<p dir="rtl" align="right">گذشتن از بررسی کفایت یعنی خانواده در آن آستانه رد نشده است. این نشان نمی‌دهد که خانواده مدل درست است، و نمونهٔ کوچک ممکن است نتواند یک مدل ضعیف را رد کند. اینجا فقط خانوادهٔ لگ‌نرمال می‌گذرد و <bdi dir="ltr">AIC</bdi> آن حدود ۱۰ واحد کمتر از خانوادهٔ بعدی است، پس به‌روشنی انتخاب می‌شود؛ چهار خانوادهٔ دیگر رد می‌شوند. شواهد کالیبراسیون فقط یک شبیه‌سازی با بذر ثابت روی شبکه‌ای اعلام‌شده است؛ برای دامنهٔ دقیق <a href="../../KNOWN_LIMITS.fa.md">محدودیت‌های شناخته‌شده</a> را ببینید.</p>
+
 <h2 dir="rtl" align="right">ذخیرهٔ پیشرفت و ادامهٔ محاسبه</h2>
 
 <p dir="rtl" align="right">برای داده‌ای که برنامهٔ شما از قبل به بخش‌های کوچک JSON تقسیم کرده است، تابع <code dir="ltr">fit_exponential_checkpointed_chunks</code> را از پکیج <code dir="ltr">veridist</code> وارد کنید. این تابع هر بخش را جداگانه پردازش می‌کند و آمار کافی<sup id="fnref-sufficient-statistics"><a href="#fn-sufficient-statistics">۱۹</a></sup> لازم برای ادامهٔ محاسبه را ذخیره می‌کند؛ نسخه‌ای از سطرهای اصلی داده را در فایل وضعیت نگه نمی‌دارد.</p>

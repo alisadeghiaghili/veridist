@@ -37,8 +37,11 @@ native-speaker review is claimed.
 The public kernel has an immutable six-family registry, a maximum-likelihood
 fit for each family with right censoring and uncertainty reporting,
 distribution operations that accept scalars and numpy arrays, and exact-state
-streaming log-likelihood reducers with and without right censoring. It does
-not provide goodness-of-fit tests or model ranking.
+streaming log-likelihood reducers with and without right censoring. These
+operations provide neither goodness-of-fit tests nor model ranking; refit Monte
+Carlo goodness-of-fit tests and adequacy-gated model selection for finite
+uncensored samples are provided separately by `veridist.inference`, described
+in the API guide.
 
 ## Generic stream sources and delivery leases
 
