@@ -10,9 +10,14 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.quality.test_migration_ledger import CHECKER_PATH, LEDGER_PATH, REPOSITORY_ROOT
+from tests.quality.test_migration_ledger import (
+    CHECKER_PATH,
+    LEDGER_PATH,
+    MIGRATION_ROOT,
+    REPOSITORY_ROOT,
+)
 
-SOURCE_LOCKS_PATH = REPOSITORY_ROOT / "docs" / "migration" / "legacy-source-locks.json"
+SOURCE_LOCKS_PATH = MIGRATION_ROOT / "legacy-source-locks.json"
 LM004_COMMIT = "6b021995b25dab81e3fdb9c18410cf974363848a"
 OTHER_VALID_LM004_COMMIT = "61e7ab62c1962b95bd012b282e11d0556959a49f"
 
@@ -48,16 +53,14 @@ class MigrationLedgerFailClosedContractTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture = Path(temporary_directory) / "fixture"
             checker = fixture / "python" / "tools" / "check_migration_ledger.py"
-            migration = fixture / "docs" / "migration"
+            migration = fixture / "python" / "quality" / "migration"
             checker.parent.mkdir(parents=True)
             migration.mkdir(parents=True)
             checker.write_text(CHECKER_PATH.read_text(encoding="utf-8"), encoding="utf-8")
             (migration / "legacy-salvage-ledger.json").write_text(
                 LEDGER_PATH.read_text(encoding="utf-8"), encoding="utf-8"
             )
-            schema_path = (
-                REPOSITORY_ROOT / "docs" / "migration" / "legacy-salvage-ledger.schema.json"
-            )
+            schema_path = MIGRATION_ROOT / "legacy-salvage-ledger.schema.json"
             (migration / "legacy-salvage-ledger.schema.json").write_text(
                 schema_path.read_text(encoding="utf-8"),
                 encoding="utf-8",

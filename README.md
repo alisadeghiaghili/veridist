@@ -197,7 +197,7 @@ The coverage badge states the required threshold, not a measured current percent
 
 Review three things: whether the statistical assumptions match data collection, whether the needed fitting and inference path exists, and whether local processing and recovery meet your workload requirements.
 
-The [known limits](python/KNOWN_LIMITS.md) describe exclusions such as left and interval censoring, covariates, and distributed execution. The historical distfit_pro source is tracked in the [migration ledger](docs/migration/README.md); it is not a runtime compatibility promise.
+The [known limits](python/KNOWN_LIMITS.md) describe exclusions such as left and interval censoring, covariates, and distributed execution. The historical distfit_pro code is not part of Veridist and is not a runtime compatibility promise.
 
 ## Future plans
 
@@ -220,7 +220,7 @@ These are development directions, not currently supported features or promised r
 | Inspect inputs, outputs, and failures | [API reference](python/docs/source/api.md) |
 | Upgrade from version 1.0 | [Migration guide](python/docs/migration-2.0.md) |
 | Report a reproducible defect | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
-| Contribute | [Contribution guide](CONTRIBUTING.md) and [engineering conventions](docs/conventions.md) |
+| Contribute | [Contribution guide](CONTRIBUTING.md) |
 | Report a vulnerability | [Security policy](SECURITY.md) |
 | Follow releases | [Changelog](python/CHANGELOG.md) |
 

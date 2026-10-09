@@ -13,7 +13,7 @@ from typing import Any
 
 PYTHON_ROOT = Path(__file__).resolve().parents[1]
 REPOSITORY_ROOT = PYTHON_ROOT.parent
-MIGRATION_ROOT = REPOSITORY_ROOT / "docs" / "migration"
+MIGRATION_ROOT = PYTHON_ROOT / "quality" / "migration"
 SCHEMA_PATH = MIGRATION_ROOT / "legacy-salvage-ledger.schema.json"
 LEDGER_PATH = MIGRATION_ROOT / "legacy-salvage-ledger.json"
 SOURCE_LOCKS_PATH = MIGRATION_ROOT / "legacy-source-locks.json"

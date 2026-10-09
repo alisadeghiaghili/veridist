@@ -197,7 +197,7 @@ The coverage badge states the required threshold, not a measured current percent
 
 Review three things: whether the statistical assumptions match data collection, whether the needed fitting and inference path exists, and whether local processing and recovery meet your workload requirements.
 
-The [known limits](https://github.com/alisadeghiaghili/veridist/blob/main/python/KNOWN_LIMITS.md) describe exclusions such as left and interval censoring, covariates, and distributed execution. The historical distfit_pro source is tracked in the [migration ledger](https://github.com/alisadeghiaghili/veridist/blob/main/docs/migration/README.md); it is not a runtime compatibility promise.
+The [known limits](https://github.com/alisadeghiaghili/veridist/blob/main/python/KNOWN_LIMITS.md) describe exclusions such as left and interval censoring, covariates, and distributed execution. The historical distfit_pro code is not part of Veridist and is not a runtime compatibility promise.
 
 ## Future plans
 
@@ -220,7 +220,7 @@ These are development directions, not currently supported features or promised r
 | Inspect inputs, outputs, and failures | [API reference](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.md) |
 | Upgrade from version 1.0 | [Migration guide](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/migration-2.0.md) |
 | Report a reproducible defect | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
-| Contribute | [Contribution guide](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) and [engineering conventions](https://github.com/alisadeghiaghili/veridist/blob/main/docs/conventions.md) |
+| Contribute | [Contribution guide](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) |
 | Report a vulnerability | [Security policy](https://github.com/alisadeghiaghili/veridist/blob/main/SECURITY.md) |
 | Follow releases | [Changelog](https://github.com/alisadeghiaghili/veridist/blob/main/python/CHANGELOG.md) |
 

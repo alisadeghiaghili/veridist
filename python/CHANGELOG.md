@@ -384,9 +384,9 @@ Veridist release record.
   `veridist/__init__.py` (plus the real `METADATA` and `LICENSE`) passed
   validation.
 - `check_coverage.py` now rejects a coverage exception once its `expiry`
-  date has passed, and rejects one whose `adr` does not name a document that
-  actually exists under `docs/adr`. Previously an exception's expiry and ADR
-  reference were only checked for well-formedness, not for being true.
+  date has passed, and rejects one whose `adr` does not name an existing
+  decision record. Previously an exception's expiry and ADR reference were
+  only checked for well-formedness, not for being true.
 - `build_reproducible.py` now normalizes file permission bits in both
   archives (`0o644` for ordinary files, `0o755` for directories and files
   that were executable in the source build) instead of carrying over
@@ -512,6 +512,10 @@ Veridist release record.
   argument, the machine-readable context of each `EngineContractError`, the
   on-disk checkpoint format, damaged-row rejection, the lost-commit
   reconciliation, the plan provenance, and the retry arguments.
+- Design and decision records are no longer published in this repository. The
+  user documentation, `KNOWN_LIMITS` and the migration guide remain here, and
+  `check_coverage.py` now validates a coverage exception's `adr` against the
+  public `quality/adr-index.json` instead of reading decision documents.
 
 ### Documentation
 
@@ -521,13 +525,12 @@ Veridist release record.
   the schema the current checker requires and does not pass it, so the
   sentence now says a historical snapshot is retained, that it does not pass
   the current checker, and that no throughput or scale claim follows from it.
-- Added dated amendment notes to `docs/adr/ADR-0005-out-of-core-backends-and-
-  scale-tiers.md` and `docs/adr/ADR-0021-streaming-log-likelihood-reducer.md`
-  recording that their retained scale-evidence artifacts (schema version 1
-  and schema version 2, respectively) are both now rejected by their current
-  checkers (which now require schema versions 3 and 5); the log-likelihood
-  artifact's recorded `git_sha` is also not part of this repository's
-  history. Neither ADR's body is rewritten.
+- Added dated amendment notes to ADR-0005 and ADR-0021 recording that their
+  retained scale-evidence artifacts (schema version 1 and schema version 2,
+  respectively) are both now rejected by their current checkers (which now
+  require schema versions 3 and 5); the log-likelihood artifact's recorded
+  `git_sha` is also not part of this repository's history. Neither ADR's body
+  is rewritten.
 - `python/docs/source/api.md` (and its Persian/German counterparts and
   `.po` catalogs) now documents the `fit_exponential_checkpointed_csv`
   revision contract (it must equal the CSV file's current SHA-256 hex
@@ -541,10 +544,9 @@ Veridist release record.
   `check_coverage.py` gates, the coverage-manifest denominator rule, the
   en/fa/de documentation-parity rule, Conventional Commits, and that mutation
   testing runs only on Linux CI.
-- The scale-evidence notes in `docs/evidence`, `docs/v1-readiness.md`,
-  `docs/v1-test-plan.md` and the two scale-evidence ADR amendments name the
-  schema versions the current checkers require (3 and 5) and the single-worker
-  timing rule.
+- The scale-evidence notes, the readiness and test-plan records and the two
+  scale-evidence ADR amendments name the schema versions the current checkers
+  require (3 and 5) and the single-worker timing rule.
 - `fit_exponential`, `fit_exponential_chunks` and `reduce_log_likelihood_chunks`
   now document that an already exhausted one-shot iterator is
   indistinguishable from an empty input (an `EMPTY_SAMPLE` failure for the

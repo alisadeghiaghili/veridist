@@ -214,7 +214,7 @@ rate=0.5; events=1; censored=1
 
 سازگاری فرض‌ها با جمع‌آوری داده، وجود مسیر برازش و استنباط موردنیاز و تناسب امکانات پردازش و بازیابی محلی با کارتان را بررسی کنید.
 
-[محدودیت‌های شناخته‌شده](https://github.com/alisadeghiaghili/veridist/blob/main/python/KNOWN_LIMITS.fa.md) مواردی مانند سانسورشدگی چپ و بازه‌ای، متغیرهای توضیحی و اجرای توزیع‌شده را توضیح می‌دهد. وضعیت کد تاریخی distfit_pro در [راهنمای مهاجرت](https://github.com/alisadeghiaghili/veridist/blob/main/docs/migration/README.md) ثبت می‌شود و به معنای سازگاری اجرایی نسخهٔ فعلی نیست.
+[محدودیت‌های شناخته‌شده](https://github.com/alisadeghiaghili/veridist/blob/main/python/KNOWN_LIMITS.fa.md) مواردی مانند سانسورشدگی چپ و بازه‌ای، متغیرهای توضیحی و اجرای توزیع‌شده را توضیح می‌دهد. کد تاریخی distfit_pro بخشی از Veridist نیست و تعهدی برای سازگاری اجرایی با آن وجود ندارد.
 
 <h2 dir="rtl" align="right">برنامه‌های آینده</h2>
 
@@ -237,7 +237,7 @@ rate=0.5; events=1; censored=1
 | بررسی ورودی و خروجی | [مرجع API](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.fa.md) |
 | ارتقا از نسخهٔ ۱٫۰ | [راهنمای مهاجرت](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/migration-2.0.md) |
 | گزارش مشکل قابل‌بازتولید | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
-| مشارکت | [راهنمای مشارکت](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) و [قراردادهای مهندسی](https://github.com/alisadeghiaghili/veridist/blob/main/docs/conventions.md) |
+| مشارکت | [راهنمای مشارکت](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) |
 | گزارش آسیب‌پذیری | [سیاست امنیت](https://github.com/alisadeghiaghili/veridist/blob/main/SECURITY.md) |
 | پیگیری نسخه‌ها | [تاریخچهٔ تغییرات](https://github.com/alisadeghiaghili/veridist/blob/main/python/CHANGELOG.md) |
 

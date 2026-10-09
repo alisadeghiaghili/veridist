@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import unittest
 from pathlib import Path
@@ -11,14 +12,7 @@ PYTHON_ROOT = Path(__file__).resolve().parents[2]
 REPOSITORY_ROOT = PYTHON_ROOT.parent
 MANIFEST = PYTHON_ROOT / "quality" / "coverage-manifest.json"
 CAPABILITY_GUIDE = REPOSITORY_ROOT / "docs" / "capability-guide.md"
-READINESS = REPOSITORY_ROOT / "docs" / "v1-readiness.md"
-EVALUATED_FAMILY_ADR = REPOSITORY_ROOT / "docs" / "adr" / "ADR-0019-evaluated-family-kernel.md"
-CSV_ADAPTER_ADR = (
-    REPOSITORY_ROOT
-    / "docs"
-    / "adr"
-    / "ADR-0018-csv-lifetime-adapter-and-one-pass-exponential-orchestrator.md"
-)
+ADR_INDEX = PYTHON_ROOT / "quality" / "adr-index.json"
 MUTATION_WORKFLOW = REPOSITORY_ROOT / ".github" / "workflows" / "mutation.yml"
 
 
@@ -33,34 +27,36 @@ class RequiredQualityArtifactTests(unittest.TestCase):
             {"statements": 57, "branches": 22},
         )
 
-    def test_readiness_separates_historical_snapshot_from_current_evidence(
-        self,
-    ) -> None:
-        readiness = READINESS.read_text(encoding="utf-8")
-        self.assertIn("Historical snapshot: `bfb496d` (preserved verbatim)", readiness)
-        self.assertIn("accepted all 23 enumerated\n  production files", readiness)
-        self.assertIn("Current unmerged family-kernel candidate", readiness)
-        self.assertNotIn("coverage.json` SHA-256", readiness)
-
-    def test_evaluated_family_adr_uses_a_primary_immutable_math_source(self) -> None:
-        adr = EVALUATED_FAMILY_ADR.read_text(encoding="utf-8")
-        self.assertIn("NIST DLMF §5.11", adr)
-        self.assertNotIn("github.com/wch/r-source/blob/trunk", adr)
-
-    def test_release_cell_adrs_are_accepted(self) -> None:
-        for adr in (CSV_ADAPTER_ADR, EVALUATED_FAMILY_ADR):
+    def test_adr_index_lists_every_decision_id_with_a_title_and_nothing_else(self) -> None:
+        index = json.loads(ADR_INDEX.read_text(encoding="utf-8"))
+        self.assertEqual(list(index), [f"ADR-{number:04d}" for number in range(1, 24)])
+        for adr, title in index.items():
             with self.subTest(adr=adr):
-                self.assertIn("Status: Accepted", adr.read_text(encoding="utf-8"))
+                self.assertIsInstance(title, str)
+                self.assertEqual(title, title.strip())
+                self.assertGreater(len(title), 10)
+        self.assertEqual(
+            index["ADR-0018"], "CSV lifetime adapter and one-pass exponential orchestrator"
+        )
+        self.assertEqual(index["ADR-0019"], "Evaluated-family kernel and parameter contracts")
 
-        index = (REPOSITORY_ROOT / "docs" / "adr" / "README.md").read_text(encoding="utf-8")
-        self.assertIn(
-            "| 0018 | CSV lifetime adapter and one-pass exponential orchestrator | Accepted |",
-            index,
-        )
-        self.assertIn(
-            "| 0019 | Evaluated-family kernel and parameter contracts | Accepted |",
-            index,
-        )
+    def test_adr_ids_cited_by_code_and_quality_data_are_in_the_index(self) -> None:
+        index = json.loads(ADR_INDEX.read_text(encoding="utf-8"))
+        pattern = re.compile(r"ADR-\d{4}")
+        roots = (PYTHON_ROOT / "src", PYTHON_ROOT / "tools", PYTHON_ROOT / "quality")
+        cited: dict[str, set[str]] = {}
+        for root in roots:
+            for path in root.rglob("*"):
+                if path.suffix not in {".py", ".json"} or "__pycache__" in path.parts:
+                    continue
+                if path == ADR_INDEX:
+                    continue
+                for adr in pattern.findall(path.read_text(encoding="utf-8")):
+                    cited.setdefault(adr, set()).add(path.relative_to(PYTHON_ROOT).as_posix())
+        self.assertTrue(cited, "no ADR citations were found; the scan is not exercising anything")
+        for adr, paths in sorted(cited.items()):
+            with self.subTest(adr=adr):
+                self.assertIn(adr, index, sorted(paths))
 
     def test_capability_guide_declares_the_release_scope_and_limits(self) -> None:
         content = " ".join(CAPABILITY_GUIDE.read_text(encoding="utf-8").split())
