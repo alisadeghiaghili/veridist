@@ -12,7 +12,7 @@ from pathlib import Path
 from tools.check_release_artifacts import ReleaseArtifactError, validate_artifact
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-VERSION = "1.0.1"
+VERSION = "2.0.0"
 METADATA = (
     f"Metadata-Version: 2.4\nName: veridist\nVersion: {VERSION}\nLicense-Expression: BUSL-1.1\n\n"
 ).encode()

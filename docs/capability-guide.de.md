@@ -2,7 +2,7 @@
 
 [English](capability-guide.md) | [فارسی](capability-guide.fa.md) | [Deutsch](capability-guide.de.md)
 
-Dieser Leitfaden beschreibt die praktische Grenze von **Veridist 1.0.1**: welche Daten das Paket annimmt, welches Ergebnis es liefert und wo die Unterstützung endet. Eine Funktion ist nur unter den genannten Daten- und Ausführungsbedingungen unterstützt.
+Dieser Leitfaden beschreibt die praktische Grenze von **Veridist 2.0.0**: welche Daten das Paket annimmt, welches Ergebnis es liefert und wo die Unterstützung endet. Eine Funktion ist nur unter den genannten Daten- und Ausführungsbedingungen unterstützt.
 
 ## Ich möchte die Zeit bis zu einem Ereignis analysieren
 

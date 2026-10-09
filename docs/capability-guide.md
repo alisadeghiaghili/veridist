@@ -2,7 +2,7 @@
 
 [English](capability-guide.md) | [فارسی](capability-guide.fa.md) | [Deutsch](capability-guide.de.md)
 
-This guide is the practical boundary of **Veridist 1.0.1**: what you can give the package, what it returns, and where its support ends. A supported feature is supported only under the stated data and execution conditions.
+This guide is the practical boundary of **Veridist 2.0.0**: what you can give the package, what it returns, and where its support ends. A supported feature is supported only under the stated data and execution conditions.
 
 ## I want to analyse time until an event
 

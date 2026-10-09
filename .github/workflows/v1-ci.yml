@@ -119,7 +119,7 @@ jobs:
           "$RUNNER_TEMP/veridist-wheel/bin/python" -m pip install dist/*.whl
           "$RUNNER_TEMP/veridist-wheel/bin/python" -m pip check
           cd "$RUNNER_TEMP"
-          "$RUNNER_TEMP/veridist-wheel/bin/python" -c "import importlib.metadata as metadata; import importlib.resources as resources; import veridist; assert metadata.version('veridist') == veridist.__version__ == '1.0.1'; assert resources.files('veridist').joinpath('py.typed').is_file()"
+          "$RUNNER_TEMP/veridist-wheel/bin/python" -c "import importlib.metadata as metadata; import importlib.resources as resources; import veridist; assert metadata.version('veridist') == veridist.__version__ == '2.0.0'; assert resources.files('veridist').joinpath('py.typed').is_file()"
           "$RUNNER_TEMP/veridist-wheel/bin/python" - <<'PY'
           from pathlib import Path
           from tempfile import TemporaryDirectory

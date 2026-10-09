@@ -4,7 +4,7 @@ This changelog covers only the nested `veridist` package. The repository-root
 legacy changelog describes the frozen `distfit_pro` history and is not a
 Veridist release record.
 
-## [Unreleased]
+## [2.0.0] - 2026-10-09
 
 ### Fixed
 
@@ -504,9 +504,9 @@ Veridist release record.
 - The mutation manifest is schema version 3: it requires `module_minimum_scores`
   with exactly the critical modules, each a finite number in (0, 1]. A module
   whose measured score is below its floor fails the evidence check even when the
-  global score passes. The provisional floors (`domain` 0.67, `statistics` 0.80,
-  `families` 0.80, `engine` 0.75) are set from the last measured scores and are
-  to be raised once the pull-request mutation run measures the new tests.
+  global score passes. Every floor is 0.80, equal to the global minimum. The
+  latest measured scores are `domain` 0.936, `statistics` 0.881, `families`
+  0.896 and `engine` 0.963.
 - Behavioural tests now pin the observable contract of rejected inputs and typed
   failures in `domain` and `engine`: the messages that name the offending
   argument, the machine-readable context of each `EngineContractError`, the
