@@ -390,7 +390,7 @@ class PackageLandingContractTests(unittest.TestCase):
         )
         for locale, content in limits.items():
             with self.subTest(locale=locale):
-                self.assertIn("1.0.1", content)
+                self.assertIn("2.0.0", content)
                 self.assertIn("BUSL-1.1", content)
                 self.assertIn("Apache-2.0", content)
                 self.assertIn("2030-09-05", content)
@@ -415,7 +415,7 @@ class PackageLandingContractTests(unittest.TestCase):
             "## Vancouver",
         ):
             self.assertIn(heading, guide)
-        self.assertIn("ver. 1.0.1", guide)
+        self.assertIn("ver. 2.0.0", guide)
         self.assertIn("CITATION.cff", guide)
         root_readmes = tuple(
             REPOSITORY_ROOT / name for name in ("README.md", "README.fa.md", "README.de.md")

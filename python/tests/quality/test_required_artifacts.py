@@ -61,7 +61,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
     def test_capability_guide_declares_the_release_scope_and_limits(self) -> None:
         content = " ".join(CAPABILITY_GUIDE.read_text(encoding="utf-8").split())
         for required in (
-            "1.0.1",
+            "2.0.0",
             "Exponential MLE",
             "Weibull-minimum MLE",
             "Lognormal MLE",

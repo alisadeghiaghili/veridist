@@ -1,6 +1,6 @@
-# Bekannte Grenzen von Veridist 1.0
+# Bekannte Grenzen von Veridist 2.0
 
-Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
+Dieses Dokument definiert die Release-Grenze 2.0 für Paketversion `2.0.0`.
 
 ## Was diese Grenzen in häufigen Anwendungen bedeuten
 
