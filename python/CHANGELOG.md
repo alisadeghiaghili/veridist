@@ -312,6 +312,15 @@ Veridist release record.
   form, the deprecated mapping forms (removed in 3.0), the checkpoint
   `source_revision` SHA-256 contract and the offset chunk form, `uncertainty()`,
   the `FamilyId` `family` attribute, the license change, and the top-level API.
+- Retained scale evidence for 2.0.0 in `evidence/`:
+  `scale-csv-exponential-2.0.0-{linux,windows}.json` (schema 3) and
+  `scale-log-likelihood-2.0.0-{linux,windows}.json` (schema 5), measured on
+  2026-10-09 from candidate commit `19ecf1062978fe0f894625e65b5a113ba1b68166`
+  by the `veridist-scale-evidence` workflow (one measurement worker, CPython
+  3.11.17 on Linux and 3.11.9 on Windows). They replace the previous schema-1
+  and schema-2 snapshots, which the current checkers rejected. The files are
+  kept in the source repository only; they are not part of the sdist or wheel.
+  A test validates every retained file with its checker.
 
 ### Deprecated
 
@@ -460,8 +469,8 @@ Veridist release record.
   now defaults to one worker. Process memory is read by one shared helper
   (`tools/process_memory.py`), which also corrects the log-likelihood runner's
   macOS `ru_maxrss` unit (bytes there, not KiB). `artifact_sha256` is
-  documented as an integrity digest, not a signature. Retained evidence files
-  are unchanged and remain rejected by the current checkers.
+  documented as an integrity digest, not a signature. The retained evidence is
+  replaced by new measurements in these schemas (see Added).
 - v1 execution evidence moves to schema 2 and six scenarios per row count:
   the previous three plus `source_mutated` (a changed source is refused with
   `SOURCE_REVISION_MISMATCH` and the checkpoint is untouched), `chunk_replay`
@@ -519,12 +528,12 @@ Veridist release record.
 
 ### Documentation
 
-- The repository-root and package READMEs (en/fa/de) no longer claim that
-  "release evidence covers declared CSV/Exponential paths at 10k, 100k, and
-  1m rows"; the retained `scale-csv-exponential-v1.json` snapshot predates
-  the schema the current checker requires and does not pass it, so the
-  sentence now says a historical snapshot is retained, that it does not pass
-  the current checker, and that no throughput or scale claim follows from it.
+- The repository-root and package READMEs (en/fa/de), the capability guide, the
+  exponential and log-likelihood documentation pages (with their `.po`
+  catalogs and the parity manifest) and `KNOWN_LIMITS` (`SCALE-EVIDENCE`) now
+  describe the retained 2.0.0 scale evidence: candidate commit, date, runner
+  platforms, Python versions and the measured 1m-row timings and peak process
+  memory, stated as descriptive figures of those runs and not as a guarantee.
 - Added dated amendment notes to ADR-0005 and ADR-0021 recording that their
   retained scale-evidence artifacts (schema version 1 and schema version 2,
   respectively) are both now rejected by their current checkers (which now

@@ -63,7 +63,7 @@ Alle sechs Familien (Exponential, Normal, Gamma, Weibull-Minimum, Lognormal und 
 
 Vom Aufrufer bereitgestellte Datenblöcke können nacheinander reduziert werden. Erfolgreiche binary64-Log-Dichtewerte verwenden einen festen O(1)-Reduktionszustand mit einer abschließenden binary64-Rundung. Das ist keine allgemeine Aussage zu RSS oder Durchsatz.
 
-Historische Nachweise decken den strikten exponentiellen CSV-Pfad mit 10 Tausend, 100 Tausend und 1 Million Zeilen sowie mehreren Chunk-Größen ab. Sie beschreiben genau diese Läufe, nicht Geschwindigkeit oder Speicherverbrauch jedes Rechners und Datensatzes.
+Erhaltene Nachweise decken den strikten exponentiellen CSV-Pfad mit 10 Tausend, 100 Tausend und 1 Million Zeilen sowie mehreren Chunk-Größen ab, gemessen am 2026-10-09 auf Linux- und Windows-Runnern. Sie beschreiben genau diese Läufe, nicht Geschwindigkeit oder Speicherverbrauch jedes Rechners und Datensatzes.
 
 Für kompatible exponentielle Reduktionen kann ein lokaler SQLite-Checkpoint den Zustand nach einer Unterbrechung bewahren. Vor dem Fortsetzen prüft Veridist Quellrevision, Prüfsumme, Checkpoint-Generation und verarbeitete Bereiche. Dauerhafte Wiederaufnahme ist auf einen Host und sein lokales Dateisystem begrenzt; sie ist keine verteilte Ausführung.
 

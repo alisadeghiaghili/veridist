@@ -90,7 +90,23 @@ Dieses Dokument definiert die Release-Grenze 2.0 für Paketversion `2.0.0`.
 - `SCALE-EVIDENCE`: Messungen gelten nur für den exakten Adapter, die Familie,
   Arbeitslast, Plattform, Python-Version, Chunk-Grenze und Kandidaten-SHA. Sie
   belegen weder universellen Durchsatz noch allgemeine Big-Data-Unterstützung
-  oder eine breite Out-of-Core-Fähigkeit.
+  oder eine breite Out-of-Core-Fähigkeit. Die erhaltenen Messungen für 2.0.0
+  liegen im Verzeichnis `python/evidence/` des Quell-Repositorys (sie sind nicht
+  Teil der Distributionsarchive). Sie wurden am 2026-10-09 am Kandidaten-Commit
+  `19ecf1062978fe0f894625e65b5a113ba1b68166` mit einem Messworker auf einem
+  GitHub-Actions-Linux-Runner (CPython 3.11.17) und einem Windows-Runner
+  (CPython 3.11.9) erstellt und werden von
+  `tools/check_scale_csv_exponential_evidence.py` und
+  `tools/check_log_likelihood_scale_evidence.py` akzeptiert. Bei 1.000.000
+  Zeilen dauerte die strikte exponentielle CSV-Anpassung über die Chunk-Grenzen
+  32, 64 und 128 KiB unter Linux 14,1 bis 18,9 Sekunden und unter Windows 14,8
+  bis 19,8 Sekunden; der Spitzenwert des Prozessspeichers (RSS) lag bei 40,2 bis
+  45,0 MiB unter Linux und 40,7 MiB unter Windows. Der Reduzierer für den
+  exakten Log-Likelihood-Zustand benötigte für eine Million Beobachtungen je nach
+  Familie 3,2 bis 9,2 Sekunden unter Linux und 3,3 bis 10,6 Sekunden unter
+  Windows (die Lognormal-Familie ist am langsamsten), bei einem RSS-Spitzenwert
+  von 25,8 MiB unter Linux und 25,3 MiB unter Windows. Das sind beschreibende
+  Zeitmessungen dieser Läufe, keine Garantien.
 - `LICENSE`: Das Paket verwendet BUSL-1.1; das ist eine quelltextverfügbare,
   aber keine Open-Source-Lizenz. Die zusätzliche Nutzungserlaubnis in `LICENSE`
   gestattet die produktive Nutzung nur für nichtkommerzielle Zwecke (private

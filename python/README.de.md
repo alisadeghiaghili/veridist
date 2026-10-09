@@ -191,10 +191,13 @@ speichert lokalen Neustartzustand für kompatible Exponential-Reduktionen,
 einschließlich des unterstützten CSV-Pfads. Halten Sie die Quellrevision stabil
 und folgen Sie dem [Checkpoint- und Fortsetzungsrezept](https://github.com/alisadeghiaghili/veridist/blob/main/python/examples/checkpoint_resume.py).
 
-Eine historische Scale-Evidenz-Momentaufnahme für den CSV-/Exponentialpfad ist
-bei 10k, 100k und 1m Zeilen erhalten, aber ihr Schema ist älter als das, was
-der aktuelle Prüfer verlangt; sie besteht die Prüfung daher nicht und stützt
-keinen aktuellen Durchsatz- oder Skalierungsanspruch. Dauerhafte
+Erhaltene Skalierungsnachweise für den strikten CSV-/Exponentialpfad decken
+10k, 100k und 1m Zeilen bei Chunk-Grenzen von 32, 64 und 128 KiB ab. Sie
+stammen aus je einem Lauf auf einem Linux- und einem Windows-Runner
+(Kandidaten-Commit `19ecf10`, 2026-10-09, CPython 3.11): 1m Zeilen benötigten
+14 bis 20 Sekunden bei einem Spitzenwert des Prozessspeichers von etwa 40 bis
+45 MiB. Diese Werte beschreiben nur diese Läufe; sie sind keine Geschwindigkeits-
+oder Speichergarantie für andere Maschinen oder Daten. Dauerhafte
 Wiederaufnahme läuft auf einer Maschine mit lokalem Dateisystem.
 
 ## Wie Qualität geprüft wird

@@ -505,23 +505,11 @@ class ScaleCsvExponentialEvidenceTests(unittest.TestCase):
             self.assertIn("HEAD changed", str(failure.exception))
             self.assertFalse(output.exists())
 
-    def test_scale12_legacy_artifact_is_quarantined_from_current_evidence(self) -> None:
-        artifact = Path(__file__).parents[2] / "evidence" / "scale-csv-exponential-v1.json"
-        result = subprocess.run(
-            [
-                sys.executable,
-                str(CHECKER),
-                "--artifact",
-                str(artifact),
-                "--expected-git-sha",
-                "4490c9eb08e9ed5e420a2b677d9de843fdf66a5d",
-                "--repo-root",
-                str(REPO),
-            ],
-            check=False,
-            capture_output=True,
-            text=True,
-        )
+    def test_scale12_previous_schema_artifact_is_rejected_by_current_checker(self) -> None:
+        artifact = _smoke_artifact()
+        artifact["schema_version"] = "1"
+        _seal(artifact)
+        result = self._check(artifact)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("current evidence requires schema version 3", result.stderr)
 

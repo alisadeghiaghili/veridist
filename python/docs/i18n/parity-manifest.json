@@ -312,12 +312,12 @@
     {
       "id": "DOC-MSG-EXP-20",
       "page": "exponential-right-censoring.md",
-      "source": "The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this CSV input path and estimator only. That older schema does not have enough provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">15</a></sup> to support a current performance claim. A current performance claim needs a clean run tied to the reviewed source revision and documented environment."
+      "source": "The retained `SCALE-CSV-EXP-01` evidence is a 2.0.0 measurement of this CSV input path and estimator only, at 10k, 100k, and 1m rows with 32 KiB, 64 KiB, and 128 KiB chunk sizes. It was taken on 2026-10-09 from candidate commit `19ecf1062978fe0f894625e65b5a113ba1b68166`, one run each on a Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a checker tied to that commit accepts it. Each run records its provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">15</a></sup> (candidate commit, clean checkout, platform, Python version, and measurement method). For 1m rows the run took 14.1 to 18.9 seconds on Linux and 14.8 to 19.8 seconds on Windows, with peak process memory of 40.2 to 45.0 MiB on Linux and 40.7 MiB on Windows. Every run read the file once and stayed within its configured chunk limit. These are the timings of those runs, not a guarantee of speed or memory on other machines or data."
     },
     {
       "id": "DOC-MSG-EXP-21",
       "page": "exponential-right-censoring.md",
-      "source": "The historical snapshot does not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example."
+      "source": "These measurements do not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example."
     },
     {
       "id": "DOC-MSG-EXP-22",
@@ -437,12 +437,12 @@
     {
       "id": "DOC-MSG-FAM-EVIDENCE-BODY",
       "page": "families-log-density-likelihood.md",
-      "source": "`LLR-06` preserves a historical generated-stream snapshot for normal-zero scalar reduction at 10k/100k/1m observations and three chunk sizes. Its schema-v2 artifact lacks candidate binding and the public source-route fact, so it cannot support a current candidate claim. A current schema-v3 run must use the public `IterableDataSource` single-pass route, bind the reviewed candidate SHA, record one outer acquisition and every yielded observation, and agree bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. Elapsed time and `tracemalloc` values remain descriptive only."
+      "source": "`LLR-06` retains generated-stream measurements of the exact-state log-likelihood reducer for each of the five scalar families (`normal`, `gamma`, `weibull_min`, `lognormal`, `gumbel_right`) at 10k/100k/1m observations and three chunk sizes (1,024, 8,192, and 65,536). They were taken on 2026-10-09 from candidate commit `19ecf1062978fe0f894625e65b5a113ba1b68166`, one run each on a Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a schema-v5 checker accepts them. Each run used the public `IterableDataSource` single-pass route, bound the candidate SHA, recorded one outer acquisition and every yielded observation, and agreed bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. At 1m observations, elapsed time was 3.2 to 9.2 seconds on Linux and 3.3 to 10.6 seconds on Windows depending on the family, with peak process memory of 25.8 MiB on Linux and 25.3 MiB on Windows. Elapsed time and `tracemalloc` values remain descriptive only."
     },
     {
       "id": "DOC-MSG-FAM-EVIDENCE-LIMIT",
       "page": "families-log-density-likelihood.md",
-      "source": "This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."
+      "source": "This evidence is scoped to the tested fixed streams of the five scalar families and the exact reducer, on the two measured runners. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, a throughput or process-memory/RSS guarantee, another data adapter, or performance on other machines."
     },
     {
       "id": "DOC-MSG-HOME-DOMAIN-01",

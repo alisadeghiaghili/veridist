@@ -179,7 +179,7 @@ Likelihood tools can reduce caller-supplied chunks, with or without right censor
 
 SQLiteCheckpointStore retains local restart state for compatible Exponential reductions, including the supported CSV path. Keep the source revision stable and follow the [checkpoint and resume recipe](https://github.com/alisadeghiaghili/veridist/blob/main/python/examples/checkpoint_resume.py).
 
-A historical CSV/Exponential scale-evidence snapshot is retained at 10k, 100k, and 1m rows, but its schema predates what the current checker requires, so it does not pass and supports no current throughput or scale claim. Current durable resume runs on one machine with a local filesystem.
+Retained scale evidence for the strict CSV/Exponential path covers 10k, 100k, and 1m rows at 32, 64, and 128 KiB chunk limits. It comes from one run each on a Linux and a Windows runner (candidate commit `19ecf10`, 2026-10-09, CPython 3.11): 1m rows took 14 to 20 seconds, with peak process memory of about 40 to 45 MiB. These figures describe those runs only; they are not a speed or memory guarantee for other machines or data. Current durable resume runs on one machine with a local filesystem.
 
 ## How quality is checked
 
