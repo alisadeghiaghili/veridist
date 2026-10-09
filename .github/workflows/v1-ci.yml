@@ -67,6 +67,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     defaults:
       run:
+        shell: bash
         working-directory: python
     strategy:
       fail-fast: false
