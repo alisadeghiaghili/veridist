@@ -310,7 +310,7 @@ def chunk(byte_size: int = 1) -> BufferedChunk:
 class BufferBlockingTests(unittest.TestCase):
     def test_a_timed_out_put_leaves_no_waiting_producer_behind(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=2, max_inflight_bytes=2)
-        buffer.put(chunk(2), timeout=2.0)
+        bounded_buffer_call(buffer, lambda: buffer.put(chunk(2), timeout=2.0))
         for _attempt in range(2):
             with self.assertRaises(DeliveryContractError) as captured:
                 bounded_buffer_call(buffer, lambda: buffer.put(chunk(2), timeout=0.02))
@@ -321,7 +321,7 @@ class BufferBlockingTests(unittest.TestCase):
 
     def test_read_and_put_passes_its_timeout_on_to_the_put(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=2, max_inflight_bytes=2)
-        buffer.put(chunk(2), timeout=2.0)
+        bounded_buffer_call(buffer, lambda: buffer.put(chunk(2), timeout=2.0))
         with self.assertRaises(DeliveryContractError) as captured:
             bounded_buffer_call(
                 buffer, lambda: buffer.read_and_put(lambda: chunk(2), timeout=0.02), timeout=2.0

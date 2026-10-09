@@ -8,6 +8,7 @@ import unittest
 from collections.abc import Callable, Iterable, Iterator
 from typing import cast
 
+from tests.contract.buffer_watchdog import bounded_buffer_call
 from veridist.domain.lifetimes import ExactLifetime
 from veridist.engine.data_source import DataSourceMetadata, Replayability
 from veridist.engine.delivery import BoundedChunkBuffer, BufferedChunk, ChunkEnvelope
@@ -105,7 +106,9 @@ class StreamSourceContractTests(unittest.TestCase):
                 with results_lock:
                     results.append(outcome)
 
-            workers = [threading.Thread(target=acquire) for _ in range(threads_per_round)]
+            workers = [
+                threading.Thread(target=acquire, daemon=True) for _ in range(threads_per_round)
+            ]
             for worker in workers:
                 worker.start()
             for worker in workers:
@@ -197,7 +200,7 @@ class ActiveLeaseBufferTests(unittest.TestCase):
         released.release()
 
         with self.assertRaisesRegex(RuntimeError, "cannot buffer an already released chunk"):
-            buffer.put(released)
+            bounded_buffer_call(buffer, lambda: buffer.put(released, timeout=0.1))
 
         self.assertEqual(buffer.queued_chunks, 0)
         self.assertEqual(buffer.inflight_bytes, 0)
@@ -209,32 +212,50 @@ class ActiveLeaseBufferTests(unittest.TestCase):
 
     def test_active_lease_remains_charged_until_release(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)
-        buffer.put(chunk("first", 0))
-        received = buffer.get(timeout=0.1)
-        self.assertEqual(buffer.inflight_bytes, 4)
-        self.assertEqual(buffer.queued_chunks, 0)
-        received.release()
-        self.assertEqual(buffer.inflight_bytes, 0)
+        try:
+            bounded_buffer_call(buffer, lambda: buffer.put(chunk("first", 0), timeout=0.1))
+            received = bounded_buffer_call(buffer, lambda: buffer.get(timeout=0.1))
+            self.assertEqual(buffer.inflight_bytes, 4)
+            self.assertEqual(buffer.queued_chunks, 0)
+            received.release()
+            self.assertEqual(buffer.inflight_bytes, 0)
+        finally:
+            buffer.cancel()
 
     def test_producer_unblocks_only_after_active_lease_release(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)
-        buffer.put(chunk("first", 0))
-        received = buffer.get(timeout=0.1)
         completed = threading.Event()
-        producer = threading.Thread(
-            target=lambda: (buffer.put(chunk("second", 1)), completed.set())
-        )
-        producer.start()
-        deadline = time.monotonic() + 1.0
-        while buffer.waiting_producers == 0 and time.monotonic() < deadline:
-            time.sleep(0.001)
-        self.assertEqual(buffer.waiting_producers, 1)
-        self.assertFalse(completed.is_set())
-        received.release()
-        producer.join(1.0)
-        self.assertTrue(completed.is_set())
-        buffer.get(timeout=0.1).release()
-        self.assertEqual(buffer.inflight_bytes, 0)
+        errors: list[BaseException] = []
+
+        def produce() -> None:
+            try:
+                buffer.put(chunk("second", 1), timeout=2.0)
+                completed.set()
+            except BaseException as error:
+                errors.append(error)
+
+        producer = threading.Thread(target=produce, name="leased-producer", daemon=True)
+        try:
+            bounded_buffer_call(buffer, lambda: buffer.put(chunk("first", 0), timeout=0.1))
+            received = bounded_buffer_call(buffer, lambda: buffer.get(timeout=0.1))
+            producer.start()
+            deadline = time.monotonic() + 1.0
+            while buffer.waiting_producers == 0 and time.monotonic() < deadline:
+                time.sleep(0.001)
+            self.assertEqual(buffer.waiting_producers, 1)
+            self.assertFalse(completed.is_set())
+            received.release()
+            producer.join(1.0)
+            self.assertFalse(producer.is_alive())
+            self.assertEqual(errors, [])
+            self.assertTrue(completed.is_set())
+            bounded_buffer_call(buffer, lambda: buffer.get(timeout=0.1)).release()
+            self.assertEqual(buffer.inflight_bytes, 0)
+        finally:
+            # Releasing every waiter keeps a failed assertion from leaving a
+            # producer blocked for the rest of the test process.
+            buffer.cancel()
+            producer.join(0.05)
 
     def test_cancel_releases_every_queued_item_then_reraises_first_callback_error(self) -> None:
         calls: list[str] = []
@@ -249,8 +270,8 @@ class ActiveLeaseBufferTests(unittest.TestCase):
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=8)
         first = chunk("first", 0, bad)
         second = chunk("second", 1, good)
-        buffer.put(first)
-        buffer.put(second)
+        bounded_buffer_call(buffer, lambda: buffer.put(first, timeout=0.1))
+        bounded_buffer_call(buffer, lambda: buffer.put(second, timeout=0.1))
         with self.assertRaisesRegex(RuntimeError, "release failed"):
             buffer.cancel()
         self.assertEqual(calls, ["bad", "good"])

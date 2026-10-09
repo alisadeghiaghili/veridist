@@ -522,8 +522,8 @@ class BoundedBufferContractTests(unittest.TestCase):
         first = buffered(chunk("first", 0, 1, byte_size=4))
         second = buffered(chunk("second", 1, 2, byte_size=4))
 
-        buffer.put(first, timeout=0.01)
-        buffer.put(second, timeout=0.01)
+        bounded_buffer_call(buffer, lambda: buffer.put(first, timeout=0.1))
+        bounded_buffer_call(buffer, lambda: buffer.put(second, timeout=0.1))
 
         self.assertEqual(buffer.inflight_bytes, 8)
         self.assertEqual(buffer.queued_chunks, 2)
@@ -531,9 +531,9 @@ class BoundedBufferContractTests(unittest.TestCase):
     def test_ds06_nonempty_queue_returns_oldest_chunk_before_timeout(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)
         first = buffered(chunk("first", 0, 1, byte_size=4))
-        buffer.put(first, timeout=0.01)
+        bounded_buffer_call(buffer, lambda: buffer.put(first, timeout=0.1))
 
-        self.assertIs(buffer.get(timeout=0.01), first)
+        self.assertIs(bounded_buffer_call(buffer, lambda: buffer.get(timeout=0.1)), first)
 
     def test_ds06_producer_blocks_until_get_releases_budget(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)
@@ -604,6 +604,60 @@ class BoundedBufferContractTests(unittest.TestCase):
         self.assertEqual(buffer.inflight_bytes, 4)
         self.assertEqual(buffer.queued_chunks, 1)
         self.assertEqual(bounded_buffer_call(buffer, lambda: buffer.get(timeout=0.1)), first)
+
+    def test_ds06_full_buffer_put_timeout_waits_the_whole_timeout_and_no_longer(self) -> None:
+        buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)
+        first = buffered(chunk("first", 0, 1, byte_size=4))
+        bounded_buffer_call(buffer, lambda: buffer.put(first, timeout=0.1))
+
+        started = time.perf_counter()
+        with self.assertRaises(DeliveryContractError) as caught:
+            bounded_buffer_call(
+                buffer,
+                lambda: buffer.put(buffered(chunk("late", 1, 2, byte_size=4)), timeout=0.05),
+            )
+        elapsed = time.perf_counter() - started
+
+        self.assertEqual(caught.exception.code, "BUFFER_TIMEOUT")
+        self.assertGreaterEqual(elapsed, 0.045)
+        self.assertLess(elapsed, 0.45)
+        self.assertEqual(buffer.waiting_producers, 0)
+        self.assertEqual(buffer.inflight_bytes, 4)
+        self.assertEqual(buffer.queued_chunks, 1)
+
+    def test_ds06_put_returns_promptly_once_capacity_is_released(self) -> None:
+        buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)
+        first = buffered(chunk("first", 0, 1, byte_size=4))
+        bounded_buffer_call(buffer, lambda: buffer.put(first, timeout=0.1))
+        second = buffered(chunk("second", 1, 2, byte_size=4))
+        finished = threading.Event()
+        errors: list[BaseException] = []
+
+        def produce() -> None:
+            try:
+                buffer.put(second, timeout=2.0)
+            except BaseException as error:
+                errors.append(error)
+            finally:
+                finished.set()
+
+        producer = threading.Thread(target=produce, name="released-capacity-producer", daemon=True)
+        try:
+            producer.start()
+            wait_for_waiting_producers(buffer, 1)
+            self.assertFalse(finished.is_set())
+            self.assertIs(bounded_buffer_call(buffer, lambda: buffer.get(timeout=0.1)), first)
+            self.assertFalse(finished.wait(0.05))  # the lease still holds the capacity
+            released_at = time.perf_counter()
+            first.release()
+            self.assertTrue(finished.wait(1.0))
+            self.assertLess(time.perf_counter() - released_at, 0.9)
+            self.assertEqual(errors, [])
+            self.assertEqual(buffer.inflight_bytes, 4)
+            self.assertIs(bounded_buffer_call(buffer, lambda: buffer.get(timeout=0.1)), second)
+        finally:
+            buffer.cancel()
+            producer.join(timeout=0.05)
 
     def test_ds06_cancel_wakes_waiter_and_stops_future_put_get(self) -> None:
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=4)

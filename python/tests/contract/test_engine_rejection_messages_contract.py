@@ -15,6 +15,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
+from tests.contract.buffer_watchdog import bounded_buffer_call
 from veridist.engine.checkpoint import (
     CheckpointRecord,
     InMemoryCheckpointStore,
@@ -210,7 +211,7 @@ class PlanningAndDeliveryMessageTests(MessageTestCase):
         self.check(
             RuntimeError,
             "cannot buffer an already released chunk",
-            lambda item: buffer.put(item, timeout=2.0),
+            lambda item: bounded_buffer_call(buffer, lambda: buffer.put(item, timeout=2.0)),
             chunk,
         )
 

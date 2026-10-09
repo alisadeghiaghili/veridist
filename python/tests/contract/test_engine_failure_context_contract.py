@@ -14,6 +14,7 @@ import unittest
 from types import SimpleNamespace
 from typing import Any
 
+from tests.contract.buffer_watchdog import bounded_buffer_call
 from veridist.engine.checkpoint import (
     CheckpointCommitUncertain,
     CheckpointRecord,
@@ -224,7 +225,7 @@ class BufferContextTests(unittest.TestCase):
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=8)
         chunk = BufferedChunk(envelope=ChunkEnvelope("s", "c", 0, 0, 0, 0), payload=object())
         with self.assertRaises(DeliveryContractError) as captured:
-            buffer.put(chunk, timeout=2.0)
+            bounded_buffer_call(buffer, lambda: buffer.put(chunk, timeout=2.0))
         self.assertIs(captured.exception.code, FailureCode.INVALID_RETAINED_BYTES)
         self.assertEqual(dict(captured.exception.context), {"byte_size": 0})
 
@@ -232,7 +233,7 @@ class BufferContextTests(unittest.TestCase):
         buffer = BoundedChunkBuffer(chunk_bytes=4, max_inflight_bytes=8)
         chunk = BufferedChunk(envelope=ChunkEnvelope("s", "c", 0, 0, 1, 5), payload=object())
         with self.assertRaises(DeliveryContractError) as captured:
-            buffer.put(chunk, timeout=2.0)
+            bounded_buffer_call(buffer, lambda: buffer.put(chunk, timeout=2.0))
         self.assertIs(captured.exception.code, FailureCode.CHUNK_TOO_LARGE)
         self.assertEqual(dict(captured.exception.context), {"byte_size": 5, "chunk_bytes": 4})
 
@@ -241,7 +242,7 @@ class BufferContextTests(unittest.TestCase):
         buffer.cancel()
         chunk = BufferedChunk(envelope=ChunkEnvelope("s", "c", 0, 0, 1, 1), payload=object())
         with self.assertRaises(DeliveryContractError) as captured:
-            buffer.put(chunk, timeout=2.0)
+            bounded_buffer_call(buffer, lambda: buffer.put(chunk, timeout=2.0))
         self.assertIs(captured.exception.code, FailureCode.CANCELLED)
         self.assertEqual(dict(captured.exception.context), {})
 
