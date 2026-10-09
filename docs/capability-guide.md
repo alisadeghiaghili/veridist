@@ -63,7 +63,7 @@ All six families (Exponential, Normal, Gamma, Weibull-minimum, Lognormal, and ri
 
 Caller-owned chunks can be reduced sequentially. Successful binary64 log-density terms use a fixed O(1) reducer state, with one final binary64 rounding. There is no generic RSS or throughput claim.
 
-Historical evidence covers the strict exponential CSV path at 10 thousand, 100 thousand, and 1 million rows with several chunk sizes. It documents those exact runs, not the speed or memory use of every machine and dataset.
+Retained evidence covers the strict exponential CSV path at 10 thousand, 100 thousand, and 1 million rows with several chunk sizes, measured on Linux and Windows runners on 2026-10-09. It documents those exact runs, not the speed or memory use of every machine and dataset.
 
 For compatible exponential reductions, a local SQLite checkpoint can preserve state after interruption. Before resuming, Veridist checks source revision, checksum, checkpoint generation, and processed ranges. Durable resume is limited to one host and its local filesystem; it is not distributed execution.
 

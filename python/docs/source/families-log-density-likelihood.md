@@ -100,16 +100,23 @@ accumulation, so the total is again independent of chunking and order.
 
 ## Evidence and limits
 
-`LLR-06` preserves a historical generated-stream snapshot for normal-zero
-scalar reduction at 10k/100k/1m observations and three chunk sizes. Its
-schema-v2 artifact lacks candidate binding and the public source-route fact, so
-it cannot support a current candidate claim. A current schema-v3 run must use
-the public `IterableDataSource` single-pass route, bind the reviewed candidate
-SHA, record one outer acquisition and every yielded observation, and agree
-bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound.
-Elapsed time and `tracemalloc` values remain descriptive only.
+`LLR-06` retains generated-stream measurements of the exact-state
+log-likelihood reducer for each of the five scalar families (`normal`,
+`gamma`, `weibull_min`, `lognormal`, `gumbel_right`) at 10k/100k/1m
+observations and three chunk sizes (1,024, 8,192, and 65,536). They were taken
+on 2026-10-09 from candidate commit
+`19ecf1062978fe0f894625e65b5a113ba1b68166`, one run each on a Linux runner
+(CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a schema-v5
+checker accepts them. Each run used the public `IterableDataSource`
+single-pass route, bound the candidate SHA, recorded one outer acquisition and
+every yielded observation, and agreed bitwise with the independent exact-unit
+oracle and 2162-bit algorithmic bound. At 1m observations, elapsed time was
+3.2 to 9.2 seconds on Linux and 3.3 to 10.6 seconds on Windows depending on
+the family, with peak process memory of 25.8 MiB on Linux and 25.3 MiB on
+Windows. Elapsed time and `tracemalloc` values remain descriptive only.
 
-This evidence is scoped to the tested scalar normal stream and exact reducer.
-It does not establish fitting, inference, goodness-of-fit, ranking, arrays,
-censoring, generic out-of-core processing, throughput, process-memory/RSS
-bounds, another data adapter, or cross-platform performance.
+This evidence is scoped to the tested fixed streams of the five scalar
+families and the exact reducer, on the two measured runners. It does not
+establish fitting, inference, goodness-of-fit, ranking, arrays, censoring,
+generic out-of-core processing, a throughput or process-memory/RSS guarantee,
+another data adapter, or performance on other machines.

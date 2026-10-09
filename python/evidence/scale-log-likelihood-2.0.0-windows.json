@@ -1,0 +1,1193 @@
+{
+  "artifact_sha256": "ec50b84c9e4e973bf35bf9a780eac1c10b5fc81e203aad8aaa0cb7396e6dab0c",
+  "cells": [
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -9189.385332046726,
+        "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.037242899999995416,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 20480,
+        "rss_peak_bytes": 26480640,
+        "tracemalloc_peak_bytes": 2683
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -1859952297715406273096796074059542357255626680932504020291826432786691077518888983991886552674801567182506458897727373300679357209709480176001059777384241561245902244720237846879850875625930467467745492693920425960802573711256082715290125945933672909984917841786436075891010217342370830265191725565304338666146869834583900160000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 268507.5544600778
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -9189.385332046726,
+        "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.03707269999998175,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26480640,
+        "tracemalloc_peak_bytes": 2667
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -1859952297715406273096796074059542357255626680932504020291826432786691077518888983991886552674801567182506458897727373300679357209709480176001059777384241561245902244720237846879850875625930467467745492693920425960802573711256082715290125945933672909984917841786436075891010217342370830265191725565304338666146869834583900160000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 269740.26709694526
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -9189.385332046726,
+        "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.037075899999990725,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26480640,
+        "tracemalloc_peak_bytes": 2632
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -1859952297715406273096796074059542357255626680932504020291826432786691077518888983991886552674801567182506458897727373300679357209709480176001059777384241561245902244720237846879850875625930467467745492693920425960802573711256082715290125945933672909984917841786436075891010217342370830265191725565304338666146869834583900160000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 269716.9859666927
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -91893.85332046727,
+        "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.37191429999998604,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 4096,
+        "rss_peak_bytes": 26484736,
+        "tracemalloc_peak_bytes": 2628
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -18599522977154062730967960740595423572556266809325040202918264327866910775188889839918865526748015671825064588977273733006793572097094801760010597773842415612459022447202378468798508756259304674677454926939204259608025737112560827152901259459336729099849178417864360758910102173423708302651917255653043386661468698345839001600000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 268879.14769613254
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -91893.85332046727,
+        "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.3696211000000176,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26484736,
+        "tracemalloc_peak_bytes": 2612
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -18599522977154062730967960740595423572556266809325040202918264327866910775188889839918865526748015671825064588977273733006793572097094801760010597773842415612459022447202378468798508756259304674677454926939204259608025737112560827152901259459336729099849178417864360758910102173423708302651917255653043386661468698345839001600000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 270547.3253556013
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -91893.85332046727,
+        "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.3691589000000022,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 4096,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2597
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -18599522977154062730967960740595423572556266809325040202918264327866910775188889839918865526748015671825064588977273733006793572097094801760010597773842415612459022447202378468798508756259304674677454926939204259608025737112560827152901259459336729099849178417864360758910102173423708302651917255653043386661468698345839001600000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 270886.06017625314
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -918938.5332046726,
+        "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 3.7445087000000115,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2581
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -185995229771540627309679607405954235725562668093250402029182643278669107751888898399188655267480156718250645889772737330067935720970948017600105977738424156124590224472023784687985087562593046746774549269392042596080257371125608271529012594593367290998491784178643607589101021734237083026519172556530433866614686983458390016000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 267057.7317659849
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -918938.5332046726,
+        "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 3.731678599999981,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2557
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -185995229771540627309679607405954235725562668093250402029182643278669107751888898399188655267480156718250645889772737330067935720970948017600105977738424156124590224472023784687985087562593046746774549269392042596080257371125608271529012594593367290998491784178643607589101021734237083026519172556530433866614686983458390016000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 267975.91839768976
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -918938.5332046726,
+        "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 3.723035199999998,
+      "family": "normal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2542
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -185995229771540627309679607405954235725562668093250402029182643278669107751888898399188655267480156718250645889772737330067935720970948017600105977738424156124590224472023784687985087562593046746774549269392042596080257371125608271529012594593367290998491784178643607589101021734237083026519172556530433866614686983458390016000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 268598.05139634473
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -10000.0,
+        "total_log_likelihood_hex": "-0x1.3880000000000p+13"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.03777780000001485,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2446
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -2024022533073106183524953467189173070495566497641421183569013580274303395679953468919603837014371244951870778643168119113898087373857934768670133999407385099215174242765663613644669077420932163412397676784727450685620074834246926986181033556491595563408100565123587695523334146152305025321863275086460062633077077410934947840000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 264705.7266435862
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -10000.0,
+        "total_log_likelihood_hex": "-0x1.3880000000000p+13"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.037769299999979467,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2430
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -2024022533073106183524953467189173070495566497641421183569013580274303395679953468919603837014371244951870778643168119113898087373857934768670133999407385099215174242765663613644669077420932163412397676784727450685620074834246926986181033556491595563408100565123587695523334146152305025321863275086460062633077077410934947840000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 264765.2988010219
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -10000.0,
+        "total_log_likelihood_hex": "-0x1.3880000000000p+13"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.03753649999998743,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2375
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -2024022533073106183524953467189173070495566497641421183569013580274303395679953468919603837014371244951870778643168119113898087373857934768670133999407385099215174242765663613644669077420932163412397676784727450685620074834246926986181033556491595563408100565123587695523334146152305025321863275086460062633077077410934947840000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 266407.3634996164
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -100000.0,
+        "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.38169619999999327,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2407
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -20240225330731061835249534671891730704955664976414211835690135802743033956799534689196038370143712449518707786431681191138980873738579347686701339994073850992151742427656636136446690774209321634123976767847274506856200748342469269861810335564915955634081005651235876955233341461523050253218632750864600626330770774109349478400000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 261988.4609802292
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -100000.0,
+        "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.3827555000000018,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2407
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -20240225330731061835249534671891730704955664976414211835690135802743033956799534689196038370143712449518707786431681191138980873738579347686701339994073850992151742427656636136446690774209321634123976767847274506856200748342469269861810335564915955634081005651235876955233341461523050253218632750864600626330770774109349478400000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 261263.3913817033
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -100000.0,
+        "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.3689114000000018,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2408
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -20240225330731061835249534671891730704955664976414211835690135802743033956799534689196038370143712449518707786431681191138980873738579347686701339994073850992151742427656636136446690774209321634123976767847274506856200748342469269861810335564915955634081005651235876955233341461523050253218632750864600626330770774109349478400000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 271067.7956821056
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -1000000.0,
+        "total_log_likelihood_hex": "-0x1.e848000000000p+19"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 3.7390837999999746,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2408
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -202402253307310618352495346718917307049556649764142118356901358027430339567995346891960383701437124495187077864316811911389808737385793476867013399940738509921517424276566361364466907742093216341239767678472745068562007483424692698618103355649159556340810056512358769552333414615230502532186327508646006263307707741093494784000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 267445.19606648205
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -1000000.0,
+        "total_log_likelihood_hex": "-0x1.e848000000000p+19"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 3.71223329999998,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2456
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -202402253307310618352495346718917307049556649764142118356901358027430339567995346891960383701437124495187077864316811911389808737385793476867013399940738509921517424276566361364466907742093216341239767678472745068562007483424692698618103355649159556340810056512358769552333414615230502532186327508646006263307707741093494784000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 269379.6211568937
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -1000000.0,
+        "total_log_likelihood_hex": "-0x1.e848000000000p+19"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 3.7115724999999884,
+      "family": "gamma",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2457
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -202402253307310618352495346718917307049556649764142118356901358027430339567995346891960383701437124495187077864316811911389808737385793476867013399940738509921517424276566361364466907742093216341239767678472745068562007483424692698618103355649159556340810056512358769552333414615230502532186327508646006263307707741093494784000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 269427.58089731593
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -3068.5281944005474,
+        "total_log_likelihood_hex": "-0x1.7f90e6f7f1890p+11"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.041041400000040085,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2524
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -621077020883684021963029199661874836900808487161313345969457671569818299376450998540623569428819234880986835346969057861810735120263618558800560928956036045759299365729793483984835902611628576725720374590502456620837268801987823111081805244734085619952468911589195316938074703903182689177400728349289482465910773304692572160000,
+        "oracle_total_units_bit_length": 1086
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 243656.40548300577
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -3068.5281944005474,
+        "total_log_likelihood_hex": "-0x1.7f90e6f7f1890p+11"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.04160980000000336,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2548
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -621077020883684021963029199661874836900808487161313345969457671569818299376450998540623569428819234880986835346969057861810735120263618558800560928956036045759299365729793483984835902611628576725720374590502456620837268801987823111081805244734085619952468911589195316938074703903182689177400728349289482465910773304692572160000,
+        "oracle_total_units_bit_length": 1086
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 240327.99965390828
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -3068.5281944005474,
+        "total_log_likelihood_hex": "-0x1.7f90e6f7f1890p+11"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.04078439999994998,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2529
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -621077020883684021963029199661874836900808487161313345969457671569818299376450998540623569428819234880986835346969057861810735120263618558800560928956036045759299365729793483984835902611628576725720374590502456620837268801987823111081805244734085619952468911589195316938074703903182689177400728349289482465910773304692572160000,
+        "oracle_total_units_bit_length": 1086
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 245191.7890176701
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -30685.28194400547,
+        "total_log_likelihood_hex": "-0x1.df7520b5edeb3p+14"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.43753639999999905,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2549
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -6210770208836840219630291996618748369008084871613133459694576715698182993764509985406235694288192348809868353469690578618107351202636185588005609289560360457592993657297934839848359026116285767257203745905024566208372688019878231110818052447340856199524689115891953169380747039031826891774007283492894824659107733046925721600000,
+        "oracle_total_units_bit_length": 1089
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 228552.41301066658
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -30685.28194400547,
+        "total_log_likelihood_hex": "-0x1.df7520b5edeb3p+14"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.4089898999999946,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2549
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -6210770208836840219630291996618748369008084871613133459694576715698182993764509985406235694288192348809868353469690578618107351202636185588005609289560360457592993657297934839848359026116285767257203745905024566208372688019878231110818052447340856199524689115891953169380747039031826891774007283492894824659107733046925721600000,
+        "oracle_total_units_bit_length": 1089
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 244504.81540009013
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -30685.28194400547,
+        "total_log_likelihood_hex": "-0x1.df7520b5edeb3p+14"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.40595619999999144,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2550
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -6210770208836840219630291996618748369008084871613133459694576715698182993764509985406235694288192348809868353469690578618107351202636185588005609289560360457592993657297934839848359026116285767257203745905024566208372688019878231110818052447340856199524689115891953169380747039031826891774007283492894824659107733046925721600000,
+        "oracle_total_units_bit_length": 1089
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 246331.99345151547
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -306852.8194400547,
+        "total_log_likelihood_hex": "-0x1.2ba93471b4b30p+18"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 4.0707504000000085,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2550
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -62107702088368402196302919966187483690080848716131334596945767156981829937645099854062356942881923488098683534696905786181073512026361855880056092895603604575929936572979348398483590261162857672572037459050245662083726880198782311108180524473408561995246891158919531693807470390318268917740072834928948246591077330469257216000000,
+        "oracle_total_units_bit_length": 1093
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 245654.95344543795
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -306852.8194400547,
+        "total_log_likelihood_hex": "-0x1.2ba93471b4b30p+18"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 4.107302000000004,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2550
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -62107702088368402196302919966187483690080848716131334596945767156981829937645099854062356942881923488098683534696905786181073512026361855880056092895603604575929936572979348398483590261162857672572037459050245662083726880198782311108180524473408561995246891158919531693807470390318268917740072834928948246591077330469257216000000,
+        "oracle_total_units_bit_length": 1093
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 243468.82698179947
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -306852.8194400547,
+        "total_log_likelihood_hex": "-0x1.2ba93471b4b30p+18"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 4.087076700000011,
+      "family": "weibull_min",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2551
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -62107702088368402196302919966187483690080848716131334596945767156981829937645099854062356942881923488098683534696905786181073512026361855880056092895603604575929936572979348398483590261162857672572037459050245662083726880198782311108180524473408561995246891158919531693807470390318268917740072834928948246591077330469257216000000,
+        "oracle_total_units_bit_length": 1093
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 244673.6563568766
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -9189.385332046726,
+        "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.09803589999995665,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3610
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -1859952297715406273096796074059542357255626680932504020291826432786691077518888983991886552674801567182506458897727373300679357209709480176001059777384241561245902244720237846879850875625930467467745492693920425960802573711256082715290125945933672909984917841786436075891010217342370830265191725565304338666146869834583900160000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 102003.44975671587
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -9189.385332046726,
+        "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.10500810000002048,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3610
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -1859952297715406273096796074059542357255626680932504020291826432786691077518888983991886552674801567182506458897727373300679357209709480176001059777384241561245902244720237846879850875625930467467745492693920425960802573711256082715290125945933672909984917841786436075891010217342370830265191725565304338666146869834583900160000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 95230.74886602128
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -9189.385332046726,
+        "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.098800400000016,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3579
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -1859952297715406273096796074059542357255626680932504020291826432786691077518888983991886552674801567182506458897727373300679357209709480176001059777384241561245902244720237846879850875625930467467745492693920425960802573711256082715290125945933672909984917841786436075891010217342370830265191725565304338666146869834583900160000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 101214.16512482116
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -91893.85332046727,
+        "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 1.0143218999999704,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3611
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -18599522977154062730967960740595423572556266809325040202918264327866910775188889839918865526748015671825064588977273733006793572097094801760010597773842415612459022447202378468798508756259304674677454926939204259608025737112560827152901259459336729099849178417864360758910102173423708302651917255653043386661468698345839001600000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 98588.03206359137
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -91893.85332046727,
+        "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.9881540000000086,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3611
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -18599522977154062730967960740595423572556266809325040202918264327866910775188889839918865526748015671825064588977273733006793572097094801760010597773842415612459022447202378468798508756259304674677454926939204259608025737112560827152901259459336729099849178417864360758910102173423708302651917255653043386661468698345839001600000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 101198.80099660491
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -91893.85332046727,
+        "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.9842643999999723,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3612
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -18599522977154062730967960740595423572556266809325040202918264327866910775188889839918865526748015671825064588977273733006793572097094801760010597773842415612459022447202378468798508756259304674677454926939204259608025737112560827152901259459336729099849178417864360758910102173423708302651917255653043386661468698345839001600000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 101598.7167675706
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -918938.5332046726,
+        "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 9.842541499999982,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3612
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -185995229771540627309679607405954235725562668093250402029182643278669107751888898399188655267480156718250645889772737330067935720970948017600105977738424156124590224472023784687985087562593046746774549269392042596080257371125608271529012594593367290998491784178643607589101021734237083026519172556530433866614686983458390016000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 101599.77481425929
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -918938.5332046726,
+        "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 10.593660199999988,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3612
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -185995229771540627309679607405954235725562668093250402029182643278669107751888898399188655267480156718250645889772737330067935720970948017600105977738424156124590224472023784687985087562593046746774549269392042596080257371125608271529012594593367290998491784178643607589101021734237083026519172556530433866614686983458390016000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 94396.08040288107
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -918938.5332046726,
+        "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 9.950974200000019,
+      "family": "lognormal",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 3613
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -185995229771540627309679607405954235725562668093250402029182643278669107751888898399188655267480156718250645889772737330067935720970948017600105977738424156124590224472023784687985087562593046746774549269392042596080257371125608271529012594593367290998491784178643607589101021734237083026519172556530433866614686983458390016000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 100492.6733706131
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -10000.0,
+        "total_log_likelihood_hex": "-0x1.3880000000000p+13"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.03339210000001458,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2401
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -2024022533073106183524953467189173070495566497641421183569013580274303395679953468919603837014371244951870778643168119113898087373857934768670133999407385099215174242765663613644669077420932163412397676784727450685620074834246926986181033556491595563408100565123587695523334146152305025321863275086460062633077077410934947840000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 299472.03080955177
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -10000.0,
+        "total_log_likelihood_hex": "-0x1.3880000000000p+13"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.033573100000012346,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2449
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -2024022533073106183524953467189173070495566497641421183569013580274303395679953468919603837014371244951870778643168119113898087373857934768670133999407385099215174242765663613644669077420932163412397676784727450685620074834246926986181033556491595563408100565123587695523334146152305025321863275086460062633077077410934947840000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 297857.51092381467
+    },
+    {
+      "actual": {
+        "observation_count": 10000,
+        "total_log_likelihood": -10000.0,
+        "total_log_likelihood_hex": "-0x1.3880000000000p+13"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.033008300000005875,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2418
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 10000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -2024022533073106183524953467189173070495566497641421183569013580274303395679953468919603837014371244951870778643168119113898087373857934768670133999407385099215174242765663613644669077420932163412397676784727450685620074834246926986181033556491595563408100565123587695523334146152305025321863275086460062633077077410934947840000,
+        "oracle_total_units_bit_length": 1088
+      },
+      "rows": 10000,
+      "throughput_rows_per_second": 302954.1054825065
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -100000.0,
+        "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 0.32698870000001534,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2450
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -20240225330731061835249534671891730704955664976414211835690135802743033956799534689196038370143712449518707786431681191138980873738579347686701339994073850992151742427656636136446690774209321634123976767847274506856200748342469269861810335564915955634081005651235876955233341461523050253218632750864600626330770774109349478400000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 305820.96567861614
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -100000.0,
+        "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 0.33388300000001436,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2450
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -20240225330731061835249534671891730704955664976414211835690135802743033956799534689196038370143712449518707786431681191138980873738579347686701339994073850992151742427656636136446690774209321634123976767847274506856200748342469269861810335564915955634081005651235876955233341461523050253218632750864600626330770774109349478400000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 299506.11441731296
+    },
+    {
+      "actual": {
+        "observation_count": 100000,
+        "total_log_likelihood": -100000.0,
+        "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 0.32613209999999526,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2451
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 100000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -20240225330731061835249534671891730704955664976414211835690135802743033956799534689196038370143712449518707786431681191138980873738579347686701339994073850992151742427656636136446690774209321634123976767847274506856200748342469269861810335564915955634081005651235876955233341461523050253218632750864600626330770774109349478400000,
+        "oracle_total_units_bit_length": 1091
+      },
+      "rows": 100000,
+      "throughput_rows_per_second": 306624.2176099852
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -1000000.0,
+        "total_log_likelihood_hex": "-0x1.e848000000000p+19"
+      },
+      "chunk_size": 1024,
+      "elapsed_seconds": 3.315639699999906,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2451
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -202402253307310618352495346718917307049556649764142118356901358027430339567995346891960383701437124495187077864316811911389808737385793476867013399940738509921517424276566361364466907742093216341239767678472745068562007483424692698618103355649159556340810056512358769552333414615230502532186327508646006263307707741093494784000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 301600.9248532126
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -1000000.0,
+        "total_log_likelihood_hex": "-0x1.e848000000000p+19"
+      },
+      "chunk_size": 8192,
+      "elapsed_seconds": 3.3154713999999785,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2451
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -202402253307310618352495346718917307049556649764142118356901358027430339567995346891960383701437124495187077864316811911389808737385793476867013399940738509921517424276566361364466907742093216341239767678472745068562007483424692698618103355649159556340810056512358769552333414615230502532186327508646006263307707741093494784000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 301616.23472306423
+    },
+    {
+      "actual": {
+        "observation_count": 1000000,
+        "total_log_likelihood": -1000000.0,
+        "total_log_likelihood_hex": "-0x1.e848000000000p+19"
+      },
+      "chunk_size": 65536,
+      "elapsed_seconds": 3.5616198999999824,
+      "family": "gumbel_right",
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 26488832,
+        "tracemalloc_peak_bytes": 2452
+      },
+      "one_pass": {
+        "iterator_acquisitions": 1,
+        "observation_yields": 1000000
+      },
+      "oracle": {
+        "bound_bits": 2162,
+        "oracle_total_units": -202402253307310618352495346718917307049556649764142118356901358027430339567995346891960383701437124495187077864316811911389808737385793476867013399940738509921517424276566361364466907742093216341239767678472745068562007483424692698618103355649159556340810056512358769552333414615230502532186327508646006263307707741093494784000000,
+        "oracle_total_units_bit_length": 1094
+      },
+      "rows": 1000000,
+      "throughput_rows_per_second": 280771.1176591317
+    }
+  ],
+  "run": {
+    "candidate_git_sha": "19ecf1062978fe0f894625e65b5a113ba1b68166",
+    "generator": "fixed-supported-family-v1",
+    "git_dirty": false,
+    "git_sha": "19ecf1062978fe0f894625e65b5a113ba1b68166",
+    "measurement_workers": 1,
+    "methodology": {
+      "passes": "elapsed-untraced-then-memory-traced-v1",
+      "rss": "process-peak-v1"
+    },
+    "platform": "Windows-10-10.0.26100-SP0",
+    "python": {
+      "implementation": "CPython",
+      "version": "3.11.9"
+    },
+    "source_contract": "public-iterable-data-source-v1"
+  },
+  "schema_version": "5"
+}

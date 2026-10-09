@@ -114,9 +114,9 @@ The result carries no inference output by itself, but `uncertainty()` on the fit
 
 Veridist reads the CSV rows once and processes them in sections instead of loading the entire file as one object. The configured byte limits restrict how much parsed CSV content this reader keeps at one time. They do not cap all memory used by Python or the operating system, and they do not guarantee a particular processing speed.
 
-The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this CSV input path and estimator only. That older schema does not have enough provenance<sup id="fnref-provenance"><a href="#fn-provenance">15</a></sup> to support a current performance claim. A current performance claim needs a clean run tied to the reviewed source revision and documented environment.
+The retained `SCALE-CSV-EXP-01` evidence is a 2.0.0 measurement of this CSV input path and estimator only, at 10k, 100k, and 1m rows with 32 KiB, 64 KiB, and 128 KiB chunk sizes. It was taken on 2026-10-09 from candidate commit `19ecf1062978fe0f894625e65b5a113ba1b68166`, one run each on a Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a checker tied to that commit accepts it. Each run records its provenance<sup id="fnref-provenance"><a href="#fn-provenance">15</a></sup> (candidate commit, clean checkout, platform, Python version, and measurement method). For 1m rows the run took 14.1 to 18.9 seconds on Linux and 14.8 to 19.8 seconds on Windows, with peak process memory of 40.2 to 45.0 MiB on Linux and 40.7 MiB on Windows. Every run read the file once and stayed within its configured chunk limit. These are the timings of those runs, not a guarantee of speed or memory on other machines or data.
 
-The historical snapshot does not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example.
+These measurements do not establish general big-data support, another adapter, cancellation, retry, or checkpointing. For save-and-resume behavior, use the API guide and the dedicated checkpoint example.
 
 </details>
 

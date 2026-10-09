@@ -1,0 +1,366 @@
+{
+  "artifact_sha256": "946601dae2c22b934690964b6c7931e77003f86832fbc921e7e99d60b9c5d8ed",
+  "cells": [
+    {
+      "chunk_bytes": 32768,
+      "elapsed_seconds": 0.15664287,
+      "fit": {
+        "absolute_rate_error": 7.3420534037e-17,
+        "event_count": 6666,
+        "expected_event_count": 6666,
+        "expected_rate": "1.339766194117369226579465963",
+        "expected_total_time": "4975.495",
+        "observation_count": 10000,
+        "rate": 1.3397661941173693,
+        "relative_rate_error": 5.480100510027352e-17,
+        "total_time": 4975.495
+      },
+      "max_inflight_bytes": 32768,
+      "memory": {
+        "rss_delta_bytes": 2256896,
+        "rss_peak_bytes": 31350784,
+        "tracemalloc_peak_bytes": 890656
+      },
+      "observed": {
+        "accepted_chunk_count": 23,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 32758,
+        "max_passes": 1,
+        "peak_inflight_bytes": 32758,
+        "processed_row_count": 10000
+      },
+      "rows": 10000,
+      "source": {
+        "bytes": 78937,
+        "sha256": "48f3e92c0c242f9d029d4278ebea80e45a3bae137aa5000309d98a4a85bc9a7f"
+      },
+      "throughput_rows_per_second": 63839.4840441828
+    },
+    {
+      "chunk_bytes": 65536,
+      "elapsed_seconds": 0.147898815,
+      "fit": {
+        "absolute_rate_error": 7.3420534037e-17,
+        "event_count": 6666,
+        "expected_event_count": 6666,
+        "expected_rate": "1.339766194117369226579465963",
+        "expected_total_time": "4975.495",
+        "observation_count": 10000,
+        "rate": 1.3397661941173693,
+        "relative_rate_error": 5.480100510027352e-17,
+        "total_time": 4975.495
+      },
+      "max_inflight_bytes": 65536,
+      "memory": {
+        "rss_delta_bytes": 1470464,
+        "rss_peak_bytes": 32821248,
+        "tracemalloc_peak_bytes": 1682213
+      },
+      "observed": {
+        "accepted_chunk_count": 12,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 65518,
+        "max_passes": 1,
+        "peak_inflight_bytes": 65518,
+        "processed_row_count": 10000
+      },
+      "rows": 10000,
+      "source": {
+        "bytes": 78937,
+        "sha256": "48f3e92c0c242f9d029d4278ebea80e45a3bae137aa5000309d98a4a85bc9a7f"
+      },
+      "throughput_rows_per_second": 67613.79393066808
+    },
+    {
+      "chunk_bytes": 131072,
+      "elapsed_seconds": 0.187053806,
+      "fit": {
+        "absolute_rate_error": 7.3420534037e-17,
+        "event_count": 6666,
+        "expected_event_count": 6666,
+        "expected_rate": "1.339766194117369226579465963",
+        "expected_total_time": "4975.495",
+        "observation_count": 10000,
+        "rate": 1.3397661941173693,
+        "relative_rate_error": 5.480100510027352e-17,
+        "total_time": 4975.495
+      },
+      "max_inflight_bytes": 131072,
+      "memory": {
+        "rss_delta_bytes": 1835008,
+        "rss_peak_bytes": 35049472,
+        "tracemalloc_peak_bytes": 2357307
+      },
+      "observed": {
+        "accepted_chunk_count": 6,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 131066,
+        "max_passes": 1,
+        "peak_inflight_bytes": 131066,
+        "processed_row_count": 10000
+      },
+      "rows": 10000,
+      "source": {
+        "bytes": 78937,
+        "sha256": "48f3e92c0c242f9d029d4278ebea80e45a3bae137aa5000309d98a4a85bc9a7f"
+      },
+      "throughput_rows_per_second": 53460.55348373933
+    },
+    {
+      "chunk_bytes": 32768,
+      "elapsed_seconds": 1.432375928,
+      "fit": {
+        "absolute_rate_error": 3.797836951e-18,
+        "event_count": 66666,
+        "expected_event_count": 66666,
+        "expected_rate": "1.338797018603105303797836951",
+        "expected_total_time": "49795.450",
+        "observation_count": 100000,
+        "rate": 1.3387970186031053,
+        "relative_rate_error": 2.83675336755877e-18,
+        "total_time": 49795.45
+      },
+      "max_inflight_bytes": 32768,
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 35049472,
+        "tracemalloc_peak_bytes": 1404129
+      },
+      "observed": {
+        "accepted_chunk_count": 224,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 32758,
+        "max_passes": 1,
+        "peak_inflight_bytes": 32758,
+        "processed_row_count": 100000
+      },
+      "rows": 100000,
+      "source": {
+        "bytes": 789187,
+        "sha256": "88bf1683bf4439a72d5bac9a69c1614708883b9aa0eaeacca10239c7ace42f3b"
+      },
+      "throughput_rows_per_second": 69814.07467495503
+    },
+    {
+      "chunk_bytes": 65536,
+      "elapsed_seconds": 1.45185162,
+      "fit": {
+        "absolute_rate_error": 3.797836951e-18,
+        "event_count": 66666,
+        "expected_event_count": 66666,
+        "expected_rate": "1.338797018603105303797836951",
+        "expected_total_time": "49795.450",
+        "observation_count": 100000,
+        "rate": 1.3387970186031053,
+        "relative_rate_error": 2.83675336755877e-18,
+        "total_time": 49795.45
+      },
+      "max_inflight_bytes": 65536,
+      "memory": {
+        "rss_delta_bytes": 1179648,
+        "rss_peak_bytes": 36229120,
+        "tracemalloc_peak_bytes": 2501835
+      },
+      "observed": {
+        "accepted_chunk_count": 111,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 65518,
+        "max_passes": 1,
+        "peak_inflight_bytes": 65518,
+        "processed_row_count": 100000
+      },
+      "rows": 100000,
+      "source": {
+        "bytes": 789187,
+        "sha256": "88bf1683bf4439a72d5bac9a69c1614708883b9aa0eaeacca10239c7ace42f3b"
+      },
+      "throughput_rows_per_second": 68877.56201973312
+    },
+    {
+      "chunk_bytes": 131072,
+      "elapsed_seconds": 1.893422569,
+      "fit": {
+        "absolute_rate_error": 3.797836951e-18,
+        "event_count": 66666,
+        "expected_event_count": 66666,
+        "expected_rate": "1.338797018603105303797836951",
+        "expected_total_time": "49795.450",
+        "observation_count": 100000,
+        "rate": 1.3387970186031053,
+        "relative_rate_error": 2.83675336755877e-18,
+        "total_time": 49795.45
+      },
+      "max_inflight_bytes": 131072,
+      "memory": {
+        "rss_delta_bytes": 4587520,
+        "rss_peak_bytes": 42127360,
+        "tracemalloc_peak_bytes": 3843766
+      },
+      "observed": {
+        "accepted_chunk_count": 56,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 131066,
+        "max_passes": 1,
+        "peak_inflight_bytes": 131066,
+        "processed_row_count": 100000
+      },
+      "rows": 100000,
+      "source": {
+        "bytes": 789187,
+        "sha256": "88bf1683bf4439a72d5bac9a69c1614708883b9aa0eaeacca10239c7ace42f3b"
+      },
+      "throughput_rows_per_second": 52814.41218523893
+    },
+    {
+      "chunk_bytes": 32768,
+      "elapsed_seconds": 14.250437784,
+      "fit": {
+        "absolute_rate_error": 1.11086218616e-16,
+        "event_count": 666666,
+        "expected_event_count": 666666,
+        "expected_rate": "1.336015911676840311086218616",
+        "expected_total_time": "498995.554",
+        "observation_count": 1000000,
+        "rate": 1.3360159116768402,
+        "relative_rate_error": 8.3147376947461e-17,
+        "total_time": 498995.554
+      },
+      "max_inflight_bytes": 32768,
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 42127360,
+        "tracemalloc_peak_bytes": 1880494
+      },
+      "observed": {
+        "accepted_chunk_count": 2233,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 32758,
+        "max_passes": 1,
+        "peak_inflight_bytes": 32758,
+        "processed_row_count": 1000000
+      },
+      "rows": 1000000,
+      "source": {
+        "bytes": 7891696,
+        "sha256": "c7f38840c43b052035eed3ea0bc110ba3038203e42aa4a520703d029b67332bb"
+      },
+      "throughput_rows_per_second": 70173.2827550584
+    },
+    {
+      "chunk_bytes": 65536,
+      "elapsed_seconds": 14.106691847,
+      "fit": {
+        "absolute_rate_error": 1.11086218616e-16,
+        "event_count": 666666,
+        "expected_event_count": 666666,
+        "expected_rate": "1.336015911676840311086218616",
+        "expected_total_time": "498995.554",
+        "observation_count": 1000000,
+        "rate": 1.3360159116768402,
+        "relative_rate_error": 8.3147376947461e-17,
+        "total_time": 498995.554
+      },
+      "max_inflight_bytes": 65536,
+      "memory": {
+        "rss_delta_bytes": 0,
+        "rss_peak_bytes": 42127360,
+        "tracemalloc_peak_bytes": 2525258
+      },
+      "observed": {
+        "accepted_chunk_count": 1108,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 65518,
+        "max_passes": 1,
+        "peak_inflight_bytes": 65518,
+        "processed_row_count": 1000000
+      },
+      "rows": 1000000,
+      "source": {
+        "bytes": 7891696,
+        "sha256": "c7f38840c43b052035eed3ea0bc110ba3038203e42aa4a520703d029b67332bb"
+      },
+      "throughput_rows_per_second": 70888.34227371778
+    },
+    {
+      "chunk_bytes": 131072,
+      "elapsed_seconds": 18.851525385,
+      "fit": {
+        "absolute_rate_error": 1.11086218616e-16,
+        "event_count": 666666,
+        "expected_event_count": 666666,
+        "expected_rate": "1.336015911676840311086218616",
+        "expected_total_time": "498995.554",
+        "observation_count": 1000000,
+        "rate": 1.3360159116768402,
+        "relative_rate_error": 8.3147376947461e-17,
+        "total_time": 498995.554
+      },
+      "max_inflight_bytes": 131072,
+      "memory": {
+        "rss_delta_bytes": 5066752,
+        "rss_peak_bytes": 47194112,
+        "tracemalloc_peak_bytes": 5294968
+      },
+      "observed": {
+        "accepted_chunk_count": 552,
+        "actual_pass_count": 1,
+        "backpressure_event_count": 0,
+        "largest_retained_chunk_bytes": 131066,
+        "max_passes": 1,
+        "peak_inflight_bytes": 131066,
+        "processed_row_count": 1000000
+      },
+      "rows": 1000000,
+      "source": {
+        "bytes": 7891696,
+        "sha256": "c7f38840c43b052035eed3ea0bc110ba3038203e42aa4a520703d029b67332bb"
+      },
+      "throughput_rows_per_second": 53046.105266138926
+    }
+  ],
+  "generator": {
+    "formula_version": "1",
+    "temporary_root": "redacted"
+  },
+  "operation_evidence": {
+    "accepted_chunks": [
+      23,
+      224,
+      2233
+    ],
+    "rows": [
+      10000,
+      100000,
+      1000000
+    ]
+  },
+  "run": {
+    "candidate_git_sha": "19ecf1062978fe0f894625e65b5a113ba1b68166",
+    "git_dirty": false,
+    "git_sha": "19ecf1062978fe0f894625e65b5a113ba1b68166",
+    "measurement_workers": 1,
+    "methodology": {
+      "passes": "elapsed-untraced-then-memory-traced-v1",
+      "rss": "process-peak-v1"
+    },
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "python": {
+      "implementation": "CPython",
+      "version": "3.11.17"
+    },
+    "timing": {
+      "clock": "time.perf_counter_ns",
+      "preflight": "paired-monotonic-wall-v2"
+    },
+    "utc_started": "2026-10-09T15:06:30Z"
+  },
+  "schema_version": "3"
+}
