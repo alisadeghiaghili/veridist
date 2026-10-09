@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import argparse
-import re
 import sys
 from collections.abc import Iterable
 
-_VERIDIST_PREFIXES = ("python/", "docs/adr/", "docs/evidence/", "docs/migration/")
+_VERIDIST_PREFIXES = ("python/",)
 _VERIDIST_PATHS = frozenset(
     {
         "README.md",
@@ -25,23 +24,12 @@ _VERIDIST_PATHS = frozenset(
         ".github/workflows/v1-ci.yml",
         ".github/workflows/v1-release-evidence.yml",
         ".github/workflows/pypi-publish.yml",
-        "docs/adoption-and-reputation-strategy.md",
         "docs/capability-guide.md",
         "docs/capability-guide.fa.md",
         "docs/capability-guide.de.md",
-        "docs/competitive-evidence-policy.md",
-        "docs/competitive-feature-matrix.csv",
-        "docs/competitive-feature-matrix.md",
-        "docs/competitive-landscape.md",
-        "docs/conventions.md",
-        "docs/readme-design-policy.md",
         "docs/citing-veridist.md",
-        "docs/v1-readiness.md",
-        "docs/v1-roadmap.md",
-        "docs/v1-test-plan.md",
     }
 )
-_DATED_DECISION = re.compile(r"docs/decisions-\d{4}-\d{2}-\d{2}\.md")
 
 
 def _validate_repository_path(path: str) -> None:
@@ -53,11 +41,7 @@ def _validate_repository_path(path: str) -> None:
 
 
 def _is_veridist_only(path: str) -> bool:
-    return (
-        path.startswith(_VERIDIST_PREFIXES)
-        or path in _VERIDIST_PATHS
-        or _DATED_DECISION.fullmatch(path) is not None
-    )
+    return path.startswith(_VERIDIST_PREFIXES) or path in _VERIDIST_PATHS
 
 
 def legacy_relevant(paths: Iterable[str]) -> bool:

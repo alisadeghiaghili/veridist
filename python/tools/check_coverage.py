@@ -19,6 +19,7 @@ REQUIRED_SUMMARY_METRICS = {
 }
 REQUIRED_EXCEPTION_FIELDS = {"path", "owner", "reason", "expiry", "adr"}
 ADR_PATTERN = re.compile(r"ADR-\d{4}$")
+ADR_INDEX_PATH = Path("quality") / "adr-index.json"
 PRAGMA_PATTERN = re.compile(r"#\s*pragma:\s*no\s*(cover|branch)", re.IGNORECASE)
 PRAGMA_KINDS = ("no_branch", "no_cover")
 
@@ -88,11 +89,21 @@ def _integer_metric(summary: dict[str, Any], metric: str, path: str, errors: lis
     return value
 
 
-def _adr_exists(repository_root: Path, adr: str) -> bool:
-    adr_dir = repository_root / "docs" / "adr"
-    if not adr_dir.is_dir():
-        return False
-    return any(adr_dir.glob(f"{adr}-*.md"))
+def _load_adr_index(project_root: Path, errors: list[str]) -> frozenset[str]:
+    """Return the ADR ids published in ``quality/adr-index.json``.
+
+    The index maps ``ADR-NNNN`` to a non-empty title and carries nothing else;
+    a missing or malformed index yields no ids, so every exception that names an
+    ADR is rejected.
+    """
+
+    index = _load_json(project_root / ADR_INDEX_PATH, "ADR index", errors)
+    valid = True
+    for adr, title in index.items():
+        if not ADR_PATTERN.fullmatch(adr) or not isinstance(title, str) or not title.strip():
+            errors.append(f"ADR index entry is invalid: {adr!r}")
+            valid = False
+    return frozenset(index) if valid else frozenset()
 
 
 def _validate_exception(
@@ -101,7 +112,7 @@ def _validate_exception(
     seen: set[str],
     errors: list[str],
     *,
-    repository_root: Path,
+    adr_ids: frozenset[str],
     today: date,
 ) -> str | None:
     if not isinstance(exception, dict):
@@ -132,7 +143,7 @@ def _validate_exception(
     if not ADR_PATTERN.fullmatch(adr):
         errors.append(f"exception ADR is invalid for {path}")
         return None
-    if not _adr_exists(repository_root, adr):
+    if adr not in adr_ids:
         errors.append(f"exception ADR does not exist for {path}: {adr}")
         return None
     try:
@@ -227,8 +238,8 @@ def validate(
     ``today`` defaults to :func:`datetime.date.today` and is compared against
     every accepted exception's ``expiry``: an exception whose expiry has
     passed is rejected rather than silently honored forever. Each exception's
-    ``adr`` must also name an ADR document that actually exists under
-    ``docs/adr`` at the repository root (``project_root.parent``).
+    ``adr`` must also be listed in ``quality/adr-index.json`` under
+    ``project_root``.
     """
 
     if today is None:
@@ -298,6 +309,7 @@ def validate(
         project_root, manifest["pragma_budget"], production_files, discovered, errors
     )
 
+    adr_ids = _load_adr_index(project_root, errors) if exceptions_value else frozenset()
     exception_paths: set[str] = set()
     for exception in exceptions_value:
         _validate_exception(
@@ -305,7 +317,7 @@ def validate(
             production_files,
             exception_paths,
             errors,
-            repository_root=project_root.parent,
+            adr_ids=adr_ids,
             today=today,
         )
 

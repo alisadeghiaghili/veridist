@@ -186,8 +186,8 @@ aufrufereigenen Generator. Inferenz ist enger als Fitting; die
 dokumentiert den genauen Umfang.
 
 Das frühere Projekt enthielt 25 Verteilungen: 20 stetige und fünf diskrete.
-Ihr Migrationsstatus ist nicht gleich dem veröffentlichten Umfang; siehe
-[Migrationsübersicht](https://github.com/alisadeghiaghili/veridist/blob/main/docs/migration/README.md).
+Ihr Migrationsstatus ist nicht gleich dem veröffentlichten Umfang; maßgeblich ist
+der Capability Guide.
 
 ## Wenn Daten wachsen
 
@@ -224,7 +224,7 @@ Wiederaufnahme zu Ihren Arbeitslasten passen.
 
 Die [bekannten Grenzen](python/KNOWN_LIMITS.de.md) nennen Ausschlüsse wie Links- und
 Intervallzensierung, Kovariaten und verteilte Ausführung. Der historische
-`distfit_pro`-Quellcode wird in der Migrationsübersicht geführt, ist aber keine
+`distfit_pro`-Quellcode ist nicht Teil von Veridist und keine
 Laufzeitkompatibilitätszusage.
 
 Die unteren API-Bausteine \`FAMILY_REGISTRY\`, \`evaluate_log_density\` und
@@ -264,7 +264,7 @@ gelieferte Änderungen im [Changelog](python/CHANGELOG.md).
 | Eingaben, Ergebnisse und Fehler prüfen | [API-Referenz](python/docs/source/api.de.md) |
 | Von Version 1.0 umsteigen | [Migrationsanleitung](python/docs/migration-2.0.md) |
 | Reproduzierbaren Defekt melden | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
-| Beitragen | [Beitragsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) und [Engineering-Konventionen](https://github.com/alisadeghiaghili/veridist/blob/main/docs/conventions.md) |
+| Beitragen | [Beitragsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) |
 | Sicherheitsproblem melden | [Sicherheitsrichtlinie](https://github.com/alisadeghiaghili/veridist/blob/main/SECURITY.md) |
 | Releases verfolgen | [Changelog](python/CHANGELOG.md) |
 

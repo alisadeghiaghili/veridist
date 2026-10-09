@@ -29,16 +29,12 @@ class CiScopeClassifierTests(unittest.TestCase):
         paths = (
             "python/src/veridist/engine/errors.py",
             "python/tests/quality/test_ci_scope.py",
-            "docs/adr/ADR-0015-retry-checkpoint-transactional-guarantees.md",
-            "docs/evidence/scale-csv-exponential-v1.md",
+            "python/quality/adr-index.json",
+            "python/quality/migration/legacy-salvage-ledger.json",
             "docs/capability-guide.md",
             "docs/capability-guide.fa.md",
             "docs/capability-guide.de.md",
-            "docs/readme-design-policy.md",
             "docs/citing-veridist.md",
-            "docs/v1-readiness.md",
-            "docs/decisions-2026-08-20.md",
-            "docs/migration/legacy-salvage-ledger.json",
             "README.md",
             "CHANGELOG.md",
             "README.fa.md",
@@ -88,7 +84,7 @@ class CiScopeClassifierTests(unittest.TestCase):
             classifier.legacy_relevant(
                 (
                     "python/tests/data/file with spaces.py",
-                    "docs/adr/تصمیم-$GITHUB_OUTPUT.md",
+                    "python/docs/تصمیم-$GITHUB_OUTPUT.md",
                 )
             )
         )
@@ -103,8 +99,8 @@ class CiScopeClassifierTests(unittest.TestCase):
     def test_nul_decoder_requires_a_complete_unambiguous_stream(self) -> None:
         classifier = load_classifier()
         self.assertEqual(
-            classifier.decode_nul_paths(b"python/a.py\0docs/adr/x.md\0"),
-            ("python/a.py", "docs/adr/x.md"),
+            classifier.decode_nul_paths(b"python/a.py\0python/b.md\0"),
+            ("python/a.py", "python/b.md"),
         )
         for payload in (b"python/a.py", b"python/a.py\0\0", b"python/\xff\0"):
             with self.subTest(payload=payload), self.assertRaises(ValueError):

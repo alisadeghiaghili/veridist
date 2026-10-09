@@ -170,10 +170,12 @@ class CoverageGateTests(unittest.TestCase):
             target = project_root / relative_path
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("# fixture\n", encoding="utf-8")
+        quality_dir = project_root / "quality"
+        quality_dir.mkdir(parents=True, exist_ok=True)
+        index = {"ADR-0002": "Statistical correctness and capability matrix"}
         if create_adr:
-            adr_dir = repository_root / "docs" / "adr"
-            adr_dir.mkdir(parents=True, exist_ok=True)
-            (adr_dir / f"{adr}-coverage-exception.md").write_text("# fixture\n", encoding="utf-8")
+            index[adr] = "Coverage exception fixture"
+        (quality_dir / "adr-index.json").write_text(json.dumps(index), encoding="utf-8")
         manifest = _manifest(files)
         manifest["accepted_exceptions"] = [
             {
@@ -249,6 +251,53 @@ class CoverageGateTests(unittest.TestCase):
             self.assertTrue(
                 any("exception ADR does not exist" in error for error in errors), errors
             )
+
+    def _validate_with_index(self, index_text: str | None) -> list[str]:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            repository_root = Path(temp_dir)
+            manifest, coverage = self._exception_project(
+                repository_root, adr="ADR-0001", expiry="2099-01-01", create_adr=True
+            )
+            index_path = repository_root / "python" / "quality" / "adr-index.json"
+            if index_text is None:
+                index_path.unlink()
+            else:
+                index_path.write_text(index_text, encoding="utf-8")
+            (repository_root / "python" / "manifest.json").write_text(
+                json.dumps(manifest), encoding="utf-8"
+            )
+            (repository_root / "python" / "coverage.json").write_text(
+                json.dumps(coverage), encoding="utf-8"
+            )
+            return validate(
+                repository_root / "python",
+                repository_root / "python" / "manifest.json",
+                repository_root / "python" / "coverage.json",
+                today=date(2026, 1, 1),
+            )
+
+    def test_accepts_exception_whose_adr_is_in_the_index(self) -> None:
+        self.assertEqual(self._validate_with_index(json.dumps({"ADR-0001": "Title"})), [])
+
+    def test_rejects_exception_when_the_adr_index_is_missing(self) -> None:
+        errors = self._validate_with_index(None)
+        self.assertTrue(any("cannot read ADR index" in error for error in errors), errors)
+        self.assertTrue(any("exception ADR does not exist" in error for error in errors), errors)
+
+    def test_rejects_a_malformed_adr_index(self) -> None:
+        for index in (
+            json.dumps({"ADR-0001": ""}),
+            json.dumps({"ADR-0001": 7}),
+            json.dumps({"adr-1": "Title", "ADR-0001": "Title"}),
+            json.dumps(["ADR-0001"]),
+            "not json",
+        ):
+            with self.subTest(index=index):
+                errors = self._validate_with_index(index)
+                self.assertTrue(errors, index)
+                self.assertTrue(
+                    any("exception ADR does not exist" in error for error in errors), errors
+                )
 
     def _pragma_project(
         self, root: Path, source: str, budget: dict[str, int] | None

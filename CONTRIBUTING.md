@@ -15,12 +15,12 @@ python/
   src/veridist/        # the package: domain, statistics, families, engine, execution, ...
   tests/                # contract, reference, unit, conformance, property, docs, quality, scale
   tools/                # coverage, release, and evidence-checking scripts used by CI
-  quality/              # coverage-manifest.json and other gate manifests
+  quality/              # coverage and mutation manifests, adr-index.json, migration ledger data
   docs/                 # Sphinx source, EN/FA/DE locale catalogs, checkpoint-resume.md
   examples/             # runnable example scripts referenced from the docs
   KNOWN_LIMITS*.md       # the current release boundary, in en/fa/de
   README*.md             # the package README, in en/fa/de
-docs/                   # repository-level ADRs, readiness ledger, evidence notes
+docs/                   # capability guides (en/fa/de) and the citation guide
 ```
 
 The package changelog is [`python/CHANGELOG.md`](python/CHANGELOG.md).

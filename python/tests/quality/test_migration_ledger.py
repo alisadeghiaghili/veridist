@@ -11,7 +11,7 @@ from pathlib import Path
 
 PYTHON_ROOT = Path(__file__).resolve().parents[2]
 REPOSITORY_ROOT = PYTHON_ROOT.parent
-MIGRATION_ROOT = REPOSITORY_ROOT / "docs" / "migration"
+MIGRATION_ROOT = PYTHON_ROOT / "quality" / "migration"
 SCHEMA_PATH = MIGRATION_ROOT / "legacy-salvage-ledger.schema.json"
 LEDGER_PATH = MIGRATION_ROOT / "legacy-salvage-ledger.json"
 CHECKER_PATH = PYTHON_ROOT / "tools" / "check_migration_ledger.py"
@@ -208,9 +208,10 @@ class MigrationLedgerTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary_directory:
             fixture = Path(temporary_directory) / "fixture"
             fixture.mkdir()
-            fixture_ledger = fixture / "docs" / "migration" / "legacy-salvage-ledger.json"
-            fixture_schema = fixture / "docs" / "migration" / "legacy-salvage-ledger.schema.json"
-            fixture_source_locks = fixture / "docs" / "migration" / "legacy-source-locks.json"
+            fixture_migration = fixture / "python" / "quality" / "migration"
+            fixture_ledger = fixture_migration / "legacy-salvage-ledger.json"
+            fixture_schema = fixture_migration / "legacy-salvage-ledger.schema.json"
+            fixture_source_locks = fixture_migration / "legacy-source-locks.json"
             checker = fixture / "python" / "tools" / "check_migration_ledger.py"
             fixture_ledger.parent.mkdir(parents=True)
             checker.parent.mkdir(parents=True)
