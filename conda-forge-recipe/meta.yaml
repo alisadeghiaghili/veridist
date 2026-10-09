@@ -1,5 +1,5 @@
 {% set name = "veridist" %}
-{% set version = "2.0.0" %}
+{% set version = "2.1.0" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/alisadeghiaghili/veridist/releases/download/v{{ version }}/veridist-{{ version }}.tar.gz
-  sha256: 0852486fcded022e64eccadf95a00276b2d6ed304d0632833dee52f3dca9e0cb
+  sha256: 0e37a582f81a6730b0a537ce32d88c94c395e11b14fd5f2c6783b840118abbdd
 
 build:
   noarch: python

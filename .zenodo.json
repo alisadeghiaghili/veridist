@@ -3,7 +3,7 @@
   "description": "Evidence-first Python distribution fitting with reproducible inference, reliability models, resumable execution, and explicit statistical contracts.",
   "upload_type": "software",
   "publication_date": "2026-10-09",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "creators": [
     {
       "name": "Sadeghi Aghili, Seyed Ali"

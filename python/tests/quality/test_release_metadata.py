@@ -71,7 +71,7 @@ class ReleaseMetadataTests(unittest.TestCase):
             self.assertIn("__version__ differs", " ".join(validate(root)))
 
     def test_rejects_a_module_without_a_literal_version(self) -> None:
-        for source in ("def broken(:\n", "__version__ = compute()\n", "other = '2.0.0'\n"):
+        for source in ("def broken(:\n", "__version__ = compute()\n", "other = '2.1.0'\n"):
             with self.subTest(source=source), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 self._copy_metadata(root)

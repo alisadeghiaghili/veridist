@@ -137,8 +137,8 @@ def validate_artifact(artifact: Path, *, project_root: Path, release_tag: str) -
     Validate built distributions through the command-line entry point::
 
         python tools/check_release_artifacts.py --project-root . \
-            --release-tag v2.0.0 --artifact dist/veridist-2.0.0-py3-none-any.whl \
-            --artifact dist/veridist-2.0.0.tar.gz
+            --release-tag v2.1.0 --artifact dist/veridist-2.1.0-py3-none-any.whl \
+            --artifact dist/veridist-2.1.0.tar.gz
     """
     if not artifact.is_file():
         raise ReleaseArtifactError(f"artifact does not exist: {artifact}")
