@@ -16,7 +16,7 @@ Lebensdaueranalyse ist nicht auf Geräte beschränkt. Dieselbe Datenstruktur kan
 | Digitale Produkte | Ein Kunde wanderte ab oder konvertierte | Der Kunde blieb bis zum Stichtag ohne Ereignis aktiv |
 | Betrieb | Eine Reparatur, Lieferung oder Dienstleistung wurde abgeschlossen | Der Vorgang war am Ende der Datenerhebung noch offen |
 
-Veridist passt eine statistische Verteilung an diese beobachteten Zeiten an, wenn die aktuellen Modellannahmen und der Eingabevertrag gelten. **Exponential-MLE**, **Weibull-Minimum-MLE** und **Lognormal-MLE** sind mit fester Lage `loc=0` für exakte und unabhängige Rechtszensierung verfügbar. Der UTF-8-CSV-Workflow ist bewusst enger: Er passt das ratenbasierte Exponentialmodell aus einem dokumentierten Zweispaltenformat an.
+Veridist passt eine statistische Verteilung an diese beobachteten Zeiten an, wenn die aktuellen Modellannahmen und der Eingabevertrag gelten. **Exponential-MLE**, **Weibull-Minimum-MLE**, **Lognormal-MLE**, **Gamma-MLE**, **Normal-MLE** und **Rechts-Gumbel-MLE** sind für exakte und unabhängige Rechtszensierung verfügbar (die vier Lebensdauerfamilien mit fester Lage `loc=0`). Der UTF-8-CSV-Workflow ist bewusst enger: Er passt das ratenbasierte Exponentialmodell aus einem dokumentierten Zweispaltenformat an.
 
 Betrugserkennung und Cybersicherheit stellen häufig eine andere Frage: Ist ein Betrag, Zeitabstand oder eine Latenz unter einer Referenzverteilung ungewöhnlich? Veridist kann für unterstützte Familien skalare Log-Dichte, Randwahrscheinlichkeit und Quantile berechnen, wenn vertretbare Parameter bereits vorliegen. Diese Werte können Signale in einem separat validierten Detektor sein; das Paket trainiert oder betreibt keinen vollständigen Betrugsklassifikator.
 
@@ -25,10 +25,13 @@ Betrugserkennung und Cybersicherheit stellen häufig eine andere Frage: Ist ein 
 | Exponential | Konstante Ausfallrate über die Zeit | Striktes CSV oder vorbereitete Python-Daten |
 | Weibull-Minimum | Sinkende, konstante oder steigende Ausfallrate, abhängig von der Form | Vorbereitete Python-Daten |
 | Lognormal | Positive Lebensdauern, deren Logarithmus einem Normalmodell folgt | Vorbereitete Python-Daten |
+| Gamma | Positive Lebensdauern mit flexibler, rechtsschiefer Form | Vorbereitete Python-Daten |
+| Normal | Reelle Messwerte um einen Mittelwert | Vorbereitete Python-Daten |
+| Rechts-Gumbel | Reelle Maxima und andere Extremwerte | Vorbereitete Python-Daten |
 
 Für den Einstieg über CSV steht nur das Exponentialmodell bereit. Die Datei muss UTF-8 sein und genau die zwei Spalten `time,event_observed` in dieser Reihenfolge enthalten. Die erste Spalte ist die Beobachtungsdauer. In der zweiten bedeutet `1`, dass der Ausfall beobachtet wurde, und `0`, dass bis zum Beobachtungsende kein Ausfall gesehen wurde. Veridist errät das Dateiformat nicht.
 
-Weibull-Minimum und Lognormal verwenden typisierte Lebensdauerobjekte. Weibull akzeptiert Häufigkeitsgewichte und optional eine feste Form; Lognormal akzeptiert Häufigkeitsgewichte. Bei Erfolg gibt es eine endliche Schätzung, andernfalls einen typisierten statistischen oder Ausführungsfehler mit Ursache. Fehler beim Lesen einer Datei werden getrennt von statistischen Fehlern gemeldet. Der Abschluss einer Berechnung beweist nicht, dass ein Modell für die Daten angemessen ist.
+Die übrigen Familien verwenden typisierte Beobachtungsobjekte im Speicher: `ExactLifetime` und `RightCensoredLifetime` für die Lebensdauerfamilien, `ExactValue` und `RightCensoredValue` für Normal und Rechts-Gumbel; `fit(family, observations)` oder die Funktion der Familie passt sie an, und `lifetimes_from_arrays` und `values_from_arrays` erzeugen sie aus Array-Spalten. Jede Familie akzeptiert Häufigkeitsgewichte, und Weibull akzeptiert zusätzlich optional eine feste Form. Bei Erfolg gibt es eine endliche Schätzung, andernfalls einen typisierten statistischen oder Ausführungsfehler mit Ursache. Fehler beim Lesen einer Datei werden getrennt von statistischen Fehlern gemeldet. Der Abschluss einer Berechnung beweist nicht, dass ein Modell für die Daten angemessen ist.
 
 ## Was ist, wenn einige Geräte noch nicht ausgefallen sind?
 
@@ -44,15 +47,17 @@ timeline
 
 Im Diagramm ist die Ausfallzeit der ersten Pumpe bekannt. Bei der zweiten wissen wir nur, dass sie mindestens 100 Stunden lief. Diese Information bleibt erhalten und fließt in den Fit ein.
 
-Links- und Intervallzensierung sowie Trunkierung gehören nicht zum Umfang von 1.0.
+Links- und Intervallzensierung sowie Trunkierung gehören nicht zum aktuellen Umfang.
 
 ## Welches Ergebnis erhalte ich?
 
-Ein Fit enthält geschätzte Parameter, Diagnosen und die Annahmen der Berechnung. Für endliche, positive und unzensierte Exponentialstichproben unterstützt Veridist außerdem **Monte-Carlo-KS/AD/CvM mit erneuter Anpassung**, AIC/BIC, eine Kalibrierungsübersicht und eine adequacy-gesteuerte Auswahl. Gewählt wird der Kandidat mit dem kleinsten AIC, der die definierte Angemessenheitsprüfung besteht; andernfalls lautet das Ergebnis `NONE_ADEQUATE`. Dies ist keine automatische Rangfolge zwischen Exponential, Weibull und Lognormal.
+Ein Fit enthält geschätzte Parameter, Diagnosen und die Annahmen der Berechnung. Für endliche, positive und unzensierte Exponentialstichproben unterstützt Veridist außerdem **Monte-Carlo-KS/AD/CvM mit erneuter Anpassung**, AIC/BIC, eine Kalibrierungsübersicht und eine adequacy-gesteuerte Auswahl. Gewählt wird der Kandidat mit dem kleinsten AIC, der die definierte Angemessenheitsprüfung besteht; andernfalls lautet das Ergebnis `NONE_ADEQUATE`. Dies ist keine automatische Rangfolge zwischen den Fit-Familien.
+
+Jede erfolgreiche Anpassung kann außerdem die Unsicherheit ihrer Schätzung mit `result.uncertainty()` angeben: Standardfehler und Kovarianz, Wald-, Profil-Likelihood- und (für unzensierte Exponentialdaten) exakte Konfidenzintervalle sowie Mittelwert, Quantile (B-Lebensdauern) und Überlebenswahrscheinlichkeit mit Intervallen. Das sind Großstichprobenergebnisse, die unabhängige Rechtszensierung voraussetzen; ist die Informationsmatrix singulär oder wurde ein Weibull-Formparameter festgelegt, ist das Ergebnis ein Wert `UncertaintyUnavailable` mit Begründung statt Zahlen.
 
 ## Was kann ich außer dem Fit berechnen?
 
-Normal, Gamma, Weibull-Minimum, Lognormal und Rechts-Gumbel unterstützen skalare Log-Dichte, CDF, Überlebensfunktion, Quantile und vom Aufrufer gesteuerte Zufallsstichproben. Diese Operationen sind skalar: Es gibt keine Array-API, und eine Berechnungsfunktion bedeutet nicht automatisch, dass die Familie auch angepasst werden kann.
+Alle sechs Familien (Exponential, Normal, Gamma, Weibull-Minimum, Lognormal und Rechts-Gumbel) unterstützen Log-Dichte (`logpdf`), CDF, Überlebensfunktion, Quantile (`ppf`) und vom Aufrufer gesteuerte Zufallsstichproben über eine einheitliche Aufrufform, auf Skalaren und numpy-Arrays. Arrays werden gebroadcastet; Normal, Lognormal und Gamma werten Element für Element aus und sind daher bei sehr großen Arrays langsam. Rechtszensierte Likelihood-Terme lassen sich blockweise mit `reduce_lifetime_log_likelihood_chunks` und `reduce_value_log_likelihood_chunks` reduzieren.
 
 ## Was geschieht bei großen Daten oder einer Unterbrechung?
 
@@ -66,7 +71,7 @@ Diese Prüfung ist unabhängig von einer einfacheren Absicherung innerhalb eines
 
 ## Was wird noch nicht unterstützt?
 
-Die Version 1.0 unterstützt keine Kovariaten wie Temperatur oder Druck, analytischen Gewichte, freien Lageparameter, allgemeinen Dataframe-/Datenbankadapter, verteilte Checkpoints, Bootstrap-Stabilität der Auswahl oder Inferenz für jede registrierte Familie. Die vollständige Grenze steht unter [bekannte Grenzen](../python/KNOWN_LIMITS.de.md).
+Die aktuelle Version unterstützt keine Kovariaten wie Temperatur oder Druck, analytischen Gewichte, freien Lageparameter, allgemeinen Dataframe-/Datenbankadapter, verteilte Checkpoints, Bootstrap-Stabilität der Auswahl oder Anpassungsgütetests und Modellauswahl über den Exponentialfall hinaus. Die vollständige Grenze steht unter [bekannte Grenzen](../python/KNOWN_LIMITS.de.md), und beim Umstieg von Version 1.0 hilft die [Migrationsanleitung](../python/docs/migration-2.0.md).
 
 ## Wie wird die Codequalität geprüft?
 
@@ -75,7 +80,7 @@ Ergebnisse werden mit unabhängigen Referenzen verglichen. Tests decken ungülti
 <details>
 <summary>Technische Details zur genaueren Prüfung</summary>
 
-Alle drei Fit-Modelle verwenden Maximum-Likelihood-Schätzung mit fester Lage null. Exponential schätzt nur die Rate; Weibull schätzt Form und Skala; Lognormal schätzt logarithmische Lage und Skala. Häufigkeitsgewichte bedeuten wiederholte Beobachtungen und werden von Weibull und Lognormal unterstützt; sie unterscheiden sich von analytischen Gewichten. Ein numerisches Scheitern wird als `OPTIMIZER_EXHAUSTED` gemeldet; ein Ergebnis, das nur am Rand des zulässigen Suchbereichs liegt, wird anstelle einer konvergierten Schätzung als `BOUNDARY_SOLUTION` gemeldet, und eine Stichprobe, für die keine Maximum-Likelihood-Schätzung existiert (zum Beispiel wenn alle beobachteten exakten Zeiten identisch sind), wird als `DEGENERATE_SAMPLE` gemeldet.
+Alle sechs Fit-Modelle verwenden Maximum-Likelihood-Schätzung; die vier Lebensdauermodelle mit fester Lage null, Normal und Rechts-Gumbel schätzen ihre Lage. Exponential schätzt nur die Rate; Weibull und Gamma schätzen Form und Skala; Lognormal schätzt logarithmische Lage und Skala; Normal schätzt Mittelwert und Standardabweichung; Rechts-Gumbel schätzt Lage und Skala. Häufigkeitsgewichte bedeuten wiederholte Beobachtungen und werden von jeder Familie unterstützt; sie unterscheiden sich von analytischen Gewichten. Ein numerisches Scheitern wird als `OPTIMIZER_EXHAUSTED` gemeldet; ein Ergebnis, das nur am Rand des zulässigen Suchbereichs liegt, wird anstelle einer konvergierten Schätzung als `BOUNDARY_SOLUTION` gemeldet, und eine Stichprobe, für die keine Maximum-Likelihood-Schätzung existiert (zum Beispiel wenn alle beobachteten exakten Zeiten identisch sind), wird als `DEGENERATE_SAMPLE` gemeldet.
 
 Die Exponentialauswertung berichtet angeforderte, erfolgreiche und fehlgeschlagene Neuanpassungen sowie Monte-Carlo-Unsicherheit. Sie bestimmen die Zufallszahlenfolge selbst; derselbe Seed reproduziert dasselbe Experiment. Die Stream-Anzahl hat eine explizite vorzeichenlose 64-Bit-Grenze. Tests decken Unterbrechung, Wiederholung, Beschädigung, konkurrierenden Zugriff und Abbruch ab.
 
@@ -90,7 +95,7 @@ Messwerte gelten nur für Adapter, Familie, Arbeitslast, Plattform, Python-Versi
 3. **Modellangemessenheit:** Ob Annahmen und Form eines Modells für Daten und Zweck akzeptabel sind.
 4. **Angemessenheitsprüfung:** Die festgelegte statistische Prüfung zur Annahme oder Ablehnung eines Kandidaten.
 5. **AIC:** Vergleicht Modelle anhand Anpassungsgüte und Parameterzahl; kleiner ist nur unter den verglichenen Modellen besser.
-6. **Verteilungsfamilien:** Wahrscheinlichkeitsverteilungen mit unterschiedlichen Formen und Anwendungen; derzeit mit skalaren Operationen.
+6. **Verteilungsfamilien:** Wahrscheinlichkeitsverteilungen mit unterschiedlichen Formen und Anwendungen; mit Dichte-, CDF-, Überlebens-, Quantil-, Stichproben- und Fit-Operationen.
 7. **Log-Dichte:** Logarithmus der relativen Plausibilität einer Beobachtung unter dem Modell für numerisch stabile Berechnungen.
 8. **Quantil:** Schwellenwert, unter dem ein festgelegter Anteil der Modellwahrscheinlichkeit liegt.
 9. **Streaming-Reduktion:** Verarbeitung aufeinanderfolgender Datenblöcke, ohne die gesamte Eingabe im Speicher zu halten.
@@ -102,7 +107,7 @@ Messwerte gelten nur für Adapter, Familie, Arbeitslast, Plattform, Python-Versi
 15. **Verarbeitete Bereiche:** Eingabepositionen, die bereits erfolgreich berechnet wurden.
 16. **Testabdeckung:** Anteil ausführbarer Zeilen und Entscheidungspfade, die Tests ausführen.
 17. **Maximum-Likelihood-Schätzung und feste Lage null:** Parameter maximieren die Datenwahrscheinlichkeit; das Modell kann nicht horizontal verschoben werden.
-18. **Modellparameter:** Exponential verwendet Rate, Weibull Form und Skala, Lognormal logarithmische Lage und Skala.
+18. **Modellparameter:** Exponential verwendet Rate, Weibull und Gamma Form und Skala, Lognormal logarithmische Lage und Skala, Normal Mittelwert und Standardabweichung, Rechts-Gumbel Lage und Skala.
 19. **Häufigkeitsgewichte:** Anzahl der Wiederholungen einer Beobachtung, verschieden von analytischen Gewichten.
 20. **Numerisches Scheitern:** Gleitkomma- oder Konvergenzgrenzen verhindern ein vertrauenswürdiges Ergebnis.
 21. **KS/AD/CvM:** Drei Anpassungstests, die auf unterschiedliche Abweichungen zwischen Daten und Modell reagieren.

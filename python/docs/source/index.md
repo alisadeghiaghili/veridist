@@ -17,9 +17,11 @@ reported mean is derived as its reciprocal.
 
 The CSV schema is exactly `time,event_observed`; event `1` is exact and `0` is
 independent right censoring. The adapter makes one iterator pass and retains at
-most its declared logical payload budget. `inference=not_provided` means no
-confidence interval, goodness-of-fit result, truncation, weights, covariates,
-or free location parameter is supplied.
+most its declared logical payload budget. `inference=not_provided` means the
+result object itself carries no inference output; request standard errors and
+confidence intervals with `uncertainty()`. The CSV path supplies no
+goodness-of-fit result, truncation, weights, covariates, or free location
+parameter.
 
 ## Executable example
 
@@ -30,12 +32,13 @@ of the returned provenance.
 Translations for this vertical are owner-reviewed provisional text; no external
 native-speaker review is claimed.
 
-## Five evaluated scalar families
+## Six evaluated families
 
-The public kernel also has an immutable five-family registry, finite scalar
-log-density evaluation, and an exact-state streaming log-likelihood reducer.
-These are distinct from the CSV exponential MLE: they do not provide generic
-fitting, inference, goodness-of-fit, ranking, arrays, or censoring support.
+The public kernel has an immutable six-family registry, a maximum-likelihood
+fit for each family with right censoring and uncertainty reporting,
+distribution operations that accept scalars and numpy arrays, and exact-state
+streaming log-likelihood reducers with and without right censoring. It does
+not provide goodness-of-fit tests or model ranking.
 
 ## Generic stream sources and delivery leases
 

@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
-"POT-Creation-Date: 2026-09-18 21:43+0330\n"
+"POT-Creation-Date: 2026-10-09 01:11+0330\n"
 "PO-Revision-Date: 2026-09-01 21:55+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: de\n"
@@ -12,54 +12,87 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../source/index.md:2 a4d417fdde0c4e2ca8a4c00654674315
+#: D:/veridist/python/docs/source/index.md:2 b0f4d3dd2ba04722a324876917875add
 msgid "Veridist documentation"
 msgstr "Veridist-Dokumentation"
 
-#: ../../source/index.md:4 4d1671c215aa4995acb1ad5e8c001e3d
+#: D:/veridist/python/docs/source/index.md:4 a5f19b936958415fac342c36cfb210db
 msgid "Evidence-first, deliberately narrow distribution primitives."
 msgstr "Evidenzorientierte, bewusst eng abgegrenzte Verteilungsgrundbausteine."
 
-#: ../../source/index.md:6 ab744d0b87ec4d51a75c8f4e5eb1f9e8
+#: D:/veridist/python/docs/source/index.md:6 ede34e11969744ca8739f2adbaf81707
+msgid "Applications across fields"
+msgstr "Anwendungen in verschiedenen Bereichen"
+
+#: D:/veridist/python/docs/source/index.md:8 d8ef005bf5b14bf29bed69aa6838c778
+msgid ""
+"The same distribution tools can support reliability, survival research, "
+"credit and insurance, fraud and cybersecurity, operations, supply chains,"
+" digital products, and environmental risk when the data and assumptions "
+"match the documented contract. “Lifetime” can mean time until any defined"
+" event, such as failure, relapse, default, a first claim, churn, or "
+"process completion. Scalar distribution calculations can also contribute "
+"signals for anomaly detection, but Veridist does not replace domain "
+"validation or provide an end-to-end fraud detector."
+msgstr ""
+"Dieselben Verteilungswerkzeuge können Zuverlässigkeit, "
+"Überlebenszeitforschung, Kredit und Versicherung, Betrug und "
+"Cybersicherheit, Betrieb, Lieferketten, digitale Produkte und "
+"Umweltrisiken unterstützen, wenn Daten und Annahmen dem dokumentierten "
+"Vertrag entsprechen. „Lebensdauer“ kann die Zeit bis zu jedem definierten"
+" Ereignis bedeuten, etwa Ausfall, Rückfall, Kreditausfall, erster "
+"Schaden, Abwanderung oder Prozessabschluss. Skalare "
+"Verteilungsberechnungen können auch Signale für die Anomalieerkennung "
+"liefern; Veridist ersetzt jedoch keine fachliche Validierung und stellt "
+"keinen vollständigen Betrugsdetektor bereit."
+
+#: 7e7765f52a8d4a9cb42e5ee249935193 D:/veridist/python/docs/source/index.md:10
 msgid "First CSV vertical"
 msgstr "Erste CSV-Funktionseinheit"
 
-#: ../../source/index.md:8 c4e283232e894fc69470db02d7a1d148
+#: 8396608b037649359bde0ec94535460b D:/veridist/python/docs/source/index.md:12
 msgid ""
 "The first public vertical fits a fixed-location exponential lifetime "
 "model from a UTF-8 CSV source with an explicit input format. Its "
 "canonical parameter is a positive rate; the reported mean is derived as "
 "its reciprocal."
 msgstr ""
-"Der erste öffentliche Pfad passt ein exponentielles Lebensdauermodell mit festem Lageparameter aus einer UTF-8-CSV-Quelle mit ausdrücklich festgelegtem Eingabeformat an. Sein maßgeblicher Parameter ist eine positive Rate; der ausgegebene Mittelwert wird als ihr Kehrwert abgeleitet."
+"Der erste öffentliche Pfad passt ein exponentielles Lebensdauermodell mit"
+" festem Lageparameter aus einer UTF-8-CSV-Quelle mit ausdrücklich "
+"festgelegtem Eingabeformat an. Sein maßgeblicher Parameter ist eine "
+"positive Rate; der ausgegebene Mittelwert wird als ihr Kehrwert "
+"abgeleitet."
 
-#: ../../source/index.md:12 38408e49d34b4179ad1937245328e0ef
+#: 41ff9678342443129c1cdca24605db21 D:/veridist/python/docs/source/index.md:16
 msgid "Limits"
 msgstr "Grenzen"
 
-#: ../../source/index.md:14 3508d31767e2458c9fcd84aef184965c
+#: D:/veridist/python/docs/source/index.md:18 db72e5d481eb4aa086591df86cbc9a43
 msgid ""
 "The CSV schema is exactly `time,event_observed`; event `1` is exact and "
 "`0` is independent right censoring. The adapter makes one iterator pass "
 "and retains at most its declared logical payload budget. "
-"`inference=not_provided` means no confidence interval, goodness-of-fit "
-"result, truncation, weights, covariates, or free location parameter is "
-"supplied."
+"`inference=not_provided` means the result object itself carries no "
+"inference output; request standard errors and confidence intervals with "
+"`uncertainty()`. The CSV path supplies no goodness-of-fit result, "
+"truncation, weights, covariates, or free location parameter."
 msgstr ""
-"Das CSV-Schema lautet exakt `time,event_observed`; Ereignis `1` ist exakt"
-" und `0` ist unabhängige Rechtszensierung. Der Adapter durchläuft den "
-"Iterator einmal und behält höchstens sein deklariertes logisches Payload-"
-"Budget. `inference=not_provided` bedeutet, dass weder Konfidenzintervall "
-"noch Anpassungsgüte-Ergebnis, Trunkierung, Gewichte, Kovariaten oder ein "
-"freier Lageparameter bereitgestellt werden."
+"Das CSV-Schema ist genau `time,event_observed`; Ereignis `1` ist exakt "
+"und `0` ist unabhängige Rechtszensierung. Der Adapter macht einen "
+"Iteratordurchlauf und hält höchstens sein deklariertes logisches "
+"Nutzlastbudget vor. `inference=not_provided` bedeutet, dass das "
+"Ergebnisobjekt selbst keine Inferenzausgabe trägt; Standardfehler und "
+"Konfidenzintervalle fordern Sie mit `uncertainty()` an. Der CSV-Pfad "
+"liefert kein Anpassungsgüteergebnis, keine Trunkierung, keine Gewichte, "
+"keine Kovariaten und keinen freien Lageparameter."
 
-#: ../../source/index.md:20 4cd93436b77c469ab70b48b87286f97f
+#: 3f669abeea9f4a5a8d8b17a28239af43 D:/veridist/python/docs/source/index.md:26
 msgid "Executable example"
 msgstr "Ausführbares Beispiel"
 
-#: ../../source/index.md:22 654e7ed6dccd40a088db4d9a3eb287c5
+#: D:/veridist/python/docs/source/index.md:28 c3d3d5bcbec94f4f80846002083bc8c7
 msgid ""
 "The example below has one canonical executable source and reports only "
 "stable machine facts. Use an opaque public source identifier; file paths "
@@ -70,7 +103,7 @@ msgstr ""
 "öffentliche Quellkennung; Dateipfade gehören nicht zur zurückgegebenen "
 "Provenienz."
 
-#: ../../source/index.md:26 b050e6c8fc084c338d5cc6861dd89cb1
+#: 34d11f01888e4eb38e0d9e95f85e9221 D:/veridist/python/docs/source/index.md:32
 msgid ""
 "Translations for this vertical are owner-reviewed provisional text; no "
 "external native-speaker review is claimed."
@@ -79,30 +112,30 @@ msgstr ""
 "Projekteigentümer geprüfte Texte; eine externe Prüfung durch "
 "Muttersprachler wird nicht behauptet."
 
-#: ../../source/index.md:29 07bb108a833e416a99dd3f1721d6a069
-msgid "Five evaluated scalar families"
-msgstr "Fünf ausgewertete skalare Familien"
+#: 08658b81a21647a0ada6f0d8b6f602b2 D:/veridist/python/docs/source/index.md:35
+msgid "Six evaluated families"
+msgstr "Sechs ausgewertete Familien"
 
-#: ../../source/index.md:31 1d3f52c04cd147688a6af5cdc9d073ac
+#: 6eb0a2d73dd84b8ab7da2811421f4de7 D:/veridist/python/docs/source/index.md:37
 msgid ""
-"The public kernel also has an immutable five-family registry, finite "
-"scalar log-density evaluation, and an exact-state streaming log-"
-"likelihood reducer. These are distinct from the CSV exponential MLE: they"
-" do not provide generic fitting, inference, goodness-of-fit, ranking, "
-"arrays, or censoring support."
+"The public kernel has an immutable six-family registry, a maximum-"
+"likelihood fit for each family with right censoring and uncertainty "
+"reporting, distribution operations that accept scalars and numpy arrays, "
+"and exact-state streaming log-likelihood reducers with and without right "
+"censoring. It does not provide goodness-of-fit tests or model ranking."
 msgstr ""
-"Der öffentliche Kern enthält außerdem ein unveränderliches Register mit "
-"fünf Familien, die Auswertung endlicher skalarer Log-Dichten und einen "
-"gestreamten Log-Likelihood-Reduzierer mit exaktem Zustand. Sie sind vom "
-"exponentiellen CSV-MLE getrennt: Sie stellen keine allgemeine Anpassung, "
-"Inferenz, Anpassungsgüte, Rankings, Arrays oder Unterstützung für "
-"Zensierung bereit."
+"Der öffentliche Kern hat ein unveränderliches Register mit sechs "
+"Familien, eine Maximum-Likelihood-Anpassung für jede Familie mit "
+"Rechtszensierung und Unsicherheitsangabe, Verteilungsoperationen, die "
+"Skalare und numpy-Arrays akzeptieren, sowie streamende Log-Likelihood-"
+"Reducer mit exaktem Zustand, mit und ohne Rechtszensierung. "
+"Anpassungsgütetests oder Modellrangfolgen bietet er nicht."
 
-#: ../../source/index.md:36 6d9f8e0827c64887bb6e3c3deb39463b
+#: 7ea1816e9398441186c8a3b0e3ae0a93 D:/veridist/python/docs/source/index.md:43
 msgid "Generic stream sources and delivery leases"
 msgstr "Allgemeine Stream-Quellen und Delivery-Leases"
 
-#: ../../source/index.md:38 0c4b8bf6f1334ac9b6a0d1009330c39e
+#: 9c02d79cc5114b0bb91a6957ca4d2bf8 D:/veridist/python/docs/source/index.md:45
 msgid ""
 "`IterableDataSource` adapts caller-owned chunk iterables with immutable "
 "source metadata. A `single_pass` source is acquired once and a second "
@@ -115,14 +148,69 @@ msgid ""
 "Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-"
 "core claim."
 msgstr ""
-"`IterableDataSource` passt abschnittsweise Iterables aus dem aufrufenden Programm mit unveränderlichen Quellmetadaten an. Eine `single_pass`-Quelle wird einmal bezogen; ein zweiter Bezug führt zu einem typisierten Fehler wegen Überschreitung des Durchlaufbudgets. Wiederholbare Deklarationen benötigen eine ausdrückliche Iterator-Factory. Der CSV-Lebensdaueradapter mit dem dokumentierten Eingabeformat bleibt der einzige mitgelieferte Dateiadapter. `BoundedChunkBuffer` rechnet einen Abschnitt an, solange er in der Warteschlange oder bei einem Verbraucher liegt, bis `BufferedChunk.release()` aufgerufen wird; Verbraucher müssen empfangene Abschnitte normalerweise in `finally` freigeben. Dies ist keine Zusage für allgemeines CSV, Parquet, Arrow, Dataframes, Datenbanken, eine RSS-Grenze, Durchsatz oder umfassende Out-of-Core-Verarbeitung."
+"`IterableDataSource` passt abschnittsweise Iterables aus dem aufrufenden "
+"Programm mit unveränderlichen Quellmetadaten an. Eine "
+"`single_pass`-Quelle wird einmal bezogen; ein zweiter Bezug führt zu "
+"einem typisierten Fehler wegen Überschreitung des Durchlaufbudgets. "
+"Wiederholbare Deklarationen benötigen eine ausdrückliche Iterator-"
+"Factory. Der CSV-Lebensdaueradapter mit dem dokumentierten Eingabeformat "
+"bleibt der einzige mitgelieferte Dateiadapter. `BoundedChunkBuffer` "
+"rechnet einen Abschnitt an, solange er in der Warteschlange oder bei "
+"einem Verbraucher liegt, bis `BufferedChunk.release()` aufgerufen wird; "
+"Verbraucher müssen empfangene Abschnitte normalerweise in `finally` "
+"freigeben. Dies ist keine Zusage für allgemeines CSV, Parquet, Arrow, "
+"Dataframes, Datenbanken, eine RSS-Grenze, Durchsatz oder umfassende Out-"
+"of-Core-Verarbeitung."
 
-#: ../../source/index.md:47 8ab71a5d2ade44dda34ca08662cb99a2
+#: D:/veridist/python/docs/source/index.md:54 ed98d128dec94d99ad6dab1c74b93d28
 msgid "Canonical executable example"
 msgstr "Kanonisches ausführbares Beispiel"
 
-msgid "Applications across fields"
-msgstr "Anwendungen in verschiedenen Bereichen"
+#~ msgid ""
+#~ "The CSV schema is exactly "
+#~ "`time,event_observed`; event `1` is exact "
+#~ "and `0` is independent right censoring."
+#~ " The adapter makes one iterator pass"
+#~ " and retains at most its declared "
+#~ "logical payload budget. `inference=not_provided` "
+#~ "means no confidence interval, goodness-"
+#~ "of-fit result, truncation, weights, "
+#~ "covariates, or free location parameter "
+#~ "is supplied."
+#~ msgstr ""
+#~ "Das CSV-Schema lautet exakt "
+#~ "`time,event_observed`; Ereignis `1` ist exakt"
+#~ " und `0` ist unabhängige Rechtszensierung."
+#~ " Der Adapter durchläuft den Iterator "
+#~ "einmal und behält höchstens sein "
+#~ "deklariertes logisches Payload-Budget. "
+#~ "`inference=not_provided` bedeutet, dass weder "
+#~ "Konfidenzintervall noch Anpassungsgüte-Ergebnis, "
+#~ "Trunkierung, Gewichte, Kovariaten oder ein "
+#~ "freier Lageparameter bereitgestellt werden."
 
-msgid "The same distribution tools can support reliability, survival research, credit and insurance, fraud and cybersecurity, operations, supply chains, digital products, and environmental risk when the data and assumptions match the documented contract. “Lifetime” can mean time until any defined event, such as failure, relapse, default, a first claim, churn, or process completion. Scalar distribution calculations can also contribute signals for anomaly detection, but Veridist does not replace domain validation or provide an end-to-end fraud detector."
-msgstr "Dieselben Verteilungswerkzeuge können Zuverlässigkeit, Überlebenszeitforschung, Kredit und Versicherung, Betrug und Cybersicherheit, Betrieb, Lieferketten, digitale Produkte und Umweltrisiken unterstützen, wenn Daten und Annahmen dem dokumentierten Vertrag entsprechen. „Lebensdauer“ kann die Zeit bis zu jedem definierten Ereignis bedeuten, etwa Ausfall, Rückfall, Kreditausfall, erster Schaden, Abwanderung oder Prozessabschluss. Skalare Verteilungsberechnungen können auch Signale für die Anomalieerkennung liefern; Veridist ersetzt jedoch keine fachliche Validierung und stellt keinen vollständigen Betrugsdetektor bereit."
+#~ msgid "Five evaluated scalar families"
+#~ msgstr "Fünf ausgewertete skalare Familien"
+
+#~ msgid ""
+#~ "The public kernel also has an "
+#~ "immutable five-family registry, finite "
+#~ "scalar log-density evaluation, and an"
+#~ " exact-state streaming log-likelihood "
+#~ "reducer. These are distinct from the "
+#~ "CSV exponential MLE: they do not "
+#~ "provide generic fitting, inference, "
+#~ "goodness-of-fit, ranking, arrays, or "
+#~ "censoring support."
+#~ msgstr ""
+#~ "Der öffentliche Kern enthält außerdem "
+#~ "ein unveränderliches Register mit fünf "
+#~ "Familien, die Auswertung endlicher skalarer"
+#~ " Log-Dichten und einen gestreamten "
+#~ "Log-Likelihood-Reduzierer mit exaktem "
+#~ "Zustand. Sie sind vom exponentiellen "
+#~ "CSV-MLE getrennt: Sie stellen keine "
+#~ "allgemeine Anpassung, Inferenz, Anpassungsgüte, "
+#~ "Rankings, Arrays oder Unterstützung für "
+#~ "Zensierung bereit."
+

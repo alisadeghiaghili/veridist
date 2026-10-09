@@ -46,14 +46,17 @@ def _success(result: object) -> LogLikelihoodSuccess:
 
 
 class LifetimeReducerSurfaceTests(unittest.TestCase):
-    def test_it_is_a_statistics_export_but_not_a_top_level_one(self) -> None:
+    def test_it_is_exported_from_statistics_and_the_top_level(self) -> None:
         self.assertIn("reduce_lifetime_log_likelihood_chunks", statistics.__all__)
         self.assertIs(
             statistics.reduce_lifetime_log_likelihood_chunks,
             reduce_lifetime_log_likelihood_chunks,
         )
-        self.assertNotIn("reduce_lifetime_log_likelihood_chunks", veridist.__all__)
-        self.assertFalse(hasattr(veridist, "reduce_lifetime_log_likelihood_chunks"))
+        self.assertIn("reduce_lifetime_log_likelihood_chunks", veridist.__all__)
+        self.assertIs(
+            veridist.reduce_lifetime_log_likelihood_chunks,
+            reduce_lifetime_log_likelihood_chunks,
+        )
 
     def test_the_admitted_families_are_exactly_the_four_lifetime_families(self) -> None:
         self.assertEqual(

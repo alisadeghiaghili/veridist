@@ -15,6 +15,8 @@ from mutation_evidence import (  # noqa: E402
     CRITICAL_MODULES,
     MUTMUT_WHEEL_SHA256,
     config_digest,
+    module_minimum_scores,
+    mutation_manifest,
     official_status,
     score_excluding_type_check,
     scoring_status,
@@ -101,11 +103,12 @@ def fixture(root: Path) -> dict[str, object]:
     (root / "quality" / "mutation-manifest.json").write_text(
         json.dumps(
             {
-                "schema_version": 2,
+                "schema_version": 3,
                 "production_root": "src/veridist",
                 "critical_modules": list(CRITICAL_MODULES),
                 "mutmut_version": "3.7.0",
                 "minimum_score": 0.8,
+                "module_minimum_scores": {module: 0.5 for module in CRITICAL_MODULES},
                 "pytest_selection": MUTATION_SELECTION,
             }
         ),
@@ -201,6 +204,51 @@ def with_type_check_mutants(payload: dict[str, object]) -> dict[str, object]:
     }
     payload["score"] = 12 / 13
     payload["score_excluding_type_check"] = 8 / 9
+    return payload
+
+
+def write_manifest(root: Path, **changes: object) -> None:
+    """Rewrite the fixture's mutation manifest, replacing keys (``None`` removes a key)."""
+
+    path = root / "quality" / "mutation-manifest.json"
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    for key, value in changes.items():
+        if value is None:
+            del manifest[key]
+        else:
+            manifest[key] = value
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+
+
+def with_module_counts(
+    payload: dict[str, object], module: str, killed: int, survived: int
+) -> dict[str, object]:
+    """Make ``module`` report ``killed`` kills and ``survived`` survivors in one file."""
+
+    report = next(
+        item
+        for item in payload["files"]  # type: ignore[attr-defined]
+        if f"/{module}/" in item["path"]
+    )
+    name = report["path"]
+    report["mutants"] = [
+        *(mutant(name, f"killed_{index}", 1) for index in range(killed)),
+        *(mutant(name, f"survived_{index}", 0) for index in range(survived)),
+    ]
+    report.update(generated=killed + survived, killed=killed, survived=survived)
+    entry = next(
+        item
+        for item in payload["modules"]  # type: ignore[attr-defined]
+        if item["module"] == module
+    )
+    entry.update(generated=killed + survived, killed=killed, survived=survived)
+    totals = {key: 0 for key in REPORT_COUNT_KEYS}
+    for item in payload["files"]:  # type: ignore[attr-defined]
+        for key in REPORT_COUNT_KEYS:
+            totals[key] += item[key]
+    payload["totals"] = totals
+    payload["score"] = totals["killed"] / (totals["killed"] + totals["survived"])
+    payload["score_excluding_type_check"] = payload["score"]
     return payload
 
 
@@ -348,3 +396,98 @@ class MutationEvidenceTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 2)
         self.assertIn("requires POSIX/fork", result.stderr)
+
+
+class ModuleMinimumScoreTests(unittest.TestCase):
+    def test_the_manifest_declares_a_floor_for_every_critical_module(self) -> None:
+        manifest = mutation_manifest(PYTHON_ROOT)
+        floors = module_minimum_scores(manifest["module_minimum_scores"])
+        self.assertEqual(tuple(floors), CRITICAL_MODULES)
+        for module, floor in floors.items():
+            with self.subTest(module=module):
+                self.assertGreater(floor, 0.0)
+                self.assertLessEqual(floor, manifest["minimum_score"])
+
+    def test_a_module_below_its_floor_fails_even_when_the_global_score_passes(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            # domain: 9 killed and 11 survived (0.45); every other module is perfect.
+            payload = with_module_counts(fixture(root), "domain", 9, 11)
+            for module in ("statistics", "families", "engine"):
+                payload = with_module_counts(payload, module, 400, 0)
+            write_manifest(
+                root, module_minimum_scores={module: 0.5 for module in CRITICAL_MODULES}
+            )
+            self.assertGreaterEqual(payload["score"], 0.8)  # type: ignore[operator]
+            result = check(root, payload)
+            self.assertEqual(result.returncode, 1, result.stdout)
+            self.assertIn(
+                "module domain mutation score 0.4500 is below its minimum 0.50", result.stderr
+            )
+
+    def test_a_module_exactly_at_its_floor_passes_and_scores_are_reported(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            payload = with_module_counts(fixture(root), "domain", 9, 11)
+            for module in ("statistics", "families", "engine"):
+                payload = with_module_counts(payload, module, 400, 0)
+            write_manifest(
+                root,
+                module_minimum_scores={
+                    "domain": 0.45,
+                    "statistics": 0.8,
+                    "families": 0.8,
+                    "engine": 0.8,
+                },
+            )
+            result = check(root, payload)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertIn("module domain: mutation score 0.4500", result.stdout)
+            self.assertIn("module engine: mutation score 1.0000", result.stdout)
+            self.assertIn("MUTATION EVIDENCE PASS", result.stdout)
+
+    def test_the_manifest_floors_are_validated_strictly(self) -> None:
+        good = {module: 0.5 for module in CRITICAL_MODULES}
+        bad_floors: dict[str, object] = {
+            "missing module": {k: v for k, v in good.items() if k != "engine"},
+            "unknown module": {**good, "adapters": 0.5},
+            "not a mapping": [0.5, 0.5, 0.5, 0.5],
+            "boolean floor": {**good, "domain": True},
+            "string floor": {**good, "domain": "0.5"},
+            "zero floor": {**good, "domain": 0.0},
+            "negative floor": {**good, "domain": -0.1},
+            "floor above one": {**good, "domain": 1.01},
+            "not a number": {**good, "domain": float("nan")},
+            "infinite": {**good, "domain": float("inf")},
+        }
+        for name, floors in bad_floors.items():
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                payload = fixture(root)
+                write_manifest(root, module_minimum_scores=floors)
+                result = check(root, payload)
+                self.assertEqual(result.returncode, 1)
+                self.assertIn("MUTATION EVIDENCE FAIL", result.stderr)
+                with self.assertRaises(ValueError):
+                    mutation_manifest(root)
+
+    def test_the_manifest_without_floors_or_with_an_old_schema_is_rejected(self) -> None:
+        for name, changes in (
+            ("no floors", {"module_minimum_scores": None}),
+            ("old schema", {"schema_version": 2}),
+            ("extra key", {"module_target_scores": {}}),
+        ):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                payload = fixture(root)
+                write_manifest(root, **changes)
+                self.assertEqual(check(root, payload).returncode, 1)
+
+    def test_the_global_minimum_stays_at_eight_tenths(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            fixture(root)
+            for score in (0.79, 0.81, True):
+                write_manifest(root, minimum_score=score)
+                with self.subTest(score=score), self.assertRaises(ValueError):
+                    mutation_manifest(root)

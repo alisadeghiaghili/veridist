@@ -1,19 +1,21 @@
 (veridist-families-log-density-likelihood)=
 # Evaluated families, scalar log density, and streaming log likelihood
 
-## Closed five-family registry
+## Closed six-family registry
 
-`FAMILY_REGISTRY` is immutable metadata for exactly five evaluated families:
-`normal`, `gamma`, `weibull_min`, `lognormal`, and `gumbel_right`. It fixes
-canonical names, aliases, parameter names, validation roles, and the currently
-available scalar `logpdf` operation. It is neither a generic distribution
-registry nor a fitting, inference, goodness-of-fit, or ranking interface.
+`FAMILY_REGISTRY` is immutable metadata for exactly six evaluated families:
+`exponential`, `normal`, `gamma`, `weibull_min`, `lognormal`, and
+`gumbel_right`. It fixes canonical names, aliases, parameter names, validation
+roles, the support, and the operations each family offers: log density, CDF,
+survival function, quantile, sampling, and fit. It is not a generic
+distribution registry, and it does not rank distributions.
 
 For the contract-level API surface, see
 <a class="veridist-api-url" href="api.html#veridist-api">veridist.statistics.log_density</a>.
 
 | Family | Canonical parameters |
 | --- | --- |
+| `exponential` | `rate > 0` |
 | `normal` | `mu`, `sigma > 0` |
 | `gamma` | `shape > 0`, `scale > 0` |
 | `weibull_min` | `shape > 0`, `scale > 0` |
@@ -22,7 +24,7 @@ For the contract-level API surface, see
 
 ## Where these calculations can help
 
-These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters and they do not turn a low-density value into a business decision.
+These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters (the fits do) and they do not turn a low-density value into a business decision.
 
 | Application area | Example value | Defensible use of this API |
 | --- | --- | --- |
@@ -42,8 +44,10 @@ canonical parameter validation. A successful result contains a finite binary64
 log-density. Data-domain failures are closed values: `nonfinite_observation`,
 `support_violation`, `nonfinite_log_density`, or `numerical_overflow`.
 Programmer misuse of a family identity or parameter set raises rather than
-being converted into a data result. This is not an array API, a CDF/PPF API,
-censoring likelihood, fit, inference, goodness-of-fit test, or model ranking.
+being converted into a data result. It evaluates one scalar and has no
+censoring; arrays, the CDF, the survival function, quantiles, and sampling are
+provided by `logpdf`, `cdf`, `sf`, `ppf`, and `sample`, and fitting by `fit`, as
+described in the API guide. It is not a goodness-of-fit test or a model ranking.
 
 ```python
 from veridist.families.registry import FAMILY_REGISTRY, FamilyId
@@ -88,6 +92,11 @@ failed = reduce_log_likelihood_chunks(FamilyId.GAMMA, ((1.0,), (0.0,)), shape=2.
 assert failed.code.value == "scalar_evaluation_failure"
 assert failed.processed_count == 1
 ```
+
+Right-censored observations have their own reducers,
+`reduce_lifetime_log_likelihood_chunks` and `reduce_value_log_likelihood_chunks`.
+They add the log survival of each censored observation to the same exact
+accumulation, so the total is again independent of chunking and order.
 
 ## Evidence and limits
 

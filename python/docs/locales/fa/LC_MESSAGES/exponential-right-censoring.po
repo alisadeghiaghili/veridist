@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
-"POT-Creation-Date: 2026-09-18 22:05+0330\n"
+"POT-Creation-Date: 2026-10-09 01:11+0330\n"
 "PO-Revision-Date: 2026-09-16 18:52+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: fa\n"
@@ -12,15 +12,15 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.11.0\n"
 
-#: ../../source/exponential-right-censoring.md:2
-#: 3dff511279684882a92e9d8fdc4d6e9c
+#: 8298bb00e1b04b5688ad66ef4d5a6ece
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:2
 msgid "Exponential right-censoring tutorial"
 msgstr "آموزش داده‌های سانسورشده از راست در مدل نمایی"
 
-#: ../../source/exponential-right-censoring.md:4
-#: 7dacfbbd90f0426d80b3d4f563810445
+#: 0b673d4d62f84767b95a253329a7b086
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:4
 msgid ""
 "<a href=\"exponential-right-censoring.md\">English</a> | <a href"
 "=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-"
@@ -30,8 +30,8 @@ msgstr ""
 "=\"exponential-right-censoring.fa.md\">فارسی</a> | <a href=\"exponential-"
 "right-censoring.de.md\">آلمانی</a>"
 
-#: ../../source/exponential-right-censoring.md:6
-#: 6899320c60414252bd08457942a31f90
+#: 7a04143dfc114a7495a60434b5a077bb
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:6
 msgid ""
 "This tutorial shows the first lifetime-data path in Veridist: fitting an "
 "exponential distribution<sup id=\"fnref-fitting\"><a href=\"#fn-"
@@ -47,18 +47,18 @@ msgstr ""
 "مسیر زمانی استفاده کنید که هر سطر داده می‌گوید «رخداد در این زمان اتفاق "
 "افتاده» یا «تا این زمان هنوز رخداد دیده نشده است»."
 
-#: ../../source/exponential-right-censoring.md:8
-#: 4aeef76d81234c728410d6e178498f72
+#: 5c7bf6fb30554740beff4819e3794a91
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:8
 msgid "The data idea"
 msgstr "ایدهٔ داده چیست؟"
 
-#: ../../source/exponential-right-censoring.md:10
-#: 3ab343f29e984f5790421e7d7cc433dc
+#: 3e7be71644c84b149fb9f9e9d4830181
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:10
 msgid "A lifetime row has two fields:"
 msgstr "هر سطر طول عمر دو فیلد دارد:"
 
-#: ../../source/exponential-right-censoring.md:33
-#: e36b8480bd89446ebe98672f50f0956b
+#: 957934d072d14756a116ff6beb0e9b5f
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:33
 msgid ""
 "For example, a row `1,1` means the event happened at time 1. A row `1,0` "
 "means the unit was observed until time 1 and was still alive, working, or"
@@ -70,13 +70,134 @@ msgstr ""
 "بدون رخداد بوده است. همین سطر دوم هم اطلاعات دارد: به مدل می‌گوید طول عمر"
 " واقعی بیشتر از ۱ است. این همان سانسور مستقل از راست است."
 
-#: ../../source/exponential-right-censoring.md:35
-#: 05cff81f5d5b435dbdfdc98937ccf1c5
+#: 825e214b3f604c628d6a4de55cafce82
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:35
+msgid "The same two rows in other fields"
+msgstr "همین دو نوع سطر در حوزه‌های دیگر"
+
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:37
+#: f8b9b4f467f846f2b2f6d1e911db5317
+msgid ""
+"“Lifetime” here means time until a defined event. The calculation is "
+"unchanged when the subject and event change, but the scientific meaning "
+"and assumptions must be checked again."
+msgstr ""
+"«طول عمر» در اینجا یعنی زمان تا یک رویداد تعریف‌شده. با تغییر موضوع و "
+"رویداد، فرمول محاسبه عوض نمی‌شود؛ اما معنای علمی و فرض‌های آن باید دوباره"
+" بررسی شوند."
+
+#: 9b89dea377b5491d920d0536b180255a
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Example field"
+msgstr "حوزهٔ مثال"
+
+#: 7db3337256fd4295bf56418251b4be90
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Event row"
+msgstr "سطر دارای رویداد"
+
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+#: e45548b15ae24d14802157eb6b978ec9
+msgid "Still-event-free row"
+msgstr "سطرِ هنوز بدون رویداد"
+
+#: 3b0ec96781684b9a9141357d2ea5651c
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Manufacturing example"
+msgstr "مثال تولید"
+
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+#: bf571747cef64a4daf9574f0bc18be67
+msgid "A component failed at the recorded hour"
+msgstr "قطعه در ساعت ثبت‌شده خراب شد"
+
+#: 1f674bf883dc4d6fa2c0dd29ec0e837d
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "It was still operating at the inspection cutoff"
+msgstr "قطعه تا پایان بازرسی هنوز کار می‌کرد"
+
+#: 65a7a278c3804ab8a0286d126cfe752b
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Health-research example"
+msgstr "مثال پژوهش سلامت"
+
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+#: f74ad51918ee4bf3b143c9899b061dcb
+msgid "Relapse or readmission occurred on the recorded day"
+msgstr "عود بیماری یا بستری دوباره در روز ثبت‌شده رخ داد"
+
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+#: a1a45c742ce8475f9891c615c5fed846
+msgid "It had not occurred by the last follow-up"
+msgstr "تا آخرین پیگیری این رخداد دیده نشد"
+
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+#: a3542db4f0ee46d6a92d65bed8294380
+msgid "Credit and insurance example"
+msgstr "مثال اعتبار و بیمه"
+
+#: 77544aab2bfd4b20be08b3007169d9bd
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Default or a first claim occurred in the recorded month"
+msgstr "نکول یا نخستین خسارت در ماه ثبت‌شده رخ داد"
+
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+#: dac5677154704c65a103280440c999f7
+msgid "It had not occurred by the study end"
+msgstr "تا پایان بررسی چنین رخدادی ثبت نشد"
+
+#: 2d8e13e5566545f4a3b5917ee52804e7
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Digital-product example"
+msgstr "مثال محصول دیجیتال"
+
+#: 49c28f759b2d41ab9278adcba92f2967
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Churn or conversion occurred on the recorded day"
+msgstr "ریزش یا تبدیل در روز ثبت‌شده رخ داد"
+
+#: 8ab72ca946684970aec51dbf0cd30afb
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "The user was still active without the event at the cutoff"
+msgstr "کاربر تا پایان بازه فعال و بدون رویداد بود"
+
+#: 7792919264834dc391c6cbfbf0ee30fd
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "Operations example"
+msgstr "مثال عملیات"
+
+#: 65c594e046ef4b64b3d7da493930e441
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "A repair, delivery, or service case completed"
+msgstr "تعمیر، تحویل یا پروندهٔ خدمت کامل شد"
+
+#: 72c33aaa27db44428f1619b60bd0d1e8
+#: D:/veridist/python/docs/source/exponential-right-censoring.md
+msgid "The case was still open when observation ended"
+msgstr "هنگام پایان مشاهده، پرونده هنوز باز بود"
+
+#: 3c99ce50951a43148f187b60a378ada9
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:47
+msgid ""
+"Fraud and cybersecurity data can also contain event times, such as time "
+"until the first alert. A different use is to compare transaction amounts "
+"or time gaps with a reference distribution to produce an anomaly signal. "
+"This tutorial implements only the first kind of data: one time and one "
+"event indicator per row. It does not implement a complete fraud detector."
+msgstr ""
+"داده‌های تقلب و امنیت سایبری هم ممکن است زمان یک رویداد، مانند زمان تا "
+"نخستین هشدار، را داشته باشند. کاربرد متفاوت دیگر، مقایسهٔ مبلغ تراکنش یا "
+"فاصلهٔ زمانی با یک توزیع مرجع و ساختن نشانهٔ ناهنجاری است. این آموزش فقط "
+"حالت اول را پیاده می‌کند: یک زمان و یک نشانگر رخداد در هر سطر. این آموزش "
+"سامانهٔ کامل کشف تقلب نمی‌سازد."
+
+#: 39ab29a424fc40ec87ba05dd437b38a2
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:49
 msgid "Run the example"
 msgstr "نمونه را اجرا کنید"
 
-#: ../../source/exponential-right-censoring.md:37
-#: d0985e1589934ba4a756f91c55e8a3d8
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:51
+#: be03700802664ff0b8b79dc0d8c2b511
 msgid ""
 "The schema declaration below names the only accepted header pair and "
 "keeps machine-readable identifiers left to right."
@@ -84,18 +205,18 @@ msgstr ""
 "تعریف schema در کد زیر تنها جفت سرستون پذیرفته‌شده را مشخص می‌کند و "
 "شناسه‌های ماشین‌خوان را عمداً چپ‌به‌راست نگه می‌دارد."
 
-#: ../../source/exponential-right-censoring.md:45
-#: 8beb7ed69ffc4f39adfe6d317345defe
+#: 606af488313b470fbe462a6d3bad63f1
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:59
 msgid "The complete runnable example uses that schema with a small CSV file."
 msgstr "مثال کامل قابل اجرا همان schema را با یک فایل CSV کوچک به کار می‌برد."
 
-#: ../../source/exponential-right-censoring.md:78
-#: 70c29d115ed3406699c8b42413753f44
+#: 65b999d4ea7144288e90b6ee69fb8cf4
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:92
 msgid "Interpret the result"
 msgstr "نتیجه را چطور بخوانید؟"
 
-#: ../../source/exponential-right-censoring.md:80
-#: 3c0d64e01fe1438dbae515a5847870a2
+#: 76f0a41c1e734279b5288e142fda0947
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:94
 msgid ""
 "The example has one observed event and two total units of observed time: "
 "one unit from the exact event row, and one unit from the right-censored "
@@ -107,8 +228,8 @@ msgstr ""
 "بیشینهٔ درست‌نمایی<sup id=\"fnref-mle\"><a href=\"#fn-mle\">۳</a></sup> "
 "در مدل نمایی چنین است:"
 
-#: ../../source/exponential-right-censoring.md:84
-#: b2c5a8bb48184f0583e4ac37825ba0dd
+#: 2b84152ab97a473e8f8c2a0c4c36df46
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:98
 msgid ""
 "Here, `λ̂` is the estimated rate<sup id=\"fnref-rate\"><a href=\"#fn-"
 "rate\">4</a></sup>. The value `0.5` means that the model estimates, on "
@@ -125,13 +246,13 @@ msgstr ""
 "ثبت شده باشد، واحد نرخ «رخداد بر ساعت» است؛ اگر با روز ثبت شده باشد، واحد"
 " آن «رخداد بر روز» است."
 
-#: ../../source/exponential-right-censoring.md:86
-#: e474ac4e8f374f03ab074f6ef7893256
+#: 25d33a0b344047459008c0611acc0abd
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:100
 msgid "What Veridist assumes"
 msgstr "Veridist چه فرضی می‌گیرد؟"
 
-#: ../../source/exponential-right-censoring.md:88
-#: 2d8f83222cb54a638c60d253774b682e
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:102
+#: e24fa798919547628cf0c2fd65cf7b19
 msgid ""
 "The model assumes that censoring is independent of the event time. In "
 "plain language, the reason observation stopped should not itself reveal "
@@ -143,8 +264,8 @@ msgstr ""
 "این فرض را در نتیجه و مستندات روشن می‌کند؛ اما نمی‌تواند آن را از خود "
 "فایل CSV اثبات کند."
 
-#: ../../source/exponential-right-censoring.md:90
-#: dea1f3764645499d9b916c02322dc88f
+#: 34a1066bf6c04688bd7217e3e263d04d
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:104
 msgid ""
 "The current public path estimates a fixed-location exponential model from"
 " a UTF-8 CSV file with an explicit input format. It does not guess column"
@@ -158,13 +279,13 @@ msgstr ""
 " قالب سازگار نباشد، پردازش متوقف می‌شود و خطا به‌روشنی گزارش می‌شود؛ "
 "برنامه مقدارهای مشکوک را خودکار تغییر نمی‌دهد."
 
-#: ../../source/exponential-right-censoring.md:92
-#: d88d3afb18214718955ddd5027b545d3
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:106
+#: dd5ec41df4864469919db902f9e785f6
 msgid "Failure cases and current limits"
 msgstr "حالت‌های شکست و محدودیت‌های فعلی"
 
-#: ../../source/exponential-right-censoring.md:94
-#: ba92ad5456aa42819ce49b8521c59bf9
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:108
+#: b5d49b8d9fe0465e95af6d12ac724579
 msgid ""
 "A valid statistical estimate is not returned when the sample is empty, no"
 " event is observed, an event appears with zero total observed time, or "
@@ -181,14 +302,15 @@ msgstr ""
 "estimate\">۶</a></sup> علت را مشخص می‌کند تا برنامه بتواند آن را از خطای "
 "خواندن فایل تشخیص دهد."
 
-#: ../../source/exponential-right-censoring.md:96
-#: 36236d0664a7491c964668b413c1d1d5
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:110
+#: aa6305f646ec4b7895e2ff47fd433bef
 msgid ""
-"This path has no confidence interval today and does not currently provide"
-" confidence intervals<sup id=\"fnref-confidence-interval\"><a href=\"#fn-"
-"confidence-interval\">7</a></sup>, goodness-of-fit tests<sup id=\"fnref-"
-"goodness-of-fit\"><a href=\"#fn-goodness-of-fit\">8</a></sup>, "
-"truncation<sup id=\"fnref-truncation\"><a href=\"#fn-"
+"The result carries no inference output by itself, but `uncertainty()` on "
+"the fitted result returns standard errors and confidence intervals<sup id"
+"=\"fnref-confidence-interval\"><a href=\"#fn-confidence-"
+"interval\">7</a></sup>. This path does not provide goodness-of-fit "
+"tests<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-of-"
+"fit\">8</a></sup>, truncation<sup id=\"fnref-truncation\"><a href=\"#fn-"
 "truncation\">9</a></sup>, left censoring<sup id=\"fnref-left-"
 "censoring\"><a href=\"#fn-left-censoring\">10</a></sup>, interval "
 "censoring<sup id=\"fnref-interval-censoring\"><a href=\"#fn-interval-"
@@ -198,31 +320,38 @@ msgid ""
 "=\"fnref-free-location\"><a href=\"#fn-free-location\">14</a></sup>, or "
 "automatic model selection."
 msgstr ""
-"این مسیر امروز فاصلهٔ اطمینان ندارد و فعلاً فاصلهٔ اطمینان<sup id"
-"=\"fnref-confidence-interval\"><a href=\"#fn-confidence-"
-"interval\">۷</a></sup>، آزمون مناسب‌بودن مدل<sup id=\"fnref-goodness-of-"
-"fit\"><a href=\"#fn-goodness-of-fit\">۸</a></sup>، برش داده<sup id"
-"=\"fnref-truncation\"><a href=\"#fn-truncation\">۹</a></sup>، سانسور "
-"چپ<sup id=\"fnref-left-censoring\"><a href=\"#fn-left-"
-"censoring\">۱۰</a></sup>، سانسور فاصله‌ای<sup id=\"fnref-interval-"
-"censoring\"><a href=\"#fn-interval-censoring\">۱۱</a></sup>، وزن<sup id"
-"=\"fnref-weight\"><a href=\"#fn-weight\">۱۲</a></sup>، متغیر کمکی<sup id"
-"=\"fnref-covariate\"><a href=\"#fn-covariate\">۱۳</a></sup>، پارامتر مکان"
-" آزاد<sup id=\"fnref-free-location\"><a href=\"#fn-free-"
-"location\">۱۴</a></sup> یا انتخاب خودکار مدل ندارد."
+"نتیجه خودش خروجی استنباطی ندارد، اما <code "
+"dir=\"ltr\">uncertainty()</code> روی نتیجهٔ برازش، خطاهای معیار و "
+"فاصله‌های اطمینان<sup id=\"fnref-confidence-interval\"><a href=\"#fn-"
+"confidence-interval\">۷</a></sup> را برمی‌گرداند. این مسیر آزمون "
+"مناسب‌بودن مدل<sup id=\"fnref-goodness-of-fit\"><a href=\"#fn-goodness-"
+"of-fit\">۸</a></sup>، برش داده<sup id=\"fnref-truncation\"><a href=\"#fn-"
+"truncation\">۹</a></sup>، سانسور چپ<sup id=\"fnref-left-censoring\"><a "
+"href=\"#fn-left-censoring\">۱۰</a></sup>، سانسور فاصله‌ای<sup id=\"fnref-"
+"interval-censoring\"><a href=\"#fn-interval-censoring\">۱۱</a></sup>، "
+"وزن<sup id=\"fnref-weight\"><a href=\"#fn-weight\">۱۲</a></sup>، متغیر "
+"کمکی<sup id=\"fnref-covariate\"><a href=\"#fn-covariate\">۱۳</a></sup>، "
+"پارامتر مکان آزاد<sup id=\"fnref-free-location\"><a href=\"#fn-free-"
+"location\">۱۴</a></sup> یا انتخاب خودکار مدل را ارائه نمی‌کند."
 
-#: ../../source/exponential-right-censoring.md:101
-#: 78498cc8373a43949fab9c9ef1b7b097
+#: 361022e0610c44cdb408c7a3d67f8f61
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:115
 msgid ""
 "Veridist reads the CSV rows once and processes them in sections instead "
-"of loading the entire file as one object. The configured byte limits restrict how much parsed"
-" CSV content this reader keeps at one time. They do not cap all memory "
-"used by Python or the operating system, and they do not guarantee a "
-"particular processing speed."
-msgstr "Veridist سطرهای فایل CSV را یک بار می‌خواند و آن‌ها را بخش‌به‌بخش پردازش می‌کند؛ بنابراین لازم نیست کل فایل را یکجا به‌صورت یک شیء در حافظه بارگذاری کند. محدودیت‌های بایتی فقط حجم محتوای پردازش‌شده‌ای را کنترل می‌کنند که این بخش از برنامه هم‌زمان نگه می‌دارد. این تنظیمات سقف کل حافظهٔ مصرفی پایتون یا سیستم‌عامل نیستند و سرعت مشخصی را نیز تضمین نمی‌کنند."
+"of loading the entire file as one object. The configured byte limits "
+"restrict how much parsed CSV content this reader keeps at one time. They "
+"do not cap all memory used by Python or the operating system, and they do"
+" not guarantee a particular processing speed."
+msgstr ""
+"Veridist سطرهای فایل CSV را یک بار می‌خواند و آن‌ها را بخش‌به‌بخش پردازش "
+"می‌کند؛ بنابراین لازم نیست کل فایل را یکجا به‌صورت یک شیء در حافظه "
+"بارگذاری کند. محدودیت‌های بایتی فقط حجم محتوای پردازش‌شده‌ای را کنترل "
+"می‌کنند که این بخش از برنامه هم‌زمان نگه می‌دارد. این تنظیمات سقف کل "
+"حافظهٔ مصرفی پایتون یا سیستم‌عامل نیستند و سرعت مشخصی را نیز تضمین "
+"نمی‌کنند."
 
-#: ../../source/exponential-right-censoring.md:103
-#: dc4d87f5791c4e2ebc866fe58de06aa3
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:117
+#: e38b871b0b0542be99824c226107f374
 msgid ""
 "The historical `SCALE-CSV-EXP-01` evidence keeps a 10k, 100k, and 1m row "
 "snapshot with 32 KiB, 64 KiB, and 128 KiB chunk sizes for this CSV input "
@@ -239,8 +368,8 @@ msgstr ""
 "عملکرد نسخهٔ فعلی کافی نیست. هر ادعای تازه دربارهٔ عملکرد باید با اجرای "
 "جدید، نسخهٔ دقیق کد و مشخصات محیط آزمایش همراه باشد."
 
-#: ../../source/exponential-right-censoring.md:105
-#: aec6517080d4436baeee026f9941c76b
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:119
+#: e4614c5407ff4d299292c5f6323dcdc0
 msgid ""
 "The historical snapshot does not establish general big-data support, "
 "another adapter, cancellation, retry, or checkpointing. For save-and-"
@@ -250,8 +379,8 @@ msgstr ""
 "دوباره یا checkpointing را اثبات نمی‌کند. برای ذخیره و ادامهٔ اجرا، "
 "راهنمای API و مثال اختصاصی checkpoint را ببینید."
 
-#: ../../source/exponential-right-censoring.md:109
-#: c51c1b037e5d4caebb05fac27611c42c
+#: 1303fed6dd6642359c729fc48b70ac70
+#: D:/veridist/python/docs/source/exponential-right-censoring.md:123
 msgid "Terms used in this tutorial"
 msgstr "اصطلاحات این آموزش"
 
@@ -290,65 +419,44 @@ msgstr "اصطلاحات این آموزش"
 #~ "قابل‌حمل حافظهٔ فرایند یا RSS نیست "
 #~ "و ادعای سرعت اجرا هم نیست."
 
-msgid "The same two rows in other fields"
-msgstr "همین دو نوع سطر در حوزه‌های دیگر"
+#~ msgid ""
+#~ "This path has no confidence interval "
+#~ "today and does not currently provide "
+#~ "confidence intervals<sup id=\"fnref-confidence-"
+#~ "interval\"><a href=\"#fn-confidence-"
+#~ "interval\">7</a></sup>, goodness-of-fit "
+#~ "tests<sup id=\"fnref-goodness-of-fit\"><a "
+#~ "href=\"#fn-goodness-of-fit\">8</a></sup>, "
+#~ "truncation<sup id=\"fnref-truncation\"><a href"
+#~ "=\"#fn-truncation\">9</a></sup>, left censoring<sup "
+#~ "id=\"fnref-left-censoring\"><a href=\"#fn-"
+#~ "left-censoring\">10</a></sup>, interval censoring<sup"
+#~ " id=\"fnref-interval-censoring\"><a href"
+#~ "=\"#fn-interval-censoring\">11</a></sup>, weights<sup"
+#~ " id=\"fnref-weight\"><a href=\"#fn-"
+#~ "weight\">12</a></sup>, covariates<sup id=\"fnref-"
+#~ "covariate\"><a href=\"#fn-covariate\">13</a></sup>, "
+#~ "a free location parameter<sup id=\"fnref-"
+#~ "free-location\"><a href=\"#fn-free-"
+#~ "location\">14</a></sup>, or automatic model "
+#~ "selection."
+#~ msgstr ""
+#~ "این مسیر امروز فاصلهٔ اطمینان ندارد "
+#~ "و فعلاً فاصلهٔ اطمینان<sup id=\"fnref-"
+#~ "confidence-interval\"><a href=\"#fn-confidence-"
+#~ "interval\">۷</a></sup>، آزمون مناسب‌بودن مدل<sup "
+#~ "id=\"fnref-goodness-of-fit\"><a href=\"#fn-"
+#~ "goodness-of-fit\">۸</a></sup>، برش داده<sup"
+#~ " id=\"fnref-truncation\"><a href=\"#fn-"
+#~ "truncation\">۹</a></sup>، سانسور چپ<sup id"
+#~ "=\"fnref-left-censoring\"><a href=\"#fn-left-"
+#~ "censoring\">۱۰</a></sup>، سانسور فاصله‌ای<sup id"
+#~ "=\"fnref-interval-censoring\"><a href=\"#fn-"
+#~ "interval-censoring\">۱۱</a></sup>، وزن<sup id"
+#~ "=\"fnref-weight\"><a href=\"#fn-weight\">۱۲</a></sup>،"
+#~ " متغیر کمکی<sup id=\"fnref-covariate\"><a "
+#~ "href=\"#fn-covariate\">۱۳</a></sup>، پارامتر مکان"
+#~ " آزاد<sup id=\"fnref-free-location\"><a "
+#~ "href=\"#fn-free-location\">۱۴</a></sup> یا "
+#~ "انتخاب خودکار مدل ندارد."
 
-msgid "“Lifetime” here means time until a defined event. The calculation is unchanged when the subject and event change, but the scientific meaning and assumptions must be checked again."
-msgstr "«طول عمر» در اینجا یعنی زمان تا یک رویداد تعریف‌شده. با تغییر موضوع و رویداد، فرمول محاسبه عوض نمی‌شود؛ اما معنای علمی و فرض‌های آن باید دوباره بررسی شوند."
-
-msgid "Example field"
-msgstr "حوزهٔ مثال"
-
-msgid "Event row"
-msgstr "سطر دارای رویداد"
-
-msgid "Still-event-free row"
-msgstr "سطرِ هنوز بدون رویداد"
-
-msgid "Manufacturing example"
-msgstr "مثال تولید"
-
-msgid "A component failed at the recorded hour"
-msgstr "قطعه در ساعت ثبت‌شده خراب شد"
-
-msgid "It was still operating at the inspection cutoff"
-msgstr "قطعه تا پایان بازرسی هنوز کار می‌کرد"
-
-msgid "Health-research example"
-msgstr "مثال پژوهش سلامت"
-
-msgid "Relapse or readmission occurred on the recorded day"
-msgstr "عود بیماری یا بستری دوباره در روز ثبت‌شده رخ داد"
-
-msgid "It had not occurred by the last follow-up"
-msgstr "تا آخرین پیگیری این رخداد دیده نشد"
-
-msgid "Credit and insurance example"
-msgstr "مثال اعتبار و بیمه"
-
-msgid "Default or a first claim occurred in the recorded month"
-msgstr "نکول یا نخستین خسارت در ماه ثبت‌شده رخ داد"
-
-msgid "It had not occurred by the study end"
-msgstr "تا پایان بررسی چنین رخدادی ثبت نشد"
-
-msgid "Digital-product example"
-msgstr "مثال محصول دیجیتال"
-
-msgid "Churn or conversion occurred on the recorded day"
-msgstr "ریزش یا تبدیل در روز ثبت‌شده رخ داد"
-
-msgid "The user was still active without the event at the cutoff"
-msgstr "کاربر تا پایان بازه فعال و بدون رویداد بود"
-
-msgid "Operations example"
-msgstr "مثال عملیات"
-
-msgid "A repair, delivery, or service case completed"
-msgstr "تعمیر، تحویل یا پروندهٔ خدمت کامل شد"
-
-msgid "The case was still open when observation ended"
-msgstr "هنگام پایان مشاهده، پرونده هنوز باز بود"
-
-msgid "Fraud and cybersecurity data can also contain event times, such as time until the first alert. A different use is to compare transaction amounts or time gaps with a reference distribution to produce an anomaly signal. This tutorial implements only the first kind of data: one time and one event indicator per row. It does not implement a complete fraud detector."
-msgstr "داده‌های تقلب و امنیت سایبری هم ممکن است زمان یک رویداد، مانند زمان تا نخستین هشدار، را داشته باشند. کاربرد متفاوت دیگر، مقایسهٔ مبلغ تراکنش یا فاصلهٔ زمانی با یک توزیع مرجع و ساختن نشانهٔ ناهنجاری است. این آموزش فقط حالت اول را پیاده می‌کند: یک زمان و یک نشانگر رخداد در هر سطر. این آموزش سامانهٔ کامل کشف تقلب نمی‌سازد."

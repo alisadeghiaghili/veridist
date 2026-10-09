@@ -92,8 +92,10 @@ class ErrorHierarchyTests(unittest.TestCase):
         self.assertNotIsInstance(error, EngineContractError)
         self.assertEqual(str(error), "acknowledgement lost")
 
-    def test_veridist_error_is_exported_from_engine_but_not_top_level(self) -> None:
-        self.assertIn("VeridistError", engine.__all__)
+    def test_error_classes_are_exported_from_engine_and_the_top_level(self) -> None:
+        for name in ("VeridistError", "EngineContractError", "CapabilityError"):
+            with self.subTest(name=name):
+                self.assertIn(name, engine.__all__)
+                self.assertIn(name, veridist.__all__)
+                self.assertIs(getattr(veridist, name), getattr(engine, name))
         self.assertIs(engine.VeridistError, VeridistError)
-        self.assertNotIn("VeridistError", veridist.__all__)
-        self.assertFalse(hasattr(veridist, "VeridistError"))

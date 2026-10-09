@@ -3,7 +3,7 @@
 
 <p dir="rtl" align="right"><a href="api.md">انگلیسی</a> | <a href="api.fa.md">فارسی</a> | <a href="api.de.md">آلمانی</a></p>
 
-<p dir="rtl" align="right">این راهنما API عمومیِ فعلی <bdi dir="ltr">Veridist</bdi> را توضیح می‌دهد. برای برازش توزیع<sup id="fnref-fitting"><a href="#fn-fitting">۱</a></sup> نمایی روی داده‌های طول عمر، معمولاً یک فایل CSV را به تابع اصلی می‌دهید و نتیجه را دریافت می‌کنید. اگر محاسبه طولانی است و ممکن است متوقف شود، می‌توانید پیشرفت آن را ذخیره کنید و بعداً ادامه دهید. ابزارهای اسکالر<sup id="fnref-scalar"><a href="#fn-scalar">۲</a></sup> و جریان‌های داده‌ای که مدیریتشان با فراخواننده<sup id="fnref-caller"><a href="#fn-caller">۳</a></sup> است نیز برای استفاده‌های فنی‌تر در دسترس‌اند.</p>
+<p dir="rtl" align="right">این راهنما API عمومیِ فعلی <bdi dir="ltr">Veridist</bdi> 2.0 را توضیح می‌دهد. برای برازش توزیع<sup id="fnref-fitting"><a href="#fn-fitting">۱</a></sup> روی داده‌های طول عمر یا اندازه‌گیری، معمولاً مشاهدات خود را، یا یک فایل CSV را، به یکی از توابع برازش می‌دهید و نتیجهٔ برگردانده‌شده را می‌خوانید. شش خانوادهٔ توزیع برازش دارند، هر عملیات توزیعی آرایه‌های numpy را نیز می‌پذیرد و هر برازش موفق می‌تواند عدم‌قطعیتِ برآورد خود را گزارش کند<sup id="fnref-uncertainty"><a href="#fn-uncertainty">۲۲</a></sup>. اگر محاسبه طولانی است و ممکن است متوقف شود، می‌توانید پیشرفت آن را ذخیره کنید و بعداً ادامه دهید. ابزارهای اسکالر<sup id="fnref-scalar"><a href="#fn-scalar">۲</a></sup> و جریان‌های داده‌ای که مدیریتشان با فراخواننده<sup id="fnref-caller"><a href="#fn-caller">۳</a></sup> است نیز برای استفاده‌های فنی‌تر در دسترس‌اند. اگر از نسخهٔ ۱٫۰ مهاجرت می‌کنید، <a href="../migration-2.0.md">راهنمای مهاجرت</a> را بخوانید.</p>
 
 <h2 dir="rtl" align="right">از همین قرارداد زمان و رویداد در حوزه‌های مختلف استفاده کنید</h2>
 
@@ -50,14 +50,24 @@
       <td align="right">فقط برای فایل محلی روی یک رایانه است؛ بازیابی توزیع‌شده<sup id="fnref-distributed-recovery"><a href="#fn-distributed-recovery">۴</a></sup> ندارد.</td>
     </tr>
     <tr>
+      <td align="right">برازش یکی از شش خانواده روی مشاهداتی که در حافظه‌اند</td>
+      <td dir="ltr" align="left"><code class="literal">fit</code>، <code class="literal">fit_weibull</code>، <code class="literal">fit_gamma</code> و سایر برازش‌های هر خانواده</td>
+      <td align="right">همهٔ مشاهدات باید در حافظه جا شوند؛ انتخاب خودکار مدل وجود ندارد.</td>
+    </tr>
+    <tr>
+      <td align="right">محاسبهٔ چگالی، CDF، بقا، چندک یا نمونه برای یک مقدار یا یک آرایه</td>
+      <td dir="ltr" align="left"><code class="literal">logpdf</code>، <code class="literal">cdf</code>، <code class="literal">sf</code>، <code class="literal">ppf</code>، <code class="literal">sample</code></td>
+      <td align="right">از توزیعی استفاده می‌کنند که از قبل مشخص کرده‌اید؛ پارامتر برازش نمی‌کنند.</td>
+    </tr>
+    <tr>
       <td align="right">محاسبهٔ چگالی لگاریتمی برای یک مقدار</td>
       <td dir="ltr" align="left"><code class="literal">evaluate_log_density</code></td>
       <td align="right">پارامترها را برازش نمی‌کند.</td>
     </tr>
     <tr>
-      <td align="right">محاسبهٔ درست‌نمایی برای چند بخش داده</td>
-      <td dir="ltr" align="left"><code class="literal">reduce_log_likelihood_chunks</code></td>
-      <td align="right">بهترین توزیع را انتخاب نمی‌کند.</td>
+      <td align="right">محاسبهٔ درست‌نمایی برای چند بخش داده، با سانسور راست یا بدون آن</td>
+      <td dir="ltr" align="left"><code class="literal">reduce_log_likelihood_chunks</code>، <code class="literal">reduce_lifetime_log_likelihood_chunks</code>، <code class="literal">reduce_value_log_likelihood_chunks</code></td>
+      <td align="right">بهترین توزیع را انتخاب نمی‌کنند.</td>
     </tr>
   </tbody>
 </table>
@@ -111,7 +121,102 @@ rate=0.5; events=1; censored=1
 
 <p dir="rtl" align="right">اگر خواندن یا پردازش فایل شکست بخورد، <code dir="ltr">result.fit</code> برابر <code dir="ltr">None</code> است. در این حالت <code dir="ltr">result.execution</code> یک خروجی نوع‌دار<sup id="fnref-typed-outcome"><a href="#fn-typed-outcome">۱۰</a></sup> شامل مرحله و دلیل شکست دارد. پیش از استفاده از پارامترهای مدل، ابتدا نوع نتیجه را بررسی کنید.</p>
 
-<p dir="rtl" align="right">مدل فعلی پارامتر مکان را روی صفر ثابت نگه می‌دارد. این مسیر هنوز فاصلهٔ اطمینان<sup id="fnref-confidence-interval"><a href="#fn-confidence-interval">۱۱</a></sup>، آزمون مناسب‌بودن مدل<sup id="fnref-goodness-of-fit"><a href="#fn-goodness-of-fit">۱۲</a></sup>، وزن<sup id="fnref-weight"><a href="#fn-weight">۱۳</a></sup>، متغیر کمکی<sup id="fnref-covariate"><a href="#fn-covariate">۱۴</a></sup>، برش داده<sup id="fnref-truncation"><a href="#fn-truncation">۱۵</a></sup>، سانسور چپ<sup id="fnref-left-censoring"><a href="#fn-left-censoring">۱۶</a></sup>، سانسور فاصله‌ای<sup id="fnref-interval-censoring"><a href="#fn-interval-censoring">۱۷</a></sup>، پارامتر مکان آزاد<sup id="fnref-free-location"><a href="#fn-free-location">۱۸</a></sup> یا انتخاب خودکار مدل را ارائه نمی‌کند. جزئیات فرض آماری و حالت‌های ناموفق در <a href="exponential-right-censoring.fa.md">آموزش داده‌های سانسورشده از راست</a> آمده است.</p>
+<p dir="rtl" align="right">مدل CSV پارامتر مکان را روی صفر ثابت نگه می‌دارد. برازشی که برمی‌گرداند می‌تواند عدم‌قطعیت برآورد خود را گزارش کند (بخش عدم‌قطعیت را در ادامه ببینید)، اما این مسیر آزمون مناسب‌بودن مدل<sup id="fnref-goodness-of-fit"><a href="#fn-goodness-of-fit">۱۲</a></sup>، وزن<sup id="fnref-weight"><a href="#fn-weight">۱۳</a></sup>، متغیر کمکی<sup id="fnref-covariate"><a href="#fn-covariate">۱۴</a></sup>، برش داده<sup id="fnref-truncation"><a href="#fn-truncation">۱۵</a></sup>، سانسور چپ<sup id="fnref-left-censoring"><a href="#fn-left-censoring">۱۶</a></sup>، سانسور فاصله‌ای<sup id="fnref-interval-censoring"><a href="#fn-interval-censoring">۱۷</a></sup>، پارامتر مکان آزاد<sup id="fnref-free-location"><a href="#fn-free-location">۱۸</a></sup> یا انتخاب خودکار مدل را ارائه نمی‌کند. جزئیات فرض آماری و حالت‌های ناموفق در <a href="exponential-right-censoring.md">آموزش داده‌های سانسورشده از راست</a> آمده است.</p>
+
+<h2 dir="rtl" align="right">برازش هر یک از شش خانواده</h2>
+
+<p dir="rtl" align="right"><code dir="ltr">fit(family, observations)</code> یکی از شش خانواده را با بیشینه‌سازی درست‌نمایی روی مشاهداتی که در حافظه نگه داشته شده‌اند برازش می‌دهد. <code dir="ltr">family</code> یک <code dir="ltr">FamilyId</code> یا مقدار رشته‌ای آن است: <code dir="ltr">exponential</code>، <code dir="ltr">weibull_min</code>، <code dir="ltr">lognormal</code>، <code dir="ltr">gamma</code>، <code dir="ltr">normal</code> یا <code dir="ltr">gumbel_right</code>. هر خانواده تابع مخصوص خود را هم دارد (<code dir="ltr">fit_exponential</code>، <code dir="ltr">fit_weibull</code>، <code dir="ltr">fit_lognormal</code>، <code dir="ltr">fit_gamma</code>، <code dir="ltr">fit_normal</code> و <code dir="ltr">fit_gumbel_right</code>) که همان مشاهدات و گزینه‌ها را می‌گیرد.</p>
+
+<p dir="rtl" align="right">چهار خانوادهٔ طول عمر (<code dir="ltr">exponential</code>، <code dir="ltr">weibull_min</code>، <code dir="ltr">lognormal</code> و <code dir="ltr">gamma</code>) مشاهدات <code dir="ltr">ExactLifetime</code> و <code dir="ltr">RightCensoredLifetime</code> را می‌گیرند. دو خانواده‌ای که روی کل محور حقیقی تعریف شده‌اند (<code dir="ltr">normal</code> و <code dir="ltr">gumbel_right</code>) مشاهدات <code dir="ltr">ExactValue</code> و <code dir="ltr">RightCensoredValue</code> را می‌گیرند و مقدار می‌تواند منفی باشد. دادن جفت نوع دیگر <code dir="ltr">TypeError</code> ایجاد می‌کند. هر خانواده سانسور راست مستقل و <code dir="ltr">frequency_weights</code> را پشتیبانی می‌کند؛ <code dir="ltr">fit_weibull</code> گزینهٔ <code dir="ltr">fixed_shape</code> را هم می‌پذیرد.</p>
+
+```python
+from veridist import ExactLifetime, RightCensoredLifetime, fit
+
+times = (120.0, 340.0, 560.0, 800.0, 1250.0, 1700.0)
+observations = [ExactLifetime(t) for t in times] + [RightCensoredLifetime(2000.0)]
+result = fit("weibull_min", observations)
+
+shape, scale = result.parameters["shape"], result.parameters["scale"]
+print(f"{result.family.value} shape={shape:.3f} scale={scale:.1f}")
+print(result.observation_count, result.event_count, result.censored_count)
+```
+
+```text
+weibull_min shape=1.216 scale=1154.2
+7 6 1
+```
+
+<p dir="rtl" align="right">یک مشکل داده‌ای، مثلاً نمونه‌ای بدون رخداد مشاهده‌شده، به‌صورت شکست نوع‌دار برگردانده می‌شود و استثنا ایجاد نمی‌کند. نتیجهٔ موفق <code dir="ltr">family</code>، نگاشت فقط‌خواندنی <code dir="ltr">parameters</code> با نام‌های استاندارد پارامترها، <code dir="ltr">log_likelihood</code>، <code dir="ltr">observation_count</code>، <code dir="ltr">event_count</code>، <code dir="ltr">censored_count</code> و <code dir="ltr">converged</code> را همراه با ویژگی‌های مخصوص خانواده مانند <code dir="ltr">rate</code>، <code dir="ltr">shape</code>، <code dir="ltr">scale</code>، <code dir="ltr">mu</code> یا <code dir="ltr">sigma</code> در اختیار می‌گذارد. نتیجهٔ ناموفق <code dir="ltr">family</code>، <code dir="ltr">code</code> و شمارش‌ها را نشان می‌دهد. پروتکل‌های <code dir="ltr">FitSuccess</code> و <code dir="ltr">FitFailure</code> همین سطح مشترک را توصیف می‌کنند؛ بنابراین پیش از خواندن پارامترها بررسیِ مناسب <code dir="ltr">isinstance(result, FitSuccess)</code> است. برازش هرگز نقطه‌ای را که روی لبهٔ بازهٔ جست‌وجو قرار دارد به‌عنوان برآورد همگرا گزارش نمی‌کند؛ به‌جای آن شکستی مانند <code dir="ltr">BOUNDARY_SOLUTION</code> یا <code dir="ltr">DEGENERATE_SAMPLE</code> برمی‌گرداند.</p>
+
+<h2 dir="rtl" align="right">ارزیابی توزیع‌ها روی اسکالرها و آرایه‌ها</h2>
+
+<p dir="rtl" align="right"><code dir="ltr">logpdf</code>، <code dir="ltr">cdf</code>، <code dir="ltr">sf</code>، <code dir="ltr">ppf</code> و <code dir="ltr">sample</code> توزیعی را که از قبل مشخص کرده‌اید ارزیابی می‌کنند. خانواده اول می‌آید و پارامترها به‌صورت کلیدواژه پس از آن، برای مثال <code dir="ltr">cdf("gamma", 6.5, shape=5.0, scale=1.0)</code>. <code dir="ltr">logpdf</code> چگالی لگاریتمی، <code dir="ltr">sf</code> تابع بقا و <code dir="ltr">ppf</code> تابع چندک است؛ <code dir="ltr">sample(family, size, rng=rng, ...)</code> با یک مولد numpy که خودتان می‌دهید از خانواده نمونه می‌گیرد.</p>
+
+<p dir="rtl" align="right">نقطه و هر پارامتر می‌تواند اسکالر پایتون یا numpy یا یک آرایه باشد و آن‌ها با یکدیگر هم‌پخش<sup id="fnref-broadcasting"><a href="#fn-broadcasting">۲۳</a></sup> می‌شوند. فراخوانی اسکالر یک <code dir="ltr">float</code> پایتون و هر ورودی آرایه‌ای یک آرایهٔ <code dir="ltr">float64</code> با شکل هم‌پخش‌شده برمی‌گرداند. <code dir="ltr">logpdf</code> بیرون از تکیه‌گاه برابر <code dir="ltr">-inf</code> است و <code dir="ltr">ppf</code> به احتمال‌هایی نیاز دارد که کاملاً بین ۰ و ۱ باشند. numpy فقط وقتی وارد می‌شود که آرایه بدهید.</p>
+
+```python
+import numpy as np
+
+from veridist import cdf, logpdf, ppf
+
+x = np.array([100.0, 200.0, 400.0])
+print(np.round(cdf("weibull_min", x, shape=1.5, scale=500.0), 4))
+print(round(logpdf("normal", 0.0, mu=0.0, sigma=1.0), 6))
+print(round(ppf("gamma", 0.5, shape=2.0, scale=1.0), 6))
+```
+
+```text
+[0.0856 0.2235 0.5111]
+-0.918939
+1.678347
+```
+
+<p dir="rtl" align="right">خانواده‌های نمایی، وایبول کمینه و گامبل راست از هسته‌های بومی numpy استفاده می‌کنند. خانواده‌های نرمال، لگ‌نرمال و گاما هسته‌های اسکالر راستی‌آزمایی‌شده را عنصر به عنصر ارزیابی می‌کنند؛ بنابراین مقدارهایی برابر با فراخوانی اسکالر می‌دهند، اما روی آرایه‌های بسیار بزرگ کندند. شکل قدیمی که پارامترها را به‌صورت نگاشت می‌دهد، <code dir="ltr">cdf("gamma", x, {"shape": 2.0, "scale": 1.0})</code>، هنوز کار می‌کند اما منسوخ شده است و در نسخهٔ ۳٫۰ حذف می‌شود.</p>
+
+<h2 dir="rtl" align="right">ساخت مشاهدات از آرایه‌ها</h2>
+
+<p dir="rtl" align="right"><code dir="ltr">lifetimes_from_arrays(time, event)</code> مشاهدات طول عمر را از دو ستون یک‌بعدی با طول برابر می‌سازد و <code dir="ltr">values_from_arrays(value, event)</code> همین کار را برای مقدارهای حقیقی انجام می‌دهد. <code dir="ltr">event</code> یک آرایهٔ بولی یا آرایهٔ صحیح شامل ۰ و ۱ است؛ درست یعنی رویداد مشاهده شده و نادرست یعنی مشاهده در آن زمان سانسور راست شده است. ستون‌ها ابتدا به‌صورت آرایهٔ کامل اعتبارسنجی می‌شوند و خطا نخستین سطر نامعتبر را نام می‌برد.</p>
+
+```python
+import numpy as np
+
+from veridist import fit, lifetimes_from_arrays
+
+time = np.array([120.0, 340.0, 560.0, 800.0, 2000.0])
+event = np.array([1, 1, 1, 1, 0])
+result = fit("exponential", lifetimes_from_arrays(time, event))
+print(round(result.rate, 8))
+```
+
+```text
+0.00104712
+```
+
+<h2 dir="rtl" align="right">گزارش عدم‌قطعیت یک برآورد</h2>
+
+<p dir="rtl" align="right">هر برازش موفق یک متد <code dir="ltr">uncertainty()</code> دارد؛ آن را روی نتیجه فراخوانی کنید، زیرا ویژگی نیست. این متد یک <code dir="ltr">FitUncertainty</code> شامل <code dir="ltr">standard_errors</code> پارامترها، ماتریس کوواریانس<sup id="fnref-covariance"><a href="#fn-covariance">۲۴</a></sup> <code dir="ltr">covariance</code> به ترتیب استاندارد پارامترها و <code dir="ltr">confidence_intervals(level=0.95, method="wald")</code> برمی‌گرداند<sup id="fnref-confidence-interval"><a href="#fn-confidence-interval">۱۱</a></sup>. <code dir="ltr">method="wald"</code> برای پارامترهای مثبت بازه را در مقیاس لگاریتمی می‌سازد و بنابراین هرگز مقدار نامثبت ندارد. <code dir="ltr">method="profile"</code> درست‌نمایی نمایه‌ای<sup id="fnref-profile-likelihood"><a href="#fn-profile-likelihood">۲۵</a></sup> را وارونه می‌کند که برای نمونه‌های کوچک قابل‌اعتمادتر است؛ طرفی که هرگز قطع نمی‌شود <code dir="ltr">inf</code> (یا <code dir="ltr">0</code>) گزارش می‌شود. <code dir="ltr">method="exact"</code> بازهٔ کای‌دو را برای نرخ نمایی روی داده‌های بدون سانسور می‌دهد.</p>
+
+<p dir="rtl" align="right">همان شیء کمیت‌های مشتق‌شده را همراه با بازه می‌دهد: <code dir="ltr">mean()</code> (میانگین زمان تا خرابی)، <code dir="ltr">quantile(p)</code> (یک عمر B<sup id="fnref-b-life"><a href="#fn-b-life">۲۶</a></sup>؛ <code dir="ltr">quantile(0.1)</code> همان B10 است) و <code dir="ltr">survival(t)</code>. هر کدام یک <code dir="ltr">DerivedEstimate</code> با <code dir="ltr">estimate</code>، <code dir="ltr">lower</code>، <code dir="ltr">upper</code>، <code dir="ltr">method</code> و <code dir="ltr">level</code> برمی‌گرداند. بازه‌های Wald از روش دلتا در مقیاسی استفاده می‌کنند که با دامنهٔ کمیت سازگار است و <code dir="ltr">method="profile"</code> برای خانواده‌های نمایی و وایبول در دسترس است.</p>
+
+```python
+from veridist import ExactLifetime, RightCensoredLifetime, fit
+
+times = (120.0, 340.0, 560.0, 800.0, 1250.0, 1700.0)
+observations = [ExactLifetime(t) for t in times] + [RightCensoredLifetime(2000.0)]
+uncertainty = fit("weibull_min", observations).uncertainty()
+
+intervals = uncertainty.confidence_intervals()
+b10 = uncertainty.quantile(0.1)
+print(tuple(round(value, 3) for value in intervals["shape"]))
+print(round(b10.estimate, 1), round(b10.lower, 1), round(b10.upper, 1))
+```
+
+```text
+(0.621, 2.382)
+181.4 40.9 804.5
+```
+
+<p dir="rtl" align="right">وقتی اطلاعات مشاهده‌شده منفرد است، شکل Weibull ثابت شده یا نتیجه داده‌ای ندارد، <code dir="ltr">uncertainty()</code> به‌جای ایجاد استثنا یک مقدار <code dir="ltr">UncertaintyUnavailable</code> با <code dir="ltr">reason</code> پایدار برمی‌گرداند. پیش از خواندن بازه‌ها نوع را بررسی کنید.</p>
 
 <h2 dir="rtl" align="right">ذخیرهٔ پیشرفت و ادامهٔ محاسبه</h2>
 
@@ -125,7 +230,36 @@ rate=0.5; events=1; censored=1
 
 <p dir="rtl" align="right">اگر داده را خود برنامهٔ شما تولید یا بخش‌بندی می‌کند، <code dir="ltr">IterableDataSource</code> آن بخش‌ها را همراه با <code dir="ltr">DataSourceMetadata</code> تغییرناپذیر و اعلام صریح <code dir="ltr">Replayability</code> دریافت می‌کند. در حالت <code dir="ltr">SINGLE_PASS</code> داده فقط یک‌بار خوانده می‌شود. در حالت <code dir="ltr">REPLAYABLE</code> باید تابعی بدهید که هر بار یک پیمایش تازه از داده بسازد. حالت <code dir="ltr">CHECKPOINT_REPLAYABLE</code> در این adapter هنوز پیاده نشده است؛ استفاده از آن خطای <code dir="ltr">CHECKPOINT_REQUIRED</code> می‌دهد.</p>
 
-<p dir="rtl" align="right"><code dir="ltr">FAMILY_REGISTRY</code> و <code dir="ltr">FamilyId</code> مشخصات پنج خانوادهٔ آماری ارزیابی‌شده را نگه می‌دارند. <code dir="ltr">evaluate_log_density</code> چگالی لگاریتمی یک مقدار را با پارامترهای داده‌شده محاسبه می‌کند. <code dir="ltr">reduce_log_likelihood_chunks</code> همین محاسبه را برای بخش‌های متعدد داده جمع می‌کند و نتیجه‌ای مستقل از نحوهٔ بخش‌بندی می‌سازد. این توابع پارامترهای مدل را تخمین نمی‌زنند، توزیع‌ها را رتبه‌بندی نمی‌کنند و برای دادهٔ سانسورشده درست‌نمایی نمی‌سازند. قرارداد دقیق آن‌ها در <a href="families-log-density-likelihood.md">راهنمای خانواده‌ها و درست‌نمایی لگاریتمی</a> آمده است.</p>
+<p dir="rtl" align="right"><code dir="ltr">FAMILY_REGISTRY</code> و <code dir="ltr">FamilyId</code> مشخصات شش خانوادهٔ آماری ارزیابی‌شده را نگه می‌دارند. <code dir="ltr">evaluate_log_density</code> چگالی لگاریتمی یک مقدار را با پارامترهای داده‌شده محاسبه می‌کند. <code dir="ltr">reduce_log_likelihood_chunks</code> همین محاسبه را برای بخش‌های متعدد داده جمع می‌کند و نتیجه‌ای مستقل از نحوهٔ بخش‌بندی می‌سازد. این توابع پارامترهای مدل را تخمین نمی‌زنند و توزیع‌ها را رتبه‌بندی نمی‌کنند. قرارداد دقیق آن‌ها در <a href="families-log-density-likelihood.md">راهنمای خانواده‌ها و درست‌نمایی لگاریتمی</a> آمده است.</p>
+
+<p dir="rtl" align="right">برای داده‌های سانسورشده، <code dir="ltr">reduce_lifetime_log_likelihood_chunks</code> (خانواده‌های <code dir="ltr">exponential</code>، <code dir="ltr">weibull_min</code>، <code dir="ltr">lognormal</code> و <code dir="ltr">gamma</code> با <code dir="ltr">ExactLifetime</code> و <code dir="ltr">RightCensoredLifetime</code>) و <code dir="ltr">reduce_value_log_likelihood_chunks</code> (خانواده‌های <code dir="ltr">normal</code> و <code dir="ltr">gumbel_right</code> با <code dir="ltr">ExactValue</code> و <code dir="ltr">RightCensoredValue</code>) چگالی لگاریتمی هر مشاهدهٔ دقیق و لگاریتم بقای هر مشاهدهٔ سانسورشده از راست را جمع می‌کنند. آن‌ها یک <code dir="ltr">FamilyId</code> و پارامترهای استاندارد را می‌گیرند، دقیقاً مانند <code dir="ltr">reduce_log_likelihood_chunks</code> انباشته می‌کنند و در پارامترهای یک برازش، <code dir="ltr">log_likelihood</code> همان برازش را بازتولید می‌کنند.</p>
+
+```python
+from veridist import (
+    ExactLifetime,
+    FamilyId,
+    RightCensoredLifetime,
+    reduce_lifetime_log_likelihood_chunks,
+)
+
+chunks = [[ExactLifetime(120.0), ExactLifetime(340.0)], [RightCensoredLifetime(2000.0)]]
+result = reduce_lifetime_log_likelihood_chunks(
+    FamilyId.WEIBULL_MIN, chunks, shape=1.2, scale=1100.0
+)
+print(result.observation_count, round(result.total_log_likelihood, 6))
+```
+
+```text
+3 -16.682975
+```
+
+<h2 dir="rtl" align="right">آنچه بستهٔ سطح بالا صادر می‌کند</h2>
+
+<p dir="rtl" align="right">API عمومی را از <code dir="ltr">veridist</code> وارد کنید: شش تابع برازش و <code dir="ltr">fit</code>؛ <code dir="ltr">FamilyId</code>، <code dir="ltr">logpdf</code>، <code dir="ltr">cdf</code>، <code dir="ltr">sf</code>، <code dir="ltr">ppf</code> و <code dir="ltr">sample</code>؛ انواع مشاهده همراه با <code dir="ltr">lifetimes_from_arrays</code> و <code dir="ltr">values_from_arrays</code>؛ پروتکل‌های <code dir="ltr">FitSuccess</code> و <code dir="ltr">FitFailure</code>؛ نقطه‌های ورود CSV و نقطهٔ بازرسی از جمله <code dir="ltr">create_checkpointed_csv_store</code> و <code dir="ltr">fit_exponential_checkpointed_csv</code>؛ سه کاهندهٔ درست‌نمایی لگاریتمی؛ و کلاس‌های خطای <code dir="ltr"><bdi dir="ltr">Veridist</bdi>Error</code>، <code dir="ltr">CapabilityError</code> و <code dir="ltr">EngineContractError</code>. ذخیره‌گاه‌ها، بافرها، منشأ و انواع خروجی در <code dir="ltr">veridist.engine</code> می‌مانند که <code dir="ltr">CapabilityError</code> را هم صادر می‌کند.</p>
+
+<h2 dir="rtl" align="right">ارتقا از نسخهٔ ۱٫۰</h2>
+
+<p dir="rtl" align="right">کد نسخهٔ ۱٫۰ همچنان کار می‌کند. دو شکل منسوخ شده‌اند و در نسخهٔ ۳٫۰ حذف می‌شوند: شکل نگاشتیِ <code dir="ltr">cdf</code>، <code dir="ltr">sf</code>، <code dir="ltr">ppf</code> و <code dir="ltr">sample</code>، و بخش‌های <code dir="ltr">bytes</code> خام برای <code dir="ltr">fit_exponential_checkpointed_chunks</code>. <a href="../migration-2.0.md">راهنمای مهاجرت</a> همهٔ تغییرها را فهرست می‌کند، از جمله تغییر مجوز به Business Source License 1.1 با اجازهٔ غیرتجاری.</p>
 
 <details dir="rtl" align="right">
 <summary>جزئیات فنی و محدودیت‌های نسخهٔ فعلی</summary>
@@ -137,7 +271,7 @@ rate=0.5; events=1; censored=1
 <h2 dir="rtl" align="right">اصطلاحات این صفحه</h2>
 
 <p id="fn-fitting" dir="rtl" align="right"><strong>۱.</strong> <bdi dir="ltr">Distribution fitting</bdi> — برآورد پارامترهای یک توزیع از روی داده و بررسی سازگاری آن با مشاهدات. <a href="#fnref-fitting" aria-label="بازگشت به متن">↩</a></p>
-<p id="fn-scalar" dir="rtl" align="right"><strong>۲.</strong> <bdi dir="ltr">Scalar operation</bdi> — عملیاتی که هر بار روی یک مقدار عددی کار می‌کند، نه روی یک آرایهٔ کامل. <a href="#fnref-scalar" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-scalar" dir="rtl" align="right"><strong>۲.</strong> <bdi dir="ltr">Scalar operation</bdi> — عملیاتی روی یک مقدار عددی؛ همین عملیات آرایه‌ها را هم می‌پذیرند. <a href="#fnref-scalar" aria-label="بازگشت به متن">↩</a></p>
 <p id="fn-caller" dir="rtl" align="right"><strong>۳.</strong> <bdi dir="ltr">Caller</bdi> — کد یا برنامه‌ای که تابع کتابخانه را صدا می‌زند و ورودی‌هایش را فراهم می‌کند. <a href="#fnref-caller" aria-label="بازگشت به متن">↩</a></p>
 <p id="fn-distributed-recovery" dir="rtl" align="right"><strong>۴.</strong> <bdi dir="ltr">Distributed recovery</bdi> — ادامه‌دادن یک محاسبه روی رایانه یا سرویس دیگری با وضعیت مشترک. <a href="#fnref-distributed-recovery" aria-label="بازگشت به متن">↩</a></p>
 <p id="fn-rate" dir="rtl" align="right"><strong>۵.</strong> <bdi dir="ltr">Rate</bdi> — تعداد مورد انتظار رخداد در هر واحد زمان؛ نرخ با احتمال رخداد یکسان نیست. <a href="#fnref-rate" aria-label="بازگشت به متن">↩</a></p>
@@ -157,3 +291,8 @@ rate=0.5; events=1; censored=1
 <p id="fn-sufficient-statistics" dir="rtl" align="right"><strong>۱۹.</strong> <bdi dir="ltr">Sufficient statistics</bdi> — خلاصه‌های عددی لازم برای برآورد پارامتر که در این محاسبه جای نگهداری همهٔ سطرهای خام را می‌گیرند. <a href="#fnref-sufficient-statistics" aria-label="بازگشت به متن">↩</a></p>
 <p id="fn-checkpoint" dir="rtl" align="right"><strong>۲۰.</strong> <bdi dir="ltr">Checkpoint</bdi> — وضعیت میانی ذخیره‌شده که اجازه می‌دهد اجرای سازگار از آخرین بخش ثبت‌شده ادامه پیدا کند. <a href="#fnref-checkpoint" aria-label="بازگشت به متن">↩</a></p>
 <p id="fn-low-level-tools" dir="rtl" align="right"><strong>۲۱.</strong> <bdi dir="ltr">Low-level tools</bdi> — توابع پایه‌ای‌تر برای زمانی که برنامهٔ شما آماده‌سازی داده، بخش‌بندی داده یا انتخاب پارامترها را خودش انجام می‌دهد. این ابزارها معمولاً برای مسیر شروع سریع کاربر نهایی نیستند. <a href="#fnref-low-level-tools" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-uncertainty" dir="rtl" align="right"><strong>۲۲.</strong> <bdi dir="ltr">Uncertainty</bdi> — میزان فاصلهٔ احتمالیِ برآوردی که از نمونه‌ای محدود به‌دست آمده با مقدار واقعی؛ معمولاً با خطاهای معیار و فاصله‌های اطمینان گزارش می‌شود. <a href="#fnref-uncertainty" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-broadcasting" dir="rtl" align="right"><strong>۲۳.</strong> <bdi dir="ltr">Broadcasting</bdi> — قاعدهٔ numpy برای ترکیب عنصر به عنصر آرایه‌هایی با شکل‌های متفاوت اما سازگار. <a href="#fnref-broadcasting" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-covariance" dir="rtl" align="right"><strong>۲۴.</strong> <bdi dir="ltr">Covariance matrix</bdi> — جدولی از واریانس برآوردهای پارامترها و کوواریانس هر جفت از آن‌ها؛ ریشهٔ دوم قطر آن خطاهای معیار است. <a href="#fnref-covariance" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-profile-likelihood" dir="rtl" align="right"><strong>۲۵.</strong> <bdi dir="ltr">Profile likelihood</bdi> — درست‌نمایی بیشینه‌شده روی پارامترهای دیگر به ازای هر مقدار از پارامتر مورد نظر؛ بازه‌های ساخته‌شده از آن شکل واقعی درست‌نمایی را دنبال می‌کنند. <a href="#fnref-profile-likelihood" aria-label="بازگشت به متن">↩</a></p>
+<p id="fn-b-life" dir="rtl" align="right"><strong>۲۶.</strong> <bdi dir="ltr">B-life</bdi> — زمانی که تا آن درصد معینی از واحدها خراب شده‌اند؛ B10 زمانی است که تا آن ۱۰ درصد خراب شده‌اند. <a href="#fnref-b-life" aria-label="بازگشت به متن">↩</a></p>

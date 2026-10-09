@@ -1,9 +1,15 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "production_root": "src/veridist",
   "critical_modules": ["domain", "statistics", "families", "engine"],
   "mutmut_version": "3.7.0",
   "minimum_score": 0.8,
+  "module_minimum_scores": {
+    "domain": 0.67,
+    "statistics": 0.8,
+    "families": 0.8,
+    "engine": 0.75
+  },
   "pytest_selection": [
     "tests/contract",
     "tests/reference",

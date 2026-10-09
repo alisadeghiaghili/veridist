@@ -20,12 +20,12 @@
 
 اکنون می‌توانید:
 
-- مدل‌های عمر نمایی، وایبول و لگ‌نرمال را برازش دهید؛
+- مدل‌های نمایی، وایبول، لگ‌نرمال، گاما، نرمال یا گامبل راست را برازش دهید؛
 - مشاهده‌های **سانسورشده از راست**<sup id="fnref-right-censoring"><a href="#fn-right-censoring">۱</a></sup> را در تحلیل نگه دارید؛
-- برآورد، شمار مشاهده‌ها و فرض‌های محاسبه را بررسی کنید؛ و
+- برای مدل برازش‌شده خطای معیار، فاصلهٔ اطمینان و عمر B را گزارش کنید؛ و
 - محاسبهٔ درست‌نمایی<sup id="fnref-likelihood"><a href="#fn-likelihood">۲</a></sup> را در مسیرهای پشتیبانی‌شده به‌صورت مرحله‌ای و محلی ادامه دهید.
 
-مسیر فایل فعلی عمداً محدود است: CSV سخت‌گیرانهٔ UTF-8 فقط مدل نماییِ نرخ‌محور را برازش می‌دهد. برای وایبول و لگ‌نرمال از شیءهای دادهٔ طول عمر استفاده می‌شود. [راهنمای قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.fa.md) مرز دقیق نسخه را ثبت می‌کند.
+مسیر فایل فعلی عمداً محدود است: CSV سخت‌گیرانهٔ UTF-8 فقط مدل نماییِ نرخ‌محور را برازش می‌دهد. هر شش خانواده مشاهدات نوع‌دار موجود در حافظه را هم برازش می‌دهند. [راهنمای قابلیت‌ها](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.fa.md) مرز دقیق نسخه را ثبت می‌کند.
 
 <h2 dir="rtl" align="right">با یک پرسش طول عمر شروع کنید</h2>
 
@@ -96,6 +96,8 @@ assert isinstance(fit, ExponentialFitSuccess)
 assert fit.rate == 0.5
 assert fit.inference == "not_provided"
 assert fit.censoring_assumption == "independent_right_censoring"
+low, high = fit.uncertainty().confidence_intervals()["rate"]
+assert low < fit.rate < high
 print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}")
 ```
 
@@ -160,19 +162,22 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">مدل‌ها و ابزارهای در دسترس</h2>
 
-### برازش داده‌های طول عمر
+### برازش
 
 | مدل | رفتار قابل توصیف |
 | --- | --- |
 | نمایی | نرخ خرابی ثابت |
 | وایبول | نرخ خرابی کاهشی، ثابت یا افزایشی، بسته به پارامتر شکل |
 | لگ‌نرمال | زمان‌های مثبت که لگاریتم آن‌ها با توزیع نرمال مدل می‌شود |
+| گاما | زمان‌های مثبت با شکلی انعطاف‌پذیر و چوله به راست |
+| نرمال | اندازه‌گیری‌های حقیقی پیرامون یک میانگین |
+| گامبل راست | بیشینه‌ها و دیگر اندازه‌گیری‌های حدیِ حقیقی |
 
-برازش‌ها با پارامتر مکان ثابت صفر، برای مشاهدات دقیق و سانسورشدهٔ مستقل از راست پشتیبانی می‌شوند. وایبول و لگ‌نرمال از APIهای مدل استفاده می‌کنند؛ تابع CSV مثال فقط نمایی است.
+خانواده‌های طول عمر (نمایی، وایبول، لگ‌نرمال و گاما) پارامتر مکان را ثابت صفر نگه می‌دارند و زمان‌های دقیق و سانسورشدهٔ مستقل از راست را می‌پذیرند؛ نرمال و گامبل راست مقدارهای حقیقیِ دقیق و سانسورشده از راست را می‌پذیرند. <bdi dir="ltr">fit(family, observations)</bdi> به خانوادهٔ موردنظر ارجاع می‌دهد و هر خانواده تابع مخصوص خود را هم دارد، مانند <bdi dir="ltr">fit_weibull</bdi>. مثال CSV بالا فقط نمایی را برازش می‌دهد. هر برازش موفق متد <bdi dir="ltr">uncertainty()</bdi> دارد که خطاهای معیار، فاصله‌های اطمینان و کمیت‌های مشتق‌شده مانند میانگین، عمر B یا احتمال بقا را برمی‌گرداند.
 
 ### محاسبات توزیع احتمال
 
-ابزارهای اسکالر نرمال، گاما، وایبول، لگ‌نرمال و گامبل راست، لگاریتم چگالی، تابع توزیع تجمعی، تابع بقا، صدک و نمونه‌گیری با مولد تصادفی تحت کنترل کاربر را فراهم می‌کنند. وجود ابزار محاسباتی یک توزیع به معنی پشتیبانی از برازش آن نیست. [راهنمای توزیع‌ها و درست‌نمایی](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/families-log-density-likelihood.md) را ببینید.
+<bdi dir="ltr">logpdf</bdi>، <bdi dir="ltr">cdf</bdi>، <bdi dir="ltr">sf</bdi>، <bdi dir="ltr">ppf</bdi> و <bdi dir="ltr">sample</bdi> خانواده را اول و پارامترها را به‌صورت کلیدواژه می‌گیرند. هر شش خانواده را پوشش می‌دهند و ورودی اسکالر و آرایهٔ numpy می‌پذیرند؛ <bdi dir="ltr">lifetimes_from_arrays</bdi> و <bdi dir="ltr">values_from_arrays</bdi> از ستون‌ها مشاهده می‌سازند. [راهنمای توزیع‌ها و درست‌نمایی](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/families-log-density-likelihood.md) را ببینید و برای ارتقا از نسخهٔ ۱٫۰ [راهنمای مهاجرت](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/migration-2.0.md) را بخوانید.
 
 ### ارزیابی مدل
 <details>
@@ -187,7 +192,7 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">وقتی داده بیشتر می‌شود</h2>
 
-ابزارهای درست‌نمایی روی بخش‌های داده محاسبه می‌کنند؛ برنامهٔ شما تقسیم و تحویل بخش‌ها را مدیریت می‌کند.
+ابزارهای درست‌نمایی روی بخش‌های داده محاسبه می‌کنند، با سانسور راست یا بدون آن (<bdi dir="ltr">reduce_lifetime_log_likelihood_chunks</bdi> و <bdi dir="ltr">reduce_value_log_likelihood_chunks</bdi>)؛ برنامهٔ شما تقسیم و تحویل بخش‌ها را مدیریت می‌کند.
 
 <bdi dir="ltr">SQLiteCheckpointStore</bdi> وضعیت محلی را برای کاهش‌های نمایی سازگار، از جمله مسیر CSV، نگه می‌دارد. نسخهٔ منبع باید ثابت بماند. [مثال ذخیرهٔ وضعیت و ادامهٔ اجرا](https://github.com/alisadeghiaghili/veridist/blob/main/python/examples/checkpoint_resume.py) را دنبال کنید.
 
@@ -217,7 +222,7 @@ rate=0.5; events=1; censored=1
 
 - **انتقال تدریجی مجموعهٔ ۲۵ توزیع قدیمی:** بررسی و انتقال ۲۰ توزیع پیوسته و ۵ توزیع گسسته، همراه با تست‌های عددی، مستندات و دامنهٔ پشتیبانی مشخص.
 - **برازش و مقایسهٔ چندمدلی:** ارائهٔ نامزدهای رتبه‌بندی‌شده با پارامترها، معیارهای مقایسه و وضعیت کفایت؛ با امکان اعلام اینکه هیچ گزینه‌ای مناسب نیست.
-- **گسترش ارزیابی آماری:** توسعهٔ سنجش برازش و عدم‌قطعیت برای خانواده‌ها و شرایط داده‌ای بیشتر.
+- **گسترش ارزیابی آماری:** توسعهٔ سنجش برازش برای خانواده‌ها و شرایط داده‌ای بیشتر.
 - **پردازش کارآمدتر داده‌های بزرگ:** ارزیابی و بهینه‌سازی زمان اجرا و حافظه با آزمایش‌های قابل‌بازتولید، همراه با توسعهٔ پردازش مرحله‌ای.
 - **آموزش‌های کاربردی بیشتر:** vignetteهایی از شناخت مسئله و داده تا تفسیر نتیجه؛ سپس نمونه‌های ویژگی‌های توزیعی برای تشخیص ناهنجاری، پایش drift و یادگیری ماشین.
 
@@ -230,6 +235,7 @@ rate=0.5; events=1; censored=1
 | راهنمای مستقل بسته | [README بسته](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.fa.md) |
 | یادگیری مثال سانسورشدگی | [آموزش نمایی](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/exponential-right-censoring.md) |
 | بررسی ورودی و خروجی | [مرجع API](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.fa.md) |
+| ارتقا از نسخهٔ ۱٫۰ | [راهنمای مهاجرت](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/migration-2.0.md) |
 | گزارش مشکل قابل‌بازتولید | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
 | مشارکت | [راهنمای مشارکت](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) و [قراردادهای مهندسی](https://github.com/alisadeghiaghili/veridist/blob/main/docs/conventions.md) |
 | گزارش آسیب‌پذیری | [سیاست امنیت](https://github.com/alisadeghiaghili/veridist/blob/main/SECURITY.md) |
