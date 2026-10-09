@@ -9,6 +9,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/alisadeghiaghili/veridist/v1-ci.yml?branch=main&label=CI)](https://github.com/alisadeghiaghili/veridist/actions/workflows/v1-ci.yml)
 [![Coverage ≥95%](https://img.shields.io/badge/coverage%20requirement-%E2%89%A595%25-blue)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.fa.md)
 [![License](https://img.shields.io/badge/license-BUSL--1.1-purple)](https://github.com/alisadeghiaghili/veridist/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23269843.svg)](https://doi.org/10.5281/zenodo.23269843)
 
 **از داده‌های طول عمر، به شناختی روشن‌تر از رفتار و قابلیت اطمینان برسید.**
 
@@ -243,7 +244,7 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">استناد به <bdi dir="ltr">Veridist</bdi></h2>
 
-به همان نسخه‌ای استناد کنید که نتیجه با آن تولید شده است. [راهنمای استناد](docs/citing-veridist.md) قالب‌های IEEE، APA 7، Chicago، MLA 9، Harvard، Vancouver، BibTeX، RIS، EndNote XML و CSL-JSON را ارائه می‌کند. [CITATION.cff](CITATION.cff) مرجع ماشین‌خوان است.
+به همان نسخه‌ای استناد کنید که نتیجه با آن تولید شده است. [راهنمای استناد](docs/citing-veridist.md) قالب‌های IEEE، APA 7، Chicago، MLA 9، Harvard، Vancouver، BibTeX، RIS، EndNote XML و CSL-JSON را ارائه می‌کند. [CITATION.cff](CITATION.cff) مرجع ماشین‌خوان است. هر نسخه در Zenodo بایگانی می‌شود. شناسهٔ <bdi dir="ltr">DOI</bdi> به‌صورت [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843) همیشه به آخرین نسخه می‌رسد و <bdi dir="ltr">Veridist 2.1.0</bdi> شناسهٔ <bdi dir="ltr">DOI</bdi> خودش را دارد: [10.5281/zenodo.23269844](https://doi.org/10.5281/zenodo.23269844).
 
 <h2 dir="rtl" align="right">نویسنده و پروفایل‌های پژوهشی</h2>
 

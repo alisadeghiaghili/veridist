@@ -17,6 +17,7 @@ import yaml
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 _VERSION_LINE = re.compile(r'^\{% set version = "([^"]+)" %\}$', re.MULTILINE)
 _RECIPE_LICENSE = re.compile(r"^\s*license:\s*(\S+)\s*$", re.MULTILINE)
+_ZENODO_DOI = re.compile(r"10\.5281/zenodo\.\d+")
 
 
 def _date(value: object) -> str | None:
@@ -55,6 +56,25 @@ def _module_version(source: str) -> str | None:
             ):
                 return value.value
     return None
+
+
+def _doi_errors(citation: dict[object, object]) -> list[str]:
+    """Return violations of the Zenodo DOI rule: every declared DOI is a Zenodo DOI."""
+
+    doi_values: list[object] = []
+    if "doi" in citation:
+        doi_values.append(citation["doi"])
+    identifiers = citation.get("identifiers", [])
+    if not isinstance(identifiers, list):
+        return ["CITATION.cff identifiers must be a list"]
+    for identifier in identifiers:
+        if isinstance(identifier, dict) and identifier.get("type") == "doi":
+            doi_values.append(identifier.get("value"))
+    return [
+        f"CITATION.cff DOI is not a Zenodo DOI: {value!r}"
+        for value in doi_values
+        if not isinstance(value, str) or _ZENODO_DOI.fullmatch(value) is None
+    ]
 
 
 def validate(repository: Path, sdist: Path | None = None) -> list[str]:
@@ -99,6 +119,7 @@ def validate(repository: Path, sdist: Path | None = None) -> list[str]:
         errors.append("CITATION.cff lacks authors")
     if citation.get("repository-code") != "https://github.com/alisadeghiaghili/veridist":
         errors.append("CITATION.cff repository is not canonical")
+    errors.extend(_doi_errors(citation))
     if not isinstance(zenodo, dict):
         return [*errors, ".zenodo.json root must be an object"]
     if zenodo.get("version") != version:

@@ -3,6 +3,7 @@ message: "If you use Veridist, please cite its released version and retained evi
 title: "Veridist"
 version: 2.1.0
 date-released: 2026-10-09
+doi: 10.5281/zenodo.23269843
 type: software
 abstract: "Evidence-first Python distribution fitting with reproducible inference and explicit statistical contracts."
 keywords:
@@ -17,3 +18,10 @@ authors:
 repository-code: "https://github.com/alisadeghiaghili/veridist"
 url: "https://github.com/alisadeghiaghili/veridist/releases/tag/v2.1.0"
 license: BUSL-1.1
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.23269843
+    description: "Concept DOI that always resolves to the latest Veridist release (all versions)."
+  - type: doi
+    value: 10.5281/zenodo.23269844
+    description: "Version DOI for Veridist 2.1.0 (this version)."
