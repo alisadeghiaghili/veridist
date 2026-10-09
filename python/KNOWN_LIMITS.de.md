@@ -6,13 +6,12 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
 
 - Teams für Zuverlässigkeit, Gesundheit, Kredit, Versicherung, digitale Produkte und Betrieb können ein klar definiertes Time-to-Event-Ergebnis modellieren, wenn die dokumentierten Annahmen gelten. Die aktuellen Modelle passen dieses Ergebnis nicht an Kunden-, Patienten-, Maschinen- oder Umweltmerkmale an.
 - Betrugs- und Cybersicherheitsteams können unterstützte skalare Verteilungsberechnungen verwenden, um unter einem bereits festgelegten Referenzmodell ein Signal zu erzeugen. Veridist trainiert keinen Klassifikator, wählt keine Alarmschwelle, verarbeitet keine Feedback-Labels und stellt keinen Adapter für produktive Ereignisströme bereit.
-- Teams aus Finanzen, Versicherung, Fertigung und Lieferketten sollten nicht annehmen, dass jede registrierte Familie eine Fit-API hat. Skalare Berechnungen benötigen eine Familie und Parameter, die separat begründet wurden, sofern kein dokumentierter Fit-Pfad existiert.
+- Teams aus Finanzen, Versicherung, Fertigung und Lieferketten können jede der sechs registrierten Familien an ihre Beobachtungen anpassen. Eine Familie muss weiterhin separat begründet werden: Anpassung und Unsicherheitsangabe ordnen keine Familien, und Anpassungsgütetests sowie Modellauswahl gibt es nur für den Exponentialfall (`INFERENCE-EXP`).
 - In jedem Bereich benötigt die Modellausgabe weiterhin fachliche Validierung, angemessene Stichproben, eine Analyse der Entscheidungskosten und alle erforderlichen rechtlichen, klinischen, sicherheitsbezogenen oder regulatorischen Prüfungen.
 
 - `FIT-CSV-EXP`: Der strikte CSV-Pfad passt nur ein Exponentialmodell mit
   festem Ort und Rate für exakte und unabhängig rechtszensierte Lebensdauern
-  an. Weibull-Minimum und Lognormal sind über typisierte Lebensdauerobjekte,
-  nicht über eine allgemeine Datei-API, verfügbar. Analytische Gewichte,
+  an. Die übrigen Familien (Weibull-Minimum, Lognormal, Gamma, Normal und Rechts-Gumbel) werden über typisierte Beobachtungen im Speicher mit `fit` und den Funktionen je Familie angepasst, nicht über eine Datei-API; `frequency_weights` werden dort unterstützt. Analytische Gewichte,
   Kovariaten, Trunkierung, Links- und Intervallzensierung sowie freie
   Ortsparameter bleiben nicht unterstützt.
 - `CSV-STRICT`: Der mitgelieferte Dateiadapter akzeptiert nur UTF-8-CSV mit
@@ -32,7 +31,7 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
   skalaren Kerne Element für Element auf: Die Ergebnisse sind mit dem
   skalaren Pfad identisch, aber bei großen Arrays langsam, weil numpy weder
   `erfc` noch die unvollständige Gammafunktion kennt und Veridist scipy nicht
-  als Laufzeitabhängigkeit hat. Inferenz für jede registrierte Familie fehlt.
+  als Laufzeitabhängigkeit hat. Anpassungsgütetests und Modellauswahl sind nicht für jede registrierte Familie verfügbar (siehe `INFERENCE-EXP`).
 - `STREAM-SOURCE`: `IterableDataSource` adaptiert Chunk-Iterables des Aufrufers.
   Das Paket enthält keinen Parquet-, Arrow-, Dataframe-, Datenbank- oder
   Netzwerkadapter. Dauerhafte Fortsetzung ist auf den strikten Lebensdauer-CSV-
@@ -73,6 +72,18 @@ Dieses Dokument definiert die Release-Grenze 1.0 für Paketversion `1.0.1`.
   außerhalb dieses Gitters wird nichts behauptet. Ein Fit behält seine
   beobachteten Werte (der Exponential-Fit nur seine suffizienten Statistiken),
   damit Intervalle bei Bedarf berechnet werden können.
+- `LL-CENSORED`: `reduce_lifetime_log_likelihood_chunks` und
+  `reduce_value_log_likelihood_chunks` unterstützen nur unabhängige
+  Rechtszensierung. Die Log-Survival-Terme zensierter Beobachtungen sind in
+  ihren Tail-Entwicklungen auf etwa `1e-12` relativ genau und werden von der
+  Log-Dichte-Orakelhülle nicht abgedeckt. Ein Term, den binary64 nicht
+  darstellen kann, oder ein so großer Gamma-Formparameter (etwa `1e5` und mehr),
+  dass die Entwicklung der unvollständigen Gammafunktion nicht konvergiert, ist
+  ein typisierter Fehlschlag und kein geratener Wert.
+- `DEPRECATED-FORMS`: Die Zuordnungsform von `cdf`, `sf` und `ppf`, die Form
+  `sample(family, size, parameters, rng)` und reine `bytes`-Chunks für
+  `fit_exponential_checkpointed_chunks` funktionieren weiterhin, lösen
+  `DeprecationWarning` aus und werden in 3.0 entfernt.
 - `MEMORY-BOUND`: Die Liefergrenze umfasst Nutzdaten in der Warteschlange und
   aktive Verbraucher-Leases bis zur ausdrücklichen Freigabe. Sie ist eine
   logische Grenze für gehaltene Nutzdaten, keine portable RSS-Obergrenze.

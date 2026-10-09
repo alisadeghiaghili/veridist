@@ -1,7 +1,9 @@
+
 msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
+"POT-Creation-Date: 2026-10-09 01:11+0330\n"
 "PO-Revision-Date: 2026-09-01 21:55+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: fa\n"
@@ -10,147 +12,481 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
 
+#: 67f311c66d7543e5b26a52c4f99a6af9
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:2
 msgid "Evaluated families, scalar log density, and streaming log likelihood"
-msgstr "خانواده‌های ارزیابی‌شده، چگالی لگاریتمی اسکالر و درست‌نمایی لگاریتمی جریانی"
+msgstr ""
+"خانواده‌های ارزیابی‌شده، چگالی لگاریتمی اسکالر و درست‌نمایی لگاریتمی "
+"جریانی"
 
-msgid "Closed five-family registry"
-msgstr "رجیستری بستهٔ پنج‌خانواده‌ای"
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:4
+#: af6b852a60c74fd2808e4000bf764b63
+msgid "Closed six-family registry"
+msgstr "رجیستری بستهٔ شش‌خانواده‌ای"
 
-msgid "`FAMILY_REGISTRY` is immutable metadata for exactly five evaluated families: `normal`, `gamma`, `weibull_min`, `lognormal`, and `gumbel_right`. It fixes canonical names, aliases, parameter names, validation roles, and the currently available scalar `logpdf` operation. It is neither a generic distribution registry nor a fitting, inference, goodness-of-fit, or ranking interface."
-msgstr "`FAMILY_REGISTRY` فراداده‌ای تغییرناپذیر برای دقیقاً پنج خانوادهٔ ارزیابی‌شدهٔ `normal`، `gamma`، `weibull_min`، `lognormal` و `gumbel_right` است. این رجیستری نام‌های مرجع، نام‌های مستعار، نام پارامترها، نقش‌های اعتبارسنجی و عملیات اسکالر `logpdf` که هم‌اکنون موجود است را تثبیت می‌کند. این نه رجیستری عمومی توزیع‌ها است و نه رابط برازش، استنباط، نیکویی برازش یا رتبه‌بندی."
+#: 8fed041c0c784367a58dec2cca7d2de6
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:6
+msgid ""
+"`FAMILY_REGISTRY` is immutable metadata for exactly six evaluated "
+"families: `exponential`, `normal`, `gamma`, `weibull_min`, `lognormal`, "
+"and `gumbel_right`. It fixes canonical names, aliases, parameter names, "
+"validation roles, the support, and the operations each family offers: log"
+" density, CDF, survival function, quantile, sampling, and fit. It is not "
+"a generic distribution registry, and it does not rank distributions."
+msgstr ""
+"<code dir=\"ltr\">FAMILY_REGISTRY</code> فرادادهٔ تغییرناپذیر دقیقاً شش "
+"خانوادهٔ ارزیابی‌شده است: <code dir=\"ltr\">exponential</code>، <code "
+"dir=\"ltr\">normal</code>، <code dir=\"ltr\">gamma</code>، <code "
+"dir=\"ltr\">weibull_min</code>، <code dir=\"ltr\">lognormal</code> و "
+"<code dir=\"ltr\">gumbel_right</code>. نام‌های استاندارد، نام‌های مستعار،"
+" نام پارامترها، نقش‌های اعتبارسنجی، تکیه‌گاه و عملیاتی را که هر خانواده "
+"ارائه می‌کند ثابت می‌کند: چگالی لگاریتمی، CDF، تابع بقا، چندک، نمونه‌گیری"
+" و برازش. این رجیستری یک رجیستری عمومی توزیع‌ها نیست و توزیع‌ها را "
+"رتبه‌بندی نمی‌کند."
 
-msgid "For the contract-level API surface, see <a class=\"veridist-api-url\" href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."
-msgstr "برای سطح API قراردادی، <a class=\"veridist-api-url\" href=\"api.html#veridist-api\">veridist.statistics.log_density</a> را ببینید."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:13
+#: d6978b5a7fea472690a8cafd3990bd05
+msgid ""
+"For the contract-level API surface, see <a class=\"veridist-api-url\" "
+"href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."
+msgstr ""
+"برای سطح API قراردادی، <a class=\"veridist-api-url\" href=\"api.html"
+"#veridist-api\">veridist.statistics.log_density</a> را ببینید."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: b8fd3cac86734c5ca4f4c2d2a6f041bf
 msgid "Family"
 msgstr "خانواده"
 
+#: 1f89062edd82405fb37745be682d197f
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Canonical parameters"
 msgstr "پارامترهای مرجع"
 
+#: 42f2e98161a541be83ce73846577836d
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid "`exponential`"
+msgstr "`exponential`"
+
+#: 32ad17d5a5314f58a674e899257cbf8b
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid "`rate > 0`"
+msgstr "`rate > 0`"
+
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: c8400c7bd1ab4238a6dbcc3ecc893186
 msgid "`normal`"
 msgstr "`normal`"
 
+#: 09ada5f0b1144c6eacbad455b95cf1e0
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "`mu`, `sigma > 0`"
 msgstr "`mu`، `sigma > 0`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: f12814f81afd454b93230e36279e1d63
 msgid "`gamma`"
 msgstr "`gamma`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: b5d1c3944a4c4dc9ae3dc3a57df00684 c4b5a3b51eb64aa5bce7a54adda94d44
 msgid "`shape > 0`, `scale > 0`"
 msgstr "`shape > 0`، `scale > 0`"
 
+#: 6209cd2e65334c79b8a850e31e14dd8d
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "`weibull_min`"
 msgstr "`weibull_min`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: bda91e82dd8c488ba2cdf45a1f975dbd
 msgid "`lognormal`"
 msgstr "`lognormal`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: a8f26a6995684b638d55ed8ee4486a5f
 msgid "`mu_log`, `sigma_log > 0`"
 msgstr "`mu_log`، `sigma_log > 0`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: fb6fdf0af20d41479c049a873afd22a1
 msgid "`gumbel_right`"
 msgstr "`gumbel_right`"
 
+#: 81d268a0a17b45259205c25f2f204205
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "`location`, `scale > 0`"
 msgstr "`location`، `scale > 0`"
 
-msgid "Scalar log-density evaluation"
-msgstr "ارزیابی چگالی لگاریتمی اسکالر"
-
-msgid "`evaluate_log_density` evaluates one built-in finite scalar observation after canonical parameter validation. A successful result contains a finite binary64 log-density. Data-domain failures are closed values: `nonfinite_observation`, `support_violation`, `nonfinite_log_density`, or `numerical_overflow`. Programmer misuse of a family identity or parameter set raises rather than being converted into a data result. This is not an array API, a CDF/PPF API, censoring likelihood, fit, inference, goodness-of-fit test, or model ranking."
-msgstr "`evaluate_log_density` پس از اعتبارسنجی پارامترهای مرجع، یک مشاهدهٔ اسکالر متناهیِ داخلی را ارزیابی می‌کند. نتیجهٔ موفق شامل چگالی لگاریتمی متناهی binary64 است. شکست‌های حوزهٔ داده، مقادیر بستهٔ `nonfinite_observation`، `support_violation`، `nonfinite_log_density` یا `numerical_overflow` هستند. استفادهٔ نادرست برنامه‌نویس از هویت خانواده یا مجموعهٔ پارامترها به‌جای تبدیل شدن به نتیجهٔ داده، استثنا ایجاد می‌کند. این API آرایه، APIِ CDF/PPF، درست‌نمایی با سانسور، برازش، استنباط، آزمون نیکویی برازش یا رتبه‌بندی مدل نیست."
-
-msgid "Exact-state streaming log likelihood"
-msgstr "درست‌نمایی لگاریتمی جریانی با حالت دقیق"
-
-msgid "`reduce_log_likelihood_chunks` consumes an iterable of ragged observation chunks once. It evaluates each scalar through the same closed evaluator and accumulates each successful binary64 result as an exact integer number of subnormal units. The final sum is rounded to binary64 once, at finalization; it is not a chunk-wise floating-point sum."
-msgstr "`reduce_log_likelihood_chunks` یک iterable از قطعه‌های نامنظم مشاهده را فقط یک‌بار مصرف می‌کند. هر اسکالر را با همان ارزیاب بسته محاسبه می‌کند و هر نتیجهٔ موفق binary64 را به صورت تعداد صحیحِ دقیقِ واحدهای زیرنرمال انباشته می‌سازد. مجموع نهایی فقط یک‌بار، هنگام نهایی‌سازی، به binary64 گرد می‌شود؛ این جمع ممیزشناورِ قطعه‌به‌قطعه نیست."
-
-msgid "\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log f(x_i)\\right)"
-msgstr "\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log f(x_i)\\right)"
-
-msgid "The immutable `LogLikelihoodState` supports compatible exact-state merging. One state has an explicit unsigned-64 observation limit (`2^64 - 1`); its maximum absolute exact integer total has a documented 2162-bit bound. A scalar failure stops reduction and reports only the number of successful observations before it. An empty chunk sequence succeeds with count zero and total `0.0`."
-msgstr "`LogLikelihoodState` تغییرناپذیر از ادغام سازگارِ حالت‌های دقیق پشتیبانی می‌کند. یک حالت دارای حد صریحِ مشاهدهٔ بدون‌علامت ۶۴بیتی (`2^64 - 1`) است؛ بیشینهٔ قدر مطلقِ مجموع صحیحِ دقیق آن، کران مستند ۲۱۶۲بیتی دارد. شکست اسکالر، کاهش را متوقف می‌کند و فقط شمار مشاهده‌های موفق پیش از آن را گزارش می‌دهد. دنبالهٔ قطعهٔ خالی با شمار صفر و مجموع `0.0` موفق است."
-
-msgid "Evidence and limits"
-msgstr "شواهد و محدودیت‌ها"
-
-msgid "`LLR-06` preserves a historical generated-stream snapshot for normal-zero scalar reduction at 10k/100k/1m observations and three chunk sizes. Its schema-v2 artifact lacks candidate binding and the public source-route fact, so it cannot support a current candidate claim. A current schema-v3 run must use the public `IterableDataSource` single-pass route, bind the reviewed candidate SHA, record one outer acquisition and every yielded observation, and agree bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. Elapsed time and `tracemalloc` values remain descriptive only."
-msgstr "`LLR-06` یک snapshot تاریخی از جریانِ تولیدشده برای کاهش اسکالرِ نرمال با میانگین صفر در 10k/100k/1m مشاهده و سه اندازهٔ قطعه نگه می‌دارد. artifact با schema-v2، binding کاندید و fact مسیر منبع عمومی ندارد؛ پس نمی‌تواند ادعای کاندید فعلی را پشتیبانی کند. اجرای فعلی schema-v3 باید مسیر single-pass عمومی `IterableDataSource` را استفاده کند، SHA کاندید بررسی‌شده را bind کند، یک acquisition بیرونی و همهٔ مشاهده‌های yieldشده را ثبت کند و با oracle مستقل واحدهای دقیق و کران الگوریتمی ۲۱۶۲بیتی توافق بیتی داشته باشد. زمان سپری‌شده و مقادیر `tracemalloc` فقط توصیفی‌اند."
-
-msgid "This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."
-msgstr "دامنهٔ این شواهد به جریان اسکالر نرمالِ آزموده‌شده و کاهندهٔ دقیق محدود است. این شواهد برازش، استنباط، نیکویی برازش، رتبه‌بندی، آرایه‌ها، سانسور، پردازش عمومی برون‌هسته‌ای، گذردهی، کران حافظهٔ فرایند/RSS، آداپتور دادهٔ دیگر یا کارایی میان‌سکویی را اثبات نمی‌کنند."
-
+#: 041593e58e934d4fa17bf00db3239061
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:25
 msgid "Where these calculations can help"
 msgstr "این محاسبات کجا کاربرد دارند؟"
 
-msgid "These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters and they do not turn a low-density value into a business decision."
-msgstr "این ابزارها به یک پرسش محدود پاسخ می‌دهند: یک مقدار یا مجموعه‌ای از مقادیر چقدر با یک خانوادهٔ توزیع و پارامترهای مشخص سازگار است؟ این ابزارها پارامترها را برآورد نمی‌کنند و یک مقدار با چگالی کم را مستقیماً به تصمیم کسب‌وکار تبدیل نمی‌کنند."
+#: 74652838286f424a960cdb9387e46be2
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:27
+msgid ""
+"These tools answer a narrow question: how compatible is an individual "
+"value, or a collection of values, with a specified family and parameter "
+"set? They do not estimate those parameters (the fits do) and they do not "
+"turn a low-density value into a business decision."
+msgstr ""
+"این ابزارها به یک پرسش محدود پاسخ می‌دهند: یک مقدار منفرد یا مجموعه‌ای از"
+" مقدارها تا چه اندازه با یک خانواده و مجموعهٔ پارامتر مشخص سازگار است؟ "
+"آن‌ها این پارامترها را تخمین نمی‌زنند (برازش‌ها این کار را می‌کنند) و "
+"مقدار با چگالی پایین را به تصمیم کسب‌وکاری تبدیل نمی‌کنند."
 
+#: 0644c2f425ca4fdea6dda919481c4e37
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Application area"
 msgstr "حوزهٔ کاربرد"
 
+#: 4f4c2a8cdd4a4bfc8e94090a4816b2e2
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Example value"
 msgstr "نمونهٔ مقدار"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: b1738e3020494d37bcfa2e51e6418260
 msgid "Defensible use of this API"
 msgstr "استفادهٔ قابل‌دفاع از این API"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: d59c8583be6a4a3e9560c91b904f4710
 msgid "Finance and insurance example"
 msgstr "مثال مالی و بیمه"
 
+#: 62f54e81911e483cb00145086a4a5e9a
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A return, loss amount, or claim size"
 msgstr "بازده، مبلغ زیان یا اندازهٔ خسارت"
 
-msgid "Evaluate log density under an already justified reference model or combine log likelihood across chunks."
-msgstr "چگالی لگاریتمی را زیر یک مدل مرجع ازپیش‌توجیه‌شده محاسبه کنید یا درست‌نمایی لگاریتمی چند بخش داده را با هم ترکیب کنید."
+#: 68689f3fcb9f412fb94476d6299a992f
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid ""
+"Evaluate log density under an already justified reference model or "
+"combine log likelihood across chunks."
+msgstr ""
+"چگالی لگاریتمی را زیر یک مدل مرجع ازپیش‌توجیه‌شده محاسبه کنید یا "
+"درست‌نمایی لگاریتمی چند بخش داده را با هم ترکیب کنید."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: c3cc558d38c84cf29c992e39ce2d14b3
 msgid "Fraud and cybersecurity example"
 msgstr "مثال کشف تقلب و امنیت سایبری"
 
+#: 6de85fe84e974367bff5bdeca6058f5e
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A transaction amount, time gap, or login latency"
 msgstr "مبلغ تراکنش، فاصلهٔ زمانی یا زمان پاسخ ورود"
 
-msgid "Produce one anomaly signal under a reference model; low density is not itself a probability of fraud."
-msgstr "زیر یک مدل مرجع، یک نشانهٔ ناهنجاری بسازید؛ چگالی کم به‌خودی‌خود احتمال تقلب نیست."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: ec3395e2d1f244339a955046d6f79ca0
+msgid ""
+"Produce one anomaly signal under a reference model; low density is not "
+"itself a probability of fraud."
+msgstr ""
+"زیر یک مدل مرجع، یک نشانهٔ ناهنجاری بسازید؛ چگالی کم به‌خودی‌خود احتمال "
+"تقلب نیست."
 
+#: 6f8b82cfc2984a599b443688aed489e0
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Manufacturing-quality example"
 msgstr "مثال کیفیت تولید"
 
+#: 95f505386eb748f8a6e73fbd726da871
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A dimension, load, or cycle measurement"
 msgstr "اندازه، بار یا اندازه‌گیری چرخه"
 
-msgid "Compare measurements with a validated process model and identify values that need review."
-msgstr "اندازه‌گیری‌ها را با یک مدل فرایند اعتبارسنجی‌شده مقایسه کنید و مقادیری را که نیاز به بررسی دارند مشخص کنید."
+#: 5456123c524b49bf8aef1786dcb2db8a
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid ""
+"Compare measurements with a validated process model and identify values "
+"that need review."
+msgstr ""
+"اندازه‌گیری‌ها را با یک مدل فرایند اعتبارسنجی‌شده مقایسه کنید و مقادیری "
+"را که نیاز به بررسی دارند مشخص کنید."
 
+#: 1cab6ed04cc349458a429975cee92e27
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Operations and supply-chain example"
 msgstr "مثال عملیات و زنجیرهٔ تأمین"
 
+#: 1d2742caaf4646cc9d577d784c8869df
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A delivery, repair, waiting, or service duration"
 msgstr "مدت تحویل، تعمیر، انتظار یا خدمت"
 
-msgid "Accumulate likelihood for a specified duration model without keeping every value in one array."
-msgstr "درست‌نمایی یک مدل مدت‌زمان مشخص را بدون نگهداری همهٔ مقادیر در یک آرایه جمع کنید."
+#: 8db7084c3a3d461d8b77c99cc12250e7
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid ""
+"Accumulate likelihood for a specified duration model without keeping "
+"every value in one array."
+msgstr ""
+"درست‌نمایی یک مدل مدت‌زمان مشخص را بدون نگهداری همهٔ مقادیر در یک آرایه "
+"جمع کنید."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: c325be5674e649e78e4b3b46dcf84cf0
 msgid "Environmental-risk example"
 msgstr "مثال تحلیل محیط‌زیست و ریسک"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: f18630f4c90041aab28cb82a9488bb4e
 msgid "A high load, loss, or extreme measurement"
 msgstr "بار زیاد، زیان یا اندازه‌گیری حدی"
 
-msgid "Evaluate the right-Gumbel log density when that family and its parameters have been justified independently."
-msgstr "وقتی خانوادهٔ گامبل راست و پارامترهایش مستقل از این محاسبه توجیه شده‌اند، چگالی لگاریتمی آن را محاسبه کنید."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: cdf800dc275c4614a77dc50c4c588c1f
+msgid ""
+"Evaluate the right-Gumbel log density when that family and its parameters"
+" have been justified independently."
+msgstr ""
+"وقتی خانوادهٔ گامبل راست و پارامترهایش مستقل از این محاسبه توجیه شده‌اند،"
+" چگالی لگاریتمی آن را محاسبه کنید."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: eab4a1e804294ea4898b034404bbc53e
 msgid "Machine-learning example"
 msgstr "مثال یادگیری ماشین"
 
+#: 63f5428dfd244b1498aec03369702079
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A distribution-based feature"
 msgstr "ویژگی مبتنی بر توزیع"
 
-msgid "Supply a model feature only when its parameters are estimated without future or test-set information."
-msgstr "فقط زمانی ویژگی را به مدل بدهید که پارامترهای آن بدون استفاده از اطلاعات آینده یا مجموعهٔ آزمون برآورد شده باشند."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: f6a1638cde144545a502c0bad180120a
+msgid ""
+"Supply a model feature only when its parameters are estimated without "
+"future or test-set information."
+msgstr ""
+"فقط زمانی ویژگی را به مدل بدهید که پارامترهای آن بدون استفاده از اطلاعات "
+"آینده یا مجموعهٔ آزمون برآورد شده باشند."
 
-msgid "Different fields have different sampling rules, costs, thresholds, and regulatory requirements. Validate the reference model and the downstream decision process in the field where they will be used."
-msgstr "حوزه‌های مختلف قواعد نمونه‌گیری، هزینه‌ها، آستانه‌ها و الزامات قانونی متفاوتی دارند. مدل مرجع و فرایند تصمیم‌گیری بعدی را در همان حوزه‌ای که استفاده می‌شوند اعتبارسنجی کنید."
+#: 75ad959c949745a3ba1deaa6db32e139
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:38
+msgid ""
+"Different fields have different sampling rules, costs, thresholds, and "
+"regulatory requirements. Validate the reference model and the downstream "
+"decision process in the field where they will be used."
+msgstr ""
+"حوزه‌های مختلف قواعد نمونه‌گیری، هزینه‌ها، آستانه‌ها و الزامات قانونی "
+"متفاوتی دارند. مدل مرجع و فرایند تصمیم‌گیری بعدی را در همان حوزه‌ای که "
+"استفاده می‌شوند اعتبارسنجی کنید."
+
+#: 621f0a79cd1d485595923e9e6f0737dc
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:40
+msgid "Scalar log-density evaluation"
+msgstr "ارزیابی چگالی لگاریتمی اسکالر"
+
+#: 4cf9a5e5bb4f4982b300cc2cace8790a
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:42
+msgid ""
+"`evaluate_log_density` evaluates one built-in finite scalar observation "
+"after canonical parameter validation. A successful result contains a "
+"finite binary64 log-density. Data-domain failures are closed values: "
+"`nonfinite_observation`, `support_violation`, `nonfinite_log_density`, or"
+" `numerical_overflow`. Programmer misuse of a family identity or "
+"parameter set raises rather than being converted into a data result. It "
+"evaluates one scalar and has no censoring; arrays, the CDF, the survival "
+"function, quantiles, and sampling are provided by `logpdf`, `cdf`, `sf`, "
+"`ppf`, and `sample`, and fitting by `fit`, as described in the API guide."
+" It is not a goodness-of-fit test or a model ranking."
+msgstr ""
+"<code dir=\"ltr\">evaluate_log_density</code> یک مشاهدهٔ اسکالر متناهی و "
+"درونی را پس از اعتبارسنجی پارامترهای استاندارد ارزیابی می‌کند. نتیجهٔ "
+"موفق شامل یک چگالی لگاریتمی متناهی با دقت binary64 است. شکست‌های دامنهٔ "
+"داده مقدارهای بسته‌اند: <code dir=\"ltr\">nonfinite_observation</code>، "
+"<code dir=\"ltr\">support_violation</code>، <code "
+"dir=\"ltr\">nonfinite_log_density</code> یا <code "
+"dir=\"ltr\">numerical_overflow</code>. استفادهٔ نادرست برنامه‌نویس از "
+"هویت خانواده یا مجموعهٔ پارامتر خطا ایجاد می‌کند و به نتیجهٔ داده‌ای "
+"تبدیل نمی‌شود. این تابع یک اسکالر را ارزیابی می‌کند و سانسور ندارد؛ "
+"آرایه‌ها، CDF، تابع بقا، چندک‌ها و نمونه‌گیری را <code "
+"dir=\"ltr\">logpdf</code>، <code dir=\"ltr\">cdf</code>، <code "
+"dir=\"ltr\">sf</code>، <code dir=\"ltr\">ppf</code> و <code "
+"dir=\"ltr\">sample</code> فراهم می‌کنند و برازش را <code "
+"dir=\"ltr\">fit</code>، همان‌گونه که در راهنمای API آمده است. این تابع "
+"آزمون مناسب‌بودن مدل یا رتبه‌بندی مدل‌ها نیست."
+
+#: 05a9ae7c20bd445388a36a56e443f1ce
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:63
+msgid "Exact-state streaming log likelihood"
+msgstr "درست‌نمایی لگاریتمی جریانی با حالت دقیق"
+
+#: 03df6d50fe4f48148c8898be529e1f7e
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:65
+msgid ""
+"`reduce_log_likelihood_chunks` consumes an iterable of ragged observation"
+" chunks once. It evaluates each scalar through the same closed evaluator "
+"and accumulates each successful binary64 result as an exact integer "
+"number of subnormal units. The final sum is rounded to binary64 once, at "
+"finalization; it is not a chunk-wise floating-point sum."
+msgstr ""
+"`reduce_log_likelihood_chunks` یک iterable از قطعه‌های نامنظم مشاهده را "
+"فقط یک‌بار مصرف می‌کند. هر اسکالر را با همان ارزیاب بسته محاسبه می‌کند و "
+"هر نتیجهٔ موفق binary64 را به صورت تعداد صحیحِ دقیقِ واحدهای زیرنرمال "
+"انباشته می‌سازد. مجموع نهایی فقط یک‌بار، هنگام نهایی‌سازی، به binary64 "
+"گرد می‌شود؛ این جمع ممیزشناورِ قطعه‌به‌قطعه نیست."
+
+#: 5d4fc28e38454832a943fcab36ca8b60
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:71
+msgid ""
+"\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log"
+" f(x_i)\\right)"
+msgstr ""
+"\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log"
+" f(x_i)\\right)"
+
+#: 18af31dbe7524e9c82a7e1dc4a186fbe
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:75
+msgid ""
+"The immutable `LogLikelihoodState` supports compatible exact-state "
+"merging. One state has an explicit unsigned-64 observation limit (`2^64 -"
+" 1`); its maximum absolute exact integer total has a documented 2162-bit "
+"bound. A scalar failure stops reduction and reports only the number of "
+"successful observations before it. An empty chunk sequence succeeds with "
+"count zero and total `0.0`."
+msgstr ""
+"`LogLikelihoodState` تغییرناپذیر از ادغام سازگارِ حالت‌های دقیق پشتیبانی "
+"می‌کند. یک حالت دارای حد صریحِ مشاهدهٔ بدون‌علامت ۶۴بیتی (`2^64 - 1`) "
+"است؛ بیشینهٔ قدر مطلقِ مجموع صحیحِ دقیق آن، کران مستند ۲۱۶۲بیتی دارد. "
+"شکست اسکالر، کاهش را متوقف می‌کند و فقط شمار مشاهده‌های موفق پیش از آن را"
+" گزارش می‌دهد. دنبالهٔ قطعهٔ خالی با شمار صفر و مجموع `0.0` موفق است."
+
+#: 87383abcf0d848748ed7da4af428f2f6
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:96
+msgid ""
+"Right-censored observations have their own reducers, "
+"`reduce_lifetime_log_likelihood_chunks` and "
+"`reduce_value_log_likelihood_chunks`. They add the log survival of each "
+"censored observation to the same exact accumulation, so the total is "
+"again independent of chunking and order."
+msgstr ""
+"مشاهدات سانسورشده از راست کاهنده‌های خودشان را دارند: <code "
+"dir=\"ltr\">reduce_lifetime_log_likelihood_chunks</code> و <code "
+"dir=\"ltr\">reduce_value_log_likelihood_chunks</code>. آن‌ها لگاریتم بقای"
+" هر مشاهدهٔ سانسورشده را به همان انباشت دقیق اضافه می‌کنند؛ بنابراین "
+"مجموع باز هم از بخش‌بندی و ترتیب مستقل است."
+
+#: 767c2ebab926480b8b31ed40d684a645
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:101
+msgid "Evidence and limits"
+msgstr "شواهد و محدودیت‌ها"
+
+#: 319268b905e74d55ab9f466556222dd0
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:103
+msgid ""
+"`LLR-06` preserves a historical generated-stream snapshot for normal-zero"
+" scalar reduction at 10k/100k/1m observations and three chunk sizes. Its "
+"schema-v2 artifact lacks candidate binding and the public source-route "
+"fact, so it cannot support a current candidate claim. A current schema-v3"
+" run must use the public `IterableDataSource` single-pass route, bind the"
+" reviewed candidate SHA, record one outer acquisition and every yielded "
+"observation, and agree bitwise with the independent exact-unit oracle and"
+" 2162-bit algorithmic bound. Elapsed time and `tracemalloc` values remain"
+" descriptive only."
+msgstr ""
+"`LLR-06` یک snapshot تاریخی از جریانِ تولیدشده برای کاهش اسکالرِ نرمال با"
+" میانگین صفر در 10k/100k/1m مشاهده و سه اندازهٔ قطعه نگه می‌دارد. "
+"artifact با schema-v2، binding کاندید و fact مسیر منبع عمومی ندارد؛ پس "
+"نمی‌تواند ادعای کاندید فعلی را پشتیبانی کند. اجرای فعلی schema-v3 باید "
+"مسیر single-pass عمومی `IterableDataSource` را استفاده کند، SHA کاندید "
+"بررسی‌شده را bind کند، یک acquisition بیرونی و همهٔ مشاهده‌های yieldشده "
+"را ثبت کند و با oracle مستقل واحدهای دقیق و کران الگوریتمی ۲۱۶۲بیتی توافق"
+" بیتی داشته باشد. زمان سپری‌شده و مقادیر `tracemalloc` فقط توصیفی‌اند."
+
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:112
+#: fbf78d53a3e2480180891271d8f33db9
+msgid ""
+"This evidence is scoped to the tested scalar normal stream and exact "
+"reducer. It does not establish fitting, inference, goodness-of-fit, "
+"ranking, arrays, censoring, generic out-of-core processing, throughput, "
+"process-memory/RSS bounds, another data adapter, or cross-platform "
+"performance."
+msgstr ""
+"دامنهٔ این شواهد به جریان اسکالر نرمالِ آزموده‌شده و کاهندهٔ دقیق محدود "
+"است. این شواهد برازش، استنباط، نیکویی برازش، رتبه‌بندی، آرایه‌ها، سانسور،"
+" پردازش عمومی برون‌هسته‌ای، گذردهی، کران حافظهٔ فرایند/RSS، آداپتور دادهٔ"
+" دیگر یا کارایی میان‌سکویی را اثبات نمی‌کنند."
+
+#~ msgid "Closed five-family registry"
+#~ msgstr "رجیستری بستهٔ پنج‌خانواده‌ای"
+
+#~ msgid ""
+#~ "`FAMILY_REGISTRY` is immutable metadata for"
+#~ " exactly five evaluated families: `normal`,"
+#~ " `gamma`, `weibull_min`, `lognormal`, and "
+#~ "`gumbel_right`. It fixes canonical names, "
+#~ "aliases, parameter names, validation roles,"
+#~ " and the currently available scalar "
+#~ "`logpdf` operation. It is neither a "
+#~ "generic distribution registry nor a "
+#~ "fitting, inference, goodness-of-fit, or"
+#~ " ranking interface."
+#~ msgstr ""
+#~ "`FAMILY_REGISTRY` فراداده‌ای تغییرناپذیر برای "
+#~ "دقیقاً پنج خانوادهٔ ارزیابی‌شدهٔ `normal`، "
+#~ "`gamma`، `weibull_min`، `lognormal` و "
+#~ "`gumbel_right` است. این رجیستری نام‌های "
+#~ "مرجع، نام‌های مستعار، نام پارامترها، "
+#~ "نقش‌های اعتبارسنجی و عملیات اسکالر "
+#~ "`logpdf` که هم‌اکنون موجود است را "
+#~ "تثبیت می‌کند. این نه رجیستری عمومی "
+#~ "توزیع‌ها است و نه رابط برازش، "
+#~ "استنباط، نیکویی برازش یا رتبه‌بندی."
+
+#~ msgid ""
+#~ "`evaluate_log_density` evaluates one built-in"
+#~ " finite scalar observation after canonical"
+#~ " parameter validation. A successful result"
+#~ " contains a finite binary64 log-"
+#~ "density. Data-domain failures are closed"
+#~ " values: `nonfinite_observation`, `support_violation`,"
+#~ " `nonfinite_log_density`, or `numerical_overflow`. "
+#~ "Programmer misuse of a family identity"
+#~ " or parameter set raises rather than"
+#~ " being converted into a data result."
+#~ " This is not an array API, a"
+#~ " CDF/PPF API, censoring likelihood, fit,"
+#~ " inference, goodness-of-fit test, or"
+#~ " model ranking."
+#~ msgstr ""
+#~ "`evaluate_log_density` پس از اعتبارسنجی "
+#~ "پارامترهای مرجع، یک مشاهدهٔ اسکالر "
+#~ "متناهیِ داخلی را ارزیابی می‌کند. نتیجهٔ"
+#~ " موفق شامل چگالی لگاریتمی متناهی "
+#~ "binary64 است. شکست‌های حوزهٔ داده، "
+#~ "مقادیر بستهٔ `nonfinite_observation`، "
+#~ "`support_violation`، `nonfinite_log_density` یا "
+#~ "`numerical_overflow` هستند. استفادهٔ نادرست "
+#~ "برنامه‌نویس از هویت خانواده یا مجموعهٔ"
+#~ " پارامترها به‌جای تبدیل شدن به نتیجهٔ"
+#~ " داده، استثنا ایجاد می‌کند. این API"
+#~ " آرایه، APIِ CDF/PPF، درست‌نمایی با "
+#~ "سانسور، برازش، استنباط، آزمون نیکویی "
+#~ "برازش یا رتبه‌بندی مدل نیست."
+
+#~ msgid ""
+#~ "These tools answer a narrow question:"
+#~ " how compatible is an individual "
+#~ "value, or a collection of values, "
+#~ "with a specified family and parameter"
+#~ " set? They do not estimate those "
+#~ "parameters and they do not turn a"
+#~ " low-density value into a business"
+#~ " decision."
+#~ msgstr ""
+#~ "این ابزارها به یک پرسش محدود پاسخ"
+#~ " می‌دهند: یک مقدار یا مجموعه‌ای از"
+#~ " مقادیر چقدر با یک خانوادهٔ توزیع "
+#~ "و پارامترهای مشخص سازگار است؟ این "
+#~ "ابزارها پارامترها را برآورد نمی‌کنند و"
+#~ " یک مقدار با چگالی کم را "
+#~ "مستقیماً به تصمیم کسب‌وکار تبدیل "
+#~ "نمی‌کنند."
+

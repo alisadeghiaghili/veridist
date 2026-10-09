@@ -290,6 +290,29 @@ Veridist release record.
   and Weibull families and raises `NotImplementedError` naming
   `method="wald"` elsewhere.
 
+- The top-level `veridist` package now exports the documented user API: the
+  six fits and `fit`; `FamilyId`, `logpdf`, `cdf`, `sf`, `ppf` and `sample`;
+  `ExactLifetime`, `RightCensoredLifetime`, `LifetimeObservation`, `ExactValue`,
+  `RightCensoredValue`, `RealObservation`, `lifetimes_from_arrays` and
+  `values_from_arrays`; the `FitSuccess` and `FitFailure` protocols;
+  `VeridistError`, `CapabilityError` and `EngineContractError`;
+  `create_checkpointed_csv_store` and `fit_exponential_checkpointed_csv`; and
+  the three log-likelihood reducers (`reduce_log_likelihood_chunks`,
+  `reduce_lifetime_log_likelihood_chunks`,
+  `reduce_value_log_likelihood_chunks`), in addition to everything exported
+  before. The package still imports only the standard library; numpy is loaded
+  on first use of an array operation. Engine internals stay in their
+  submodules.
+- `CapabilityError` is also exported from `veridist.engine`.
+- `quality/mutation-manifest.json` gains `module_minimum_scores`, a minimum
+  mutation score for each critical module (`domain`, `statistics`, `families`,
+  `engine`), enforced by `tools/check_mutation_evidence.py` in addition to the
+  global 0.8 minimum. The checker prints each module's measured score.
+- `docs/migration-2.0.md`, a migration guide from 1.0: the keyword calling
+  form, the deprecated mapping forms (removed in 3.0), the checkpoint
+  `source_revision` SHA-256 contract and the offset chunk form, `uncertainty()`,
+  the `FamilyId` `family` attribute, the license change, and the top-level API.
+
 ### Deprecated
 
 - Passing bare `bytes` chunks to `fit_exponential_checkpointed_chunks` is
@@ -478,6 +501,18 @@ Veridist release record.
   `TypeError`; a probability that is not a real number still raises
   `ValueError`.
 
+- The mutation manifest is schema version 3: it requires `module_minimum_scores`
+  with exactly the critical modules, each a finite number in (0, 1]. A module
+  whose measured score is below its floor fails the evidence check even when the
+  global score passes. The provisional floors (`domain` 0.67, `statistics` 0.80,
+  `families` 0.80, `engine` 0.75) are set from the last measured scores and are
+  to be raised once the pull-request mutation run measures the new tests.
+- Behavioural tests now pin the observable contract of rejected inputs and typed
+  failures in `domain` and `engine`: the messages that name the offending
+  argument, the machine-readable context of each `EngineContractError`, the
+  on-disk checkpoint format, damaged-row rejection, the lost-commit
+  reconciliation, the plan provenance, and the retry arguments.
+
 ### Documentation
 
 - The repository-root and package READMEs (en/fa/de) no longer claim that
@@ -515,6 +550,23 @@ Veridist release record.
   indistinguishable from an empty input (an `EMPTY_SAMPLE` failure for the
   exponential fits, a zero-count success for the log-likelihood reducer), and
   point to `IterableDataSource` for enforced single-pass semantics.
+
+- The API guide (en/fa/de, with the `.po` catalogs and the parity manifest) now
+  covers the unified API: fitting any of the six families with `fit`, the
+  keyword calling form and array evaluation of `logpdf`/`cdf`/`sf`/`ppf`/
+  `sample`, `lifetimes_from_arrays` and `values_from_arrays`, `uncertainty()`
+  with confidence intervals and derived quantities, the censored log-likelihood
+  reducers, and the top-level exports. Its Python examples run in a test and
+  print what the guide documents. The stale statements that censored
+  likelihoods are not built, that the operations are not an array API, that a
+  fit has no confidence interval, and that there are five families are removed
+  here, in the families page, the index page and the exponential tutorial.
+- The six READMEs (root and package, en/fa/de) describe the six families,
+  uncertainty reporting and arrays, and their quickstart exercises
+  `uncertainty()`; each README links the migration guide.
+- `KNOWN_LIMITS` (en/fa/de) and the capability guide (en/fa/de) are brought in
+  line with the six fits, array evaluation and uncertainty reporting. New
+  `LL-CENSORED` and `DEPRECATED-FORMS` limits are recorded.
 
 ## [1.0.1] - 2026-09-12
 

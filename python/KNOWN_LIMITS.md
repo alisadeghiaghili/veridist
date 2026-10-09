@@ -6,13 +6,12 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
 
 - Reliability, health, credit, insurance, digital-product, and operations teams can model one clearly defined time-to-event outcome when the documented assumptions apply. The current models do not adjust that outcome for customer, patient, machine, or environmental characteristics.
 - Fraud and cybersecurity teams can use supported scalar distribution calculations to create a signal under an already specified reference model. Veridist does not train a classifier, select an alert threshold, process feedback labels, or supply a production event-stream adapter.
-- Finance, insurance, manufacturing, and supply-chain teams should not assume every registered family has a fitting API. Scalar calculations require a family and parameters that were justified separately unless a documented fitting path exists.
+- Finance, insurance, manufacturing, and supply-chain teams can fit any of the six registered families to their observations. A family still has to be justified separately: fitting and uncertainty reporting do not rank families, and goodness-of-fit tests and model selection exist only for the exponential case (`INFERENCE-EXP`).
 - In every field, model output still needs domain validation, appropriate sampling, decision-cost analysis, and any required legal, clinical, safety, or regulatory review.
 
 - `FIT-CSV-EXP`: the strict CSV path fits only a fixed-location, rate-only
   exponential model over exact and independently right-censored lifetimes.
-  Weibull-minimum and lognormal fits are callable over typed lifetime objects,
-  not through a general file-fitting API. Analytic weights, covariates,
+  The other families (Weibull-minimum, lognormal, gamma, normal, and right-Gumbel) are fitted over typed observations held in memory through `fit` and the per-family functions, not through a file-fitting API; `frequency_weights` are supported there. Analytic weights, covariates,
   truncation, left censoring, interval censoring, and free location parameters
   remain unsupported.
 - `CSV-STRICT`: the bundled file adapter accepts only UTF-8 CSV with exactly
@@ -30,7 +29,7 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
   wrap the verified scalar kernels element by element: the results equal the
   scalar path exactly, but large arrays are slow, because numpy has no `erfc`
   or incomplete gamma function and Veridist has no scipy runtime dependency.
-  Inference is not available for every registered family.
+  Goodness-of-fit tests and model selection are not available for every registered family (see `INFERENCE-EXP`).
 - `STREAM-SOURCE`: `IterableDataSource` adapts caller-owned chunk iterables.
   The package bundles no Parquet, Arrow, dataframe, database, or network
   adapter. Durable resume is limited to the strict lifetime CSV path and local
@@ -65,6 +64,17 @@ This document defines the 1.0 release boundary for package version `1.0.1`.
   nothing is claimed outside that grid. A fit keeps its observed values (the
   exponential fit only its sufficient statistics) so that intervals can be
   computed on demand.
+- `LL-CENSORED`: `reduce_lifetime_log_likelihood_chunks` and
+  `reduce_value_log_likelihood_chunks` support independent right censoring
+  only. The log-survival terms of censored observations are accurate to about
+  `1e-12` relative in their tail expansions and are not covered by the
+  log-density oracle envelope. A term that binary64 cannot represent, or a
+  gamma shape so large (roughly `1e5` and up) that the incomplete-gamma
+  expansion does not converge, is a typed failure rather than a guessed value.
+- `DEPRECATED-FORMS`: the mapping form of `cdf`, `sf`, and `ppf`, the
+  `sample(family, size, parameters, rng)` form, and bare `bytes` chunks for
+  `fit_exponential_checkpointed_chunks` still work, emit
+  `DeprecationWarning`, and are removed in 3.0.
 - `MEMORY-BOUND`: the delivery bound covers queued payload and active consumer
   leases until explicit release. It is a logical retained-payload bound, not a
   portable RSS ceiling.

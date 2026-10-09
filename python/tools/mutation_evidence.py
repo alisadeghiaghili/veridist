@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3  # mutation manifest; evidence has its own schema version
 CRITICAL_MODULES = ("domain", "statistics", "families", "engine")
 MUTATION_TEST_SELECTION = (
     "tests/contract",
@@ -141,6 +141,25 @@ def strict_json(source: str) -> object:
     return json.loads(source, object_pairs_hook=pairs, parse_constant=constant)
 
 
+def module_minimum_scores(value: object) -> dict[str, float]:
+    """Validate the per-module mutation floors: exactly the critical modules, each in (0, 1]."""
+
+    if not isinstance(value, dict) or set(value) != set(CRITICAL_MODULES):
+        raise ValueError("module_minimum_scores must name exactly the critical modules")
+    floors: dict[str, float] = {}
+    for module in CRITICAL_MODULES:
+        floor = value[module]
+        if (
+            isinstance(floor, bool)
+            or not isinstance(floor, int | float)
+            or not math.isfinite(floor)
+            or not 0.0 < floor <= 1.0
+        ):
+            raise ValueError(f"module minimum score for {module} must be a finite number in (0, 1]")
+        floors[module] = float(floor)
+    return floors
+
+
 def mutation_manifest(project_root: Path) -> dict[str, Any]:
     value = strict_json(
         (project_root / "quality" / "mutation-manifest.json").read_text(encoding="utf-8")
@@ -151,6 +170,7 @@ def mutation_manifest(project_root: Path) -> dict[str, Any]:
         "critical_modules",
         "mutmut_version",
         "minimum_score",
+        "module_minimum_scores",
         "pytest_selection",
     }
     if not isinstance(value, dict) or set(value) != wanted:
@@ -171,6 +191,7 @@ def mutation_manifest(project_root: Path) -> dict[str, Any]:
         or score != 0.8
     ):
         raise ValueError("mutation manifest minimum score must be finite 0.8")
+    module_minimum_scores(value["module_minimum_scores"])
     return value
 
 

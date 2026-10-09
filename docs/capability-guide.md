@@ -16,7 +16,7 @@ Lifetime analysis is not limited to equipment. The same data structure can descr
 | Digital products | A customer churned or converted | The customer remained active without the event at the cutoff |
 | Operations | A repair, delivery, or service process completed | The process was still open when data collection ended |
 
-Veridist fits a statistical distribution to these observed times when the current model assumptions and input contract apply. **Exponential MLE**, **Weibull-minimum MLE**, and **Lognormal MLE** are available with fixed `loc=0` for exact and independent right-censoring. The UTF-8 CSV workflow is deliberately narrower: it fits the rate-only Exponential model from a documented two-column format.
+Veridist fits a statistical distribution to these observed times when the current model assumptions and input contract apply. **Exponential MLE**, **Weibull-minimum MLE**, **Lognormal MLE**, **Gamma MLE**, **Normal MLE**, and **Right-Gumbel MLE** are available for exact and independent right-censoring (the four lifetime families use fixed `loc=0`). The UTF-8 CSV workflow is deliberately narrower: it fits the rate-only Exponential model from a documented two-column format.
 
 Fraud detection and cybersecurity often ask a different question: whether an amount, time gap, or latency is unusual under a reference distribution. Veridist can supply scalar log density, tail probability, and quantile calculations for supported families when defensible parameters are already available. Those values can be signals in a separately validated detector; the package does not train or operate an end-to-end fraud classifier.
 
@@ -25,10 +25,13 @@ Fraud detection and cybersecurity often ask a different question: whether an amo
 | Exponential | A constant failure rate over time | Strict CSV or prepared Python data |
 | Weibull-minimum | A decreasing, constant, or increasing failure rate, depending on shape | Prepared Python data |
 | Lognormal | Positive lifetimes whose logarithm follows a Normal model | Prepared Python data |
+| Gamma | Positive lifetimes with a flexible, right-skewed shape | Prepared Python data |
+| Normal | Real-valued measurements around a mean | Prepared Python data |
+| Right-Gumbel | Real-valued maxima and other extreme measurements | Prepared Python data |
 
 For a CSV start, only the Exponential model is available. The file must be UTF-8 and contain exactly the two columns `time,event_observed`, in that order. The first column is the observation duration. In the second, `1` means that failure was observed and `0` means that no failure was observed by the end of observation. Veridist does not guess the file format.
 
-Weibull-minimum and Lognormal use typed lifetime objects. Weibull can accept frequency weights and an optional fixed shape; Lognormal can accept frequency weights. A finite estimate is returned on success, otherwise a typed statistical or execution failure explains why fitting did not finish. File-reading failures are reported separately from statistical failures. Completing a calculation alone does not establish that a model is adequate for the data.
+The other families use typed observation objects held in memory: `ExactLifetime` and `RightCensoredLifetime` for the lifetime families, `ExactValue` and `RightCensoredValue` for Normal and right-Gumbel; `fit(family, observations)` or the per-family function fits them, and `lifetimes_from_arrays` and `values_from_arrays` build them from array columns. Every family can accept frequency weights, and Weibull also accepts an optional fixed shape. A finite estimate is returned on success, otherwise a typed statistical or execution failure explains why fitting did not finish. File-reading failures are reported separately from statistical failures. Completing a calculation alone does not establish that a model is adequate for the data.
 
 ## What if some equipment has not failed yet?
 
@@ -44,15 +47,17 @@ timeline
 
 In the diagram, the first pump's failure time is known. For the second, we only know that it worked for at least 100 hours. That information is retained and used in fitting.
 
-Left censoring, interval censoring, and truncation are outside the 1.0 scope.
+Left censoring, interval censoring, and truncation are outside the current scope.
 
 ## What result do I get?
 
-A fit includes estimated parameters, diagnostics, and the assumptions used for the calculation. For finite, positive, uncensored Exponential samples, Veridist also supports **Refit Monte Carlo KS/AD/CvM**, AIC/BIC, a calibration summary, and adequacy-gated selection. It selects the lowest-AIC candidate that passes the configured adequacy check; otherwise it returns `NONE_ADEQUATE`. This is not automatic ranking across Exponential, Weibull, and Lognormal.
+A fit includes estimated parameters, diagnostics, and the assumptions used for the calculation. For finite, positive, uncensored Exponential samples, Veridist also supports **Refit Monte Carlo KS/AD/CvM**, AIC/BIC, a calibration summary, and adequacy-gated selection. It selects the lowest-AIC candidate that passes the configured adequacy check; otherwise it returns `NONE_ADEQUATE`. This is not automatic ranking across the fitting families.
+
+Every successful fit can also report the uncertainty of its estimate with `result.uncertainty()`: standard errors and covariance, Wald, profile-likelihood and (for uncensored exponential data) exact confidence intervals, and the mean, quantiles (B-lives) and survival probability with intervals. These are large-sample results that assume independent right censoring; when the information matrix is singular, or a Weibull shape was fixed, the result is an `UncertaintyUnavailable` value with a reason instead of numbers.
 
 ## What can I calculate besides fitting?
 
-Normal, Gamma, Weibull-minimum, Lognormal, and right-Gumbel support scalar log-density, CDF, survival, quantile, and caller-owned random sampling. These are scalar operations: they are not an array API, and availability of a calculation does not mean that the family has a fitting API.
+All six families (Exponential, Normal, Gamma, Weibull-minimum, Lognormal, and right-Gumbel) support log-density (`logpdf`), CDF, survival, quantile (`ppf`), and caller-owned random sampling through one calling form, on scalars and on numpy arrays. Arrays are broadcast; the normal, lognormal, and gamma families evaluate element by element, so they are slow on very large arrays. Right-censored likelihood terms can be reduced chunk by chunk with `reduce_lifetime_log_likelihood_chunks` and `reduce_value_log_likelihood_chunks`.
 
 ## What if the input is large or a run is interrupted?
 
@@ -66,7 +71,7 @@ That resume check is separate from a plainer guard made within a single CSV read
 
 ## What is not supported yet?
 
-The 1.0 release does not support covariates such as temperature or pressure, analytic weights, free location parameters, generic dataframe/database adapters, distributed checkpoints, bootstrap selection stability, or inference for every registered family. See [known limits](../python/KNOWN_LIMITS.md) for the complete release boundary.
+The current release does not support covariates such as temperature or pressure, analytic weights, free location parameters, generic dataframe/database adapters, distributed checkpoints, bootstrap selection stability, or goodness-of-fit tests and model selection beyond the exponential case. See [known limits](../python/KNOWN_LIMITS.md) for the complete release boundary, and the [migration guide](../python/docs/migration-2.0.md) when moving from version 1.0.
 
 ## How is code quality checked?
 
@@ -75,7 +80,7 @@ Results are compared with independent references. Tests cover invalid input, bou
 <details>
 <summary>Technical details for closer review</summary>
 
-All three fitting models use maximum-likelihood estimation with fixed location zero. Exponential estimates rate only; Weibull estimates shape and scale; Lognormal estimates log-location and log-scale. Frequency weights mean repeated observations and are supported by Weibull and Lognormal; they are distinct from analytic weights. A numerical failure is reported as `OPTIMIZER_EXHAUSTED`; a result that only exists at the edge of the allowed search range is reported as `BOUNDARY_SOLUTION` instead of a converged estimate, and a sample for which no maximum-likelihood estimate exists (for example, every observed exact time identical) is reported as `DEGENERATE_SAMPLE`.
+All six fitting models use maximum-likelihood estimation; the four lifetime models use fixed location zero, while Normal and right-Gumbel estimate their location. Exponential estimates rate only; Weibull and Gamma estimate shape and scale; Lognormal estimates log-location and log-scale; Normal estimates mean and standard deviation; right-Gumbel estimates location and scale. Frequency weights mean repeated observations and are supported by every family; they are distinct from analytic weights. A numerical failure is reported as `OPTIMIZER_EXHAUSTED`; a result that only exists at the edge of the allowed search range is reported as `BOUNDARY_SOLUTION` instead of a converged estimate, and a sample for which no maximum-likelihood estimate exists (for example, every observed exact time identical) is reported as `DEGENERATE_SAMPLE`.
 
 The Exponential evaluation reports requested, successful, and failed refits plus Monte Carlo uncertainty. You supply the random-number sequence; using the same seed reproduces the same experiment. The stream count has an explicit unsigned 64-bit limit. Tests cover interruption, replay, corruption, concurrent access, and cancellation.
 
@@ -90,7 +95,7 @@ Measurements are valid only for the exact adapter, family, workload, platform, P
 3. **Model adequacy:** whether a model's assumptions and shape are acceptable for the data and purpose.
 4. **Adequacy check:** the defined statistical check used to accept or reject a candidate model.
 5. **AIC:** compares models using fit quality and parameter count; lower is preferred only among the models compared.
-6. **Distribution families:** probability distributions with different shapes and uses; these families currently expose scalar operations.
+6. **Distribution families:** probability distributions with different shapes and uses; these families expose density, CDF, survival, quantile, sampling, and fit operations.
 7. **Log density:** the logarithm of an observation's relative plausibility under a model, used for numerically stable calculations.
 8. **Quantile:** a threshold below which a specified share of the model probability lies.
 9. **Streaming reduction:** processing chunks in sequence without keeping the complete input in memory.
@@ -102,7 +107,7 @@ Measurements are valid only for the exact adapter, family, workload, platform, P
 15. **Processed ranges:** input positions that have already been calculated successfully.
 16. **Test coverage:** the share of executable lines and decision paths exercised by tests.
 17. **Maximum-likelihood estimation and fixed zero location:** parameters maximize observed-data likelihood, while the model cannot shift horizontally.
-18. **Model parameters:** Exponential uses rate; Weibull uses shape and scale; Lognormal uses log-location and log-scale.
+18. **Model parameters:** Exponential uses rate; Weibull and Gamma use shape and scale; Lognormal uses log-location and log-scale; Normal uses mean and standard deviation; right-Gumbel uses location and scale.
 19. **Frequency weights:** the number of times an observation is repeated, distinct from analytic weights.
 20. **Numerical failure:** floating-point or convergence limits prevent a trustworthy result.
 21. **KS/AD/CvM:** three goodness-of-fit tests sensitive to different forms of disagreement between data and model.

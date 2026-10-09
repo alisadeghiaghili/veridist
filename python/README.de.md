@@ -15,9 +15,9 @@
 Veridist ist eine Python-Bibliothek für **Lebensdauerdaten und Zuverlässigkeitsanalyse**. Sie macht Annahmen, Beobachtungszahlen und Ausführungsinformationen einer Schätzung überprüfbar.
 Der Name **Veridist** verbindet *verified* und *distribution*: Verteilungsanpassung mit Überprüfbarkeit. Ein erfolgreich ausgeführter Fit erklärt ein Modell nicht automatisch für angemessen.
 
-Veridist unterstützt heute Exponential-, Weibull-Minimum- und Lognormal-Lebensdauermodelle, unabhängig rechtszensierte Beobachtungen, prüfbare Schätzungen sowie stückweise Likelihood-Reduktion und lokales Fortsetzen kompatibler Exponential-CSV-Läufe.
+Veridist unterstützt heute Exponential-, Weibull-Minimum-, Lognormal-, Gamma-, Normal- und Rechts-Gumbel-Modelle, unabhängig rechtszensierte Beobachtungen, Standardfehler, Konfidenzintervalle und B-Lebensdauern für angepasste Modelle sowie stückweise Likelihood-Reduktion und lokales Fortsetzen kompatibler Exponential-CSV-Läufe.
 
-Der CSV-Einstieg ist bewusst eng: Strenges UTF-8-CSV passt nur ein ratenbasiertes Exponentialmodell an. Weibull-Minimum und Lognormal verwenden typisierte Lebensdauerobjekte. Die [Funktionsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.de.md) beschreibt die Grenze der Release-Linie.
+Der CSV-Einstieg ist bewusst eng: Strenges UTF-8-CSV passt nur ein ratenbasiertes Exponentialmodell an. Jede Familie passt außerdem typisierte Beobachtungsobjekte im Speicher an. Die [Funktionsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.de.md) beschreibt die Grenze der Release-Linie.
 
 ## Mit einer Lebensdauerfrage beginnen
 
@@ -88,6 +88,8 @@ assert isinstance(fit, ExponentialFitSuccess)
 assert fit.rate == 0.5
 assert fit.inference == "not_provided"
 assert fit.censoring_assumption == "independent_right_censoring"
+low, high = fit.uncertainty().confidence_intervals()["rate"]
+assert low < fit.rate < high
 print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}")
 ```
 
@@ -152,25 +154,22 @@ typisierte Fehler.
 
 ## Modelle und Werkzeuge heute
 
-### Lebensdauer-Fitting
+### Fitting
 
 | Modell | Beschreibbares Muster |
 | --- | --- |
 | Exponential | Konstante Ausfallrate. |
 | Weibull-Minimum | Fallende, konstante oder steigende Ausfallrate, abhängig von der Form. |
 | Lognormal | Positive Lebensdauern, deren Logarithmen normal modelliert werden. |
+| Gamma | Positive Lebensdauern mit flexibler, rechtsschiefer Form. |
+| Normal | Reelle Messwerte um einen Mittelwert. |
+| Rechts-Gumbel | Reelle Maxima und andere Extremwerte. |
 
-Diese Fits verwenden festen Ort null und unterstützen exakte sowie unabhängig
-rechtszensierte Lebensdauern. Weibull-Minimum und Lognormal verwenden ihre
-Modell-APIs; das CSV-Beispiel passt nur Exponential an.
+Die Lebensdauerfamilien (Exponential, Weibull-Minimum, Lognormal und Gamma) verwenden festen Ort null und nehmen exakte sowie unabhängig rechtszensierte Lebensdauern an; Normal und Rechts-Gumbel nehmen exakte und rechtszensierte reelle Werte an. `fit(family, observations)` verteilt auf eine Familie, und jede Familie hat außerdem eine eigene Funktion wie `fit_weibull`. Das CSV-Beispiel oben passt nur Exponential an. Jede erfolgreiche Anpassung hat eine Methode `uncertainty()`, die Standardfehler, Konfidenzintervalle und abgeleitete Größen wie Mittelwert, B-Lebensdauer oder Überlebenswahrscheinlichkeit liefert.
 
 ### Wahrscheinlichkeitsberechnungen
 
-Skalare Operationen für Normal-, Gamma-, Weibull-Minimum-, Lognormal- und
-Rechts-Gumbel-Familien umfassen Log-Dichte, CDF, Survival, Quantile und
-Sampling mit aufrufereigenem RNG. Eine verfügbare Verteilungsoperation bedeutet
-nicht, dass eine Fit-API verfügbar ist. Siehe
-[Familien- und Likelihood-Leitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/families-log-density-likelihood.md).
+`logpdf`, `cdf`, `sf`, `ppf` und `sample` nehmen die Familie zuerst und die Parameter als Schlüsselwörter. Sie decken alle sechs Familien ab und akzeptieren Skalare und numpy-Arrays; `lifetimes_from_arrays` und `values_from_arrays` erzeugen Beobachtungen aus Spalten. Siehe den [Familien- und Likelihood-Leitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/families-log-density-likelihood.md); beim Umstieg von Version 1.0 lesen Sie die [Migrationsanleitung](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/migration-2.0.md).
 
 ### Modellbewertung
 
@@ -186,7 +185,7 @@ Ihr Migrationsstatus ist nicht gleich dem veröffentlichten Umfang; siehe
 
 ## Wenn Daten wachsen
 
-Likelihood-Werkzeuge reduzieren vom Aufrufer gelieferte Chunks; Ihre Anwendung
+Likelihood-Werkzeuge reduzieren vom Aufrufer gelieferte Chunks, mit oder ohne Rechtszensierung (`reduce_lifetime_log_likelihood_chunks` und `reduce_value_log_likelihood_chunks`); Ihre Anwendung
 entscheidet, wie Daten geteilt und geliefert werden. `SQLiteCheckpointStore`
 speichert lokalen Neustartzustand für kompatible Exponential-Reduktionen,
 einschließlich des unterstützten CSV-Pfads. Halten Sie die Quellrevision stabil
@@ -237,7 +236,7 @@ und statistische Korrektheit:
 - **Mehrmodell-Fitting und -Vergleich:** Rangfolgen mit Parametern,
   Vergleichsmaßen, Angemessenheitsinformation und einem expliziten Ergebnis,
   wenn kein Modell passt.
-- **Breitere statistische Bewertung:** Güte- und Unsicherheitswerkzeuge auf
+- **Breitere statistische Bewertung:** Gütewerkzeuge auf
   weitere Familien und Beobachtungsbedingungen ausdehnen.
 - **Effizientere Verarbeitung großer Daten:** Laufzeit und Speicher mit
   reproduzierbaren Experimenten messen und verbessern.
@@ -257,6 +256,7 @@ gelieferte Änderungen im [Changelog](https://github.com/alisadeghiaghili/veridi
 | Eigenständigen Paketleitfaden lesen | [Package README](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.de.md) |
 | Zensierungsbeispiel lernen | [Exponential-Leitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/exponential-right-censoring.md) |
 | Eingaben, Ergebnisse und Fehler prüfen | [API-Referenz](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/api.de.md) |
+| Von Version 1.0 umsteigen | [Migrationsanleitung](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/migration-2.0.md) |
 | Reproduzierbaren Defekt melden | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
 | Beitragen | [Beitragsleitfaden](https://github.com/alisadeghiaghili/veridist/blob/main/CONTRIBUTING.md) und [Engineering-Konventionen](https://github.com/alisadeghiaghili/veridist/blob/main/docs/conventions.md) |
 | Sicherheitsproblem melden | [Sicherheitsrichtlinie](https://github.com/alisadeghiaghili/veridist/blob/main/SECURITY.md) |

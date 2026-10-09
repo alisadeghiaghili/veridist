@@ -17,6 +17,7 @@ from mutation_evidence import (
     MUTMUT_VERSION,
     config_digest,
     input_digest,
+    module_minimum_scores,
     mutation_manifest,
     official_status,
     reject_mutation_pragmas,
@@ -277,7 +278,7 @@ def check(
             "post_input_digest": current_digest,
         }:
             fail("input provenance drift")
-    mutation_manifest(project_root)
+    manifest = mutation_manifest(project_root)
     reject_mutation_pragmas(project_root)
     baseline = phase(
         payload["baseline"],
@@ -416,6 +417,25 @@ def check(
         total["killed"], total["survived"], total["type_check"]
     ):
         fail("invalid mutation score excluding type-check kills")
+    floors = module_minimum_scores(manifest["module_minimum_scores"])
+    for module, achieved in module_scores(payload).items():
+        if achieved < floors[module]:
+            fail(
+                f"module {module} mutation score {achieved:.4f} is below its minimum "
+                f"{floors[module]:.2f}"
+            )
+
+
+def module_scores(payload: dict[str, Any]) -> dict[str, float]:
+    """Return killed / (killed + survived) per critical module of validated evidence."""
+
+    scores: dict[str, float] = {}
+    for entry in payload["modules"]:
+        denominator = entry["killed"] + entry["survived"]
+        if denominator == 0:
+            fail(f"module {entry['module']} has no scored mutants")
+        scores[entry["module"]] = entry["killed"] / denominator
+    return {module: scores[module] for module in CRITICAL_MODULES}
 
 
 def main() -> int:
@@ -442,6 +462,8 @@ def main() -> int:
     except (OSError, ValueError) as error:
         print(f"MUTATION EVIDENCE FAIL: {error}", file=sys.stderr)
         return 1
+    for module, achieved in module_scores(cast(dict[str, Any], payload)).items():
+        print(f"module {module}: mutation score {achieved:.4f}")
     print("MUTATION EVIDENCE PASS")
     return 0
 

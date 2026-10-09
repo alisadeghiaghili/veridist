@@ -1,7 +1,9 @@
+
 msgid ""
 msgstr ""
 "Project-Id-Version: veridist 0.0.0.dev0\n"
 "Report-Msgid-Bugs-To: alisadeghiaghili@gmail.com\n"
+"POT-Creation-Date: 2026-10-09 01:11+0330\n"
 "PO-Revision-Date: 2026-09-01 21:55+0330\n"
 "Last-Translator: Ali Sadeghi Aghili <alisadeghiaghili@gmail.com>\n"
 "Language: de\n"
@@ -10,147 +12,485 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.11.0\n"
 
+#: 67f311c66d7543e5b26a52c4f99a6af9
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:2
 msgid "Evaluated families, scalar log density, and streaming log likelihood"
 msgstr "Ausgewertete Familien, skalare Log-Dichte und gestreamte Log-Likelihood"
 
-msgid "Closed five-family registry"
-msgstr "Geschlossenes Register mit fünf Familien"
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:4
+#: af6b852a60c74fd2808e4000bf764b63
+msgid "Closed six-family registry"
+msgstr "Geschlossenes Register mit sechs Familien"
 
-msgid "`FAMILY_REGISTRY` is immutable metadata for exactly five evaluated families: `normal`, `gamma`, `weibull_min`, `lognormal`, and `gumbel_right`. It fixes canonical names, aliases, parameter names, validation roles, and the currently available scalar `logpdf` operation. It is neither a generic distribution registry nor a fitting, inference, goodness-of-fit, or ranking interface."
-msgstr "`FAMILY_REGISTRY` enthält unveränderliche Metadaten für genau fünf ausgewertete Familien: `normal`, `gamma`, `weibull_min`, `lognormal` und `gumbel_right`. Es legt kanonische Namen, Aliasse, Parameternamen, Validierungsrollen und die derzeit verfügbare skalare Operation `logpdf` fest. Es ist weder ein allgemeines Verteilungsregister noch eine Schnittstelle für Anpassung, Inferenz, Anpassungsgüte oder Ranking."
+#: 8fed041c0c784367a58dec2cca7d2de6
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:6
+msgid ""
+"`FAMILY_REGISTRY` is immutable metadata for exactly six evaluated "
+"families: `exponential`, `normal`, `gamma`, `weibull_min`, `lognormal`, "
+"and `gumbel_right`. It fixes canonical names, aliases, parameter names, "
+"validation roles, the support, and the operations each family offers: log"
+" density, CDF, survival function, quantile, sampling, and fit. It is not "
+"a generic distribution registry, and it does not rank distributions."
+msgstr ""
+"`FAMILY_REGISTRY` sind unveränderliche Metadaten für genau sechs "
+"ausgewertete Familien: `exponential`, `normal`, `gamma`, `weibull_min`, "
+"`lognormal` und `gumbel_right`. Es legt kanonische Namen, Aliase, "
+"Parameternamen, Validierungsrollen, den Träger und die Operationen fest, "
+"die jede Familie anbietet: logarithmierte Dichte, CDF, "
+"Überlebensfunktion, Quantil, Stichprobenziehung und Anpassung. Es ist "
+"kein allgemeines Verteilungsregister und ordnet keine Verteilungen."
 
-msgid "For the contract-level API surface, see <a class=\"veridist-api-url\" href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."
-msgstr "Für die API-Vertragsoberfläche siehe <a class=\"veridist-api-url\" href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:13
+#: d6978b5a7fea472690a8cafd3990bd05
+msgid ""
+"For the contract-level API surface, see <a class=\"veridist-api-url\" "
+"href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."
+msgstr ""
+"Für die API-Vertragsoberfläche siehe <a class=\"veridist-api-url\" "
+"href=\"api.html#veridist-api\">veridist.statistics.log_density</a>."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: b8fd3cac86734c5ca4f4c2d2a6f041bf
 msgid "Family"
 msgstr "Familie"
 
+#: 1f89062edd82405fb37745be682d197f
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Canonical parameters"
 msgstr "Kanonische Parameter"
 
+#: 42f2e98161a541be83ce73846577836d
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid "`exponential`"
+msgstr "`exponential`"
+
+#: 32ad17d5a5314f58a674e899257cbf8b
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid "`rate > 0`"
+msgstr "`rate > 0`"
+
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: c8400c7bd1ab4238a6dbcc3ecc893186
 msgid "`normal`"
 msgstr "`normal`"
 
+#: 09ada5f0b1144c6eacbad455b95cf1e0
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "`mu`, `sigma > 0`"
 msgstr "`mu`, `sigma > 0`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: f12814f81afd454b93230e36279e1d63
 msgid "`gamma`"
 msgstr "`gamma`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: b5d1c3944a4c4dc9ae3dc3a57df00684 c4b5a3b51eb64aa5bce7a54adda94d44
 msgid "`shape > 0`, `scale > 0`"
 msgstr "`shape > 0`, `scale > 0`"
 
+#: 6209cd2e65334c79b8a850e31e14dd8d
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "`weibull_min`"
 msgstr "`weibull_min`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: bda91e82dd8c488ba2cdf45a1f975dbd
 msgid "`lognormal`"
 msgstr "`lognormal`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: a8f26a6995684b638d55ed8ee4486a5f
 msgid "`mu_log`, `sigma_log > 0`"
 msgstr "`mu_log`, `sigma_log > 0`"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: fb6fdf0af20d41479c049a873afd22a1
 msgid "`gumbel_right`"
 msgstr "`gumbel_right`"
 
+#: 81d268a0a17b45259205c25f2f204205
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "`location`, `scale > 0`"
 msgstr "`location`, `scale > 0`"
 
-msgid "Scalar log-density evaluation"
-msgstr "Auswertung skalarer Log-Dichten"
-
-msgid "`evaluate_log_density` evaluates one built-in finite scalar observation after canonical parameter validation. A successful result contains a finite binary64 log-density. Data-domain failures are closed values: `nonfinite_observation`, `support_violation`, `nonfinite_log_density`, or `numerical_overflow`. Programmer misuse of a family identity or parameter set raises rather than being converted into a data result. This is not an array API, a CDF/PPF API, censoring likelihood, fit, inference, goodness-of-fit test, or model ranking."
-msgstr "`evaluate_log_density` wertet nach der kanonischen Parametervalidierung eine integrierte endliche skalare Beobachtung aus. Ein erfolgreiches Ergebnis enthält eine endliche binary64-Log-Dichte. Fehler der Datendomäne sind die abgeschlossenen Werte `nonfinite_observation`, `support_violation`, `nonfinite_log_density` oder `numerical_overflow`. Ein Programmierfehler bei Familienidentität oder Parametersatz löst eine Ausnahme aus, statt in ein Datenergebnis umgewandelt zu werden. Dies ist keine Array-API, CDF/PPF-API, Likelihood für Zensierung, Anpassungs-, Inferenz-, Anpassungsgüte- oder Modellranking-API."
-
-msgid "Exact-state streaming log likelihood"
-msgstr "Gestreamte Log-Likelihood mit exaktem Zustand"
-
-msgid "`reduce_log_likelihood_chunks` consumes an iterable of ragged observation chunks once. It evaluates each scalar through the same closed evaluator and accumulates each successful binary64 result as an exact integer number of subnormal units. The final sum is rounded to binary64 once, at finalization; it is not a chunk-wise floating-point sum."
-msgstr "`reduce_log_likelihood_chunks` verbraucht ein Iterable ungleich großer Beobachtungs-Chunks genau einmal. Es wertet jeden Skalar über denselben abgeschlossenen Auswerter aus und akkumuliert jedes erfolgreiche binary64-Ergebnis als exakte ganzzahlige Anzahl subnormaler Einheiten. Die Endsumme wird erst bei der Finalisierung einmal auf binary64 gerundet; sie ist keine blockweise Gleitkommasumme."
-
-msgid "\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log f(x_i)\\right)"
-msgstr "\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log f(x_i)\\right)"
-
-msgid "The immutable `LogLikelihoodState` supports compatible exact-state merging. One state has an explicit unsigned-64 observation limit (`2^64 - 1`); its maximum absolute exact integer total has a documented 2162-bit bound. A scalar failure stops reduction and reports only the number of successful observations before it. An empty chunk sequence succeeds with count zero and total `0.0`."
-msgstr "Der unveränderliche `LogLikelihoodState` unterstützt kompatibles Zusammenführen exakter Zustände. Ein Zustand hat eine explizite Beobachtungsgrenze von unsigned-64 (`2^64 - 1`); für seinen maximalen absoluten exakten Ganzzahlwert ist eine 2162-Bit-Grenze dokumentiert. Ein Skalarfehler beendet die Reduktion und meldet nur die Zahl erfolgreicher Beobachtungen davor. Eine leere Chunk-Folge ist mit Anzahl null und Summe `0.0` erfolgreich."
-
-msgid "Evidence and limits"
-msgstr "Evidenz und Grenzen"
-
-msgid "`LLR-06` preserves a historical generated-stream snapshot for normal-zero scalar reduction at 10k/100k/1m observations and three chunk sizes. Its schema-v2 artifact lacks candidate binding and the public source-route fact, so it cannot support a current candidate claim. A current schema-v3 run must use the public `IterableDataSource` single-pass route, bind the reviewed candidate SHA, record one outer acquisition and every yielded observation, and agree bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. Elapsed time and `tracemalloc` values remain descriptive only."
-msgstr "`LLR-06` bewahrt einen historischen Snapshot generierter Ströme für die normal-nullwertige skalare Reduktion bei 10k/100k/1m Beobachtungen und drei Chunk-Größen. Sein schema-v2-Artefakt enthält weder Kandidatenbindung noch die Tatsache der öffentlichen Quellroute und kann daher keine aktuelle Kandidatenbehauptung stützen. Ein aktueller schema-v3-Lauf muss die öffentliche `IterableDataSource`-Einzeldurchlaufroute verwenden, den geprüften Kandidaten-SHA binden, genau eine äußere Acquisition und jede gelieferte Beobachtung aufzeichnen und bitgenau mit dem unabhängigen Orakel exakter Einheiten sowie der 2162-Bit-Grenze übereinstimmen. Verstrichene Zeit und `tracemalloc`-Werte bleiben nur beschreibend."
-
-msgid "This evidence is scoped to the tested scalar normal stream and exact reducer. It does not establish fitting, inference, goodness-of-fit, ranking, arrays, censoring, generic out-of-core processing, throughput, process-memory/RSS bounds, another data adapter, or cross-platform performance."
-msgstr "Diese Evidenz ist auf den getesteten skalaren Normalstrom und den exakten Reduzierer beschränkt. Sie belegt weder Anpassung, Inferenz, Anpassungsgüte, Ranking, Arrays, Zensierung, allgemeine Out-of-Core-Verarbeitung, Durchsatz, Grenzen für Prozessspeicher/RSS, einen anderen Datenadapter noch plattformübergreifende Leistung."
-
+#: 041593e58e934d4fa17bf00db3239061
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:25
 msgid "Where these calculations can help"
 msgstr "Wo diese Berechnungen helfen können"
 
-msgid "These tools answer a narrow question: how compatible is an individual value, or a collection of values, with a specified family and parameter set? They do not estimate those parameters and they do not turn a low-density value into a business decision."
-msgstr "Diese Werkzeuge beantworten eine enge Frage: Wie vereinbar ist ein einzelner Wert oder eine Sammlung von Werten mit einer angegebenen Familie und einem Parametersatz? Sie schätzen diese Parameter nicht und machen aus einem Wert mit niedriger Dichte keine Geschäftsentscheidung."
+#: 74652838286f424a960cdb9387e46be2
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:27
+msgid ""
+"These tools answer a narrow question: how compatible is an individual "
+"value, or a collection of values, with a specified family and parameter "
+"set? They do not estimate those parameters (the fits do) and they do not "
+"turn a low-density value into a business decision."
+msgstr ""
+"Diese Werkzeuge beantworten eine enge Frage: Wie gut passt ein einzelner "
+"Wert oder eine Menge von Werten zu einer festgelegten Familie und "
+"Parametermenge? Sie schätzen diese Parameter nicht (das tun die "
+"Anpassungen) und machen aus einem Wert mit niedriger Dichte keine "
+"geschäftliche Entscheidung."
 
+#: 0644c2f425ca4fdea6dda919481c4e37
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Application area"
 msgstr "Anwendungsbereich"
 
+#: 4f4c2a8cdd4a4bfc8e94090a4816b2e2
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Example value"
 msgstr "Beispielwert"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: b1738e3020494d37bcfa2e51e6418260
 msgid "Defensible use of this API"
 msgstr "Vertretbare Verwendung dieser API"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: d59c8583be6a4a3e9560c91b904f4710
 msgid "Finance and insurance example"
 msgstr "Beispiel aus Finanzen und Versicherung"
 
+#: 62f54e81911e483cb00145086a4a5e9a
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A return, loss amount, or claim size"
 msgstr "Eine Rendite, ein Verlustbetrag oder eine Schadenhöhe"
 
-msgid "Evaluate log density under an already justified reference model or combine log likelihood across chunks."
-msgstr "Log-Dichte unter einem bereits begründeten Referenzmodell auswerten oder Log-Likelihood über Datenabschnitte zusammenführen."
+#: 68689f3fcb9f412fb94476d6299a992f
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid ""
+"Evaluate log density under an already justified reference model or "
+"combine log likelihood across chunks."
+msgstr ""
+"Log-Dichte unter einem bereits begründeten Referenzmodell auswerten oder "
+"Log-Likelihood über Datenabschnitte zusammenführen."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: c3cc558d38c84cf29c992e39ce2d14b3
 msgid "Fraud and cybersecurity example"
 msgstr "Beispiel aus Betrugserkennung und Cybersicherheit"
 
+#: 6de85fe84e974367bff5bdeca6058f5e
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A transaction amount, time gap, or login latency"
 msgstr "Ein Transaktionsbetrag, Zeitabstand oder eine Anmeldelatenz"
 
-msgid "Produce one anomaly signal under a reference model; low density is not itself a probability of fraud."
-msgstr "Ein Anomaliesignal unter einem Referenzmodell erzeugen; niedrige Dichte ist für sich keine Betrugswahrscheinlichkeit."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: ec3395e2d1f244339a955046d6f79ca0
+msgid ""
+"Produce one anomaly signal under a reference model; low density is not "
+"itself a probability of fraud."
+msgstr ""
+"Ein Anomaliesignal unter einem Referenzmodell erzeugen; niedrige Dichte "
+"ist für sich keine Betrugswahrscheinlichkeit."
 
+#: 6f8b82cfc2984a599b443688aed489e0
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Manufacturing-quality example"
 msgstr "Beispiel aus der Fertigungsqualität"
 
+#: 95f505386eb748f8a6e73fbd726da871
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A dimension, load, or cycle measurement"
 msgstr "Eine Maß-, Last- oder Zyklusmessung"
 
-msgid "Compare measurements with a validated process model and identify values that need review."
-msgstr "Messungen mit einem validierten Prozessmodell vergleichen und prüfbedürftige Werte erkennen."
+#: 5456123c524b49bf8aef1786dcb2db8a
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid ""
+"Compare measurements with a validated process model and identify values "
+"that need review."
+msgstr ""
+"Messungen mit einem validierten Prozessmodell vergleichen und "
+"prüfbedürftige Werte erkennen."
 
+#: 1cab6ed04cc349458a429975cee92e27
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "Operations and supply-chain example"
 msgstr "Beispiel aus Betrieb und Lieferketten"
 
+#: 1d2742caaf4646cc9d577d784c8869df
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A delivery, repair, waiting, or service duration"
 msgstr "Eine Liefer-, Reparatur-, Warte- oder Servicedauer"
 
-msgid "Accumulate likelihood for a specified duration model without keeping every value in one array."
-msgstr "Likelihood für ein angegebenes Dauermodell sammeln, ohne jeden Wert in einem Array zu halten."
+#: 8db7084c3a3d461d8b77c99cc12250e7
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+msgid ""
+"Accumulate likelihood for a specified duration model without keeping "
+"every value in one array."
+msgstr ""
+"Likelihood für ein angegebenes Dauermodell sammeln, ohne jeden Wert in "
+"einem Array zu halten."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: c325be5674e649e78e4b3b46dcf84cf0
 msgid "Environmental-risk example"
 msgstr "Beispiel aus Umwelt- und Risikoanalyse"
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: f18630f4c90041aab28cb82a9488bb4e
 msgid "A high load, loss, or extreme measurement"
 msgstr "Eine hohe Last, ein Verlust oder eine Extremwertmessung"
 
-msgid "Evaluate the right-Gumbel log density when that family and its parameters have been justified independently."
-msgstr "Die Rechts-Gumbel-Log-Dichte auswerten, wenn diese Familie und ihre Parameter unabhängig begründet wurden."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: cdf800dc275c4614a77dc50c4c588c1f
+msgid ""
+"Evaluate the right-Gumbel log density when that family and its parameters"
+" have been justified independently."
+msgstr ""
+"Die Rechts-Gumbel-Log-Dichte auswerten, wenn diese Familie und ihre "
+"Parameter unabhängig begründet wurden."
 
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: eab4a1e804294ea4898b034404bbc53e
 msgid "Machine-learning example"
 msgstr "Machine-Learning-Beispiel"
 
+#: 63f5428dfd244b1498aec03369702079
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
 msgid "A distribution-based feature"
 msgstr "Ein verteilungsbasiertes Merkmal"
 
-msgid "Supply a model feature only when its parameters are estimated without future or test-set information."
-msgstr "Ein Modellmerkmal nur bereitstellen, wenn seine Parameter ohne Informationen aus Zukunft oder Testdaten geschätzt wurden."
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md
+#: f6a1638cde144545a502c0bad180120a
+msgid ""
+"Supply a model feature only when its parameters are estimated without "
+"future or test-set information."
+msgstr ""
+"Ein Modellmerkmal nur bereitstellen, wenn seine Parameter ohne "
+"Informationen aus Zukunft oder Testdaten geschätzt wurden."
 
-msgid "Different fields have different sampling rules, costs, thresholds, and regulatory requirements. Validate the reference model and the downstream decision process in the field where they will be used."
-msgstr "Verschiedene Bereiche haben unterschiedliche Stichprobenregeln, Kosten, Schwellen und regulatorische Anforderungen. Validieren Sie Referenzmodell und nachgelagerten Entscheidungsprozess in dem Bereich, in dem sie eingesetzt werden."
+#: 75ad959c949745a3ba1deaa6db32e139
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:38
+msgid ""
+"Different fields have different sampling rules, costs, thresholds, and "
+"regulatory requirements. Validate the reference model and the downstream "
+"decision process in the field where they will be used."
+msgstr ""
+"Verschiedene Bereiche haben unterschiedliche Stichprobenregeln, Kosten, "
+"Schwellen und regulatorische Anforderungen. Validieren Sie Referenzmodell"
+" und nachgelagerten Entscheidungsprozess in dem Bereich, in dem sie "
+"eingesetzt werden."
+
+#: 621f0a79cd1d485595923e9e6f0737dc
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:40
+msgid "Scalar log-density evaluation"
+msgstr "Auswertung skalarer Log-Dichten"
+
+#: 4cf9a5e5bb4f4982b300cc2cace8790a
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:42
+msgid ""
+"`evaluate_log_density` evaluates one built-in finite scalar observation "
+"after canonical parameter validation. A successful result contains a "
+"finite binary64 log-density. Data-domain failures are closed values: "
+"`nonfinite_observation`, `support_violation`, `nonfinite_log_density`, or"
+" `numerical_overflow`. Programmer misuse of a family identity or "
+"parameter set raises rather than being converted into a data result. It "
+"evaluates one scalar and has no censoring; arrays, the CDF, the survival "
+"function, quantiles, and sampling are provided by `logpdf`, `cdf`, `sf`, "
+"`ppf`, and `sample`, and fitting by `fit`, as described in the API guide."
+" It is not a goodness-of-fit test or a model ranking."
+msgstr ""
+"`evaluate_log_density` wertet eine eingebaute endliche skalare "
+"Beobachtung nach der Validierung der kanonischen Parameter aus. Ein "
+"erfolgreiches Ergebnis enthält eine endliche logarithmierte Dichte in "
+"binary64. Datenbereichsfehler sind geschlossene Werte: "
+"`nonfinite_observation`, `support_violation`, `nonfinite_log_density` "
+"oder `numerical_overflow`. Fehlbedienung durch Programmierende bei "
+"Familienidentität oder Parametermenge löst eine Ausnahme aus und wird "
+"nicht in ein Datenergebnis umgewandelt. Die Funktion wertet einen Skalar "
+"aus und kennt keine Zensierung; Arrays, die CDF, die Überlebensfunktion, "
+"Quantile und Stichprobenziehung liefern `logpdf`, `cdf`, `sf`, `ppf` und "
+"`sample`, die Anpassung `fit`, wie in der API-Anleitung beschrieben. Sie "
+"ist weder ein Anpassungsgütetest noch eine Modellrangfolge."
+
+#: 05a9ae7c20bd445388a36a56e443f1ce
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:63
+msgid "Exact-state streaming log likelihood"
+msgstr "Gestreamte Log-Likelihood mit exaktem Zustand"
+
+#: 03df6d50fe4f48148c8898be529e1f7e
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:65
+msgid ""
+"`reduce_log_likelihood_chunks` consumes an iterable of ragged observation"
+" chunks once. It evaluates each scalar through the same closed evaluator "
+"and accumulates each successful binary64 result as an exact integer "
+"number of subnormal units. The final sum is rounded to binary64 once, at "
+"finalization; it is not a chunk-wise floating-point sum."
+msgstr ""
+"`reduce_log_likelihood_chunks` verbraucht ein Iterable ungleich großer "
+"Beobachtungs-Chunks genau einmal. Es wertet jeden Skalar über denselben "
+"abgeschlossenen Auswerter aus und akkumuliert jedes erfolgreiche "
+"binary64-Ergebnis als exakte ganzzahlige Anzahl subnormaler Einheiten. "
+"Die Endsumme wird erst bei der Finalisierung einmal auf binary64 "
+"gerundet; sie ist keine blockweise Gleitkommasumme."
+
+#: 5d4fc28e38454832a943fcab36ca8b60
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:71
+msgid ""
+"\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log"
+" f(x_i)\\right)"
+msgstr ""
+"\\operatorname{LL} = \\operatorname{round}_{binary64}\\left(\\sum_i \\log"
+" f(x_i)\\right)"
+
+#: 18af31dbe7524e9c82a7e1dc4a186fbe
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:75
+msgid ""
+"The immutable `LogLikelihoodState` supports compatible exact-state "
+"merging. One state has an explicit unsigned-64 observation limit (`2^64 -"
+" 1`); its maximum absolute exact integer total has a documented 2162-bit "
+"bound. A scalar failure stops reduction and reports only the number of "
+"successful observations before it. An empty chunk sequence succeeds with "
+"count zero and total `0.0`."
+msgstr ""
+"Der unveränderliche `LogLikelihoodState` unterstützt kompatibles "
+"Zusammenführen exakter Zustände. Ein Zustand hat eine explizite "
+"Beobachtungsgrenze von unsigned-64 (`2^64 - 1`); für seinen maximalen "
+"absoluten exakten Ganzzahlwert ist eine 2162-Bit-Grenze dokumentiert. Ein"
+" Skalarfehler beendet die Reduktion und meldet nur die Zahl erfolgreicher"
+" Beobachtungen davor. Eine leere Chunk-Folge ist mit Anzahl null und "
+"Summe `0.0` erfolgreich."
+
+#: 87383abcf0d848748ed7da4af428f2f6
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:96
+msgid ""
+"Right-censored observations have their own reducers, "
+"`reduce_lifetime_log_likelihood_chunks` and "
+"`reduce_value_log_likelihood_chunks`. They add the log survival of each "
+"censored observation to the same exact accumulation, so the total is "
+"again independent of chunking and order."
+msgstr ""
+"Rechtszensierte Beobachtungen haben eigene Reducer, "
+"`reduce_lifetime_log_likelihood_chunks` und "
+"`reduce_value_log_likelihood_chunks`. Sie addieren die logarithmierte "
+"Überlebenswahrscheinlichkeit jeder zensierten Beobachtung zur selben "
+"exakten Akkumulation, sodass die Summe wiederum von Blockaufteilung und "
+"Reihenfolge unabhängig ist."
+
+#: 767c2ebab926480b8b31ed40d684a645
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:101
+msgid "Evidence and limits"
+msgstr "Evidenz und Grenzen"
+
+#: 319268b905e74d55ab9f466556222dd0
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:103
+msgid ""
+"`LLR-06` preserves a historical generated-stream snapshot for normal-zero"
+" scalar reduction at 10k/100k/1m observations and three chunk sizes. Its "
+"schema-v2 artifact lacks candidate binding and the public source-route "
+"fact, so it cannot support a current candidate claim. A current schema-v3"
+" run must use the public `IterableDataSource` single-pass route, bind the"
+" reviewed candidate SHA, record one outer acquisition and every yielded "
+"observation, and agree bitwise with the independent exact-unit oracle and"
+" 2162-bit algorithmic bound. Elapsed time and `tracemalloc` values remain"
+" descriptive only."
+msgstr ""
+"`LLR-06` bewahrt einen historischen Snapshot generierter Ströme für die "
+"normal-nullwertige skalare Reduktion bei 10k/100k/1m Beobachtungen und "
+"drei Chunk-Größen. Sein schema-v2-Artefakt enthält weder "
+"Kandidatenbindung noch die Tatsache der öffentlichen Quellroute und kann "
+"daher keine aktuelle Kandidatenbehauptung stützen. Ein aktueller "
+"schema-v3-Lauf muss die öffentliche "
+"`IterableDataSource`-Einzeldurchlaufroute verwenden, den geprüften "
+"Kandidaten-SHA binden, genau eine äußere Acquisition und jede gelieferte "
+"Beobachtung aufzeichnen und bitgenau mit dem unabhängigen Orakel exakter "
+"Einheiten sowie der 2162-Bit-Grenze übereinstimmen. Verstrichene Zeit und"
+" `tracemalloc`-Werte bleiben nur beschreibend."
+
+#: D:/veridist/python/docs/source/families-log-density-likelihood.md:112
+#: fbf78d53a3e2480180891271d8f33db9
+msgid ""
+"This evidence is scoped to the tested scalar normal stream and exact "
+"reducer. It does not establish fitting, inference, goodness-of-fit, "
+"ranking, arrays, censoring, generic out-of-core processing, throughput, "
+"process-memory/RSS bounds, another data adapter, or cross-platform "
+"performance."
+msgstr ""
+"Diese Evidenz ist auf den getesteten skalaren Normalstrom und den exakten"
+" Reduzierer beschränkt. Sie belegt weder Anpassung, Inferenz, "
+"Anpassungsgüte, Ranking, Arrays, Zensierung, allgemeine Out-of-Core-"
+"Verarbeitung, Durchsatz, Grenzen für Prozessspeicher/RSS, einen anderen "
+"Datenadapter noch plattformübergreifende Leistung."
+
+#~ msgid "Closed five-family registry"
+#~ msgstr "Geschlossenes Register mit fünf Familien"
+
+#~ msgid ""
+#~ "`FAMILY_REGISTRY` is immutable metadata for"
+#~ " exactly five evaluated families: `normal`,"
+#~ " `gamma`, `weibull_min`, `lognormal`, and "
+#~ "`gumbel_right`. It fixes canonical names, "
+#~ "aliases, parameter names, validation roles,"
+#~ " and the currently available scalar "
+#~ "`logpdf` operation. It is neither a "
+#~ "generic distribution registry nor a "
+#~ "fitting, inference, goodness-of-fit, or"
+#~ " ranking interface."
+#~ msgstr ""
+#~ "`FAMILY_REGISTRY` enthält unveränderliche Metadaten"
+#~ " für genau fünf ausgewertete Familien: "
+#~ "`normal`, `gamma`, `weibull_min`, `lognormal` "
+#~ "und `gumbel_right`. Es legt kanonische "
+#~ "Namen, Aliasse, Parameternamen, Validierungsrollen"
+#~ " und die derzeit verfügbare skalare "
+#~ "Operation `logpdf` fest. Es ist weder"
+#~ " ein allgemeines Verteilungsregister noch "
+#~ "eine Schnittstelle für Anpassung, Inferenz,"
+#~ " Anpassungsgüte oder Ranking."
+
+#~ msgid ""
+#~ "`evaluate_log_density` evaluates one built-in"
+#~ " finite scalar observation after canonical"
+#~ " parameter validation. A successful result"
+#~ " contains a finite binary64 log-"
+#~ "density. Data-domain failures are closed"
+#~ " values: `nonfinite_observation`, `support_violation`,"
+#~ " `nonfinite_log_density`, or `numerical_overflow`. "
+#~ "Programmer misuse of a family identity"
+#~ " or parameter set raises rather than"
+#~ " being converted into a data result."
+#~ " This is not an array API, a"
+#~ " CDF/PPF API, censoring likelihood, fit,"
+#~ " inference, goodness-of-fit test, or"
+#~ " model ranking."
+#~ msgstr ""
+#~ "`evaluate_log_density` wertet nach der "
+#~ "kanonischen Parametervalidierung eine integrierte"
+#~ " endliche skalare Beobachtung aus. Ein "
+#~ "erfolgreiches Ergebnis enthält eine endliche"
+#~ " binary64-Log-Dichte. Fehler der "
+#~ "Datendomäne sind die abgeschlossenen Werte "
+#~ "`nonfinite_observation`, `support_violation`, "
+#~ "`nonfinite_log_density` oder `numerical_overflow`. "
+#~ "Ein Programmierfehler bei Familienidentität "
+#~ "oder Parametersatz löst eine Ausnahme "
+#~ "aus, statt in ein Datenergebnis "
+#~ "umgewandelt zu werden. Dies ist keine"
+#~ " Array-API, CDF/PPF-API, Likelihood "
+#~ "für Zensierung, Anpassungs-, Inferenz-, "
+#~ "Anpassungsgüte- oder Modellranking-API."
+
+#~ msgid ""
+#~ "These tools answer a narrow question:"
+#~ " how compatible is an individual "
+#~ "value, or a collection of values, "
+#~ "with a specified family and parameter"
+#~ " set? They do not estimate those "
+#~ "parameters and they do not turn a"
+#~ " low-density value into a business"
+#~ " decision."
+#~ msgstr ""
+#~ "Diese Werkzeuge beantworten eine enge "
+#~ "Frage: Wie vereinbar ist ein einzelner"
+#~ " Wert oder eine Sammlung von Werten"
+#~ " mit einer angegebenen Familie und "
+#~ "einem Parametersatz? Sie schätzen diese "
+#~ "Parameter nicht und machen aus einem "
+#~ "Wert mit niedriger Dichte keine "
+#~ "Geschäftsentscheidung."
+

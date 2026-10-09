@@ -2,7 +2,7 @@
 
 <p dir="rtl" align="right"><a href="KNOWN_LIMITS.md">English</a> | <a href="KNOWN_LIMITS.fa.md">فارسی</a> | <a href="KNOWN_LIMITS.de.md">Deutsch</a></p>
 
-<!-- CI contract IDs: `FIT-CSV-EXP` `CSV-STRICT` `SCALAR-FAMILIES` `STREAM-SOURCE` `MEMORY-BOUND` `SCALE-EVIDENCE` `LICENSE` `SOURCE-MUTATION-STAT` `CONTEXT-REDACTION` -->
+<!-- CI contract IDs: `FIT-CSV-EXP` `CSV-STRICT` `SCALAR-FAMILIES` `LL-CENSORED` `DEPRECATED-FORMS` `STREAM-SOURCE` `MEMORY-BOUND` `SCALE-EVIDENCE` `LICENSE` `SOURCE-MUTATION-STAT` `CONTEXT-REDACTION` -->
 
 <p dir="rtl" align="right">این صفحه مرزهای نسخهٔ <bdi dir="ltr">1.0.1</bdi> را به زبان ساده توضیح می‌دهد. اگر کاری در این فهرست نیامده، نباید آن را قابلیت پشتیبانی‌شده فرض کرد.</p>
 
@@ -11,7 +11,7 @@
 <ul dir="rtl" align="right">
   <li>تیم‌های قابلیت اطمینان، سلامت، اعتبار، بیمه، محصول دیجیتال و عملیات می‌توانند یک «زمان تا رویداد» روشن را، در صورت سازگاری با فرض‌های مستند، مدل کنند. مدل‌های فعلی اثر ویژگی‌های مشتری، بیمار، دستگاه یا محیط را بر آن رویداد تعدیل نمی‌کنند.</li>
   <li>تیم‌های تقلب و امنیت سایبری می‌توانند با محاسبات اسکالرِ پشتیبانی‌شده و یک مدل مرجع که از قبل مشخص شده، یک نشانه بسازند. <bdi dir="ltr">Veridist</bdi> طبقه‌بند آموزش نمی‌دهد، آستانهٔ هشدار انتخاب نمی‌کند، برچسب‌های بازخورد را پردازش نمی‌کند و آداپتور آمادهٔ جریان رخدادِ محیط عملیاتی ندارد.</li>
-  <li>تیم‌های مالی، بیمه، تولید و زنجیرهٔ تأمین نباید فرض کنند همهٔ خانواده‌های ثبت‌شده API برازش دارند. محاسبات اسکالر به خانواده و پارامترهایی نیاز دارند که جداگانه توجیه شده باشند، مگر اینکه مسیر برازش مستندی برای آن‌ها وجود داشته باشد.</li>
+  <li>تیم‌های مالی، بیمه، تولید و زنجیرهٔ تأمین می‌توانند هر یک از شش خانوادهٔ ثبت‌شده را روی مشاهدات خود برازش دهند. خانواده همچنان باید جداگانه توجیه شود: برازش و گزارش عدم‌قطعیت خانواده‌ها را رتبه‌بندی نمی‌کنند و آزمون مناسب‌بودن مدل و انتخاب مدل فقط برای حالت نمایی وجود دارد (<code dir="ltr">INFERENCE-EXP</code>).</li>
   <li>در هر حوزه، خروجی مدل همچنان به اعتبارسنجی تخصصی، نمونه‌گیری مناسب، بررسی هزینهٔ تصمیم و ارزیابی‌های قانونی، بالینی، ایمنی یا نظارتیِ لازم نیاز دارد.</li>
 </ul>
 
@@ -21,7 +21,7 @@
   <li><bdi dir="ltr">CSV</bdi> فقط برای مدل نمایی با <strong>مکان ثابت صفر و پارامتر نرخ</strong><sup id="fnref-location-rate"><a href="#fn-location-rate">۱</a></sup> است.</li>
   <li>فایل باید <bdi dir="ltr">UTF-8</bdi> باشد و دقیقاً دو ستون <code dir="ltr">time,event_observed</code> داشته باشد.</li>
   <li>عدد ۱ در ستون وضعیت یعنی خرابی دیده شده و عدد ۰ یعنی دستگاه تا پایان مشاهده هنوز خراب نشده است.</li>
-  <li><strong>وایبول کمینه و لگ‌نرمال</strong><sup id="fnref-families"><a href="#fn-families">۲</a></sup> با دادهٔ آماده‌شده در پایتون کار می‌کنند، نه با یک API عمومی برای فایل.</li>
+  <li><strong>وایبول کمینه و لگ‌نرمال</strong><sup id="fnref-families"><a href="#fn-families">۲</a></sup> و نیز گاما، نرمال و گامبل راست روی مشاهدات نوع‌دارِ موجود در حافظه از راه <code dir="ltr">fit</code> و تابع‌های هر خانواده برازش می‌شوند، نه با یک API فایل؛ <code dir="ltr">frequency_weights</code> در آن‌ها پشتیبانی می‌شود.</li>
   <li>یک سطر خالی فقط زمانی پذیرفته می‌شود که آخرین چیز در فایل باشد (مثلاً یک خط خالیِ پایانی که یک ویرایشگر یا صفحه‌گستر اضافه کرده)؛ سطر خالی در هر جای دیگر همچنان خطای <bdi dir="ltr">blank_record</bdi> است.</li>
 </ul>
 
@@ -34,7 +34,9 @@
   <li>آداپتور آماده برای Parquet، Arrow، دیتافریم، پایگاه داده یا شبکه</li>
   <li>هستهٔ سریع آرایه‌ای برای خانواده‌های نرمال، لگ‌نرمال و گاما: ارزیابی آرایه‌ای وجود دارد (<code dir="ltr">logpdf</code>، <code dir="ltr">cdf</code>، <code dir="ltr">sf</code> و <code dir="ltr">ppf</code> آرایهٔ <bdi dir="ltr">numpy</bdi> می‌پذیرند و نقطه را با پارامترهای آرایه‌ای هم‌پخش می‌کنند؛ ورودی اسکالر همچنان <code dir="ltr">float</code> برمی‌گرداند)، اما فقط نمایی، وایبول کمینه و گامبل راست هستهٔ بومی <bdi dir="ltr">numpy</bdi> دارند. آن سه خانواده هستهٔ اسکالرِ راستی‌آزمایی‌شده را عنصر به عنصر فرا می‌خوانند؛ نتیجه با مسیر اسکالر دقیقاً یکی است، اما روی آرایه‌های بزرگ کند است، چون <bdi dir="ltr">numpy</bdi> تابع <code dir="ltr">erfc</code> یا گامای ناقص ندارد و <bdi dir="ltr">scipy</bdi> وابستگی زمان اجرای <bdi dir="ltr">Veridist</bdi> نیست.</li>
   <li>ذخیرهٔ وضعیت میان چند رایانه</li>
-  <li>استنباط آماری برای همهٔ توزیع‌ها و سنجش پایداری انتخاب مدل با <strong>بوت‌استرپ</strong><sup id="fnref-bootstrap"><a href="#fn-bootstrap">۶</a></sup></li>
+  <li><code dir="ltr">LL-CENSORED</code>: <code dir="ltr">reduce_lifetime_log_likelihood_chunks</code> و <code dir="ltr">reduce_value_log_likelihood_chunks</code> فقط سانسور راست مستقل را پشتیبانی می‌کنند. جمله‌های لگاریتم بقای مشاهدات سانسورشده در بسط‌های دنباله‌شان حدود <code dir="ltr">1e-12</code> نسبی دقت دارند و در پوشش خطای مرجعِ چگالی لگاریتمی قرار نمی‌گیرند. جمله‌ای که <bdi dir="ltr">binary64</bdi> نتواند نمایش دهد، یا پارامتر شکل گامای چنان بزرگ (حدود <code dir="ltr">1e5</code> به بالا) که بسط گامای ناقص همگرا نشود، شکست نوع‌دار است، نه مقداری حدس‌زده.</li>
+  <li><code dir="ltr">DEPRECATED-FORMS</code>: شکل نگاشتیِ <code dir="ltr">cdf</code>، <code dir="ltr">sf</code> و <code dir="ltr">ppf</code>، شکل <code dir="ltr">sample(family, size, parameters, rng)</code> و بخش‌های <code dir="ltr">bytes</code> خام برای <code dir="ltr">fit_exponential_checkpointed_chunks</code> هنوز کار می‌کنند، <code dir="ltr">DeprecationWarning</code> صادر می‌کنند و در نسخهٔ ۳٫۰ حذف می‌شوند.</li>
+  <li>آزمون مناسب‌بودن مدل و انتخاب مدل برای همهٔ توزیع‌ها (فقط حالت نمایی؛ <code dir="ltr">INFERENCE-EXP</code>) و سنجش پایداری انتخاب مدل با <strong>بوت‌استرپ</strong><sup id="fnref-bootstrap"><a href="#fn-bootstrap">۶</a></sup></li>
 </ul>
 
 <h2 dir="rtl" align="right">عدم‌قطعیت برآوردها</h2>

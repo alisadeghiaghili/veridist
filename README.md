@@ -18,12 +18,12 @@ The name **Veridist** combines *verified* and *distribution*: distribution fitti
 
 Use Veridist today when you need to:
 
-- fit fixed-location Exponential, Weibull-minimum, or Lognormal lifetime models;
+- fit Exponential, Weibull-minimum, Lognormal, Gamma, Normal, or right-Gumbel models;
 - retain independent right-censored observations instead of discarding them;
-- inspect the estimate alongside the declared modelling assumptions; or
+- report standard errors, confidence intervals, and B-lives for a fitted model; or
 - reduce supported likelihood calculations in chunks and resume a compatible local Exponential CSV run.
 
-The first file-based workflow is deliberately narrow: strict UTF-8 CSV fits a rate-only Exponential model. Weibull-minimum and Lognormal fitting use typed lifetime objects. See the [capability guide](docs/capability-guide.md) for the release boundary.
+The first file-based workflow is deliberately narrow: strict UTF-8 CSV fits a rate-only Exponential model. Every family also fits typed observation objects held in memory. See the [capability guide](docs/capability-guide.md) for the release boundary.
 
 ## From an observation to a model
 
@@ -88,6 +88,8 @@ assert isinstance(fit, ExponentialFitSuccess)
 assert fit.rate == 0.5
 assert fit.inference == "not_provided"
 assert fit.censoring_assumption == "independent_right_censoring"
+low, high = fit.uncertainty().confidence_intervals()["rate"]
+assert low < fit.rate < high
 print(f"rate={fit.rate}; events={fit.event_count}; censored={fit.censored_count}")
 ```
 
@@ -148,19 +150,22 @@ The [API reference](python/docs/source/api.md) explains accepted input, result t
 
 ## Models and tools available today
 
-### Lifetime fitting
+### Fitting
 
 | Model | Pattern it can describe |
 | --- | --- |
 | Exponential | A constant failure rate. |
 | Weibull-minimum | A decreasing, constant, or increasing failure rate, depending on shape. |
 | Lognormal | Positive lifetimes whose logarithms are modelled by a Normal distribution. |
+| Gamma | Positive lifetimes with a flexible, right-skewed shape. |
+| Normal | Real-valued measurements around a mean. |
+| Right-Gumbel | Real-valued maxima and other extreme measurements. |
 
-These fits use fixed location zero and support exact and independently right-censored lifetimes. Weibull-minimum and Lognormal use their model APIs; the CSV example fits Exponential only.
+The lifetime families (Exponential, Weibull-minimum, Lognormal, and Gamma) use fixed location zero and take exact and independently right-censored lifetimes; Normal and right-Gumbel take exact and right-censored real values. `fit(family, observations)` dispatches to a family, and each family also has its own function such as `fit_weibull`. The CSV example above fits Exponential only. Every successful fit has an `uncertainty()` method that returns standard errors, confidence intervals, and derived quantities such as a mean, a B-life, or a survival probability.
 
 ### Probability calculations
 
-Scalar operations for Normal, Gamma, Weibull-minimum, Lognormal, and right-Gumbel include log-density, CDF, survival, quantiles, and caller-owned RNG sampling. An available distribution operation does not imply an available fitting API. See the [families and likelihood guide](python/docs/source/families-log-density-likelihood.md).
+`logpdf`, `cdf`, `sf`, `ppf`, and `sample` take the family first and the parameters as keywords. They cover all six families and accept scalars and numpy arrays, and `lifetimes_from_arrays` and `values_from_arrays` build observations from columns. See the [families and likelihood guide](python/docs/source/families-log-density-likelihood.md); when moving from version 1.0, read the [migration guide](python/docs/migration-2.0.md).
 
 ### Model assessment
 The lower-level API exposes `FAMILY_REGISTRY`, `evaluate_log_density`, and `reduce_log_likelihood_chunks` for family lookup, scalar log-density, and chunked likelihood reduction.
@@ -170,7 +175,7 @@ Finite positive uncensored Exponential samples support refit Monte Carlo KS/AD/C
 
 ## When data grows
 
-Likelihood tools can reduce caller-supplied chunks. Your application owns how data is split and delivered.
+Likelihood tools can reduce caller-supplied chunks, with or without right censoring (`reduce_lifetime_log_likelihood_chunks` and `reduce_value_log_likelihood_chunks`). Your application owns how data is split and delivered.
 
 SQLiteCheckpointStore retains local restart state for compatible Exponential reductions, including the supported CSV path. Keep the source revision stable and follow the [checkpoint and resume recipe](python/examples/checkpoint_resume.py).
 
@@ -200,7 +205,7 @@ Development directions focus on broader model coverage, easier analysis, and sta
 
 - **Review and migrate the 25 legacy distributions:** 20 continuous and 5 discrete distributions, with numerical tests, documentation, and explicit capability boundaries for each migrated model.
 - **Multi-model fitting and comparison:** ranked candidate results with fitted parameters, comparison measures, adequacy information, and an explicit outcome when no model is suitable.
-- **Broader statistical assessment:** extend goodness-of-fit and uncertainty tools to more families and observation settings.
+- **Broader statistical assessment:** extend goodness-of-fit tools to more families and observation settings.
 - **More efficient large-data processing:** measure and improve runtime and memory with reproducible experiments, alongside chunked processing.
 - **More practical vignettes:** walk from a real question through data to interpretation, then explore distribution-derived features for anomaly detection, drift monitoring, and machine learning.
 
@@ -213,6 +218,7 @@ These are development directions, not currently supported features or promised r
 | Read the standalone package guide | [Package README](python/README.md) |
 | Learn the censoring example | [Exponential walkthrough](python/docs/source/exponential-right-censoring.md) |
 | Inspect inputs, outputs, and failures | [API reference](python/docs/source/api.md) |
+| Upgrade from version 1.0 | [Migration guide](python/docs/migration-2.0.md) |
 | Report a reproducible defect | [GitHub Issues](https://github.com/alisadeghiaghili/veridist/issues) |
 | Contribute | [Contribution guide](CONTRIBUTING.md) and [engineering conventions](docs/conventions.md) |
 | Report a vulnerability | [Security policy](SECURITY.md) |
