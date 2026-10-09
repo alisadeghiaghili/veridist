@@ -134,7 +134,7 @@ These examples share statistical structure, not identical business meaning. Doma
 
 Distribution fitting can mean fitting several candidate models, estimating their parameters, and comparing how well they describe the observations. A multi-model workflow can return ranked candidates with evaluation measures. The best-ranked candidate is not necessarily the true data-generating distribution, and none may be adequate.
 
-Automatic ranking across the currently supported fitting families is a future direction for Veridist. Existing inference and adequacy-gated selection have a narrower scope: finite, positive, uncensored Exponential samples. The [capability guide](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.md) records the exact contract.
+Automatic ranking across the currently supported fitting families is a future direction for Veridist. Existing inference and adequacy-gated selection cover all six families, but only for finite, uncensored samples held in memory; a family that passes the adequacy check has not been rejected, which does not make it the true model. The [capability guide](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.md) records the exact contract.
 
 ## Use your own data
 
@@ -171,7 +171,7 @@ The lifetime families (Exponential, Weibull-minimum, Lognormal, and Gamma) use f
 The lower-level API exposes `FAMILY_REGISTRY`, `evaluate_log_density`, and `reduce_log_likelihood_chunks` for family lookup, scalar log-density, and chunked likelihood reduction.
 
 
-Finite positive uncensored Exponential samples support refit Monte Carlo KS/AD/CvM, AIC/BIC, and adequacy-gated selection with a caller-owned generator. Inference is narrower than fitting; the [capability guide](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.md) records the exact scope.
+Finite, uncensored samples support refit Monte Carlo KS/AD/CvM for all six families (`refit_monte_carlo_gof`), and AIC/BIC with adequacy-gated selection across families (`assess_families`), with a caller-owned generator. Inference is narrower than fitting: censored observations are not supported. The [capability guide](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.md) records the exact scope.
 
 ## When data grows
 
@@ -205,7 +205,7 @@ Development directions focus on broader model coverage, easier analysis, and sta
 
 - **Review and migrate the 25 legacy distributions:** 20 continuous and 5 discrete distributions, with numerical tests, documentation, and explicit capability boundaries for each migrated model.
 - **Multi-model fitting and comparison:** ranked candidate results with fitted parameters, comparison measures, adequacy information, and an explicit outcome when no model is suitable.
-- **Broader statistical assessment:** extend goodness-of-fit tools to more families and observation settings.
+- **Broader statistical assessment:** extend goodness-of-fit tools to censored observations and further observation settings.
 - **More efficient large-data processing:** measure and improve runtime and memory with reproducible experiments, alongside chunked processing.
 - **More practical vignettes:** walk from a real question through data to interpretation, then explore distribution-derived features for anomaly detection, drift monitoring, and machine learning.
 

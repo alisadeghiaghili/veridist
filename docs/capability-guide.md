@@ -51,7 +51,7 @@ Left censoring, interval censoring, and truncation are outside the current scope
 
 ## What result do I get?
 
-A fit includes estimated parameters, diagnostics, and the assumptions used for the calculation. For finite, positive, uncensored Exponential samples, Veridist also supports **Refit Monte Carlo KS/AD/CvM**, AIC/BIC, a calibration summary, and adequacy-gated selection. It selects the lowest-AIC candidate that passes the configured adequacy check; otherwise it returns `NONE_ADEQUATE`. This is not automatic ranking across the fitting families.
+A fit includes estimated parameters, diagnostics, and the assumptions used for the calculation. For finite, uncensored samples, Veridist also supports **Refit Monte Carlo KS/AD/CvM** for each of the six families, AIC/BIC, a calibration summary, and adequacy-gated selection across families (`assess_families`). It selects the lowest-AIC candidate that passes the configured adequacy check; otherwise it returns `NONE_ADEQUATE`. A candidate that passes has not been rejected, which does not make it the true model, and a family whose observed fit fails is listed with its failure code and never receives a p-value. This is not a ranking of distributions beyond the families compared.
 
 Every successful fit can also report the uncertainty of its estimate with `result.uncertainty()`: standard errors and covariance, Wald, profile-likelihood and (for uncensored exponential data) exact confidence intervals, and the mean, quantiles (B-lives) and survival probability with intervals. These are large-sample results that assume independent right censoring; when the information matrix is singular, or a Weibull shape was fixed, the result is an `UncertaintyUnavailable` value with a reason instead of numbers.
 
@@ -71,7 +71,7 @@ That resume check is separate from a plainer guard made within a single CSV read
 
 ## What is not supported yet?
 
-The current release does not support covariates such as temperature or pressure, analytic weights, free location parameters, generic dataframe/database adapters, distributed checkpoints, bootstrap selection stability, or goodness-of-fit tests and model selection beyond the exponential case. See [known limits](../python/KNOWN_LIMITS.md) for the complete release boundary, and the [migration guide](../python/docs/migration-2.0.md) when moving from version 1.0.
+The current release does not support covariates such as temperature or pressure, analytic weights, free location parameters, generic dataframe/database adapters, distributed checkpoints, bootstrap selection stability, or goodness-of-fit tests and model selection for censored observations. See [known limits](../python/KNOWN_LIMITS.md) for the complete release boundary, and the [migration guide](../python/docs/migration-2.0.md) when moving from version 1.0.
 
 ## How is code quality checked?
 
@@ -82,7 +82,7 @@ Results are compared with independent references. Tests cover invalid input, bou
 
 All six fitting models use maximum-likelihood estimation; the four lifetime models use fixed location zero, while Normal and right-Gumbel estimate their location. Exponential estimates rate only; Weibull and Gamma estimate shape and scale; Lognormal estimates log-location and log-scale; Normal estimates mean and standard deviation; right-Gumbel estimates location and scale. Frequency weights mean repeated observations and are supported by every family; they are distinct from analytic weights. A numerical failure is reported as `OPTIMIZER_EXHAUSTED`; a result that only exists at the edge of the allowed search range is reported as `BOUNDARY_SOLUTION` instead of a converged estimate, and a sample for which no maximum-likelihood estimate exists (for example, every observed exact time identical) is reported as `DEGENERATE_SAMPLE`.
 
-The Exponential evaluation reports requested, successful, and failed refits plus Monte Carlo uncertainty. You supply the random-number sequence; using the same seed reproduces the same experiment. The stream count has an explicit unsigned 64-bit limit. Tests cover interruption, replay, corruption, concurrent access, and cancellation.
+The goodness-of-fit evaluation of each family reports requested, successful, and failed refits plus Monte Carlo uncertainty. A refit that fails is counted, not retried, and a failed fit of the observed sample ends the evaluation with its failure code instead of a p-value. You supply the random-number sequence; using the same seed reproduces the same experiment. The cost is the number of replicates times the cost of one fit, and the calibration evidence is a seeded simulation on a declared grid only. The stream count has an explicit unsigned 64-bit limit. Tests cover interruption, replay, corruption, concurrent access, and cancellation.
 
 Measurements are valid only for the exact adapter, family, workload, platform, Python version, chunk limit, and candidate SHA that were tested. Unsupported combinations fail explicitly. The strict CSV example and rendered Persian RTL pages are executable CI contracts.
 

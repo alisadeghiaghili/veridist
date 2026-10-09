@@ -82,7 +82,7 @@
     {
       "id": "DOC-MSG-HOME-FAMILIES-BODY",
       "page": "index.md",
-      "source": "The public kernel has an immutable six-family registry, a maximum-likelihood fit for each family with right censoring and uncertainty reporting, distribution operations that accept scalars and numpy arrays, and exact-state streaming log-likelihood reducers with and without right censoring. It does not provide goodness-of-fit tests or model ranking."
+      "source": "The public kernel has an immutable six-family registry, a maximum-likelihood fit for each family with right censoring and uncertainty reporting, distribution operations that accept scalars and numpy arrays, and exact-state streaming log-likelihood reducers with and without right censoring. These operations provide neither goodness-of-fit tests nor model ranking; refit Monte Carlo goodness-of-fit tests and adequacy-gated model selection for finite uncensored samples are provided separately by `veridist.inference`, described in the API guide."
     },
     {
       "id": "DOC-MSG-HOME-STREAM-TITLE",
@@ -213,6 +213,26 @@
       "id": "DOC-MSG-API-24",
       "page": "api.md",
       "source": "Terms Used On This Page"
+    },
+    {
+      "id": "DOC-MSG-API-GOF-01",
+      "page": "api.md",
+      "source": "Check how well a family fits your sample"
+    },
+    {
+      "id": "DOC-MSG-API-GOF-02",
+      "page": "api.md",
+      "source": "`refit_monte_carlo_gof` in `veridist.inference` tests whether a sample is consistent with one of the six families, using the Kolmogorov-Smirnov (`KS`), Anderson-Darling (`AD`), or Cramér-von Mises (`CVM`) statistic. It fits the family to your sample, draws `replicates` samples of the same size from that fitted model with your numpy generator, refits every one, and reports how often the refit statistic reaches the observed one. Refitting every replicate is what keeps the p-value honest about the estimated parameters. The observations are plain, finite, exactly observed numbers: strictly positive for the lifetime families, any real number for `normal` and `gumbel_right`, and at least three of them for every family except `exponential`. Censored observations raise `TypeError`."
+    },
+    {
+      "id": "DOC-MSG-API-GOF-03",
+      "page": "api.md",
+      "source": "If the family cannot be fitted to your sample, `GofFitError` names the failure code and no p-value is computed. A replicate whose refit fails is counted in `failed_replicates`; it is neither retried nor hidden. `assess_families` fits several families to the same sample, reports the log-likelihood, AIC, BIC, and p-value of each, and selects the lowest-AIC family that was not rejected, or returns `NONE_ADEQUATE`. One generator drives the families in the order given, so the same seed reproduces the result. The cost is the number of replicates times the cost of one fit, for every family assessed."
+    },
+    {
+      "id": "DOC-MSG-API-GOF-04",
+      "page": "api.md",
+      "source": "Passing the adequacy check means a family was not rejected at that threshold. It does not show that the family is the true model, and a small sample can fail to reject a poor one. Here only the lognormal family passes, and its AIC is about 10 points below the next family's, so it is selected clearly; the other four are rejected. The calibration evidence is a seeded simulation on a declared grid only; see <a href=\"../../KNOWN_LIMITS.md\">known limits</a> for the exact scope."
     },
     {
       "id": "DOC-MSG-EXP-01",
