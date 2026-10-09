@@ -10,6 +10,8 @@ import tomllib
 import unittest
 from pathlib import Path
 
+import yaml
+
 from tools.check_release_metadata import validate
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -121,6 +123,35 @@ class ReleaseMetadataTests(unittest.TestCase):
                 encoding="utf-8",
             )
             self.assertIn("recipe license differs", " ".join(validate(root)))
+
+    def test_repository_declares_the_concept_and_version_dois(self) -> None:
+        citation = yaml.safe_load((ROOT / "CITATION.cff").read_text("utf-8"))
+        self.assertEqual(citation["doi"], "10.5281/zenodo.23269843")
+        dois = {item["value"] for item in citation["identifiers"] if item["type"] == "doi"}
+        self.assertEqual(dois, {"10.5281/zenodo.23269843", "10.5281/zenodo.23269844"})
+
+    def test_rejects_a_non_zenodo_or_malformed_doi(self) -> None:
+        for doi in ("10.1000/other", "https://doi.org/10.5281/zenodo.1", "10.5281/zenodo."):
+            with self.subTest(doi=doi), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                self._copy_metadata(root)
+                path = root / "CITATION.cff"
+                path.write_text(
+                    path.read_text("utf-8").replace("10.5281/zenodo.23269843", doi, 1),
+                    encoding="utf-8",
+                )
+                self.assertIn("not a Zenodo DOI", " ".join(validate(root)))
+
+    def test_rejects_a_non_list_identifiers_field(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._copy_metadata(root)
+            path = root / "CITATION.cff"
+            path.write_text(
+                path.read_text("utf-8").split("identifiers:")[0] + "identifiers: none\n",
+                encoding="utf-8",
+            )
+            self.assertIn("identifiers must be a list", " ".join(validate(root)))
 
     def test_rejects_a_built_sdist_that_differs_from_the_recipe_hash(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

@@ -7,6 +7,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/alisadeghiaghili/veridist/v1-ci.yml?branch=main&label=CI)](https://github.com/alisadeghiaghili/veridist/actions/workflows/v1-ci.yml)
 [![Coverage ≥95%](https://img.shields.io/badge/coverage%20requirement-%E2%89%A595%25-blue)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.de.md)
 [![License](https://img.shields.io/badge/license-BUSL--1.1-purple)](https://github.com/alisadeghiaghili/veridist/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23269843.svg)](https://doi.org/10.5281/zenodo.23269843)
 
 [English](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.md) | [فارسی](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.fa.md) | [Deutsch](https://github.com/alisadeghiaghili/veridist/blob/main/python/README.de.md)
 
@@ -274,6 +275,10 @@ Zitieren Sie die Release, die Ihr Ergebnis erzeugt hat. Der
 bietet IEEE, APA 7, Chicago, MLA 9, Harvard, Vancouver, BibTeX, RIS, EndNote
 XML und CSL-JSON. [CITATION.cff](https://github.com/alisadeghiaghili/veridist/blob/main/CITATION.cff)
 ist der kanonische maschinenlesbare Eintrag.
+
+Jede Release ist bei Zenodo archiviert. Der DOI [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843)
+führt immer zur neuesten Release; Veridist 2.1.0 hat den eigenen DOI
+[10.5281/zenodo.23269844](https://doi.org/10.5281/zenodo.23269844).
 
 ## Autor- und Forschungsprofile
 

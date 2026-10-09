@@ -7,6 +7,7 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/alisadeghiaghili/veridist/v1-ci.yml?branch=main&label=CI)](https://github.com/alisadeghiaghili/veridist/actions/workflows/v1-ci.yml)
 [![Coverage ≥95%](https://img.shields.io/badge/coverage%20requirement-%E2%89%A595%25-blue)](https://github.com/alisadeghiaghili/veridist/blob/main/docs/capability-guide.md)
 [![License](https://img.shields.io/badge/license-BUSL--1.1-purple)](https://github.com/alisadeghiaghili/veridist/blob/main/LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.23269843.svg)](https://doi.org/10.5281/zenodo.23269843)
 
 [English](README.md) | [فارسی](README.fa.md) | [Deutsch](README.de.md)
 
@@ -226,7 +227,7 @@ These are development directions, not currently supported features or promised r
 
 ## Cite Veridist
 
-Cite the version that produced your result. The [citation guide](docs/citing-veridist.md) provides IEEE, APA 7, Chicago, MLA 9, Harvard, Vancouver, BibTeX, RIS, EndNote XML, and CSL-JSON formats. [CITATION.cff](CITATION.cff) is the canonical machine-readable record.
+Cite the version that produced your result. The [citation guide](docs/citing-veridist.md) provides IEEE, APA 7, Chicago, MLA 9, Harvard, Vancouver, BibTeX, RIS, EndNote XML, and CSL-JSON formats. [CITATION.cff](CITATION.cff) is the canonical machine-readable record. Every release is archived on Zenodo. The DOI [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843) always resolves to the latest release, and Veridist 2.1.0 has its own DOI, [10.5281/zenodo.23269844](https://doi.org/10.5281/zenodo.23269844).
 
 ## Author and research profiles
 

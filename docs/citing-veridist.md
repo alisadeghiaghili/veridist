@@ -8,6 +8,19 @@ The examples below cite Veridist 2.1.0. For another release, take the version,
 publication date, and release URL from `CITATION.cff`; do not represent an
 unversioned repository page as the exact software release.
 
+## DOI
+
+Every release is archived on Zenodo, which assigns two kinds of DOI:
+
+- **Concept DOI** [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843). It always resolves to the
+  latest release. Use it to cite Veridist as software in general, and it is
+  the `doi` recorded in [`CITATION.cff`](../CITATION.cff).
+- **Version DOI** [10.5281/zenodo.23269844](https://doi.org/10.5281/zenodo.23269844). It resolves to
+  exactly Veridist 2.1.0. Use it when the result depends on that release.
+
+Each later release receives its own version DOI on its Zenodo record. The
+examples below keep the release URL; add the DOI that fits your purpose.
+
 ## Author identity
 
 The author's published name is **Seyed Ali Sadeghi Aghili**; \`Sadeghi Aghili\`
@@ -34,6 +47,9 @@ https://github.com/alisadeghiaghili/veridist/releases/tag/v2.1.0
 
 ## BibTeX
 
+The `doi` field is the concept DOI. Replace it with the version DOI
+`10.5281/zenodo.23269844` to cite exactly 2.1.0.
+
 ```bibtex
 @software{sadeghi_aghili_veridist_2026,
   author  = {Sadeghi Aghili, Seyed Ali},
@@ -41,6 +57,7 @@ https://github.com/alisadeghiaghili/veridist/releases/tag/v2.1.0
   version = {2.1.0},
   month   = oct,
   year    = {2026},
+  doi     = {10.5281/zenodo.23269843},
   url     = {https://github.com/alisadeghiaghili/veridist/releases/tag/v2.1.0}
 }
 ```
