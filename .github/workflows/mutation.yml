@@ -67,7 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
-          python -m pip install '.[test,docs]'
+          python -m pip install '.[test,docs,arrow]'
           python -m pip install "$RUNNER_TEMP/$MUTMUT_WHEEL"
           python -c "import importlib.metadata; assert importlib.metadata.version('mutmut') == '3.7.0'"
 

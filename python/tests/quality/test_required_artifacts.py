@@ -20,7 +20,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
     def test_manifest_records_the_authoritative_production_file_count(self) -> None:
         manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
         production_count = len(manifest["production_files"])
-        self.assertEqual(production_count, 52)
+        self.assertEqual(production_count, 54)
         self.assertIn("src/veridist/engine/streaming.py", manifest["production_files"])
         self.assertEqual(
             manifest["expected_denominators"]["src/veridist/engine/streaming.py"],
@@ -221,7 +221,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
             "1d2f9a1bfa4a474b2213df6b17223150b492bf4a85af0eda4fb322297337fb32",
             "importlib.metadata.version('mutmut')",
             "--index-url https://pypi.org/simple",
-            "python -m pip install '.[test,docs]'",
+            "python -m pip install '.[test,docs,arrow]'",
             "--mutmut-wheel",
             "--logs-dir",
             "--logs-root",

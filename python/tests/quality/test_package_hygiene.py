@@ -36,7 +36,7 @@ class PackageHygieneTests(unittest.TestCase):
         self.assertTrue((PACKAGE_ROOT / "py.typed").is_file())
 
     def test_source_has_no_eager_optional_imports_or_import_time_side_effects(self) -> None:
-        forbidden_import_roots = {"numpy", "pandas", "scipy", "polars", "dask", "ray"}
+        forbidden_import_roots = {"numpy", "pandas", "scipy", "polars", "dask", "ray", "pyarrow"}
         for source_file in PACKAGE_ROOT.rglob("*.py"):
             tree = ast.parse(source_file.read_text(encoding="utf-8"), filename=str(source_file))
             for node in ast.walk(tree):
@@ -56,6 +56,15 @@ class PackageHygieneTests(unittest.TestCase):
         project = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         test_extra = project["project"]["optional-dependencies"]["test"]
         self.assertIn("pytest-cov>=6,<8", test_extra)
+
+    def test_arrow_is_an_optional_extra_and_the_core_stays_numpy_only(self) -> None:
+        project = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        self.assertEqual(project["project"]["dependencies"], ["numpy>=1.26,<3"])
+        extras = project["project"]["optional-dependencies"]
+        self.assertEqual(extras["arrow"], ["pyarrow>=16.1"])
+        for name, requirements in extras.items():
+            if name != "arrow":
+                self.assertFalse(any("pyarrow" in item for item in requirements), name)
 
     def test_project_metadata_declares_human_authorship(self) -> None:
         project = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
