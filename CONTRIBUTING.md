@@ -33,8 +33,11 @@ Everything under `python/` targets Python 3.11+.
 cd python
 python -m venv .venv
 source .venv/bin/activate   # or .venv\Scripts\activate on Windows
-pip install -e ".[test,lint,docs]"
+pip install -e ".[test,lint,docs,arrow]"
 ```
+
+The `arrow` extra (PyArrow) is needed by the tests of the internal Arrow and
+Parquet sources.
 
 Use `.[mutation]` only if you intend to run `mutmut` on Linux (see
 "Mutation testing" below), and `.[browser]` only for the opt-in Playwright

@@ -70,7 +70,7 @@ class VeridistWorkflowContractTests(unittest.TestCase):
         self.assertIn(
             'python-version: ["3.11", "3.12", "3.13", "3.14"]', self.workflow
         )
-        self.assertIn('python -m pip install -e ".[test]"', self.workflow)
+        self.assertIn('python -m pip install -e ".[test,arrow]"', self.workflow)
         self.assertIn("python -m pytest --cov=veridist --cov-branch", self.workflow)
         self.assertIn("--ignore=tests/docs/test_docs_toolchain.py", self.workflow)
         self.assertIn("--cov-report=json:coverage.json", self.workflow)
@@ -112,7 +112,7 @@ class VeridistWorkflowContractTests(unittest.TestCase):
         self.assertEqual(re.findall(r"python-version:", block), ["python-version:"])
         self.assertIn("working-directory: python", block)
         self.assertIn(f"uses: {CHECKOUT_PIN}\n        with:\n          fetch-depth: 0", block)
-        self.assertIn('python -m pip install -e ".[test]"', block)
+        self.assertIn('python -m pip install -e ".[test,arrow]"', block)
         self.assertEqual(
             re.findall(r"python -m pytest.*", block),
             ["python -m pytest --ignore=tests/docs/test_docs_toolchain.py"],
