@@ -106,6 +106,7 @@ source_paths = [
     "src/veridist/statistics",
     "src/veridist/families",
     "src/veridist/engine",
+    "src/veridist/scale",
 ]
 # Mutation evidence must exercise every test layer that specifies a critical
 # production operation.  The distribution-operation contracts live in the

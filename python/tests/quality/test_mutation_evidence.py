@@ -90,7 +90,7 @@ def fixture(root: Path) -> dict[str, object]:
     (root / "pyproject.toml").write_text(
         "[tool.mutmut]\n"
         'source_paths = ["src/veridist/domain", "src/veridist/statistics", '
-        '"src/veridist/families", "src/veridist/engine"]\n'
+        '"src/veridist/families", "src/veridist/engine", "src/veridist/scale"]\n'
         'pytest_add_cli_args_test_selection = ["tests/contract", "tests/reference", "tests/unit", '
         '"tests/conformance", "tests/property"]\n'
         'also_copy = ["tools", "src/veridist/__init__.py", "src/veridist/execution.py", '
@@ -147,7 +147,8 @@ def fixture(root: Path) -> dict[str, object]:
             for module in CRITICAL_MODULES
         ],
         "totals": {
-            key: 4 if key in {"generated", "killed"} else 0 for key in REPORT_COUNT_KEYS
+            key: len(CRITICAL_MODULES) if key in {"generated", "killed"} else 0
+            for key in REPORT_COUNT_KEYS
         },
         "score": 1.0,
         "score_excluding_type_check": 1.0,
@@ -195,15 +196,16 @@ def with_type_check_mutants(payload: dict[str, object]) -> dict[str, object]:
     report.update(generated=10, killed=9, survived=1, type_check=4)
     module = payload["modules"][0]  # type: ignore[index]
     module.update(generated=10, killed=9, survived=1, type_check=4)
+    others = len(CRITICAL_MODULES) - 1  # one perfect mutant in each remaining module
     payload["totals"] = {
-        "generated": 13,
-        "killed": 12,
+        "generated": 10 + others,
+        "killed": 9 + others,
         "survived": 1,
         "unresolved": 0,
         "type_check": 4,
     }
-    payload["score"] = 12 / 13
-    payload["score_excluding_type_check"] = 8 / 9
+    payload["score"] = (9 + others) / (10 + others)
+    payload["score_excluding_type_check"] = (5 + others) / (6 + others)
     return payload
 
 
@@ -413,7 +415,7 @@ class ModuleMinimumScoreTests(unittest.TestCase):
             root = Path(temporary)
             # domain: 9 killed and 11 survived (0.45); every other module is perfect.
             payload = with_module_counts(fixture(root), "domain", 9, 11)
-            for module in ("statistics", "families", "engine"):
+            for module in ("statistics", "families", "engine", "scale"):
                 payload = with_module_counts(payload, module, 400, 0)
             write_manifest(
                 root, module_minimum_scores={module: 0.5 for module in CRITICAL_MODULES}
@@ -429,7 +431,7 @@ class ModuleMinimumScoreTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             payload = with_module_counts(fixture(root), "domain", 9, 11)
-            for module in ("statistics", "families", "engine"):
+            for module in ("statistics", "families", "engine", "scale"):
                 payload = with_module_counts(payload, module, 400, 0)
             write_manifest(
                 root,
@@ -438,6 +440,7 @@ class ModuleMinimumScoreTests(unittest.TestCase):
                     "statistics": 0.8,
                     "families": 0.8,
                     "engine": 0.8,
+                    "scale": 0.8,
                 },
             )
             result = check(root, payload)

@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 SCHEMA_VERSION = 3  # mutation manifest; evidence has its own schema version
-CRITICAL_MODULES = ("domain", "statistics", "families", "engine")
+CRITICAL_MODULES = ("domain", "statistics", "families", "engine", "scale")
 MUTATION_TEST_SELECTION = (
     "tests/contract",
     "tests/reference",
