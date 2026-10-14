@@ -9,16 +9,20 @@ from pathlib import Path
 from typing import Any
 from unittest import mock
 
+import duckdb
 import numpy as np
+import polars as pl
 import pyarrow as pa
 
 from tests.unit.scale_arrow_fixtures import write_parquet
 from tests.unit.scale_source_oracle import ListSource
 from veridist.engine.errors import VeridistError
-from veridist.scale import _arrow
+from veridist.scale import _arrow, _duckdb, _polars
 from veridist.scale._arrow import ArrowSource, ParquetSource
+from veridist.scale._duckdb import DuckDBSource
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._one_pass import ExponentialState
+from veridist.scale._polars import PolarsSource
 from veridist.scale._sources import (
     FingerprintLevel,
     NumpySource,
@@ -28,6 +32,8 @@ from veridist.scale._sources import (
 )
 
 EXPECTED_HINT = 'install the optional "arrow" extra with: pip install "veridist[arrow]"'
+POLARS_HINT = 'install the optional "polars" extra with: pip install "veridist[polars]"'
+DUCKDB_HINT = 'install the optional "duckdb" extra with: pip install "veridist[duckdb]"'
 BLOCK_PYARROW = {"pyarrow": None, "pyarrow.parquet": None}
 
 
@@ -66,6 +72,9 @@ class ProtocolTests(unittest.TestCase):
                 NumpySource(np.array([1.0])),
                 ArrowSource(table, "x"),
                 ParquetSource(directory, "x"),
+                PolarsSource(pl.DataFrame({"x": [1.0]}), "x"),
+                PolarsSource(pl.LazyFrame({"x": [1.0]}), "x"),
+                DuckDBSource((duckdb.connect(), "select 1.0::double as x"), "x"),
                 ListSource([[np.array([1.0])]]),
             ]
             for source in sources:
@@ -81,7 +90,14 @@ class ProtocolTests(unittest.TestCase):
                         self.assertTrue(all(b.dtype == np.float64 and b.ndim == 1 for b in batches))
 
     def test_objects_without_the_two_calls_are_not_sources(self) -> None:
-        for other in (object(), np.array([1.0]), pa.table({"x": [1.0]}), "x", None):
+        for other in (
+            object(),
+            np.array([1.0]),
+            pa.table({"x": [1.0]}),
+            pl.DataFrame({"x": [1.0]}),
+            "x",
+            None,
+        ):
             with self.subTest(kind=type(other).__name__):
                 self.assertNotIsInstance(other, Source)
 
@@ -89,7 +105,15 @@ class ProtocolTests(unittest.TestCase):
         values = np.array([0.5, 1.5, 4.0])
         expected = ExponentialState.empty().update(values).to_bytes()
         table = pa.table({"x": values})
-        for source in (NumpySource(values), ArrowSource(table, "x"), ListSource([[values]])):
+        sources = (
+            NumpySource(values),
+            ArrowSource(table, "x"),
+            PolarsSource(pl.DataFrame({"x": values}), "x"),
+            PolarsSource(pl.LazyFrame({"x": values}), "x"),
+            DuckDBSource(duckdb.connect().from_arrow(table), "x"),
+            ListSource([[values]]),
+        )
+        for source in sources:
             with self.subTest(kind=type(source).__name__):
                 self.assertEqual(fold(source, ExponentialState).to_bytes(), expected)
 
@@ -101,6 +125,19 @@ class ProtocolTests(unittest.TestCase):
         (array,) = NumpySource(np.array([1.0])).partitions()
         self.assertIs(array.fingerprint_level, FingerprintLevel.CONTENT)
         self.assertTrue(array.resumable)
+
+    def test_polars_and_duckdb_partitions_are_not_resumable(self) -> None:
+        sources: list[Any] = [
+            PolarsSource(pl.DataFrame({"x": [1.0]}), "x"),
+            PolarsSource(pl.LazyFrame({"x": [1.0]}), "x"),
+            DuckDBSource((duckdb.connect(), "select 1.0::double as x"), "x"),
+        ]
+        for source in sources:
+            with self.subTest(kind=type(source).__name__):
+                (partition,) = source.partitions()
+                self.assertIsNone(partition.fingerprint)
+                self.assertIs(partition.fingerprint_level, FingerprintLevel.NONE)
+                self.assertFalse(partition.resumable)
 
 
 class MissingExtraTests(unittest.TestCase):
@@ -138,6 +175,53 @@ class MissingExtraTests(unittest.TestCase):
                 self.assert_missing_extra(parquet.partitions)
                 self.assert_missing_extra(lambda: parquet.batches(partition))
                 self.assert_missing_extra(lambda: _arrow.arrow_float64(pa.array([1.0])))
+
+    def assert_missing(self, call: Any, hint: str) -> None:
+        with self.assertRaises(ScaleSourceError) as context:
+            call()
+        error = context.exception
+        self.assertIs(error.code, ScaleSourceErrorCode.OPTIONAL_DEPENDENCY_MISSING)
+        self.assertEqual(error.hint, hint)
+        self.assertEqual(str(error), f"OPTIONAL_DEPENDENCY_MISSING: {hint}")
+        self.assertIsInstance(error.__cause__, ImportError)
+
+    def test_the_loader_names_the_extra_it_is_given(self) -> None:
+        with mock.patch.dict(sys.modules, {"polars": None, "duckdb": None}):
+            self.assert_missing(lambda: _arrow.load_optional("polars", "polars"), POLARS_HINT)
+            self.assert_missing(lambda: _arrow.load_optional("duckdb", "duckdb"), DUCKDB_HINT)
+            self.assert_missing(lambda: _arrow.load_optional("duckdb", "arrow"), EXPECTED_HINT)
+
+    def test_the_polars_source_needs_polars_and_pyarrow_and_names_its_extra(self) -> None:
+        data = pl.DataFrame({"x": [1.0, 2.0]})
+        source = PolarsSource(data, "x")
+        (partition,) = source.partitions()
+        with mock.patch.dict(sys.modules, {"polars": None}):
+            self.assert_missing(_polars.polars_module, POLARS_HINT)
+            self.assert_missing(lambda: PolarsSource(data, "x"), POLARS_HINT)
+            self.assert_missing(lambda: source.batches(partition), POLARS_HINT)
+        with mock.patch.dict(sys.modules, {"pyarrow": None}):
+            self.assert_missing(lambda: PolarsSource(data, "x"), POLARS_HINT)
+            self.assert_missing(lambda: source.batches(partition), POLARS_HINT)
+        with mock.patch.dict(sys.modules, BLOCK_PYARROW):
+            self.assert_missing(lambda: PolarsSource(data.lazy(), "x"), POLARS_HINT)
+
+    def test_the_duckdb_source_needs_duckdb_and_pyarrow_and_names_its_extra(self) -> None:
+        connection = duckdb.connect()
+        pair = (connection, "select 1.0::double as x")
+        source = DuckDBSource(pair, "x")
+        (partition,) = source.partitions()
+        with mock.patch.dict(sys.modules, {"duckdb": None}):
+            self.assert_missing(_duckdb.duckdb_module, DUCKDB_HINT)
+            self.assert_missing(lambda: DuckDBSource(pair, "x"), DUCKDB_HINT)
+            self.assert_missing(lambda: source.batches(partition), DUCKDB_HINT)
+        with mock.patch.dict(sys.modules, {"pyarrow": None}):
+            self.assert_missing(lambda: DuckDBSource(pair, "x"), DUCKDB_HINT)
+            self.assert_missing(lambda: source.batches(partition), DUCKDB_HINT)
+
+    def test_an_import_error_of_any_kind_is_reported_for_polars_and_duckdb_too(self) -> None:
+        with mock.patch.object(_arrow, "import_module", side_effect=ImportError("broken lib")):
+            self.assert_missing(_polars.polars_module, POLARS_HINT)
+            self.assert_missing(_duckdb.duckdb_module, DUCKDB_HINT)
 
     def test_the_array_source_and_fold_do_not_need_the_extra(self) -> None:
         values = np.array([1.0, 2.0, 3.0])

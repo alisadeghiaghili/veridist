@@ -33,11 +33,11 @@ Everything under `python/` targets Python 3.11+.
 cd python
 python -m venv .venv
 source .venv/bin/activate   # or .venv\Scripts\activate on Windows
-pip install -e ".[test,lint,docs,arrow]"
+pip install -e ".[test,lint,docs,arrow,polars,duckdb]"
 ```
 
-The `arrow` extra (PyArrow) is needed by the tests of the internal Arrow and
-Parquet sources.
+The `arrow`, `polars` and `duckdb` extras (PyArrow, Polars, DuckDB) are needed
+by the tests of the internal Arrow, Parquet, Polars and DuckDB sources.
 
 Use `.[mutation]` only if you intend to run `mutmut` on Linux (see
 "Mutation testing" below), and `.[browser]` only for the opt-in Playwright

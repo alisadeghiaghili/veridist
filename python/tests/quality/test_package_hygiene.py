@@ -36,7 +36,16 @@ class PackageHygieneTests(unittest.TestCase):
         self.assertTrue((PACKAGE_ROOT / "py.typed").is_file())
 
     def test_source_has_no_eager_optional_imports_or_import_time_side_effects(self) -> None:
-        forbidden_import_roots = {"numpy", "pandas", "scipy", "polars", "dask", "ray", "pyarrow"}
+        forbidden_import_roots = {
+            "numpy",
+            "pandas",
+            "scipy",
+            "polars",
+            "dask",
+            "ray",
+            "pyarrow",
+            "duckdb",
+        }
         for source_file in PACKAGE_ROOT.rglob("*.py"):
             tree = ast.parse(source_file.read_text(encoding="utf-8"), filename=str(source_file))
             for node in ast.walk(tree):
@@ -57,14 +66,18 @@ class PackageHygieneTests(unittest.TestCase):
         test_extra = project["project"]["optional-dependencies"]["test"]
         self.assertIn("pytest-cov>=6,<8", test_extra)
 
-    def test_arrow_is_an_optional_extra_and_the_core_stays_numpy_only(self) -> None:
+    def test_data_source_libraries_are_optional_extras_and_the_core_stays_numpy_only(self) -> None:
         project = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
         self.assertEqual(project["project"]["dependencies"], ["numpy>=1.26,<3"])
         extras = project["project"]["optional-dependencies"]
         self.assertEqual(extras["arrow"], ["pyarrow>=16.1"])
+        self.assertEqual(extras["polars"], ["polars>=1.37.0", "pyarrow>=16.1"])
+        self.assertEqual(extras["duckdb"], ["duckdb>=1.5.0", "pyarrow>=16.1"])
+        data_source_extras = {"arrow", "polars", "duckdb"}
         for name, requirements in extras.items():
-            if name != "arrow":
-                self.assertFalse(any("pyarrow" in item for item in requirements), name)
+            if name not in data_source_extras:
+                for library in ("pyarrow", "polars", "duckdb"):
+                    self.assertFalse(any(library in item for item in requirements), name)
 
     def test_project_metadata_declares_human_authorship(self) -> None:
         project = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
