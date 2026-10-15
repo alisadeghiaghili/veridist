@@ -14,7 +14,13 @@ import numpy as np
 import pyarrow as pa
 
 from tests.unit.scale_arrow_fixtures import write_parquet
-from tests.unit.scale_frame_fixtures import all_batches, code_of, sql_path, values_of
+from tests.unit.scale_frame_fixtures import (
+    all_batches,
+    code_of,
+    connect,
+    sql_path,
+    values_of,
+)
 from veridist.scale import _duckdb
 from veridist.scale._arrow import ParquetSource
 from veridist.scale._duckdb import DuckDBSource, _quoted, to_arrow_reader
@@ -35,7 +41,7 @@ SELECT = "select (range + 0.5)::double as x, range::bigint as y, 'a' as s from r
 
 class DuckDBInputTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.connection = duckdb.connect()
+        self.connection = connect()
         self.addCleanup(self.connection.close)
 
     def test_a_relation_and_a_connection_with_sql_give_the_same_values(self) -> None:
@@ -225,7 +231,7 @@ class DuckDBInputTests(unittest.TestCase):
 
 class DuckDBFailureTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.connection = duckdb.connect()
+        self.connection = connect()
         self.addCleanup(self.connection.close)
 
     def assert_unreadable(self, error: ScaleSourceError, cause: type[BaseException]) -> None:
@@ -245,7 +251,7 @@ class DuckDBFailureTests(unittest.TestCase):
         self.assert_unreadable(context.exception, duckdb.Error)
 
     def test_a_closed_connection_is_unreadable(self) -> None:
-        other = duckdb.connect()
+        other = connect()
         relation = other.sql(SELECT)
         source = DuckDBSource(relation, "x")
         (partition,) = source.partitions()

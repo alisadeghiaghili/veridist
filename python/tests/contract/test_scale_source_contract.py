@@ -9,12 +9,12 @@ from pathlib import Path
 from typing import Any
 from unittest import mock
 
-import duckdb
 import numpy as np
 import polars as pl
 import pyarrow as pa
 
 from tests.unit.scale_arrow_fixtures import write_parquet
+from tests.unit.scale_frame_fixtures import connect
 from tests.unit.scale_source_oracle import ListSource
 from veridist.engine.errors import VeridistError
 from veridist.scale import _arrow, _duckdb, _polars
@@ -74,7 +74,7 @@ class ProtocolTests(unittest.TestCase):
                 ParquetSource(directory, "x"),
                 PolarsSource(pl.DataFrame({"x": [1.0]}), "x"),
                 PolarsSource(pl.LazyFrame({"x": [1.0]}), "x"),
-                DuckDBSource((duckdb.connect(), "select 1.0::double as x"), "x"),
+                DuckDBSource((connect(), "select 1.0::double as x"), "x"),
                 ListSource([[np.array([1.0])]]),
             ]
             for source in sources:
@@ -110,7 +110,7 @@ class ProtocolTests(unittest.TestCase):
             ArrowSource(table, "x"),
             PolarsSource(pl.DataFrame({"x": values}), "x"),
             PolarsSource(pl.LazyFrame({"x": values}), "x"),
-            DuckDBSource(duckdb.connect().from_arrow(table), "x"),
+            DuckDBSource(connect().from_arrow(table), "x"),
             ListSource([[values]]),
         )
         for source in sources:
@@ -130,7 +130,7 @@ class ProtocolTests(unittest.TestCase):
         sources: list[Any] = [
             PolarsSource(pl.DataFrame({"x": [1.0]}), "x"),
             PolarsSource(pl.LazyFrame({"x": [1.0]}), "x"),
-            DuckDBSource((duckdb.connect(), "select 1.0::double as x"), "x"),
+            DuckDBSource((connect(), "select 1.0::double as x"), "x"),
         ]
         for source in sources:
             with self.subTest(kind=type(source).__name__):
@@ -206,7 +206,7 @@ class MissingExtraTests(unittest.TestCase):
             self.assert_missing(lambda: PolarsSource(data.lazy(), "x"), POLARS_HINT)
 
     def test_the_duckdb_source_needs_duckdb_and_pyarrow_and_names_its_extra(self) -> None:
-        connection = duckdb.connect()
+        connection = connect()
         pair = (connection, "select 1.0::double as x")
         source = DuckDBSource(pair, "x")
         (partition,) = source.partitions()

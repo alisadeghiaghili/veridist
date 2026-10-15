@@ -29,7 +29,24 @@ from typing import Any
 
 import pytest
 
+import veridist
+from tests import process_isolation
 from veridist.engine.delivery import BoundedChunkBuffer
+
+# The optional dataframe libraries start one worker per core.  The tests need no
+# parallelism, and the idle workers cost CPU time (a lazy Polars scan over tiny
+# batches uses more than twice as much CPU time as wall time on a 16-core host)
+# and, in a process that mutation testing forks, are lost.  So every pool is
+# pinned to one thread.  Polars reads these variables when it is first imported,
+# which happens only when a test module is collected, after this file is loaded;
+# a value set by the caller wins.
+for _variable in ("POLARS_MAX_THREADS", "RAYON_NUM_THREADS"):
+    os.environ.setdefault(_variable, "1")
+
+# A process forked by the mutation runner must not use those libraries after the
+# fork; see ``tests/process_isolation.py``.
+process_isolation.install()
+process_isolation.check_expected_package(veridist.__file__, os.environ)
 
 # A legitimate call finishes within its own timeout; the slack only has to
 # absorb scheduler jitter on a heavily loaded host.
@@ -119,6 +136,42 @@ def _watch(stop: threading.Event) -> None:
                 faulthandler.dump_traceback(file=sys.stderr, all_threads=True)
                 sys.stderr.flush()
                 os._exit(70)
+
+
+def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
+    process_isolation.defer_library_tests(items)
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_protocol(item: pytest.Item, nextitem: pytest.Item | None) -> object | None:
+    """Give a forked process a fresh interpreter before its first Polars or DuckDB test."""
+
+    if process_isolation.must_restart(item.path, os.environ):
+        session = item.session
+        remaining = [entry.nodeid for entry in session.items[session.items.index(item) :]]
+        arguments = process_isolation.fresh_process_arguments(
+            item.config.invocation_params.args,
+            item.config.known_args_namespace.file_or_dir,
+            remaining,
+        )
+        environment = process_isolation.fresh_process_environment(os.environ, veridist.__file__)
+        try:
+            process_isolation.restart(arguments, environment)
+        except OSError:
+            pass  # carry on in this process, as before
+    return None
+
+
+@pytest.fixture(scope="session", autouse=True)
+def single_threaded_arrow() -> None:
+    """Pin the Arrow compute and I/O thread pools to one thread, if pyarrow is installed."""
+
+    try:
+        import pyarrow
+    except ImportError:
+        return
+    pyarrow.set_cpu_count(1)
+    pyarrow.set_io_thread_count(1)
 
 
 @pytest.fixture(scope="session", autouse=True)

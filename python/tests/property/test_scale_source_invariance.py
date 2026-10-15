@@ -8,13 +8,12 @@ from collections.abc import Callable, Iterator
 from pathlib import Path
 from typing import Any
 
-import duckdb
 import numpy as np
 import polars as pl
 import pyarrow as pa
 
 from tests.unit.scale_arrow_fixtures import StreamExporter, write_parquet
-from tests.unit.scale_frame_fixtures import sql_path
+from tests.unit.scale_frame_fixtures import connect, sql_path
 from tests.unit.scale_source_oracle import ListSource
 from veridist.scale._arrow import ArrowSource, ParquetSource
 from veridist.scale._duckdb import DuckDBSource
@@ -174,7 +173,7 @@ class LayoutInvarianceTests(unittest.TestCase):
         self.check_scans(lambda pattern: PolarsSource(pl.scan_parquet(pattern), "x"))
 
     def test_a_duckdb_scan_agrees_with_every_parquet_layout(self) -> None:
-        connection = duckdb.connect()
+        connection = connect()
         self.check_scans(
             lambda pattern: DuckDBSource(
                 connection.sql(f"select x from read_parquet({sql_path(Path(pattern))})"), "x"
@@ -204,7 +203,7 @@ class LayoutInvarianceTests(unittest.TestCase):
         )
 
     def test_a_duckdb_relation_agrees_with_the_array(self) -> None:
-        relation = duckdb.connect().from_arrow(pa.table({"x": self.values}))
+        relation = connect().from_arrow(pa.table({"x": self.values}))
         self.check_in_memory({"relation": DuckDBSource(relation, "x")})
 
     def test_stored_types_that_widen_exactly_give_the_same_state_as_float64(self) -> None:

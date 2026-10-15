@@ -59,8 +59,18 @@ def polars_lazy(table: pa.Table) -> Any:
     return pl.from_arrow(table).lazy()
 
 
+def connect() -> Any:
+    """An in-memory DuckDB connection that runs on one thread.
+
+    A default connection starts one worker per core, which the tests do not need; one
+    thread keeps the number of native threads of the test process small.
+    """
+
+    return duckdb.connect(config={"threads": 1})
+
+
 def duckdb_relation(table: pa.Table) -> Any:
-    return duckdb.connect().from_arrow(table)
+    return connect().from_arrow(table)
 
 
 FRAME_SOURCES: dict[str, Callable[[pa.Table, str], Any]] = {

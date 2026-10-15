@@ -5,7 +5,6 @@ from __future__ import annotations
 import unittest
 from typing import Any
 
-import duckdb
 import numpy as np
 import polars as pl
 import pyarrow as pa
@@ -14,6 +13,7 @@ from tests.unit.scale_frame_fixtures import (
     FRAME_SOURCES,
     all_batches,
     code_of,
+    connect,
     values_of,
 )
 from veridist.scale._duckdb import DuckDBSource
@@ -77,24 +77,92 @@ REFUSED: list[tuple[str, pa.Table, ScaleSourceErrorCode]] = [
 ]
 
 
-class FrameValuePolicyTests(unittest.TestCase):
-    def test_accepted_columns_give_exact_float64_values_through_every_adapter(self) -> None:
-        for adapter, make in FRAME_SOURCES.items():
-            for name, table, expected in ACCEPTED:
-                with self.subTest(adapter=adapter, case=name):
-                    source = make(table, "x")
-                    batches = all_batches(source)
-                    self.assertTrue(all(b.dtype == np.float64 and b.ndim == 1 for b in batches))
-                    self.assertEqual(values_of(source), expected)
+class AdapterPolicyCases:
+    """The value-policy cases that every adapter must satisfy, run through one adapter.
 
-    def test_refused_columns_use_the_arrow_codes_through_every_adapter(self) -> None:
-        for adapter, make in FRAME_SOURCES.items():
-            for name, table, code in REFUSED:
-                with self.subTest(adapter=adapter, case=name):
-                    source = make(table, "x")
-                    (partition,) = source.partitions()
-                    refused = code_of(lambda s=source, p=partition: list(s.batches(p)))
-                    self.assertIs(refused, code)
+    One subclass per adapter keeps every test short, so that a mutation that makes
+    one of them fail is found after a fraction of a second.
+    """
+
+    adapter: str
+
+    def make(self, table: pa.Table, column: str) -> Any:
+        source: Any = FRAME_SOURCES[self.adapter](table, column)
+        return source
+
+    def test_accepted_columns_give_exact_float64_values(self) -> None:
+        for name, table, expected in ACCEPTED:
+            with self.subTest(case=name):
+                source = self.make(table, "x")
+                batches = all_batches(source)
+                self.assertTrue(all(b.dtype == np.float64 and b.ndim == 1 for b in batches))
+                self.assertEqual(values_of(source), expected)
+
+    def test_refused_columns_use_the_arrow_codes(self) -> None:
+        for name, table, code in REFUSED:
+            with self.subTest(case=name):
+                source = self.make(table, "x")
+                (partition,) = source.partitions()
+                refused = code_of(lambda s=source, p=partition: list(s.batches(p)))
+                self.assertIs(refused, code)
+
+    def test_a_refusal_message_is_the_bare_code_and_carries_no_value(self) -> None:
+        source = self.make(column([123456.789, None], pa.float64()), "x")
+        (partition,) = source.partitions()
+        with self.assertRaises(ScaleSourceError) as context:
+            list(source.batches(partition))
+        self.assertEqual(str(context.exception), "NULL_VALUE")
+        self.assertIsNone(context.exception.hint)
+
+    def test_a_missing_column_is_refused_at_construction(self) -> None:
+        table = pa.table({"x": [1.0], "y": [2.0]})
+        for name in ("missing", "X", "x ", "xy"):
+            with self.subTest(column=name):
+                refused = code_of(lambda n=name: self.make(table, n))
+                self.assertIs(refused, CODES.COLUMN_NOT_FOUND)
+
+    def test_the_column_is_found_in_any_position(self) -> None:
+        table = pa.table({"a": [1.0], "b": [2.0], "c": [3.0]})
+        self.assertEqual(values_of(self.make(table, "a")), [1.0])
+        self.assertEqual(values_of(self.make(table, "b")), [2.0])
+        self.assertEqual(values_of(self.make(table, "c")), [3.0])
+
+    def test_only_the_projected_column_is_judged(self) -> None:
+        table = pa.table({"bad": ["a", "b"], "x": [1.0, 2.0], "worse": [None, None]})
+        self.assertEqual(values_of(self.make(table, "x")), [1.0, 2.0])
+
+    def test_names_that_look_like_patterns_or_sql_are_taken_literally(self) -> None:
+        names = ["^a$", "a", "a.b", 'x"y', "select", "A b", "[x]", ".*", "tab.col"]
+        table = pa.table({name: [float(index)] for index, name in enumerate(names)})
+        for index, name in enumerate(names):
+            with self.subTest(column=name):
+                self.assertEqual(values_of(self.make(table, name)), [float(index)])
+
+    def test_a_refused_batch_never_reaches_the_state(self) -> None:
+        table = column([1.0, 2.0, NAN, 4.0], pa.float64())
+        with self.assertRaises(ScaleSourceError) as context:
+            fold(self.make(table, "x"), ExponentialState, max_rows=1)
+        self.assertIs(context.exception.code, CODES.NAN_VALUE)
+
+
+class PolarsFramePolicyTests(AdapterPolicyCases, unittest.TestCase):
+    adapter = "polars frame"
+
+
+class PolarsLazyFramePolicyTests(AdapterPolicyCases, unittest.TestCase):
+    adapter = "polars lazy frame"
+
+
+class DuckDBRelationPolicyTests(AdapterPolicyCases, unittest.TestCase):
+    adapter = "duckdb relation"
+
+
+class FrameValuePolicyTests(unittest.TestCase):
+    def test_every_adapter_is_covered_by_the_cases_above(self) -> None:
+        self.assertEqual(
+            set(FRAME_SOURCES),
+            {cls.adapter for cls in AdapterPolicyCases.__subclasses__()},
+        )
 
     def test_nan_is_judged_before_infinity_within_one_batch(self) -> None:
         table = column([INF, NAN], pa.float64())
@@ -105,57 +173,8 @@ class FrameValuePolicyTests(unittest.TestCase):
                 refused = code_of(lambda s=source, p=partition: list(s.batches(p)))
                 self.assertIs(refused, CODES.NAN_VALUE)
 
-    def test_a_refusal_message_is_the_bare_code_and_carries_no_value(self) -> None:
-        table = column([123456.789, None], pa.float64())
-        for adapter, make in FRAME_SOURCES.items():
-            with self.subTest(adapter=adapter):
-                source = make(table, "x")
-                (partition,) = source.partitions()
-                with self.assertRaises(ScaleSourceError) as context:
-                    list(source.batches(partition))
-                self.assertEqual(str(context.exception), "NULL_VALUE")
-                self.assertIsNone(context.exception.hint)
-
-    def test_a_missing_column_is_refused_at_construction_through_every_adapter(self) -> None:
-        table = pa.table({"x": [1.0], "y": [2.0]})
-        for adapter, make in FRAME_SOURCES.items():
-            for name in ("missing", "X", "x ", "xy"):
-                with self.subTest(adapter=adapter, column=name):
-                    refused = code_of(lambda m=make, n=name: m(table, n))
-                    self.assertIs(refused, CODES.COLUMN_NOT_FOUND)
-
-    def test_the_column_is_found_in_any_position(self) -> None:
-        table = pa.table({"a": [1.0], "b": [2.0], "c": [3.0]})
-        for adapter, make in FRAME_SOURCES.items():
-            with self.subTest(adapter=adapter):
-                self.assertEqual(values_of(make(table, "a")), [1.0])
-                self.assertEqual(values_of(make(table, "b")), [2.0])
-                self.assertEqual(values_of(make(table, "c")), [3.0])
-
-    def test_only_the_projected_column_is_judged(self) -> None:
-        table = pa.table({"bad": ["a", "b"], "x": [1.0, 2.0], "worse": [None, None]})
-        for adapter, make in FRAME_SOURCES.items():
-            with self.subTest(adapter=adapter):
-                self.assertEqual(values_of(make(table, "x")), [1.0, 2.0])
-
-    def test_names_that_look_like_patterns_or_sql_are_taken_literally(self) -> None:
-        names = ["^a$", "a", "a.b", 'x"y', "select", "A b", "[x]", ".*", "tab.col"]
-        table = pa.table({name: [float(index)] for index, name in enumerate(names)})
-        for adapter, make in FRAME_SOURCES.items():
-            for index, name in enumerate(names):
-                with self.subTest(adapter=adapter, column=name):
-                    self.assertEqual(values_of(make(table, name)), [float(index)])
-
-    def test_a_refused_batch_never_reaches_the_state(self) -> None:
-        table = column([1.0, 2.0, NAN, 4.0], pa.float64())
-        for adapter, make in FRAME_SOURCES.items():
-            with self.subTest(adapter=adapter):
-                with self.assertRaises(ScaleSourceError) as context:
-                    fold(make(table, "x"), ExponentialState, max_rows=1)
-                self.assertIs(context.exception.code, CODES.NAN_VALUE)
-
     def test_hugeint_and_decimal_columns_of_a_query_are_unsupported(self) -> None:
-        connection = duckdb.connect()
+        connection = connect()
         for sql in (
             "select 1::hugeint as x",
             "select 1.5::decimal(10, 2) as x",
@@ -169,7 +188,7 @@ class FrameValuePolicyTests(unittest.TestCase):
                 self.assertIs(code_of(lambda i=iterator: next(i)), CODES.UNSUPPORTED_DTYPE)
 
     def test_a_query_column_of_a_float_or_an_integer_type_is_accepted(self) -> None:
-        connection = duckdb.connect()
+        connection = connect()
         for sql in (
             "select 1.5::double as x",
             "select 1.5::float as x",
