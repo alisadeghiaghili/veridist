@@ -211,6 +211,7 @@ class RequiredQualityArtifactTests(unittest.TestCase):
         workflow = MUTATION_WORKFLOW.read_text(encoding="utf-8")
         for required in (
             "runs-on: ubuntu-latest",
+            "timeout-minutes: 120",
             'python-version: "3.13"',
             "workflow_dispatch:",
             "pull_request:",

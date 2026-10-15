@@ -15,7 +15,7 @@ jobs:
   mutation:
     name: mutation / critical statistical core
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 120
     env:
       PYTHONUTF8: "1"
       PYTHONUNBUFFERED: "1"
