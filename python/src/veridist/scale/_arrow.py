@@ -57,18 +57,22 @@ PARQUET_SUFFIX: Final = ".parquet"
 CONTENT_BLOCK_BYTES: Final = 1 << 20
 """Bytes read at a time when hashing a column chunk."""
 
-_MISSING_EXTRA_HINT: Final = (
-    f'install the optional "{EXTRA_NAME}" extra with: pip install "veridist[{EXTRA_NAME}]"'
-)
 
+def load_optional(name: str, extra: str) -> Any:
+    """Import ``name`` on first use; its absence is ``OPTIONAL_DEPENDENCY_MISSING``.
 
-def _load(name: str) -> Any:
+    The fixed hint names ``extra``, the optional extra that provides the module.
+    """
+
     try:
         return import_module(name)
     except ImportError as error:
-        raise ScaleSourceError(
-            ScaleSourceErrorCode.OPTIONAL_DEPENDENCY_MISSING, _MISSING_EXTRA_HINT
-        ) from error
+        hint = f'install the optional "{extra}" extra with: pip install "veridist[{extra}]"'
+        raise ScaleSourceError(ScaleSourceErrorCode.OPTIONAL_DEPENDENCY_MISSING, hint) from error
+
+
+def _load(name: str) -> Any:
+    return load_optional(name, EXTRA_NAME)
 
 
 def pyarrow_module() -> Any:
@@ -102,7 +106,7 @@ def arrow_float64(array: Any) -> Any:
     return float64_values(array.to_numpy(zero_copy_only=True))
 
 
-def _column_index(schema: Any, column: str) -> int:
+def column_index(schema: Any, column: str) -> int:
     """The index of the one field called ``column``; none or several is ``COLUMN_NOT_FOUND``."""
 
     indices = schema.get_all_field_indices(column)
@@ -111,7 +115,7 @@ def _column_index(schema: Any, column: str) -> int:
     return int(indices[0])
 
 
-def _column_batches(batches: Any, index: int, max_rows: int) -> Iterator[Any]:
+def column_batches(batches: Any, index: int, max_rows: int) -> Iterator[Any]:
     """Zero-copy slices of at most ``max_rows`` rows of one column, validated."""
 
     pa = pyarrow_module()
@@ -123,7 +127,7 @@ def _column_batches(batches: Any, index: int, max_rows: int) -> Iterator[Any]:
         raise ScaleSourceError(ScaleSourceErrorCode.SOURCE_UNREADABLE) from error
 
 
-def _check_column_name(column: object) -> str:
+def check_column_name(column: object) -> str:
     if type(column) is not str or not column:
         raise TypeError("column must be a non-empty string")
     return column
@@ -137,7 +141,7 @@ class ArrowSource:
     __slots__ = ("_batches", "_consumed", "_index", "_reader", "_rows")
 
     def __init__(self, data: object, column: str) -> None:
-        _check_column_name(column)
+        check_column_name(column)
         pa = pyarrow_module()
         self._batches: tuple[Any, ...] | None = None
         self._reader: Any = None
@@ -162,7 +166,7 @@ class ArrowSource:
                 "data must be a pyarrow Table, RecordBatch or RecordBatchReader, "
                 "or expose __arrow_c_stream__"
             )
-        self._index = _column_index(schema, column)
+        self._index = column_index(schema, column)
 
     def partitions(self) -> tuple[Partition, ...]:
         """The one partition: no fingerprint, hence not resumable."""
@@ -183,11 +187,11 @@ class ArrowSource:
         if not isinstance(partition, Partition) or partition.id != self.PARTITION_ID:
             raise ValueError("partition does not belong to this source")
         if self._reader is None:
-            return _column_batches(self._batches, self._index, bound)
+            return column_batches(self._batches, self._index, bound)
         if self._consumed:
             raise ScaleSourceError(ScaleSourceErrorCode.SOURCE_CONSUMED)
         self._consumed = True
-        return _column_batches(self._reader, self._index, bound)
+        return column_batches(self._reader, self._index, bound)
 
 
 def _stat_text(value: object) -> str:
@@ -302,7 +306,7 @@ class ParquetSource:
         root: str | os.PathLike[str] | None = None,
         content_hash: bool = False,
     ) -> None:
-        self._column = _check_column_name(column)
+        self._column = check_column_name(column)
         if type(content_hash) is not bool:
             raise TypeError("content_hash must be a bool")
         self._content_hash = content_hash
@@ -352,7 +356,7 @@ class ParquetSource:
                 status = path.stat()
                 with pq.ParquetFile(path) as parquet:
                     schema = parquet.schema_arrow
-                    index = _column_index(schema, self._column)
+                    index = column_index(schema, self._column)
                     column_type = str(schema.field(index).type)
                     metadata = parquet.metadata
                     for group in range(metadata.num_row_groups):
@@ -418,10 +422,10 @@ class ParquetSource:
                     rows is not None and metadata.row_group(group).num_rows != rows
                 ):
                     raise ScaleSourceError(ScaleSourceErrorCode.PARTITION_CHANGED)
-                _column_index(parquet.schema_arrow, self._column)
+                column_index(parquet.schema_arrow, self._column)
                 reader = parquet.iter_batches(
                     batch_size=max_rows, row_groups=[group], columns=[self._column]
                 )
-                yield from _column_batches(reader, 0, max_rows)
+                yield from column_batches(reader, 0, max_rows)
         except (OSError, pa.ArrowException) as error:
             raise ScaleSourceError(ScaleSourceErrorCode.SOURCE_UNREADABLE) from error

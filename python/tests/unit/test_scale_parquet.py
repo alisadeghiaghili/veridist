@@ -634,6 +634,13 @@ class ReadingTests(MutableFixture):
         loose = Partition("a.parquet#1", 1, None, None, FingerprintLevel.NONE)
         self.assertEqual(read_values(source, loose), [3.0, 4.0, 5.0])
 
+    def test_a_file_name_that_contains_the_separator_is_read_through_its_partitions(self) -> None:
+        write_parquet(self.root / "c#d.parquet", {"x": np.arange(20.0, 24.0)}, row_group_size=2)
+        source, partitions = self.partitions()
+        hashed = [p for p in partitions if p.id.startswith("c#d.parquet#")]
+        self.assertEqual([p.id for p in hashed], ["c#d.parquet#0", "c#d.parquet#1"])
+        self.assertEqual([read_values(source, p) for p in hashed], [[20.0, 21.0], [22.0, 23.0]])
+
     def test_a_changed_row_group_is_refused(self) -> None:
         source, partitions = self.partitions()
         wrong_rows = Partition("a.parquet#0", 0, 4, None, FingerprintLevel.NONE)
