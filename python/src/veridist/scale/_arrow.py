@@ -47,6 +47,8 @@ from typing import Any, Final
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._sources import (
     DEFAULT_MAX_ROWS,
+    DowngradeReason,
+    ExecutorKind,
     FingerprintLevel,
     Partition,
     canonical_digest,
@@ -181,6 +183,17 @@ class ArrowSource:
 
         return (Partition(self.PARTITION_ID, 0, self._rows, None, FingerprintLevel.NONE),)
 
+    def parallel_obstacle(
+        self, kind: ExecutorKind, partitions: Sequence[Partition]
+    ) -> DowngradeReason | None:
+        """A reader or stream is read once; in-memory Arrow data stays in this process."""
+
+        if self.single_use:
+            return DowngradeReason.SINGLE_USE_SOURCE
+        if kind is ExecutorKind.PROCESSES:
+            return DowngradeReason.IN_MEMORY_DATA
+        return None
+
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS
     ) -> Iterator[Any]:
@@ -304,6 +317,9 @@ class ParquetSource:
     fingerprint level (see the module documentation).
     """
 
+    WORKER_MODULES: Final = ("pyarrow", "pyarrow.parquet")
+    """What a worker process imports before its first task."""
+
     __slots__ = ("_column", "_content_hash", "_files")
 
     def __init__(
@@ -398,6 +414,13 @@ class ParquetSource:
         except (OSError, pa.ArrowException) as error:
             raise ScaleSourceError(ScaleSourceErrorCode.SOURCE_UNREADABLE) from error
         return tuple(found)
+
+    def parallel_obstacle(
+        self, kind: ExecutorKind, partitions: Sequence[Partition]
+    ) -> DowngradeReason | None:
+        """None: workers open the files by path, and the source is a few strings to pickle."""
+
+        return None
 
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS

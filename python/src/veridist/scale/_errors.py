@@ -6,7 +6,8 @@ depend on the data or on a stored state are a :class:`ScaleStateError` with a
 closed code. Failures of a data source (a missing column, an unsupported type, a
 null, a missing optional dependency, a spool that is required, full, changed or
 unusable) are a :class:`ScaleSourceError` with its own closed code. Neither the message
-nor the attributes ever carry a data value or a path.
+nor the attributes ever carry a data value or a path. Both classes pickle, so a failure
+raised in a worker process reaches the parent as the same typed error.
 """
 
 from __future__ import annotations
@@ -36,6 +37,9 @@ class ScaleStateError(VeridistError, ValueError):
         resolved = ScaleStateErrorCode(code)
         super().__init__(resolved.value)
         self.code = resolved
+
+    def __reduce__(self) -> tuple[type[ScaleStateError], tuple[ScaleStateErrorCode]]:
+        return (type(self), (self.code,))
 
 
 class ScaleSourceErrorCode(StrEnum):
@@ -72,3 +76,8 @@ class ScaleSourceError(VeridistError, ValueError):
         super().__init__(resolved.value if hint is None else f"{resolved.value}: {hint}")
         self.code = resolved
         self.hint = hint
+
+    def __reduce__(
+        self,
+    ) -> tuple[type[ScaleSourceError], tuple[ScaleSourceErrorCode, str | None]]:
+        return (type(self), (self.code, self.hint))

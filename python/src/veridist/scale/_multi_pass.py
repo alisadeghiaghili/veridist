@@ -59,12 +59,14 @@ from veridist.families.weibull import (
     WeibullFitSuccess,
 )
 from veridist.scale._accumulator import ExactSum
+from veridist.scale._codec import decode_frame, encode_frame
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._evidence import (
     ProfileEvidence,
     gumbel_evaluation,
     weibull_evaluation,
 )
+from veridist.scale._executors import PassEngine
 from veridist.scale._kernels import float64_batch, logarithms, numpy_module
 from veridist.scale._pilot import GumbelPilotState, PilotState, WeibullPilotState
 from veridist.scale._planner import (
@@ -76,12 +78,21 @@ from veridist.scale._planner import (
     ProfileSums,
     solve_profile,
 )
-from veridist.scale._sources import Source, fold_partition
+from veridist.scale._sources import BatchReader, Partition, Source
+from veridist.scale._tasks import FoldJob
 
 Kernel = Callable[[Any], Any]
-"""Maps one validated float64 batch to its centred observations ``w`` (all at most zero)."""
+"""Maps one validated float64 batch to its centred observations ``w`` (all at most zero).
+
+A kernel that a process executor runs must be picklable, so the kernels of the fits are the
+small classes below and not closures."""
 
 SUMS_PER_CANDIDATE: Final = 3
+
+PROFILE_TAG: Final = "scale.profile_accumulator"
+PROFILE_SCHEMA_VERSION: Final = 1
+MAX_SERIALIZED_CANDIDATES: Final = 255 // SUMS_PER_CANDIDATE
+"""A frame holds at most 255 integers, three per candidate."""
 
 
 class ProfileAccumulator:
@@ -124,6 +135,42 @@ class ProfileAccumulator:
         )
         return merged
 
+    def to_bytes(self) -> bytes:
+        """Canonical bytes: tag, schema version, the row count and the exact sums in units.
+
+        ``ValueError`` for more than ``MAX_SERIALIZED_CANDIDATES`` candidates.
+        """
+
+        if len(self.sums) > MAX_SERIALIZED_CANDIDATES:
+            raise ValueError("too many candidates to serialize")
+        units = tuple(total.total_units() for candidate in self.sums for total in candidate)
+        return encode_frame(PROFILE_TAG, PROFILE_SCHEMA_VERSION, self.count, units)
+
+    @classmethod
+    def from_bytes(cls, data: object, candidates: int) -> ProfileAccumulator:
+        """Restore the accumulator of ``candidates`` candidates from :meth:`to_bytes` output.
+
+        ``ScaleStateError`` with ``STATE_BYTES_INVALID``, ``STATE_TAG_MISMATCH`` or
+        ``STATE_VERSION_UNSUPPORTED``, as for every state.
+        """
+
+        count, units = decode_frame(
+            data,
+            tag=PROFILE_TAG,
+            version=PROFILE_SCHEMA_VERSION,
+            integer_count=candidates * SUMS_PER_CANDIDATE,
+        )
+        restored = cls(candidates)
+        restored.count = count
+        restored.sums = tuple(
+            tuple(
+                ExactSum.from_units(count, value)
+                for value in units[start : start + SUMS_PER_CANDIDATE]
+            )
+            for start in range(0, len(units), SUMS_PER_CANDIDATE)
+        )
+        return restored
+
     def totals(self) -> list[ProfileSums]:
         """The sums of every candidate, each rounded once."""
 
@@ -143,21 +190,40 @@ class MultiPassResult:
     passes: ScalePassProvenance
 
 
-def _pilot_pass(
-    ledger: PassLedger, source: Source, state_type: type[PilotState], max_rows: int
-) -> PilotState:
-    """The first pass: the pilot state of the source, merged in canonical order."""
+@dataclass(frozen=True, slots=True)
+class ProfileJob:
+    """Fold a partition into the profile sums of every candidate of one pass."""
 
-    state = state_type.empty()
-    for partition in ledger.begin(PassRole.STATISTICS, 0):
-        state = state.merge(fold_partition(source, partition, state_type, max_rows=max_rows))
+    kernel: Kernel
+    parameters: tuple[float, ...]
+
+    def run(self, source: BatchReader, partition: Partition, max_rows: int) -> bytes:
+        part = ProfileAccumulator(len(self.parameters))
+        for batch in source.batches(partition, max_rows=max_rows):
+            part.update(self.kernel(float64_batch(batch)), self.parameters)
+        return part.to_bytes()
+
+    def restore(self, data: bytes) -> ProfileAccumulator:
+        return ProfileAccumulator.from_bytes(data, len(self.parameters))
+
+    def identity(self) -> ProfileAccumulator:
+        return ProfileAccumulator(len(self.parameters))
+
+
+def _pilot_pass(
+    ledger: PassLedger, source: Source, state_type: type[PilotState], engine: PassEngine
+) -> PilotState:
+    """The first pass: the pilot state of the source, merged as the canonical tree."""
+
+    partitions = tuple(ledger.begin(PassRole.STATISTICS, 0))
+    state: PilotState = engine.run(source, partitions, FoldJob(state_type))
     return state
 
 
 def _profile_pass(
     ledger: PassLedger,
     source: Source,
-    max_rows: int,
+    engine: PassEngine,
     kernel: Kernel,
     rows: int,
     request: PassRequest,
@@ -168,29 +234,28 @@ def _profile_pass(
     first pass read.
     """
 
-    total = ProfileAccumulator(len(request.parameters))
-    partitions = ledger.begin(
-        request.role,
-        len(request.parameters),
-        request.log_low,
-        request.log_high,
-        bracket_log_width=request.bracket_log_width,
+    partitions = tuple(
+        ledger.begin(
+            request.role,
+            len(request.parameters),
+            request.log_low,
+            request.log_high,
+            bracket_log_width=request.bracket_log_width,
+        )
     )
-    for partition in partitions:
-        part = ProfileAccumulator(len(request.parameters))
-        for batch in source.batches(partition, max_rows=max_rows):
-            part.update(kernel(float64_batch(batch)), request.parameters)
-        total = total.merge(part)
+    total: ProfileAccumulator = engine.run(
+        source, partitions, ProfileJob(kernel, request.parameters)
+    )
     if total.count != rows:
         raise ScaleSourceError(ScaleSourceErrorCode.PARTITION_CHANGED)
     return total.totals()
 
 
 def _evaluator(
-    ledger: PassLedger, source: Source, max_rows: int, kernel: Kernel, rows: int
+    ledger: PassLedger, source: Source, engine: PassEngine, kernel: Kernel, rows: int
 ) -> Callable[[PassRequest], list[ProfileSums]]:
     def evaluate(request: PassRequest) -> list[ProfileSums]:
-        return _profile_pass(ledger, source, max_rows, kernel, rows, request)
+        return _profile_pass(ledger, source, engine, kernel, rows, request)
 
     return evaluate
 
@@ -237,15 +302,25 @@ def _weibull_report(
     return WeibullFitSuccess(shape, scale, likelihood, count, count, 0, _evidence=evidence)
 
 
+@dataclass(frozen=True, slots=True)
+class WeibullKernel:
+    """``log x - c``: the logarithm of an observation centred on the largest one."""
+
+    peak_log: float
+
+    def __call__(self, batch: Any) -> Any:
+        return logarithms(batch) - self.peak_log
+
+
 def fit_weibull_min(
     source: Source,
     ledger: PassLedger,
-    max_rows: int,
+    engine: PassEngine,
 ) -> MultiPassResult:
     """The Weibull-minimum fit of ``source`` on exact data; see the module documentation."""
 
     np = numpy_module()
-    state = _pilot_pass(ledger, source, WeibullPilotState, max_rows)
+    state = _pilot_pass(ledger, source, WeibullPilotState, engine)
     statistics = state.finalize()
     count = statistics.count
 
@@ -264,11 +339,10 @@ def fit_weibull_min(
     sum_w = float(exact_w)
     mean_w = float(exact_w / count)
 
-    def kernel(batch: Any) -> Any:
-        return logarithms(batch) - peak_log
-
     solution = solve_profile(
-        _evaluator(ledger, source, max_rows, kernel, count), count=count, mean_w=mean_w
+        _evaluator(ledger, source, engine, WeibullKernel(peak_log), count),
+        count=count,
+        mean_w=mean_w,
     )
     if solution is ProfileRefusal.BOUNDARY:
         return done(_weibull_failure(WeibullFitFailureCode.BOUNDARY_SOLUTION, count))
@@ -328,14 +402,26 @@ def _gumbel_report(
     return GumbelFitSuccess(location, scale, likelihood, count, count, 0, _evidence=evidence)
 
 
+@dataclass(frozen=True, slots=True)
+class GumbelKernel:
+    """``x'_min - x'`` with ``x' = (x - center) / peak``: the standardised observation, flipped."""
+
+    minimum_standardised: float
+    center: float
+    peak: float
+
+    def __call__(self, batch: Any) -> Any:
+        return self.minimum_standardised - (batch - self.center) / self.peak
+
+
 def fit_gumbel_right(
     source: Source,
     ledger: PassLedger,
-    max_rows: int,
+    engine: PassEngine,
 ) -> MultiPassResult:
     """The right-Gumbel fit of ``source`` on exact data; see the module documentation."""
 
-    state = _pilot_pass(ledger, source, GumbelPilotState, max_rows)
+    state = _pilot_pass(ledger, source, GumbelPilotState, engine)
     statistics = state.finalize()
     count = statistics.count
 
@@ -358,11 +444,10 @@ def fit_gumbel_right(
     sum_w = float(exact_w)
     mean_w = float(exact_w / count)
 
-    def kernel(batch: Any) -> Any:
-        return minimum_standardised - (batch - center) / peak
-
     solution = solve_profile(
-        _evaluator(ledger, source, max_rows, kernel, count), count=count, mean_w=mean_w
+        _evaluator(ledger, source, engine, GumbelKernel(minimum_standardised, center, peak), count),
+        count=count,
+        mean_w=mean_w,
     )
     if solution is ProfileRefusal.BOUNDARY:
         return done(_gumbel_failure(GumbelFitFailureCode.BOUNDARY_SOLUTION, count))
@@ -372,8 +457,11 @@ def fit_gumbel_right(
 
 
 __all__ = [
+    "GumbelKernel",
     "MultiPassResult",
     "ProfileAccumulator",
+    "ProfileJob",
+    "WeibullKernel",
     "fit_gumbel_right",
     "fit_weibull_min",
 ]
