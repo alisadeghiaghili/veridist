@@ -729,6 +729,48 @@ class ScalePassProvenance:
 
 
 @dataclass(frozen=True, slots=True)
+class ScaleSpoolPartitionProvenance:
+    """What a local spool holds of one partition: its row count and content digest.
+
+    ``ordinal`` is the partition's place in the source's canonical order (the same
+    ordinal as its :class:`ScalePartitionProvenance`), ``rows`` the number of values
+    written and ``digest_sha256`` the SHA-256 of those values as little-endian binary64,
+    in the order they were written. The record holds no path and no data value.
+    """
+
+    ordinal: int
+    rows: int
+    digest_sha256: str
+
+    def __post_init__(self) -> None:
+        _require_non_negative_integer("ordinal", self.ordinal)
+        _require_non_negative_integer("rows", self.rows)
+        _require_sha256("spool digest", self.digest_sha256)
+
+
+@dataclass(frozen=True, slots=True)
+class ScaleSpoolProvenance:
+    """A fit used a local spool: the rows it holds and the digest of each partition.
+
+    ``row_count`` is the total of the partition rows and ``partitions`` has one record
+    per partition in canonical order. Every read of the spool was checked against these
+    digests.
+    """
+
+    row_count: int
+    partitions: tuple[ScaleSpoolPartitionProvenance, ...]
+
+    def __post_init__(self) -> None:
+        _require_non_negative_integer("row_count", self.row_count)
+        if type(self.partitions) is not tuple or any(
+            type(item) is not ScaleSpoolPartitionProvenance for item in self.partitions
+        ):
+            raise TypeError("partitions must be a tuple of spool partition provenance")
+        if self.row_count != sum(item.rows for item in self.partitions):
+            raise ValueError("row_count must equal the total of the partition rows")
+
+
+@dataclass(frozen=True, slots=True)
 class ScaleProvenance:
     """Closed facts about a fit computed from a scale source (provenance schema 2).
 
@@ -738,7 +780,9 @@ class ScaleProvenance:
     estimate was derived from (``None`` only when no state exists because the data
     were refused) and ``environment`` the numeric environment the logarithms were
     evaluated in. ``passes`` is the pass record of a multi-pass fit and ``None`` for a
-    fit that reads its source once. The record holds no data value.
+    fit that reads its source once. ``spool`` is the record of the local spool a fit
+    used and ``None`` for a fit that used none; its partitions are those of
+    ``partitions``. The record holds no data value and no path.
     """
 
     schema_version: str
@@ -750,6 +794,7 @@ class ScaleProvenance:
     state: ScaleStateProvenance | None
     environment: ScaleEnvironmentProvenance
     passes: ScalePassProvenance | None = None
+    spool: ScaleSpoolProvenance | None = None
 
     def __post_init__(self) -> None:
         if self.schema_version != SCALE_PROVENANCE_SCHEMA_VERSION:
@@ -772,6 +817,15 @@ class ScaleProvenance:
             raise TypeError("environment provenance must be typed")
         if self.passes is not None and type(self.passes) is not ScalePassProvenance:
             raise TypeError("pass provenance must be typed or None")
+        if self.spool is not None:
+            if type(self.spool) is not ScaleSpoolProvenance:
+                raise TypeError("spool provenance must be typed or None")
+            if tuple(item.ordinal for item in self.spool.partitions) != tuple(
+                item.ordinal for item in self.partitions
+            ):
+                raise ValueError("a spool holds exactly the partitions of the source")
+            if self.spool.row_count != self.row_count:
+                raise ValueError("the spool must hold exactly the rows the fit read")
 
 
 def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
@@ -824,6 +878,18 @@ def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
                 for item in record.passes.records
             ],
         }
+    if record.spool is not None:
+        value["spool"] = {
+            "partitions": [
+                {
+                    "digest_sha256": item.digest_sha256,
+                    "ordinal": item.ordinal,
+                    "rows": item.rows,
+                }
+                for item in record.spool.partitions
+            ],
+            "row_count": record.spool.row_count,
+        }
     return json.dumps(
         value,
         ensure_ascii=False,
@@ -856,6 +922,8 @@ __all__ = [
     "ScalePassProvenance",
     "ScalePassRecord",
     "ScaleProvenance",
+    "ScaleSpoolPartitionProvenance",
+    "ScaleSpoolProvenance",
     "ScaleStateProvenance",
     "SourceDisclosure",
     "SourceHash",

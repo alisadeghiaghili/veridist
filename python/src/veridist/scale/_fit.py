@@ -21,6 +21,20 @@ refused before that pass is read with ``PASS_BUDGET_EXCEEDED`` (both are
 either case. The pass count and the record of the passes are in the provenance
 (``scale.passes``). The first pass is the state of the provenance record.
 
+Spool. A multi-pass family reads its source several times, which a source that can be read
+only once (an Arrow reader or stream) does not allow and which is wasteful when a read is
+expensive. ``spool=SpoolPolicy(...)`` (:mod:`veridist.scale._spool`) is the explicit,
+opt-in remedy: the first pass writes the values it validated to a private local directory,
+the source is not read again, every later pass reads that copy and verifies it against its
+digests, and the directory is deleted when the fit ends, however it ends. Without a spool,
+a multi-pass family refuses a source that can be read only once before it reads anything
+(``SPOOL_REQUIRED``); it does not read the first pass and fail in the second. The result is
+bit for bit the one the same fit without a spool gives (and, for a source that can be
+read once, the one a re-readable copy of the same data gives). The provenance records the
+spool, its row count and the digest of each partition, and no path (``scale.spool``). A
+one-pass family reads its source once and ignores ``spool``: no directory or file is
+created for it.
+
 Argument errors (``TypeError`` or ``ValueError``, raised before any read) and every
 refusal of the value policy (:class:`~veridist.scale._errors.ScaleSourceError`) or of a
 state (:class:`~veridist.scale._errors.ScaleStateError`) are raised, never turned into a
@@ -50,6 +64,7 @@ from veridist.engine.provenance import (
     ScalePartitionProvenance,
     ScalePassProvenance,
     ScaleProvenance,
+    ScaleSpoolProvenance,
     ScaleStateProvenance,
 )
 from veridist.families.gamma import GammaFitFailure, GammaFitFailureCode
@@ -58,7 +73,12 @@ from veridist.families.registry import FAMILY_REGISTRY, FamilyId
 from veridist.families.results import FitFailure, FitSuccess
 from veridist.scale._arrow import ArrowSource, ParquetSource
 from veridist.scale._environment import numeric_environment_digest, numpy_version
-from veridist.scale._errors import ScaleStateError, ScaleStateErrorCode
+from veridist.scale._errors import (
+    ScaleSourceError,
+    ScaleSourceErrorCode,
+    ScaleStateError,
+    ScaleStateErrorCode,
+)
 from veridist.scale._estimates import (
     fit_exponential_state,
     fit_gamma_state,
@@ -81,7 +101,9 @@ from veridist.scale._sources import (
     Source,
     check_max_rows,
     fold_partition,
+    is_single_use,
 )
+from veridist.scale._spool import HINT_REQUIRED, Spool, SpoolPolicy
 from veridist.scale._state import MergeableState
 
 SOURCE_KINDS: Final[dict[type, str]] = {
@@ -187,6 +209,7 @@ def _provenance(
     state: MergeableState[Any] | PilotState | None,
     max_rows: int,
     passes: ScalePassProvenance | None = None,
+    spool: ScaleSpoolProvenance | None = None,
 ) -> ScaleProvenance:
     state_record = None
     if state is not None:
@@ -203,6 +226,7 @@ def _provenance(
         state_record,
         ScaleEnvironmentProvenance(numpy_version(), numeric_environment_digest()),
         passes,
+        spool,
     )
 
 
@@ -211,14 +235,27 @@ def _fit_multi_pass(
     family: FamilyId,
     max_rows: int,
     pass_budget: int,
+    spool: SpoolPolicy | None,
 ) -> ScaleFitResult:
-    """A multi-pass fit; the pass budget has been validated and the plan accepted it."""
+    """A multi-pass fit; the pass budget has been validated and the plan accepted it.
+
+    ``ScaleSourceError`` with ``SPOOL_REQUIRED``, before anything is read, for a source
+    that can be read only once when no spool is requested.
+    """
 
     bounds = plan_passes(pass_budget)
     partitions = source.partitions()
     ledger = PassLedger(partitions, pass_budget, bounds)
     run = _MULTI_PASS[family]
-    outcome = run(source, ledger, max_rows)
+    if spool is None:
+        if is_single_use(source):
+            raise ScaleSourceError(ScaleSourceErrorCode.SPOOL_REQUIRED, HINT_REQUIRED)
+        outcome = run(source, ledger, max_rows)
+        record = None
+    else:
+        with Spool(spool) as local:
+            outcome = run(local.source(source), ledger, max_rows)
+            record = local.provenance()
     return ScaleFitResult(
         outcome.fit,
         _provenance(
@@ -228,6 +265,7 @@ def _fit_multi_pass(
             outcome.state,
             max_rows,
             outcome.passes,
+            record,
         ),
     )
 
@@ -238,6 +276,7 @@ def fit(
     *,
     max_rows: int = DEFAULT_MAX_ROWS,
     pass_budget: int = PASS_BUDGET_DEFAULT,
+    spool: SpoolPolicy | None = None,
 ) -> ScaleFitResult:
     """Fit ``family`` to the exact observations of ``source``.
 
@@ -247,7 +286,10 @@ def fit(
     ``pass_budget`` the number of times the source may be read. A one-pass family reads
     ``source`` once, partition by partition, in the source's canonical order; a
     multi-pass family reads it as many times as its plan needs, at most ``pass_budget``.
-    See the module documentation for the result and the refusals.
+    ``spool`` is ``None`` or a :class:`~veridist.scale._spool.SpoolPolicy`: the explicit
+    request for a local spool, which a multi-pass family needs for a source that can be
+    read only once and a one-pass family ignores. See the module documentation for the
+    result and the refusals.
     """
 
     spec = FAMILY_REGISTRY.lookup(family)
@@ -255,9 +297,11 @@ def fit(
     budget = check_pass_budget(pass_budget)
     if not isinstance(source, Source):
         raise TypeError("source must provide partitions() and batches()")
+    if spool is not None and not isinstance(spool, SpoolPolicy):
+        raise TypeError("spool must be a SpoolPolicy or None")
     plan = _PLANS.get(spec.id)
     if plan is None:
-        return _fit_multi_pass(source, spec.id, bound, budget)
+        return _fit_multi_pass(source, spec.id, bound, budget, spool)
     partitions = source.partitions()
     try:
         state = _fold_partitions(source, partitions, plan.state_type, bound)
