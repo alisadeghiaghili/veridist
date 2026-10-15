@@ -55,6 +55,8 @@ def bits(result: ScaleFitResult) -> tuple[bytes, ...]:
 
 
 class ExecutorSweepTests(NoLeaksTestCase):
+    real_processes = True
+
     def setUp(self) -> None:
         super().setUp()
         directory = tempfile.TemporaryDirectory()

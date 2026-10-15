@@ -651,26 +651,32 @@ class PoolLifeTests(NoLeaksTestCase):
 
     def test_the_default_pool_of_each_kind(self) -> None:
         source = PartSource(parts(4))
-        for make, factory in (
-            (ThreadExecutor, "make_thread_pool"),
-            (ProcessExecutor, "make_process_pool"),
+        for make, factory, other in (
+            (ThreadExecutor, "make_thread_pool", "make_process_pool"),
+            (ProcessExecutor, "make_process_pool", "make_thread_pool"),
         ):
             fake = FakePool()
             with (
                 self.subTest(kind=make.__name__),
                 cores(16),
                 mock.patch.object(_executors, factory, return_value=fake) as patched,
+                mock.patch.object(
+                    _executors, other, side_effect=AssertionError("the other kind of pool")
+                ) as unwanted,
             ):
                 with PassEngine(make(2), 10) as engine:
                     engine.run(source, source.partitions(), JOB)
                 patched.assert_called_once_with(2, ("numpy",))
+                unwanted.assert_not_called()
                 self.assertEqual(fake.shutdowns, [(True, True)])
 
     def test_the_other_default_pool_is_not_made(self) -> None:
         source = PartSource(parts(4))
         with (
             cores(16),
-            mock.patch.object(_executors, "make_process_pool") as processes,
+            mock.patch.object(
+                _executors, "make_process_pool", side_effect=AssertionError("a process pool")
+            ) as processes,
             mock.patch.object(_executors, "make_thread_pool", return_value=FakePool()),
         ):
             with PassEngine(ThreadExecutor(2), 10) as engine:

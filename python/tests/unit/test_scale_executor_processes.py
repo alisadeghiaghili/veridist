@@ -47,6 +47,8 @@ def counting_factory() -> PoolRecorder:
 
 
 class ProcessTests(NoLeaksTestCase):
+    real_processes = True
+
     def setUp(self) -> None:
         super().setUp()
         directory = tempfile.TemporaryDirectory()

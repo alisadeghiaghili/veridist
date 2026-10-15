@@ -201,10 +201,28 @@ def parquet_dataset(
     return ParquetSource(root, "x")
 
 
+def refuse_process_pool(workers: int, modules: tuple[str, ...]) -> Any:
+    """Stands in for the process pool maker in tests that must not start worker processes."""
+
+    raise AssertionError("a process pool was made in a test that runs no worker processes")
+
+
 class NoLeaksTestCase(unittest.TestCase):
-    """A test case that fails if a thread or a child process outlives the test."""
+    """A test case that fails if a thread or a child process outlives the test.
+
+    It also refuses to make a real process pool, unless the class sets ``real_processes``.
+    A pool of the wrong kind (processes where threads were asked for) would otherwise leave a
+    test waiting for spawned workers that cannot take its tasks; the refusal fails that test
+    at once instead.
+    """
+
+    real_processes = False
 
     def setUp(self) -> None:
+        if not self.real_processes:
+            refusal = mock.patch("veridist.scale._executors.make_process_pool", refuse_process_pool)
+            refusal.start()
+            self.addCleanup(refusal.stop)
         self._children = {process.pid for process in multiprocessing.active_children()}
         self._threads = {thread.ident for thread in threading.enumerate()}
         self.addCleanup(self._assert_nothing_left_running)
