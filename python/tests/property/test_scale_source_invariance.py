@@ -9,13 +9,17 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import polars as pl
 import pyarrow as pa
 
 from tests.unit.scale_arrow_fixtures import StreamExporter, write_parquet
+from tests.unit.scale_frame_fixtures import connect, sql_path
 from tests.unit.scale_source_oracle import ListSource
 from veridist.scale._arrow import ArrowSource, ParquetSource
+from veridist.scale._duckdb import DuckDBSource
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._one_pass import ExponentialState, GammaState, LognormalState, NormalState
+from veridist.scale._polars import PolarsSource
 from veridist.scale._sources import NumpySource, Partition, fold, fold_partition
 
 SIZE = 120
@@ -155,6 +159,52 @@ class LayoutInvarianceTests(unittest.TestCase):
                 with self.subTest(input=name, max_rows=max_rows):
                     state = fold(ArrowSource(make(), "x"), NormalState, max_rows=max_rows)
                     self.assertEqual(state.to_bytes(), expected)
+
+    def check_scans(self, make: Callable[[str], Any]) -> None:
+        expected = self.reference(NormalState)
+        for name, root in self.layouts.items():
+            source = make(root.as_posix() + "/**/*.parquet")
+            for max_rows in MAX_ROWS:
+                with self.subTest(layout=name, max_rows=max_rows):
+                    state = fold(source, NormalState, max_rows=max_rows)
+                    self.assertEqual(state.to_bytes(), expected)
+
+    def test_a_polars_scan_agrees_with_every_parquet_layout(self) -> None:
+        self.check_scans(lambda pattern: PolarsSource(pl.scan_parquet(pattern), "x"))
+
+    def test_a_duckdb_scan_agrees_with_every_parquet_layout(self) -> None:
+        connection = connect()
+        self.check_scans(
+            lambda pattern: DuckDBSource(
+                connection.sql(f"select x from read_parquet({sql_path(Path(pattern))})"), "x"
+            )
+        )
+
+    def check_in_memory(self, sources: dict[str, Any]) -> None:
+        expected = self.reference(NormalState)
+        for kind, source in sources.items():
+            for max_rows in (1, 13, 100_000):
+                with self.subTest(source=kind, max_rows=max_rows):
+                    state = fold(source, NormalState, max_rows=max_rows)
+                    self.assertEqual(state.to_bytes(), expected)
+
+    def test_polars_frames_agree_however_they_are_chunked(self) -> None:
+        single = pl.DataFrame({"x": self.values})
+        pieces = [self.values[start : start + 17] for start in range(0, SIZE, 17)]
+        chunked = pl.concat([pl.DataFrame({"x": piece}) for piece in pieces], rechunk=False)
+        self.assertGreater(chunked.n_chunks(), 1)
+        self.check_in_memory(
+            {
+                "frame": PolarsSource(single, "x"),
+                "chunked frame": PolarsSource(chunked, "x"),
+                "lazy frame": PolarsSource(single.lazy(), "x"),
+                "chunked lazy frame": PolarsSource(chunked.lazy(), "x"),
+            }
+        )
+
+    def test_a_duckdb_relation_agrees_with_the_array(self) -> None:
+        relation = connect().from_arrow(pa.table({"x": self.values}))
+        self.check_in_memory({"relation": DuckDBSource(relation, "x")})
 
     def test_stored_types_that_widen_exactly_give_the_same_state_as_float64(self) -> None:
         rng = np.random.default_rng(3)
