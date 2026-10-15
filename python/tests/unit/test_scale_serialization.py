@@ -25,6 +25,7 @@ from veridist.scale._one_pass import (
     LognormalState,
     NormalState,
 )
+from veridist.scale._squares import MAX_SQUARE_UNITS
 from veridist.statistics.log_likelihood import MAX_OBSERVATION_COUNT
 
 TAG = b"scale.exact_sum"
@@ -65,14 +66,14 @@ class CodecLayoutTests(unittest.TestCase):
             NormalState.empty().to_bytes().hex(),
             "56445353"  # magic
             "0c7363616c652e6e6f726d616c"  # tag length and tag "scale.normal"
-            "0001"  # schema version
+            "0002"  # schema version
             "0000000000000000"  # observation count
             "02"  # two integers
             "00"
             "00000000"  # sum x: sign and empty magnitude
             "00"
             "00000000"  # sum x*x: sign and empty magnitude
-            "c1ee2f84cecd965ef6425f9716fd1cc5c85ef1617d8cf099f75f546d5dbaf4ad",  # SHA-256
+            "ed0ad6a770b206da153cdeb393db0561d15789f4a00518d24b1805558ed1b53f",  # SHA-256
         )
 
     def test_negative_sum_uses_the_sign_byte_and_a_positive_magnitude(self) -> None:
@@ -302,6 +303,7 @@ class RejectionTests(unittest.TestCase):
 
     def test_family_state_bounds_are_checked_per_sum(self) -> None:
         maximum = acc.MAX_ELEMENT_UNITS
+        square = MAX_SQUARE_UNITS
 
         def pair(count: int, first: int, second: int) -> bytes:
             def part(value: int) -> tuple[int, bytes]:
@@ -310,16 +312,38 @@ class RejectionTests(unittest.TestCase):
                 )
 
             return seal(
-                frame_body(tag=b"scale.normal", count=count, integers=(part(first), part(second)))
+                frame_body(
+                    tag=b"scale.normal",
+                    version=2,
+                    count=count,
+                    integers=(part(first), part(second)),
+                )
             )
 
-        self.assertEqual(NormalState.from_bytes(pair(2, 2 * maximum, -2 * maximum)).count, 2)
-        for first, second in ((2 * maximum + 1, 0), (0, -2 * maximum - 1)):
+        self.assertEqual(NormalState.from_bytes(pair(2, 2 * maximum, -2 * square)).count, 2)
+        for first, second in ((2 * maximum + 1, 0), (0, -2 * square - 1), (0, 2 * square + 1)):
             with self.subTest(first=first, second=second):
                 self.assertEqual(
                     code_of(pair(2, first, second), NormalState.from_bytes),
                     ScaleStateErrorCode.STATE_BYTES_INVALID,
                 )
+
+    def test_states_of_the_previous_schema_are_refused_not_misread(self) -> None:
+        for cls, tag in ((NormalState, b"scale.normal"), (LognormalState, b"scale.lognormal")):
+            self.assertEqual(cls.SCHEMA_VERSION, 2)
+            old = seal(
+                frame_body(tag=tag, version=1, count=1, integers=((0, b""), (0, b"1")))
+            )
+            with self.subTest(state=cls.__name__):
+                self.assertEqual(
+                    code_of(old, cls.from_bytes), ScaleStateErrorCode.STATE_VERSION_UNSUPPORTED
+                )
+                current = seal(
+                    frame_body(tag=tag, version=2, count=1, integers=((0, b""), (0, b"1")))
+                )
+                self.assertEqual(cls.from_bytes(current).sums, (7, 49))
+        for cls in (ExponentialState, GammaState):
+            self.assertEqual(cls.SCHEMA_VERSION, 1)
 
     def test_error_text_carries_no_content(self) -> None:
         with self.assertRaises(ScaleStateError) as caught:

@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import unittest
 import zlib
+from fractions import Fraction
 
 import numpy as np
 
@@ -108,6 +109,12 @@ class AccumulatorInvarianceTests(unittest.TestCase):
             self.assertEqual(observable(reverse), reference)
 
 
+def exact_squares(values: np.ndarray) -> float:
+    """The exact sum of the true squares, rounded once, by rational arithmetic."""
+
+    return float(sum((Fraction(float(v)) ** 2 for v in values), Fraction(0)))
+
+
 class StateAlgebraTests(unittest.TestCase):
     def test_identity_commutativity_associativity_partition_and_permutation(self) -> None:
         for cls in STATES:
@@ -144,7 +151,7 @@ class StateAlgebraTests(unittest.TestCase):
             with self.subTest(seed=seed):
                 normal = NormalState.empty().update(plain).finalize()
                 self.assertEqual(normal.sum_x.rounded, math.fsum(plain.tolist()))
-                self.assertEqual(normal.sum_x_squared.rounded, math.fsum((plain * plain).tolist()))
+                self.assertEqual(normal.sum_x_squared.rounded, exact_squares(plain))
                 self.assertEqual(
                     ExponentialState.empty().update(exponential).finalize().total_time.rounded,
                     math.fsum(exponential.tolist()),
@@ -154,9 +161,7 @@ class StateAlgebraTests(unittest.TestCase):
                 self.assertEqual(gamma.sum_log_x.rounded, math.fsum(logs.tolist()))
                 lognormal = LognormalState.empty().update(positive).finalize()
                 self.assertEqual(lognormal.sum_log_x.rounded, math.fsum(logs.tolist()))
-                self.assertEqual(
-                    lognormal.sum_log_x_squared.rounded, math.fsum((logs * logs).tolist())
-                )
+                self.assertEqual(lognormal.sum_log_x_squared.rounded, exact_squares(logs))
 
 
 if __name__ == "__main__":

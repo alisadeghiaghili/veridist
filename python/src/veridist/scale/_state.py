@@ -71,9 +71,10 @@ class ExactSumsState(ABC, Generic[ResultT_co]):
     """An observation count and one exact sum per term, in units of ``2**-1074``.
 
     A subclass names its tag, schema version and number of sums, and supplies
-    :meth:`_terms` (the per-element float64 term arrays of a validated batch) and
-    :meth:`finalize`. Every sum is the exact sum of binary64 terms, so a state
-    depends on the multiset of its terms only.
+    :meth:`_batch_sums` (the exact integer sums of one validated batch, one per sum)
+    and :meth:`finalize`. Every sum is exact, so a state depends on the multiset of
+    its observations only. The unit of a sum is ``2**-1074`` unless the subclass
+    declares otherwise through :meth:`element_bounds` and its own :meth:`finalize`.
     """
 
     STATE_TAG: ClassVar[str]
@@ -90,11 +91,10 @@ class ExactSumsState(ABC, Generic[ResultT_co]):
             raise ValueError("count is outside the unsigned-64 observation bound")
         if type(self.sums) is not tuple or len(self.sums) != self.SUM_COUNT:
             raise ValueError("sums must be a tuple with one entry per sum")
-        bound = self.count * MAX_ELEMENT_UNITS
-        for value in self.sums:
+        for value, element_bound in zip(self.sums, self.element_bounds(), strict=True):
             if type(value) is not int:
                 raise TypeError("each sum must be a built-in integer")
-            if abs(value) > bound:
+            if abs(value) > self.count * element_bound:
                 raise ValueError("a sum exceeds the bound implied by the count")
 
     @classmethod
@@ -103,10 +103,16 @@ class ExactSumsState(ABC, Generic[ResultT_co]):
 
         return cls(0, (0,) * cls.SUM_COUNT)
 
+    @classmethod
+    def element_bounds(cls) -> tuple[int, ...]:
+        """The largest absolute value one observation adds to each sum, in that sum's unit."""
+
+        return (MAX_ELEMENT_UNITS,) * cls.SUM_COUNT
+
     @staticmethod
     @abstractmethod
-    def _terms(values: Any) -> tuple[Any, ...]:
-        """The float64 term arrays of a finite batch, one per sum, after domain checks."""
+    def _batch_sums(values: Any) -> tuple[int, ...]:
+        """The exact integer sums of a finite batch, one per sum, after domain checks."""
 
     @abstractmethod
     def finalize(self) -> ResultT_co:
@@ -117,8 +123,8 @@ class ExactSumsState(ABC, Generic[ResultT_co]):
 
         ``TypeError`` or ``ValueError`` for a wrong container, dtype or shape;
         ``ScaleStateError`` for a non-finite value, a value outside the family's
-        support, a non-finite derived term or a count beyond ``2**64 - 1``. A
-        refused batch leaves nothing changed (states are immutable).
+        support or a count beyond ``2**64 - 1``. A refused batch leaves nothing
+        changed (states are immutable).
         """
 
         values = float64_batch(batch)
@@ -126,10 +132,8 @@ class ExactSumsState(ABC, Generic[ResultT_co]):
         if self.count > MAX_OBSERVATION_COUNT - size:
             raise ScaleStateError(ScaleStateErrorCode.OBSERVATION_LIMIT_EXCEEDED)
         require_finite(values)
-        terms = self._terms(values)
-        sums = tuple(
-            total + batch_units(term) for total, term in zip(self.sums, terms, strict=True)
-        )
+        added = self._batch_sums(values)
+        sums = tuple(total + units for total, units in zip(self.sums, added, strict=True))
         return type(self)(self.count + size, sums)
 
     def merge(self, other: Self) -> Self:

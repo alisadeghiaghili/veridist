@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import pickle
 import unittest
 from dataclasses import FrozenInstanceError, dataclass
@@ -15,6 +16,7 @@ from tests.unit.scale_oracle import (
     STATES,
     batch,
     exact_fraction,
+    exact_square_units,
     expected_sums,
     frame_body,
     seal,
@@ -70,7 +72,6 @@ class ErrorTypeTests(unittest.TestCase):
             {
                 "NON_FINITE_VALUE",
                 "VALUE_OUT_OF_SUPPORT",
-                "DERIVED_VALUE_NOT_FINITE",
                 "OBSERVATION_LIMIT_EXCEEDED",
                 "TOTAL_NOT_REPRESENTABLE",
                 "INCOMPATIBLE_STATE",
@@ -93,9 +94,9 @@ class IdentityAndTypingTests(unittest.TestCase):
     def test_tags_versions_and_sum_counts(self) -> None:
         expected = {
             ExponentialState: ("scale.exponential", 1, 1),
-            NormalState: ("scale.normal", 1, 2),
+            NormalState: ("scale.normal", 2, 2),
             GammaState: ("scale.gamma", 1, 2),
-            LognormalState: ("scale.lognormal", 1, 2),
+            LognormalState: ("scale.lognormal", 2, 2),
         }
         for cls, (tag, version, sums) in expected.items():
             with self.subTest(state=cls.__name__):
@@ -228,19 +229,16 @@ class UpdateRefusalTests(unittest.TestCase):
             state = cls.empty().update(np.array([5e-324, MAX_FLOAT, 1.0]))
             self.assertEqual(state.count, 3)
 
-    def test_overflowing_square_is_a_derived_failure(self) -> None:
-        refused(
-            self,
-            CODES.DERIVED_VALUE_NOT_FINITE,
-            lambda: NormalState.empty().update(np.array([1.0, 1.5e154])),
-        )
-        refused(
-            self,
-            CODES.DERIVED_VALUE_NOT_FINITE,
-            lambda: NormalState.empty().update(np.array([-MAX_FLOAT])),
-        )
-        state = NormalState.empty().update(np.array([1e154, -1e154]))
-        self.assertEqual(state.count, 2)
+    def test_a_square_beyond_the_float_range_is_summed_exactly_not_refused(self) -> None:
+        for values in (
+            np.array([1.0, 1.5e154]),
+            np.array([-MAX_FLOAT]),
+            np.array([1e154, -1e154]),
+            np.array([5e-324, 1e-200]),
+        ):
+            state = NormalState.empty().update(values)
+            self.assertEqual(state.sums[1], exact_square_units(values.tolist()))
+            self.assertEqual(state.count, len(values))
 
     def test_a_refused_update_leaves_the_state_unchanged(self) -> None:
         rng = np.random.default_rng(4)
@@ -395,17 +393,41 @@ class FinalizeTests(unittest.TestCase):
         self.assertEqual(result.centered_sum_of_squares.exact, Fraction(14, 3))
         self.assertEqual(result.centered_sum_of_squares.rounded, 14 / 3)
 
-    def test_normal_variance_numerator_is_exact_for_the_rounded_squares(self) -> None:
-        # Data far from zero relative to their spread. The per-element squares are
-        # rounded binary64 products; the numerator is exact arithmetic on their exact sum.
+    def test_normal_variance_numerator_is_exact(self) -> None:
+        # Data far from zero relative to their spread: the squares are summed exactly, so
+        # the centered sum is the exact one, 8 * 5.25 for eight consecutive integers.
         values = 1.0e9 + np.arange(0.0, 8.0)
         result = NormalState.empty().update(values).finalize()
         assert result.centered_sum_of_squares is not None
-        squares = values * values
-        total = exact_fraction(values.tolist())
-        expected = exact_fraction(squares.tolist()) - total * total / 8
-        self.assertEqual(result.centered_sum_of_squares.exact, expected)
-        self.assertEqual(result.centered_sum_of_squares.rounded, float(expected))
+        self.assertEqual(result.centered_sum_of_squares.exact, Fraction(42))
+        self.assertEqual(result.centered_sum_of_squares.rounded, 42.0)
+        self.assertEqual(
+            result.sum_x_squared.exact,
+            sum((Fraction(float(v)) ** 2 for v in values), Fraction(0)),
+        )
+
+    def test_the_centered_sum_is_zero_exactly_when_all_values_are_equal(self) -> None:
+        for value in (0.1, 1e9 + 0.3, 1e200, 5e-300, 123456.789):
+            same = NormalState.empty().update(np.full(7, value)).finalize()
+            assert same.centered_sum_of_squares is not None
+            self.assertEqual(same.centered_sum_of_squares.exact, 0, value)
+            bumped = np.array([value] * 6 + [np.nextafter(value, 2 * value + 1)])
+            other = NormalState.empty().update(bumped)
+            statistics = other.finalize()
+            assert statistics.centered_sum_of_squares is not None
+            self.assertGreater(statistics.centered_sum_of_squares.exact, 0)
+
+    def test_a_sum_of_squares_beyond_the_float_range_saturates_but_stays_exact(self) -> None:
+        values = np.array([1.2e154, 1.2e154])
+        statistics = NormalState.empty().update(values).finalize()
+        self.assertEqual(statistics.sum_x_squared.exact, 2 * Fraction(1.2e154) ** 2)
+        self.assertEqual(statistics.sum_x_squared.rounded, math.inf)
+        assert statistics.centered_sum_of_squares is not None
+        self.assertEqual(statistics.centered_sum_of_squares.exact, 0)
+        huge = NormalState.empty().update(np.array([1e200, -1e200])).finalize()
+        assert huge.centered_sum_of_squares is not None
+        self.assertEqual(huge.centered_sum_of_squares.rounded, math.inf)
+        self.assertEqual(huge.centered_sum_of_squares.exact, 2 * Fraction(1e200) ** 2)
 
     def test_sums_match_independent_exact_oracles(self) -> None:
         rng = np.random.default_rng(5)
@@ -429,7 +451,7 @@ class FinalizeTests(unittest.TestCase):
         self.assertEqual(gamma.mean_log_x.exact, total_logs / 50)
         self.assertEqual(gamma.mean_log_x.rounded, float(total_logs / 50))
         lognormal = LognormalState.empty().update(values).finalize()
-        squares = exact_fraction((logs * logs).tolist())
+        squares = sum((Fraction(float(v)) ** 2 for v in logs), Fraction(0))
         self.assertEqual(lognormal.sum_log_x.exact, total_logs)
         self.assertEqual(lognormal.sum_log_x_squared.exact, squares)
         assert lognormal.mean_log_x is not None
@@ -444,7 +466,7 @@ class FinalizeTests(unittest.TestCase):
         refused(self, CODES.TOTAL_NOT_REPRESENTABLE, state.finalize)
         self.assertEqual(state.sums, (2 * MAX_ELEMENT_UNITS,))
         self.assertEqual(state.update(np.array([0.0])).count, 3)
-        normal = NormalState.empty().update(np.array([1.2e154, 1.2e154]))
+        normal = NormalState.empty().update(np.array([MAX_FLOAT, MAX_FLOAT]))
         refused(self, CODES.TOTAL_NOT_REPRESENTABLE, normal.finalize)
 
     def test_exact_statistic_rounds_once_and_refuses_overflow(self) -> None:
@@ -461,6 +483,17 @@ class FinalizeTests(unittest.TestCase):
         self.assertEqual(
             ExactStatistic.of(Fraction(MAX_FLOAT).limit_denominator(1)).rounded, MAX_FLOAT
         )
+
+
+class SaturatingStatisticTests(unittest.TestCase):
+    def test_in_range_values_round_once_like_the_plain_constructor(self) -> None:
+        for value in (Fraction(1, 3), Fraction(-1, 3), Fraction(0), Fraction(10**300)):
+            self.assertEqual(ExactStatistic.saturating(value), ExactStatistic.of(value))
+
+    def test_values_beyond_the_range_saturate_with_their_sign(self) -> None:
+        huge = Fraction(10**400)
+        self.assertEqual(ExactStatistic.saturating(huge), ExactStatistic(huge, math.inf))
+        self.assertEqual(ExactStatistic.saturating(-huge), ExactStatistic(-huge, -math.inf))
 
 
 class KernelTests(unittest.TestCase):
@@ -492,9 +525,6 @@ class KernelTests(unittest.TestCase):
         rng = np.random.default_rng(7)
         buffer = np.exp2(rng.uniform(-300, 300, 700)) * rng.uniform(0.5, 2.0, 700)
         reference_log = np.array([_kernels.logarithms(buffer[i : i + 1])[0] for i in range(700)])
-        reference_square = np.array(
-            [_kernels.squares(buffer[i : i + 1] * 1e-100)[0] for i in range(700)]
-        )
         for offset in (0, 1, 2, 3, 5, 7):
             for length in (1, 2, 3, 4, 7, 8, 9, 15, 16, 17, 31, 33, 100, 693):
                 window = slice(offset, offset + length)
@@ -502,27 +532,11 @@ class KernelTests(unittest.TestCase):
                     np.testing.assert_array_equal(
                         _kernels.logarithms(buffer[window]), reference_log[window]
                     )
-                    np.testing.assert_array_equal(
-                        _kernels.squares(buffer[window] * 1e-100), reference_square[window]
-                    )
 
-    def test_logarithm_is_numpy_log_and_square_is_the_plain_product(self) -> None:
+    def test_logarithm_is_numpy_log(self) -> None:
         values = np.array([1e-300, 0.1, 1.0, 3.0, 1e300])
         np.testing.assert_array_equal(_kernels.logarithms(values), np.log(values))
-        scaled = values * 1e-150
-        np.testing.assert_array_equal(_kernels.squares(scaled), scaled * scaled)
-        self.assertEqual(float(_kernels.squares(np.array([3.0]))[0]), 9.0)
         self.assertEqual(float(_kernels.logarithms(np.array([1.0]))[0]), 0.0)
-
-    def test_squares_refuses_overflow_without_a_numpy_warning(self) -> None:
-        import warnings
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("error")
-            refused(
-                self, CODES.DERIVED_VALUE_NOT_FINITE, lambda: _kernels.squares(np.array([1e200]))
-            )
-            self.assertEqual(float(_kernels.squares(np.array([5e-324]))[0]), 0.0)
 
 
 if __name__ == "__main__":
