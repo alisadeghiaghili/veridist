@@ -17,6 +17,8 @@ from veridist.engine.provenance import (
     ExecutionReport,
     ScaleEnvironmentProvenance,
     ScalePartitionProvenance,
+    ScalePassProvenance,
+    ScalePassRecord,
     ScaleProvenance,
     ScaleStateProvenance,
     scale_provenance_to_canonical_json_bytes,
@@ -239,6 +241,145 @@ class CanonicalJsonTests(unittest.TestCase):
     def test_only_a_scale_record_is_encoded(self) -> None:
         with self.assertRaises(TypeError):
             scale_provenance_to_canonical_json_bytes(provenance())  # type: ignore[arg-type]
+
+
+class PassRecordTests(unittest.TestCase):
+    def test_a_valid_record_keeps_its_fields(self) -> None:
+        self.assertEqual(
+            (lambda r: (r.role, r.points, r.log_low, r.log_high))(
+                ScalePassRecord("grid", 8, -8.0, 8.0)
+            ),
+            ("grid", 8, -8.0, 8.0),
+        )
+        self.assertEqual(ScalePassRecord("statistics", 0, None, None).points, 0)
+        self.assertEqual(ScalePassRecord("iteration", 1, None, None).role, "iteration")
+        self.assertEqual(ScalePassRecord("expansion", 8, 8.5, 12.0).log_high, 12.0)
+        self.assertEqual(ScalePassRecord("grid", 1, 2.0, 2.0).log_low, 2.0)
+
+    def test_the_role_is_one_of_four(self) -> None:
+        for bad in ("", "Grid", "newton", "report"):
+            with self.subTest(role=bad), self.assertRaises(ValueError):
+                ScalePassRecord(bad, 1, None, None)
+
+    def test_points_are_counts(self) -> None:
+        for bad in (-1, True, 1.0):
+            with self.subTest(points=bad), self.assertRaises((TypeError, ValueError)):
+                ScalePassRecord("iteration", bad, None, None)  # type: ignore[arg-type]
+
+    def test_only_the_statistics_pass_has_no_points(self) -> None:
+        with self.assertRaises(ValueError):
+            ScalePassRecord("iteration", 0, None, None)
+        with self.assertRaises(ValueError):
+            ScalePassRecord("statistics", 1, None, None)
+
+    def test_the_logarithmic_range_belongs_to_grids_and_expansions(self) -> None:
+        for role in ("statistics", "iteration"):
+            with self.subTest(role=role), self.assertRaises(ValueError):
+                ScalePassRecord(role, 0 if role == "statistics" else 1, -1.0, 1.0)
+        for role in ("grid", "expansion"):
+            with self.subTest(role=role), self.assertRaises(ValueError):
+                ScalePassRecord(role, 8, None, None)
+
+    def test_the_range_is_finite_floats_in_order_and_given_together(self) -> None:
+        for low, high in ((float("nan"), 1.0), (0.0, float("inf")), (-float("inf"), 0.0)):
+            with self.subTest(low=low, high=high), self.assertRaises(TypeError):
+                ScalePassRecord("grid", 8, low, high)
+        for low, high in ((1, 2.0), (1.0, 2)):
+            with self.subTest(low=low, high=high), self.assertRaises(TypeError):
+                ScalePassRecord("grid", 8, low, high)  # type: ignore[arg-type]
+        with self.assertRaises(ValueError):
+            ScalePassRecord("grid", 8, 2.0, 1.0)
+        with self.assertRaises(ValueError):
+            ScalePassRecord("grid", 8, 1.0, None)
+        with self.assertRaises(ValueError):
+            ScalePassRecord("grid", 8, None, 1.0)
+
+
+def passes(**changes: Any) -> ScalePassProvenance:
+    base = ScalePassProvenance(
+        8,
+        3,
+        17,
+        3,
+        (
+            ScalePassRecord("statistics", 0, None, None),
+            ScalePassRecord("grid", 8, -8.0, 8.0),
+            ScalePassRecord("iteration", 1, None, None),
+        ),
+    )
+    return replace(base, **changes)
+
+
+class PassProvenanceTests(unittest.TestCase):
+    def test_a_valid_record_keeps_its_fields(self) -> None:
+        item = passes()
+        self.assertEqual(
+            (item.pass_budget, item.minimum_passes, item.maximum_passes, item.pass_count),
+            (8, 3, 17, 3),
+        )
+        self.assertEqual(len(item.records), 3)
+
+    def test_counts_are_positive_integers(self) -> None:
+        for name in ("pass_budget", "minimum_passes", "maximum_passes"):
+            for bad in (0, -1, True, 2.0):
+                with self.subTest(name=name, value=bad), self.assertRaises((TypeError, ValueError)):
+                    passes(**{name: bad})
+        for bad in (-1, True, 3.0):
+            with self.subTest(pass_count=bad), self.assertRaises((TypeError, ValueError)):
+                passes(pass_count=bad)
+
+    def test_the_bounds_and_the_count_are_consistent(self) -> None:
+        with self.assertRaises(ValueError):
+            passes(minimum_passes=18)
+        with self.assertRaises(ValueError):
+            passes(pass_budget=2)
+        with self.assertRaises(ValueError):
+            passes(pass_count=2)
+        self.assertEqual(passes(pass_budget=3).pass_budget, 3)
+        self.assertEqual(passes(minimum_passes=3, maximum_passes=3).maximum_passes, 3)
+        with self.assertRaises(ValueError):
+            passes(maximum_passes=2, minimum_passes=2)
+        one = ScalePassRecord("statistics", 0, None, None)
+        self.assertEqual(passes(pass_budget=3, records=(one,) * 3).pass_count, 3)
+
+    def test_the_count_cannot_exceed_the_budget_or_the_plan_maximum(self) -> None:
+        record = ScalePassRecord("iteration", 1, None, None)
+        with self.assertRaises(ValueError):
+            passes(pass_budget=3, records=(record,) * 4, pass_count=4)
+        with self.assertRaises(ValueError):
+            passes(maximum_passes=3, pass_budget=9, records=(record,) * 4, pass_count=4)
+
+    def test_records_are_a_tuple_of_pass_records(self) -> None:
+        with self.assertRaises(TypeError):
+            passes(records=list(passes().records))
+        with self.assertRaises(TypeError):
+            passes(records=("grid", "grid", "grid"))
+
+    def test_the_scale_record_takes_none_or_a_typed_pass_record(self) -> None:
+        self.assertIsNone(record().passes)
+        self.assertEqual(record(passes=passes()).passes, passes())
+        with self.assertRaises(TypeError):
+            record(passes="three passes")
+
+    def test_the_canonical_bytes_without_passes_do_not_change(self) -> None:
+        self.assertNotIn(b"passes", scale_provenance_to_canonical_json_bytes(record()))
+
+    def test_the_canonical_bytes_with_passes_are_exact(self) -> None:
+        data = scale_provenance_to_canonical_json_bytes(record(passes=passes()))
+        expected = (
+            '"passes":{"maximum_passes":17,"minimum_passes":3,"pass_budget":8,"pass_count":3,'
+            '"records":['
+            '{"log_high":null,"log_low":null,"points":0,"role":"statistics"},'
+            '{"log_high":8.0,"log_low":-8.0,"points":8,"role":"grid"},'
+            '{"log_high":null,"log_low":null,"points":1,"role":"iteration"}]},'
+        )
+        self.assertIn(expected.encode(), data)
+        value = json.loads(data)
+        self.assertEqual(value["passes"]["pass_count"], 3)
+        self.assertEqual(list(value), sorted(value))
+        self.assertNotEqual(data, scale_provenance_to_canonical_json_bytes(record()))
+        changed = scale_provenance_to_canonical_json_bytes(record(passes=passes(pass_budget=9)))
+        self.assertNotEqual(data, changed)
 
 
 if __name__ == "__main__":

@@ -122,10 +122,14 @@ class ArgumentTests(unittest.TestCase):
             with self.subTest(family=bad), self.assertRaises(TypeError):
                 fit(self.source, bad)  # type: ignore[arg-type]
 
-    def test_families_without_a_one_pass_fit_are_refused_before_any_read(self) -> None:
-        for family in (FamilyId.WEIBULL_MIN, FamilyId.GUMBEL_RIGHT, "weibull_min"):
-            with self.subTest(family=family), self.assertRaises(ValueError):
-                fit(self.source, family)
+    def test_the_pass_budget_is_validated_before_any_read(self) -> None:
+        for family in ("normal", "weibull_min", "gumbel_right"):
+            for bad in (0, -1):
+                with self.subTest(family=family, pass_budget=bad), self.assertRaises(ValueError):
+                    fit(self.source, family, pass_budget=bad)
+            for bad in (True, 8.0, "8", None):
+                with self.subTest(family=family, pass_budget=bad), self.assertRaises(TypeError):
+                    fit(self.source, family, pass_budget=bad)  # type: ignore[arg-type]
         self.assertEqual(self.source.partition_calls, 0)
 
     def test_the_batch_cap_is_validated_before_any_read(self) -> None:
@@ -141,6 +145,11 @@ class ArgumentTests(unittest.TestCase):
         for bad in (object(), [1.0, 2.0], np.array([1.0, 2.0]), None):
             with self.subTest(source=type(bad).__name__), self.assertRaises(TypeError):
                 fit(bad, "normal")  # type: ignore[arg-type]
+
+    def test_the_default_pass_budget_is_eight(self) -> None:
+        import inspect
+
+        self.assertEqual(inspect.signature(fit).parameters["pass_budget"].default, 8)
 
     def test_the_default_cap_is_the_source_default(self) -> None:
         result = fit(self.source, "normal")

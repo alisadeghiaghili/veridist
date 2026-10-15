@@ -6,6 +6,7 @@ import json
 import re
 from dataclasses import dataclass
 from enum import StrEnum
+from math import isfinite
 from typing import TypeAlias, cast
 
 from veridist import __version__
@@ -34,6 +35,7 @@ _SAFE_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,127}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _FINGERPRINT = re.compile(r"sha256:[0-9a-f]{64}")
 _FINGERPRINT_LEVELS = frozenset({"none", "metadata", "content"})
+_SCALE_PASS_ROLES = frozenset({"statistics", "grid", "expansion", "iteration"})
 _MAX_SEED = 2**128 - 1
 
 
@@ -657,6 +659,76 @@ class ScaleEnvironmentProvenance:
 
 
 @dataclass(frozen=True, slots=True)
+class ScalePassRecord:
+    """One read of the source by a multi-pass fit.
+
+    ``role`` is ``"statistics"`` (the first pass: the count, the exact sums and the
+    extremes), ``"grid"`` (the initial grid of candidate parameter values),
+    ``"expansion"`` (a further grid outward) or ``"iteration"`` (one Newton step, whose
+    last one also carries the report). ``points`` is the number of candidate parameter
+    values the pass evaluated (zero for ``"statistics"``). ``log_low`` and ``log_high``
+    are the smallest and largest natural logarithm of a candidate of a grid or an
+    expansion, fixed by the plan and not by the data, and ``None`` for the other roles.
+    """
+
+    role: str
+    points: int
+    log_low: float | None
+    log_high: float | None
+
+    def __post_init__(self) -> None:
+        if self.role not in _SCALE_PASS_ROLES:
+            raise ValueError("pass role must be statistics, grid, expansion or iteration")
+        _require_non_negative_integer("points", self.points)
+        for name, value in (("log_low", self.log_low), ("log_high", self.log_high)):
+            if value is not None and (type(value) is not float or not isfinite(value)):
+                raise TypeError(f"{name} must be a finite float or None")
+        if (self.log_low is None) != (self.log_high is None):
+            raise ValueError("log_low and log_high are given together or not at all")
+        if self.log_low is not None and self.log_high is not None and self.log_low > self.log_high:
+            raise ValueError("log_low must not exceed log_high")
+        if (self.role in {"grid", "expansion"}) != (self.log_low is not None):
+            raise ValueError("only a grid or an expansion has a logarithmic range")
+        if (self.role == "statistics") != (self.points == 0):
+            raise ValueError("only the statistics pass has no candidate points")
+
+
+@dataclass(frozen=True, slots=True)
+class ScalePassProvenance:
+    """The passes a multi-pass fit made over its source.
+
+    ``pass_budget`` is the caller's budget, ``minimum_passes`` and ``maximum_passes`` the
+    bounds the plan published before the first read, ``pass_count`` the number of reads
+    the fit made and ``records`` one record per read in order. The record holds no data
+    value.
+    """
+
+    pass_budget: int
+    minimum_passes: int
+    maximum_passes: int
+    pass_count: int
+    records: tuple[ScalePassRecord, ...]
+
+    def __post_init__(self) -> None:
+        _require_positive_integer("pass_budget", self.pass_budget)
+        _require_positive_integer("minimum_passes", self.minimum_passes)
+        _require_positive_integer("maximum_passes", self.maximum_passes)
+        _require_non_negative_integer("pass_count", self.pass_count)
+        if self.minimum_passes > self.maximum_passes:
+            raise ValueError("minimum_passes must not exceed maximum_passes")
+        if self.pass_budget < self.minimum_passes:
+            raise ValueError("pass_budget must not be below minimum_passes")
+        if type(self.records) is not tuple or any(
+            type(item) is not ScalePassRecord for item in self.records
+        ):
+            raise TypeError("records must be a tuple of pass records")
+        if self.pass_count != len(self.records):
+            raise ValueError("pass_count must equal the number of records")
+        if self.pass_count > min(self.pass_budget, self.maximum_passes):
+            raise ValueError("pass_count must not exceed the budget or the plan maximum")
+
+
+@dataclass(frozen=True, slots=True)
 class ScaleProvenance:
     """Closed facts about a fit computed from a scale source (provenance schema 2).
 
@@ -665,7 +737,8 @@ class ScaleProvenance:
     read, ``max_rows`` the cap on the rows of one batch, ``state`` the state the
     estimate was derived from (``None`` only when no state exists because the data
     were refused) and ``environment`` the numeric environment the logarithms were
-    evaluated in. The record holds no data value.
+    evaluated in. ``passes`` is the pass record of a multi-pass fit and ``None`` for a
+    fit that reads its source once. The record holds no data value.
     """
 
     schema_version: str
@@ -676,6 +749,7 @@ class ScaleProvenance:
     max_rows: int
     state: ScaleStateProvenance | None
     environment: ScaleEnvironmentProvenance
+    passes: ScalePassProvenance | None = None
 
     def __post_init__(self) -> None:
         if self.schema_version != SCALE_PROVENANCE_SCHEMA_VERSION:
@@ -696,6 +770,8 @@ class ScaleProvenance:
             raise TypeError("state provenance must be typed or None")
         if type(self.environment) is not ScaleEnvironmentProvenance:
             raise TypeError("environment provenance must be typed")
+        if self.passes is not None and type(self.passes) is not ScalePassProvenance:
+            raise TypeError("pass provenance must be typed or None")
 
 
 def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
@@ -732,6 +808,22 @@ def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
         "source_kind": record.source_kind,
         "state": state,
     }
+    if record.passes is not None:
+        value["passes"] = {
+            "maximum_passes": record.passes.maximum_passes,
+            "minimum_passes": record.passes.minimum_passes,
+            "pass_budget": record.passes.pass_budget,
+            "pass_count": record.passes.pass_count,
+            "records": [
+                {
+                    "log_high": item.log_high,
+                    "log_low": item.log_low,
+                    "points": item.points,
+                    "role": item.role,
+                }
+                for item in record.passes.records
+            ],
+        }
     return json.dumps(
         value,
         ensure_ascii=False,
@@ -761,6 +853,8 @@ __all__ = [
     "RngProvenance",
     "ScaleEnvironmentProvenance",
     "ScalePartitionProvenance",
+    "ScalePassProvenance",
+    "ScalePassRecord",
     "ScaleProvenance",
     "ScaleStateProvenance",
     "SourceDisclosure",

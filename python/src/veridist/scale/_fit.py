@@ -1,27 +1,40 @@
-"""End-to-end fitting of the one-pass families from a source of exact observations.
+"""End-to-end fitting from a source of exact observations.
 
-``fit(source, family)`` folds the partitions of ``source`` into the family's exact
-state (:mod:`veridist.scale._one_pass`), computes the maximum-likelihood estimate from
-the exact statistics of that state (:mod:`veridist.scale._estimates`) and returns the
-result of the in-memory fit of the same family together with a scale provenance
-record. The estimate does not depend on the batch size, the partition layout, the
-file split or the order of the rows: the state, its canonical bytes and its digest are
-identical for every such choice within one numeric environment, and so are the result
-bits.
+``fit(source, family)`` returns the result of the in-memory fit of the family together
+with a scale provenance record. The estimate does not depend on the batch size, the
+partition layout, the file split or the order of the rows: the state, its canonical
+bytes and its digest are identical for every such choice within one numeric
+environment, and so are the result bits.
 
-Supported families are ``exponential``, ``normal``, ``gamma`` and ``lognormal`` on
-exact (uncensored) data; any other family is refused with ``ValueError`` before any
-read. Argument errors (``TypeError`` or ``ValueError``) and every refusal of the value
-policy (:class:`~veridist.scale._errors.ScaleSourceError`) or of a state
-(:class:`~veridist.scale._errors.ScaleStateError`) are raised, never turned into a
-fit failure, with one exception that mirrors the in-memory fit: for ``gamma`` and
-``lognormal`` a value that is not strictly positive is the failure
+One-pass families: ``exponential``, ``normal``, ``gamma`` and ``lognormal`` on exact
+(uncensored) data. The partitions of ``source`` are folded into the family's exact state
+(:mod:`veridist.scale._one_pass`) and the maximum-likelihood estimate is computed from the
+exact statistics of that state (:mod:`veridist.scale._estimates`).
+
+Multi-pass families: ``weibull_min`` and ``gumbel_right`` on exact data. The source is read
+several times, as planned by :mod:`veridist.scale._planner` and carried out by
+:mod:`veridist.scale._multi_pass`, within an explicit ``pass_budget`` (default
+``PASS_BUDGET_DEFAULT``). A budget below the least the plan needs is refused before any
+read with ``PASS_BUDGET_INSUFFICIENT``; a run that would need a pass beyond the budget is
+refused before that pass is read with ``PASS_BUDGET_EXCEEDED`` (both are
+:class:`~veridist.engine.pass_budget.PassBudgetError`), and no estimate is returned in
+either case. The pass count and the record of the passes are in the provenance
+(``scale.passes``). The first pass is the state of the provenance record.
+
+Argument errors (``TypeError`` or ``ValueError``, raised before any read) and every
+refusal of the value policy (:class:`~veridist.scale._errors.ScaleSourceError`) or of a
+state (:class:`~veridist.scale._errors.ScaleStateError`) are raised, never turned into a
+fit failure, with one exception that mirrors the in-memory fit: for ``gamma``,
+``lognormal`` and ``weibull_min`` a value that is not strictly positive is the failure
 ``INVALID_SUPPORT``, reported with the number of rows the source holds.
 
 Uncertainty. A successful normal, gamma or lognormal result carries
 :class:`~veridist.scale._evidence.StateEvidence`, so ``uncertainty()`` is computed
 from the sufficient statistics and needs no data; the exponential result computes it
-from its own count and total time, as the in-memory result does.
+from its own count and total time, as the in-memory result does. A Weibull or Gumbel
+result carries the observed information of its final pass
+(:class:`~veridist.scale._evidence.ProfileEvidence`): the covariance, standard errors and
+Wald intervals; a profile-likelihood interval is refused (it needs further passes).
 """
 
 from __future__ import annotations
@@ -35,6 +48,7 @@ from veridist.engine.provenance import (
     SCALE_PROVENANCE_SCHEMA_VERSION,
     ScaleEnvironmentProvenance,
     ScalePartitionProvenance,
+    ScalePassProvenance,
     ScaleProvenance,
     ScaleStateProvenance,
 )
@@ -51,7 +65,15 @@ from veridist.scale._estimates import (
     fit_lognormal_state,
     fit_normal_state,
 )
+from veridist.scale._multi_pass import MultiPassResult, fit_gumbel_right, fit_weibull_min
 from veridist.scale._one_pass import ExponentialState, GammaState, LognormalState, NormalState
+from veridist.scale._pilot import PilotState
+from veridist.scale._planner import (
+    PASS_BUDGET_DEFAULT,
+    PassLedger,
+    check_pass_budget,
+    plan_passes,
+)
 from veridist.scale._sources import (
     DEFAULT_MAX_ROWS,
     NumpySource,
@@ -117,6 +139,13 @@ _PLANS: Final[dict[FamilyId, _Plan]] = {
 }
 
 
+_MULTI_PASS: Final[dict[FamilyId, Callable[[Source, PassLedger, int], MultiPassResult]]] = {
+    FamilyId.WEIBULL_MIN: fit_weibull_min,
+    FamilyId.GUMBEL_RIGHT: fit_gumbel_right,
+}
+"""The multi-pass families: each reads the source as often as its plan needs."""
+
+
 def _fold_partitions(
     source: Source,
     partitions: tuple[Partition, ...],
@@ -155,8 +184,9 @@ def _provenance(
     source: Source,
     partitions: tuple[Partition, ...],
     row_count: int,
-    state: MergeableState[Any] | None,
+    state: MergeableState[Any] | PilotState | None,
     max_rows: int,
+    passes: ScalePassProvenance | None = None,
 ) -> ScaleProvenance:
     state_record = None
     if state is not None:
@@ -172,28 +202,62 @@ def _provenance(
         max_rows,
         state_record,
         ScaleEnvironmentProvenance(numpy_version(), numeric_environment_digest()),
+        passes,
+    )
+
+
+def _fit_multi_pass(
+    source: Source,
+    family: FamilyId,
+    max_rows: int,
+    pass_budget: int,
+) -> ScaleFitResult:
+    """A multi-pass fit; the pass budget has been validated and the plan accepted it."""
+
+    bounds = plan_passes(pass_budget)
+    partitions = source.partitions()
+    ledger = PassLedger(partitions, pass_budget, bounds)
+    run = _MULTI_PASS[family]
+    outcome = run(source, ledger, max_rows)
+    return ScaleFitResult(
+        outcome.fit,
+        _provenance(
+            source,
+            partitions,
+            outcome.row_count,
+            outcome.state,
+            max_rows,
+            outcome.passes,
+        ),
     )
 
 
 def fit(
-    source: Source, family: FamilyId | str, *, max_rows: int = DEFAULT_MAX_ROWS
+    source: Source,
+    family: FamilyId | str,
+    *,
+    max_rows: int = DEFAULT_MAX_ROWS,
+    pass_budget: int = PASS_BUDGET_DEFAULT,
 ) -> ScaleFitResult:
-    """Fit ``family`` to the exact observations of ``source`` in one pass over the data.
+    """Fit ``family`` to the exact observations of ``source``.
 
     ``family`` is a :class:`~veridist.families.registry.FamilyId` or its string value
-    (``TypeError`` for anything else, ``ValueError`` for an unknown name and for a
-    family this fit does not support). ``max_rows`` bounds the rows of one batch.
-    ``source`` is read once, partition by partition, in the source's canonical order.
+    (``TypeError`` for anything else, ``ValueError`` for an unknown name).
+    ``max_rows`` bounds the rows of one batch and
+    ``pass_budget`` the number of times the source may be read. A one-pass family reads
+    ``source`` once, partition by partition, in the source's canonical order; a
+    multi-pass family reads it as many times as its plan needs, at most ``pass_budget``.
     See the module documentation for the result and the refusals.
     """
 
     spec = FAMILY_REGISTRY.lookup(family)
-    plan = _PLANS.get(spec.id)
-    if plan is None:
-        raise ValueError("family is not supported by the one-pass scale fit")
     bound = check_max_rows(max_rows)
+    budget = check_pass_budget(pass_budget)
     if not isinstance(source, Source):
         raise TypeError("source must provide partitions() and batches()")
+    plan = _PLANS.get(spec.id)
+    if plan is None:
+        return _fit_multi_pass(source, spec.id, bound, budget)
     partitions = source.partitions()
     try:
         state = _fold_partitions(source, partitions, plan.state_type, bound)
