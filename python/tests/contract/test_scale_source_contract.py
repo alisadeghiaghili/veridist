@@ -52,6 +52,10 @@ class ErrorCodeContractTests(unittest.TestCase):
                 "SOURCE_CONSUMED",
                 "SOURCE_NOT_FOUND",
                 "SOURCE_UNREADABLE",
+                "SPOOL_CHANGED",
+                "SPOOL_LIMIT_EXCEEDED",
+                "SPOOL_REQUIRED",
+                "SPOOL_UNAVAILABLE",
                 "UNSUPPORTED_DTYPE",
             ],
         )

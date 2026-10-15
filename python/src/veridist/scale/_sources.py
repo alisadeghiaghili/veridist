@@ -31,6 +31,11 @@ cannot be fingerprinted without consuming it. A partition without a fingerprint
 is *not resumable*: any later code that resumes from or reuses a stored partition
 state must refuse it. A fingerprint is an integrity check against accidental
 change, not authentication.
+
+Re-reading. A source is read again by a fit that needs several passes. A source that
+can be read only once says so with a ``single_use`` attribute that is ``True`` (see
+:func:`is_single_use`); a multi-pass fit refuses it before reading unless a local spool
+is requested (:mod:`veridist.scale._spool`).
 """
 
 from __future__ import annotations
@@ -123,6 +128,16 @@ class Source(Protocol):
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS
     ) -> Iterator[Any]: ...
+
+
+def is_single_use(source: object) -> bool:
+    """Whether ``source`` declares that it can be read only once.
+
+    A source says so with a ``single_use`` attribute that is ``True``. Every other
+    source, one without the attribute included, is taken to be readable again.
+    """
+
+    return getattr(source, "single_use", False) is True
 
 
 def check_max_rows(max_rows: object) -> int:

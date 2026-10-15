@@ -4,8 +4,9 @@ Programmer errors (a wrong container, dtype or shape) are the built-in
 ``TypeError`` and ``ValueError``, as elsewhere in the package. Failures that
 depend on the data or on a stored state are a :class:`ScaleStateError` with a
 closed code. Failures of a data source (a missing column, an unsupported type, a
-null, a missing optional dependency) are a :class:`ScaleSourceError` with its own
-closed code. Neither the message nor the attributes ever carry a data value.
+null, a missing optional dependency, a spool that is required, full, changed or
+unusable) are a :class:`ScaleSourceError` with its own closed code. Neither the message
+nor the attributes ever carry a data value or a path.
 """
 
 from __future__ import annotations
@@ -51,14 +52,19 @@ class ScaleSourceErrorCode(StrEnum):
     SOURCE_UNREADABLE = "SOURCE_UNREADABLE"
     SOURCE_CONSUMED = "SOURCE_CONSUMED"
     PARTITION_CHANGED = "PARTITION_CHANGED"
+    SPOOL_REQUIRED = "SPOOL_REQUIRED"
+    SPOOL_LIMIT_EXCEEDED = "SPOOL_LIMIT_EXCEEDED"
+    SPOOL_CHANGED = "SPOOL_CHANGED"
+    SPOOL_UNAVAILABLE = "SPOOL_UNAVAILABLE"
 
 
 class ScaleSourceError(VeridistError, ValueError):
     """A data-source failure identified by its code and, at most, a fixed hint.
 
     The hint is a constant sentence that tells the caller what to do (for a
-    missing optional dependency, which extra to install). It never contains a
-    path, a column name or a data value.
+    missing optional dependency, which extra to install; for a source that can be
+    read once, that a spool must be requested). It never contains a path, a column
+    name or a data value.
     """
 
     def __init__(self, code: ScaleSourceErrorCode | str, hint: str | None = None) -> None:

@@ -10,7 +10,9 @@ pass as a bare ``ImportError``.
   (``__arrow_c_stream__``). It is one partition. Its fingerprint level is
   ``NONE``: a stream cannot be fingerprinted without being read, so the partition
   is *not resumable* and any later resume must refuse it. A reader or a stream
-  object can be read once; a ``Table`` or a ``RecordBatch`` can be read again.
+  object can be read once (its ``single_use`` is ``True``, so a multi-pass fit
+  refuses it unless a spool is requested); a ``Table`` or a ``RecordBatch`` can be
+  read again.
 * :class:`ParquetSource` reads one column of one or more Parquet files, one
   partition per (file, row group), pushing the projection down to the reader.
 
@@ -167,6 +169,12 @@ class ArrowSource:
                 "or expose __arrow_c_stream__"
             )
         self._index = column_index(schema, column)
+
+    @property
+    def single_use(self) -> bool:
+        """Whether the data can be read once only: it comes from a reader or a stream."""
+
+        return self._reader is not None
 
     def partitions(self) -> tuple[Partition, ...]:
         """The one partition: no fingerprint, hence not resumable."""

@@ -20,6 +20,8 @@ from veridist.engine.provenance import (
     ScalePassProvenance,
     ScalePassRecord,
     ScaleProvenance,
+    ScaleSpoolPartitionProvenance,
+    ScaleSpoolProvenance,
     ScaleStateProvenance,
     scale_provenance_to_canonical_json_bytes,
     to_canonical_json_bytes,
@@ -384,3 +386,115 @@ class PassProvenanceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def spool_partition(**changes: Any) -> ScaleSpoolPartitionProvenance:
+    base = ScaleSpoolPartitionProvenance(0, 10, DIGEST_A)
+    return replace(base, **changes)
+
+
+def spool(**changes: Any) -> ScaleSpoolProvenance:
+    base = ScaleSpoolProvenance(
+        17, (spool_partition(), spool_partition(ordinal=1, rows=7, digest_sha256=DIGEST_B))
+    )
+    return replace(base, **changes)
+
+
+class SpoolProvenanceTests(unittest.TestCase):
+    def test_a_partition_keeps_its_fields(self) -> None:
+        item = spool_partition()
+        self.assertEqual((item.ordinal, item.rows, item.digest_sha256), (0, 10, DIGEST_A))
+        self.assertEqual(spool_partition(rows=0).rows, 0)
+
+    def test_a_partition_validates_its_fields(self) -> None:
+        for bad in (-1, True, 1.5):
+            with self.subTest(ordinal=bad), self.assertRaises((TypeError, ValueError)):
+                spool_partition(ordinal=bad)
+            with self.subTest(rows=bad), self.assertRaises((TypeError, ValueError)):
+                spool_partition(rows=bad)
+        for digest in ("A" * 64, "a" * 63, "sha256:" + "a" * 64, "", 5):
+            with self.subTest(digest=digest), self.assertRaises((TypeError, ValueError)):
+                spool_partition(digest_sha256=digest)
+
+    def test_the_spool_keeps_its_fields(self) -> None:
+        item = spool()
+        self.assertEqual(item.row_count, 17)
+        self.assertEqual([part.ordinal for part in item.partitions], [0, 1])
+        self.assertEqual(ScaleSpoolProvenance(0, ()).partitions, ())
+
+    def test_the_spool_validates_its_fields(self) -> None:
+        for bad in (-1, True, 1.5):
+            with self.subTest(row_count=bad), self.assertRaises((TypeError, ValueError)):
+                spool(row_count=bad)
+        with self.assertRaises(TypeError):
+            spool(partitions=[spool_partition()], row_count=10)
+        with self.assertRaises(TypeError):
+            spool(partitions=("a",), row_count=0)
+        with self.assertRaises(ValueError):
+            spool(row_count=16)
+        with self.assertRaises(ValueError):
+            spool(row_count=18)
+
+    def test_the_records_are_frozen(self) -> None:
+        with self.assertRaises(FrozenInstanceError):
+            spool().row_count = 1  # type: ignore[misc]
+        with self.assertRaises(FrozenInstanceError):
+            spool_partition().rows = 1  # type: ignore[misc]
+
+    def test_a_scale_record_has_no_spool_unless_given_one(self) -> None:
+        self.assertIsNone(record().spool)
+        self.assertEqual(record(spool=spool()).spool, spool())
+
+    def test_the_scale_record_checks_the_spool_against_its_partitions_and_rows(self) -> None:
+        with self.assertRaises(TypeError):
+            record(spool="digest")
+        with self.assertRaises(TypeError):
+            record(spool=spool_partition())
+        with self.assertRaises(ValueError):
+            record(spool=spool(partitions=(spool_partition(),), row_count=10))
+        with self.assertRaises(ValueError):
+            record(
+                spool=spool(
+                    partitions=(
+                        spool_partition(),
+                        spool_partition(ordinal=2, rows=7, digest_sha256=DIGEST_B),
+                    )
+                )
+            )
+        with self.assertRaises(ValueError):
+            record(
+                spool=spool(
+                    partitions=(
+                        spool_partition(ordinal=1),
+                        spool_partition(ordinal=0, rows=7, digest_sha256=DIGEST_B),
+                    )
+                )
+            )
+        with self.assertRaises(ValueError):
+            record(
+                row_count=18,
+                spool=spool(),
+            )
+
+    def test_the_canonical_bytes_hold_the_spool_and_no_other_field_changes(self) -> None:
+        without = scale_provenance_to_canonical_json_bytes(record())
+        self.assertNotIn(b"spool", without)
+        with_spool = scale_provenance_to_canonical_json_bytes(record(spool=spool()))
+        expected = (
+            '"spool":{"partitions":['
+            '{"digest_sha256":"' + DIGEST_A + '","ordinal":0,"rows":10},'
+            '{"digest_sha256":"' + DIGEST_B + '","ordinal":1,"rows":7}],"row_count":17},'
+        )
+        self.assertIn(expected.encode(), with_spool)
+        value = json.loads(with_spool)
+        del value["spool"]
+        self.assertEqual(value, json.loads(without))
+        self.assertEqual(
+            scale_provenance_to_canonical_json_bytes(record(spool=spool())), with_spool
+        )
+        other = spool(
+            partitions=(spool_partition(digest_sha256=DIGEST_B), spool().partitions[1])
+        )
+        self.assertNotEqual(
+            scale_provenance_to_canonical_json_bytes(record(spool=other)), with_spool
+        )
