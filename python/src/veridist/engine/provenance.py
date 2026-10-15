@@ -27,10 +27,13 @@ from veridist.engine.pass_budget import PassEnforcer, PassObservation
 from veridist.engine.resume import PublicResumeMetadata
 
 PROVENANCE_SCHEMA_VERSION = "1"
+SCALE_PROVENANCE_SCHEMA_VERSION = "2"
 _PUBLIC_SOURCE_ID = re.compile(r"src_[0-9a-f]{32}")
 _RUN_ID = re.compile(r"run_[0-9a-f]{32}")
 _SAFE_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,127}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
+_FINGERPRINT = re.compile(r"sha256:[0-9a-f]{64}")
+_FINGERPRINT_LEVELS = frozenset({"none", "metadata", "content"})
 _MAX_SEED = 2**128 - 1
 
 
@@ -594,8 +597,153 @@ def to_canonical_json_bytes(report: ExecutionReport) -> bytes:
     ).encode("utf-8")
 
 
+@dataclass(frozen=True, slots=True)
+class ScalePartitionProvenance:
+    """One partition of a scale source: its identity, size and fingerprint.
+
+    ``fingerprint`` is ``None`` exactly when ``fingerprint_level`` is ``"none"``;
+    such a partition is not resumable. The identifier is whatever the source calls
+    the partition and, for a file source, names the file, so it is a locator.
+    """
+
+    partition_id: str
+    ordinal: int
+    rows: int | None
+    fingerprint: str | None
+    fingerprint_level: str
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.partition_id, str) or not self.partition_id:
+            raise TypeError("partition ID must be a non-empty string")
+        _require_non_negative_integer("ordinal", self.ordinal)
+        if self.rows is not None:
+            _require_non_negative_integer("rows", self.rows)
+        if self.fingerprint_level not in _FINGERPRINT_LEVELS:
+            raise ValueError("fingerprint level must be none, metadata or content")
+        if self.fingerprint_level == "none":
+            if self.fingerprint is not None:
+                raise ValueError("a partition without a fingerprint level has no fingerprint")
+        elif (
+            not isinstance(self.fingerprint, str)
+            or _FINGERPRINT.fullmatch(self.fingerprint) is None
+        ):
+            raise ValueError("fingerprint must be sha256: and 64 lowercase hex digits")
+
+
+@dataclass(frozen=True, slots=True)
+class ScaleStateProvenance:
+    """The canonical state a scale fit was computed from: its type and its SHA-256."""
+
+    state_tag: str
+    state_schema_version: int
+    digest_sha256: str
+
+    def __post_init__(self) -> None:
+        _require_token("state tag", self.state_tag)
+        _require_positive_integer("state schema version", self.state_schema_version)
+        _require_sha256("state digest", self.digest_sha256)
+
+
+@dataclass(frozen=True, slots=True)
+class ScaleEnvironmentProvenance:
+    """The numpy version and the digest of its log and exp results on a reference sample."""
+
+    numpy_version: str
+    digest_sha256: str
+
+    def __post_init__(self) -> None:
+        _require_token("numpy version", self.numpy_version)
+        _require_sha256("environment digest", self.digest_sha256)
+
+
+@dataclass(frozen=True, slots=True)
+class ScaleProvenance:
+    """Closed facts about a fit computed from a scale source (provenance schema 2).
+
+    ``partitions`` is the source's partition list in canonical order and
+    ``partition_count`` its length. ``row_count`` is the number of rows the fit
+    read, ``max_rows`` the cap on the rows of one batch, ``state`` the state the
+    estimate was derived from (``None`` only when no state exists because the data
+    were refused) and ``environment`` the numeric environment the logarithms were
+    evaluated in. The record holds no data value.
+    """
+
+    schema_version: str
+    source_kind: str
+    partitions: tuple[ScalePartitionProvenance, ...]
+    partition_count: int
+    row_count: int
+    max_rows: int
+    state: ScaleStateProvenance | None
+    environment: ScaleEnvironmentProvenance
+
+    def __post_init__(self) -> None:
+        if self.schema_version != SCALE_PROVENANCE_SCHEMA_VERSION:
+            raise ValueError("unsupported scale provenance schema version")
+        _require_token("source kind", self.source_kind)
+        if type(self.partitions) is not tuple or any(
+            type(item) is not ScalePartitionProvenance for item in self.partitions
+        ):
+            raise TypeError("partitions must be a tuple of partition provenance")
+        _require_non_negative_integer("partition_count", self.partition_count)
+        if self.partition_count != len(self.partitions):
+            raise ValueError("partition_count must equal the number of partitions")
+        if len({item.partition_id for item in self.partitions}) != len(self.partitions):
+            raise ValueError("partition IDs must be unique")
+        _require_non_negative_integer("row_count", self.row_count)
+        _require_positive_integer("max_rows", self.max_rows)
+        if self.state is not None and type(self.state) is not ScaleStateProvenance:
+            raise TypeError("state provenance must be typed or None")
+        if type(self.environment) is not ScaleEnvironmentProvenance:
+            raise TypeError("environment provenance must be typed")
+
+
+def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
+    """Encode a schema 2 scale record as deterministic compact UTF-8 JSON."""
+
+    if type(record) is not ScaleProvenance:
+        raise TypeError("record must be a ScaleProvenance")
+    state: dict[str, object] | None = None
+    if record.state is not None:
+        state = {
+            "digest_sha256": record.state.digest_sha256,
+            "state_schema_version": record.state.state_schema_version,
+            "state_tag": record.state.state_tag,
+        }
+    value: dict[str, object] = {
+        "environment": {
+            "digest_sha256": record.environment.digest_sha256,
+            "numpy_version": record.environment.numpy_version,
+        },
+        "max_rows": record.max_rows,
+        "partition_count": record.partition_count,
+        "partitions": [
+            {
+                "fingerprint": item.fingerprint,
+                "fingerprint_level": item.fingerprint_level,
+                "ordinal": item.ordinal,
+                "partition_id": item.partition_id,
+                "rows": item.rows,
+            }
+            for item in record.partitions
+        ],
+        "row_count": record.row_count,
+        "schema_version": record.schema_version,
+        "source_kind": record.source_kind,
+        "state": state,
+    }
+    return json.dumps(
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
+    ).encode("utf-8")
+
+
 __all__ = [
     "PROVENANCE_SCHEMA_VERSION",
+    "SCALE_PROVENANCE_SCHEMA_VERSION",
     "AdapterProvenance",
     "ApproximateComputation",
     "ApproximationProvenance",
@@ -611,6 +759,10 @@ __all__ = [
     "PublicSourceId",
     "RngPolicy",
     "RngProvenance",
+    "ScaleEnvironmentProvenance",
+    "ScalePartitionProvenance",
+    "ScaleProvenance",
+    "ScaleStateProvenance",
     "SourceDisclosure",
     "SourceHash",
     "SourceHashAlgorithm",
@@ -625,6 +777,7 @@ __all__ = [
     "SpoolRetention",
     "checkpoint_observation_from_resume",
     "failure_record_from_error",
+    "scale_provenance_to_canonical_json_bytes",
     "snapshot_execution_observation",
     "to_canonical_json_bytes",
 ]

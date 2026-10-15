@@ -33,6 +33,19 @@ def exact_units(values: Iterable[float]) -> int:
     return total
 
 
+SQUARE_UNITS = 1 << 2148
+
+
+def exact_square_units(values: Iterable[float]) -> int:
+    """The exact sum of the squares of float values in units of 2**-2148, by integer arithmetic."""
+
+    total = 0
+    for value in values:
+        numerator, denominator = float(value).as_integer_ratio()
+        total += numerator * numerator * (SQUARE_UNITS // (denominator * denominator))
+    return total
+
+
 def exact_fraction(values: Iterable[float]) -> Fraction:
     """The exact sum of float values as a ``Fraction``."""
 
@@ -122,11 +135,11 @@ def expected_sums(cls: type, values: np.ndarray) -> tuple[int, ...]:
     if cls is ExponentialState:
         return (exact_units(values.tolist()),)
     if cls is NormalState:
-        return (exact_units(values.tolist()), exact_units((values * values).tolist()))
+        return (exact_units(values.tolist()), exact_square_units(values.tolist()))
     logs = np.log(values)
     if cls is GammaState:
         return (exact_units(values.tolist()), exact_units(logs.tolist()))
-    return (exact_units(logs.tolist()), exact_units((logs * logs).tolist()))
+    return (exact_units(logs.tolist()), exact_square_units(logs.tolist()))
 
 
 def seal(body: bytes) -> bytes:

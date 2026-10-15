@@ -334,16 +334,62 @@ class GaussianModel(Model):
         censored: tuple[float, ...],
         constant: float,
     ) -> None:
+        center = fsum(exact) / len(exact)
+        deviations = tuple(value - center for value in exact)
+        self._set(
+            family,
+            names,
+            len(exact),
+            center,
+            fsum(deviations),
+            fsum(value * value for value in deviations),
+            constant,
+            _grouped(censored),
+        )
+
+    def _set(
+        self,
+        family: FamilyId,
+        names: tuple[str, str],
+        events: int,
+        center: float,
+        sum_deviations: float,
+        sum_squares: float,
+        constant: float,
+        censored: tuple[tuple[float, int], ...],
+    ) -> None:
         self.family = family
         self.names = names
         self.positive_support = family is FamilyId.LOGNORMAL
         self.constant = constant
-        self.events = len(exact)
-        self.center = fsum(exact) / len(exact)
-        deviations = tuple(value - self.center for value in exact)
-        self.sum_deviations = fsum(deviations)
-        self.sum_squares = fsum(value * value for value in deviations)
-        self.censored = _grouped(censored)
+        self.events = events
+        self.center = center
+        self.sum_deviations = sum_deviations
+        self.sum_squares = sum_squares
+        self.censored = censored
+
+    @classmethod
+    def from_statistics(
+        cls,
+        family: FamilyId,
+        names: tuple[str, str],
+        events: int,
+        center: float,
+        sum_deviations: float,
+        sum_squares: float,
+        constant: float,
+    ) -> GaussianModel:
+        """Build the model of an uncensored sample from its summary about ``center``.
+
+        ``sum_deviations`` and ``sum_squares`` are the sum of ``y - center`` and of
+        ``(y - center)**2`` over the ``events`` values of ``y`` and ``constant`` is the
+        same additive constant the sample constructor takes.  Nothing else of the sample is
+        used by an uncensored model, so this model equals the one built from the values.
+        """
+
+        model = cls.__new__(cls)
+        model._set(family, names, events, center, sum_deviations, sum_squares, constant, ())
+        return model
 
     def evaluate(self, theta: tuple[float, ...], *, precise: bool = True) -> Evaluation:
         mu, sigma = theta
@@ -449,6 +495,17 @@ class GammaModel(Model):
         self.censored = tuple(
             (time, log(time), multiplicity) for time, multiplicity in _grouped(censored)
         )
+
+    @classmethod
+    def from_statistics(cls, events: int, sum_exact: float, sum_logs: float) -> GammaModel:
+        """Build the model of an uncensored sample from ``events``, ``sum x`` and ``sum log x``."""
+
+        model = cls.__new__(cls)
+        model.events = events
+        model.sum_exact = sum_exact
+        model.sum_logs = sum_logs
+        model.censored = ()
+        return model
 
     def _exact_value(self, shape: float, scale: float) -> float:
         events = float(self.events)

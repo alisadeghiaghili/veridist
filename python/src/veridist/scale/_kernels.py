@@ -1,10 +1,10 @@
 """Batch validation and per-element term kernels shared by the exact states.
 
-Every transcendental or product term is computed with one formula for the
-whole batch: ``numpy.log`` for logarithms and a plain ``x * x`` product for
-squares, never ``numpy.power`` (which special-cases some exponents). A kernel
-returns a new contiguous float64 array and its result for an element does not
-depend on the element's position in the batch.
+Every transcendental term is computed with one formula for the whole batch:
+``numpy.log`` for logarithms, never ``numpy.power`` (which special-cases some
+exponents). A kernel returns a new contiguous float64 array and its result for an
+element does not depend on the element's position in the batch. Squares are not a
+kernel: they are summed exactly by :mod:`veridist.scale._squares`.
 """
 
 from __future__ import annotations
@@ -59,21 +59,6 @@ def require_positive(values: Any) -> None:
 
     if not (values > 0.0).all():
         raise ScaleStateError(ScaleStateErrorCode.VALUE_OUT_OF_SUPPORT)
-
-
-def squares(values: Any) -> Any:
-    """Per-element binary64 product ``x * x``; an overflow is ``DERIVED_VALUE_NOT_FINITE``.
-
-    The product is rounded to binary64 for each element (it is not an exact
-    square); only the later summation is exact.
-    """
-
-    np = numpy_module()
-    with np.errstate(over="ignore"):
-        result = np.multiply(values, values)
-    if not np.isfinite(result).all():
-        raise ScaleStateError(ScaleStateErrorCode.DERIVED_VALUE_NOT_FINITE)
-    return result
 
 
 def logarithms(values: Any) -> Any:

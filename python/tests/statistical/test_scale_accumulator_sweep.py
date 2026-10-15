@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import math
 import unittest
+from fractions import Fraction
 
 import numpy as np
 
-from tests.unit.scale_oracle import bits, exact_units, random_chunk_sizes
+from tests.unit.scale_oracle import bits, exact_square_units, exact_units, random_chunk_sizes
 from veridist.scale._accumulator import AccumulatorLimits, ExactSum
 from veridist.scale._one_pass import GammaState, NormalState
 
@@ -114,7 +115,10 @@ class StateSweepTests(unittest.TestCase):
         whole = NormalState.empty().update(values)
         result = whole.finalize()
         self.assertEqual(result.sum_x.rounded, math.fsum(values.tolist()))
-        self.assertEqual(result.sum_x_squared.rounded, math.fsum((values * values).tolist()))
+        self.assertEqual(
+            result.sum_x_squared.rounded,
+            float(Fraction(exact_square_units(values.tolist()), 1 << 2148)),
+        )
         for seed in (1, 2):
             order = np.random.default_rng(seed).permutation(SIZE)
             pieces = np.array_split(values[order], 7)
