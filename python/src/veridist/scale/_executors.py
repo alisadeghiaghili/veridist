@@ -60,7 +60,12 @@ from multiprocessing import get_context
 from types import TracebackType
 from typing import Any, ClassVar, Final
 
-from veridist.engine.provenance import ScaleExecutionPassProvenance, ScaleExecutionProvenance
+from veridist.engine.provenance import (
+    ScaleCheckpointProvenance,
+    ScaleExecutionPassProvenance,
+    ScaleExecutionProvenance,
+)
+from veridist.scale._checkpoint import CheckpointRun
 from veridist.scale._sources import (
     BatchReader,
     DowngradeReason,
@@ -197,12 +202,13 @@ def resolve_executor(executor: object) -> Executor | None:
     return SerialExecutor()
 
 
-def _gather(futures: dict[Future[TaskOutcome], int], outcomes: list[TaskOutcome]) -> None:
-    """Collect the outcomes of ``futures`` (each mapped to its partition ordinal) into ``outcomes``.
+def _gather(futures: dict[Future[TaskOutcome], int], accept: Callable[[TaskOutcome], None]) -> None:
+    """Pass the outcome of each of ``futures`` (each mapped to its partition ordinal) to ``accept``.
 
-    The error of the lowest ordinal that failed is raised once every task before it has
-    returned; tasks after it are cancelled and not waited for. An exception that is not an
-    ``Exception`` is raised at once.
+    Outcomes are accepted as they arrive, in any order. The error of the lowest ordinal that
+    failed is raised once every task before it has returned; tasks after it are cancelled and
+    not waited for. An exception that is not an ``Exception`` is raised at once, and so is
+    one that ``accept`` raises.
     """
 
     pending = set(futures)
@@ -212,7 +218,7 @@ def _gather(futures: dict[Future[TaskOutcome], int], outcomes: list[TaskOutcome]
         for future in done:
             error = future.exception()
             if error is None:
-                outcomes.append(future.result())
+                accept(future.result())
             elif isinstance(error, Exception):
                 failures[futures[future]] = error
             else:
@@ -234,9 +240,15 @@ class PassEngine:
     failed or was interrupted. ``run`` reads one pass and returns the merged state.
     """
 
-    def __init__(self, executor: Executor | None, max_rows: int) -> None:
+    def __init__(
+        self,
+        executor: Executor | None,
+        max_rows: int,
+        checkpoint: CheckpointRun | None = None,
+    ) -> None:
         self._executor = executor
         self._max_rows = max_rows
+        self._checkpoint = checkpoint
         self._pool: PoolExecutor | None = None
         self._records: list[ScaleExecutionPassProvenance] = []
 
@@ -261,6 +273,11 @@ class PassEngine:
         return ScaleExecutionProvenance(
             self._executor.kind.value, self._executor.workers, tuple(self._records)
         )
+
+    def checkpoint_provenance(self) -> ScaleCheckpointProvenance | None:
+        """The record of what the passes did with the checkpoint, or ``None`` without one."""
+
+        return None if self._checkpoint is None else self._checkpoint.provenance()
 
     def _mode(
         self, source: Source, partitions: Sequence[Partition]
@@ -296,14 +313,14 @@ class PassEngine:
         executor: ThreadExecutor | ProcessExecutor,
         workers: int,
         tasks: list[PartitionTask],
-        outcomes: list[TaskOutcome],
+        accept: Callable[[TaskOutcome], None],
     ) -> None:
         pool = self._pool_for(executor, workers, tasks[0].source)
         futures: dict[Future[TaskOutcome], int] = {}
         try:
             for task in tasks:
                 futures[pool.submit(run_partition_task, task)] = task.partition.ordinal
-            _gather(futures, outcomes)
+            _gather(futures, accept)
         except BaseException:
             for future in futures:
                 future.cancel()
@@ -313,9 +330,22 @@ class PassEngine:
         """Read ``partitions`` of ``source`` as one pass and return the merged ``job`` value.
 
         Errors are those of the tasks (see the module documentation); the pass is recorded
-        whether it returned or failed.
+        whether it returned or failed. With a checkpoint, a pass that the ledger holds is
+        returned without any read, the partitions that have a committed state are not read,
+        and the state of every other partition is committed by this (the parent) process
+        as its task returns.
         """
 
+        step = None
+        if self._checkpoint is not None:
+            step = self._checkpoint.begin_pass(len(self._records), job, partitions)
+        reused: dict[int, bytes] = {} if step is None else step.reused
+        if step is not None and step.replayed is not None:
+            replayed = job.restore(step.replayed)
+            self._record_pass(self._mode(source, ()), 0, 0)
+            return replayed
+        if step is not None:
+            partitions = step.pending
         kind, workers, reason = self._mode(source, partitions)
         retryable = self._executor is not None and is_retryable(source)
         retries = MAX_PARTITION_RETRIES if retryable else 0
@@ -328,27 +358,44 @@ class PassEngine:
             for partition in partitions
         ]
         outcomes: list[TaskOutcome] = []
+
+        def accept(outcome: TaskOutcome) -> None:
+            outcomes.append(outcome)
+            if step is not None:
+                step.commit(outcome)
+
         try:
             if kind is ExecutorKind.SERIAL:
-                outcomes.extend(run_partition_task(task) for task in tasks)
+                for task in tasks:
+                    accept(run_partition_task(task))
             else:
                 assert isinstance(self._executor, ThreadExecutor | ProcessExecutor)
-                self._in_parallel(self._executor, workers, tasks, outcomes)
+                self._in_parallel(self._executor, workers, tasks, accept)
         finally:
-            self._records.append(
-                ScaleExecutionPassProvenance(
-                    kind.value,
-                    workers,
-                    len(tasks),
-                    sum(outcome.retries for outcome in outcomes),
-                    None if reason is None else reason.value,
-                )
+            self._record_pass(
+                (kind, workers, reason), len(tasks), sum(item.retries for item in outcomes)
             )
-        ordered = sorted(outcomes, key=lambda outcome: outcome.ordinal)
-        return merge_tree(
-            [job.restore(outcome.data) for outcome in ordered],
+        known = {**reused, **{outcome.ordinal: outcome.data for outcome in outcomes}}
+        merged = merge_tree(
+            [job.restore(known[ordinal]) for ordinal in sorted(known)],
             lambda left, right: left.merge(right),
             job.identity(),
+        )
+        if step is not None:
+            step.finish(merged.to_bytes())
+        return merged
+
+    def _record_pass(
+        self,
+        mode: tuple[ExecutorKind, int, DowngradeReason | None],
+        tasks: int,
+        retries: int,
+    ) -> None:
+        kind, workers, reason = mode
+        self._records.append(
+            ScaleExecutionPassProvenance(
+                kind.value, workers, tasks, retries, None if reason is None else reason.value
+            )
         )
 
 

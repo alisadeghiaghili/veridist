@@ -42,6 +42,19 @@ fit failure, with one exception that mirrors the in-memory fit: for ``gamma``,
 ``lognormal`` and ``weibull_min`` a value that is not strictly positive is the failure
 ``INVALID_SUPPORT``, reported with the number of rows the source holds.
 
+Checkpoint. ``checkpoint=`` (a path, or a ``SQLitePartitionStore`` of
+:mod:`veridist.scale._partition_store`) keeps the exact state of every partition, and the
+merged result of every completed pass, in a local store, so that an interrupted fit continues
+with ``resume=True`` and reads only the partitions that have no committed state; the result,
+its state digest and the provenance but the checkpoint record are bit for bit those of an
+uninterrupted fit. ``incremental=True`` (with ``resume=True``, one-pass families only) fits a
+source that has gained partitions by reading only the new ones. ``recompute_changed=True``
+reads again a partition whose fingerprint changed and replaces its state,
+``allow_removed=True`` (incremental) excludes a partition that is gone. Without them a changed,
+missing or new partition is a typed refusal before any read. A source whose partitions have no
+fingerprint (Arrow streams, Polars plans, DuckDB relations) cannot be checkpointed. The record
+is ``scale.checkpoint``; see :mod:`veridist.scale._checkpoint`.
+
 Uncertainty. A successful normal, gamma or lognormal result carries
 :class:`~veridist.scale._evidence.StateEvidence`, so ``uncertainty()`` is computed
 from the sufficient statistics and needs no data; the exponential result computes it
@@ -53,6 +66,7 @@ Wald intervals; a profile-likelihood interval is refused (it needs further passe
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 from dataclasses import dataclass
 from hashlib import sha256
@@ -60,6 +74,7 @@ from typing import Any, Final
 
 from veridist.engine.provenance import (
     SCALE_PROVENANCE_SCHEMA_VERSION,
+    ScaleCheckpointProvenance,
     ScaleEnvironmentProvenance,
     ScaleExecutionProvenance,
     ScalePartitionProvenance,
@@ -73,6 +88,14 @@ from veridist.families.lognormal import LognormalFitFailure, LognormalFitFailure
 from veridist.families.registry import FAMILY_REGISTRY, FamilyId
 from veridist.families.results import FitFailure, FitSuccess
 from veridist.scale._arrow import ArrowSource, ParquetSource
+from veridist.scale._checkpoint import (
+    CheckpointRequest,
+    CheckpointRun,
+    job_identity,
+    refuse_incremental,
+    require_resumable,
+    resolve_checkpoint,
+)
 from veridist.scale._environment import numeric_environment_digest, numpy_version
 from veridist.scale._errors import (
     ScaleSourceError,
@@ -87,13 +110,21 @@ from veridist.scale._estimates import (
     fit_normal_state,
 )
 from veridist.scale._executors import Executor, PassEngine, resolve_executor
-from veridist.scale._multi_pass import MultiPassResult, fit_gumbel_right, fit_weibull_min
+from veridist.scale._multi_pass import (
+    PROFILE_SCHEMA_VERSION,
+    PROFILE_TAG,
+    MultiPassResult,
+    fit_gumbel_right,
+    fit_weibull_min,
+)
 from veridist.scale._one_pass import ExponentialState, GammaState, LognormalState, NormalState
-from veridist.scale._pilot import PilotState
+from veridist.scale._partition_store import SQLitePartitionStore
+from veridist.scale._pilot import GumbelPilotState, PilotState, WeibullPilotState
 from veridist.scale._planner import (
     PASS_BUDGET_DEFAULT,
     PassLedger,
     check_pass_budget,
+    plan_identity,
     plan_passes,
 )
 from veridist.scale._sources import (
@@ -169,6 +200,42 @@ _MULTI_PASS: Final[dict[FamilyId, Callable[[Source, PassLedger, PassEngine], Mul
 }
 """The multi-pass families: each reads the source as often as its plan needs."""
 
+_MULTI_PASS_PILOTS: Final[dict[FamilyId, type[PilotState]]] = {
+    FamilyId.WEIBULL_MIN: WeibullPilotState,
+    FamilyId.GUMBEL_RIGHT: GumbelPilotState,
+}
+"""The first-pass state of each multi-pass family."""
+
+
+def _state_schema(*schemas: tuple[str, int]) -> str:
+    """The tags and schema versions of the states a family keeps, as one component."""
+
+    return ",".join(f"{tag}:{version}" for tag, version in schemas)
+
+
+def _open_checkpoint(
+    request: CheckpointRequest,
+    family: FamilyId,
+    source: Source,
+    max_rows: int,
+    partitions: tuple[Partition, ...],
+    state_schema: str,
+    *,
+    multi_pass: bool,
+) -> CheckpointRun:
+    """Start or resume the job of this fit in the store (the partitions are resumable)."""
+
+    identity = job_identity(
+        family=family.value,
+        column=getattr(source, "column", None),
+        source_kind=SOURCE_KINDS.get(type(source), CUSTOM_SOURCE_KIND),
+        max_rows=max_rows,
+        partitions=partitions,
+        state_schema=state_schema,
+        plan=plan_identity() if multi_pass else None,
+    )
+    return CheckpointRun.open(request, identity, partitions, multi_pass=multi_pass)
+
 
 def _count_rows(source: Source, partitions: tuple[Partition, ...], max_rows: int) -> int:
     """The number of rows the partitions hold, by reading them under the value policy."""
@@ -199,6 +266,7 @@ def _provenance(
     passes: ScalePassProvenance | None = None,
     spool: ScaleSpoolProvenance | None = None,
     execution: ScaleExecutionProvenance | None = None,
+    checkpoint: ScaleCheckpointProvenance | None = None,
 ) -> ScaleProvenance:
     state_record = None
     if state is not None:
@@ -217,6 +285,7 @@ def _provenance(
         passes,
         spool,
         execution,
+        checkpoint,
     )
 
 
@@ -227,21 +296,35 @@ def _fit_multi_pass(
     pass_budget: int,
     spool: SpoolPolicy | None,
     executor: Executor | None,
+    request: CheckpointRequest | None,
 ) -> ScaleFitResult:
     """A multi-pass fit; the pass budget has been validated and the plan accepted it.
 
     ``ScaleSourceError`` with ``SPOOL_REQUIRED``, before anything is read, for a source
-    that can be read only once when no spool is requested.
+    that can be read only once when no spool is requested. With a checkpoint request, a
+    source that cannot be fingerprinted is refused first, and the store is not touched
+    before the other refusals have been made.
     """
 
     bounds = plan_passes(pass_budget)
     partitions = source.partitions()
+    checkpoint = None
+    if request is not None:
+        require_resumable(partitions)
     ledger = PassLedger(partitions, pass_budget, bounds)
     run = _MULTI_PASS[family]
-    engine = PassEngine(executor, max_rows)
+    if spool is None and is_single_use(source):
+        raise ScaleSourceError(ScaleSourceErrorCode.SPOOL_REQUIRED, HINT_REQUIRED)
+    if request is not None:
+        schema = _state_schema(
+            (_MULTI_PASS_PILOTS[family].STATE_TAG, _MULTI_PASS_PILOTS[family].SCHEMA_VERSION),
+            (PROFILE_TAG, PROFILE_SCHEMA_VERSION),
+        )
+        checkpoint = _open_checkpoint(
+            request, family, source, max_rows, partitions, schema, multi_pass=True
+        )
+    engine = PassEngine(executor, max_rows, checkpoint)
     if spool is None:
-        if is_single_use(source):
-            raise ScaleSourceError(ScaleSourceErrorCode.SPOOL_REQUIRED, HINT_REQUIRED)
         with engine:
             outcome = run(source, ledger, engine)
         record = None
@@ -261,6 +344,7 @@ def _fit_multi_pass(
             outcome.passes,
             record,
             engine.provenance(),
+            engine.checkpoint_provenance(),
         ),
     )
 
@@ -273,6 +357,11 @@ def fit(
     pass_budget: int = PASS_BUDGET_DEFAULT,
     spool: SpoolPolicy | None = None,
     executor: Executor | str | None = None,
+    checkpoint: SQLitePartitionStore | str | os.PathLike[str] | None = None,
+    resume: bool = False,
+    incremental: bool = False,
+    recompute_changed: bool = False,
+    allow_removed: bool = False,
 ) -> ScaleFitResult:
     """Fit ``family`` to the exact observations of ``source``.
 
@@ -288,8 +377,13 @@ def fit(
     read in turn), ``"serial"``, a :class:`~veridist.scale._executors.ThreadExecutor` or a
     :class:`~veridist.scale._executors.ProcessExecutor`: the partitions of every pass are then
     read by that executor, with no change to the result, the state or its digest; see
-    :mod:`veridist.scale._executors`. See the module documentation for the result and the
-    refusals.
+    :mod:`veridist.scale._executors`. ``checkpoint`` is ``None``, a path or a
+    :class:`~veridist.scale._partition_store.SQLitePartitionStore`; ``resume``,
+    ``incremental``, ``recompute_changed`` and ``allow_removed`` say how a store that holds
+    a job is used (``TypeError`` for a flag that is not a ``bool``, ``ValueError`` for a flag
+    without a checkpoint, ``incremental`` without ``resume`` and ``allow_removed`` without
+    ``incremental``); see :mod:`veridist.scale._checkpoint`. See the module documentation for
+    the result and the refusals.
     """
 
     spec = FAMILY_REGISTRY.lookup(family)
@@ -300,11 +394,21 @@ def fit(
     if spool is not None and not isinstance(spool, SpoolPolicy):
         raise TypeError("spool must be a SpoolPolicy or None")
     resolved = resolve_executor(executor)
+    request = resolve_checkpoint(checkpoint, resume, incremental, recompute_changed, allow_removed)
     plan = _PLANS.get(spec.id)
+    if request is not None:
+        refuse_incremental(request, multi_pass=plan is None)
     if plan is None:
-        return _fit_multi_pass(source, spec.id, bound, budget, spool, resolved)
+        return _fit_multi_pass(source, spec.id, bound, budget, spool, resolved, request)
     partitions = source.partitions()
-    engine = PassEngine(resolved, bound)
+    opened = None
+    if request is not None:
+        require_resumable(partitions)
+        schema = _state_schema((plan.state_type.STATE_TAG, plan.state_type.SCHEMA_VERSION))
+        opened = _open_checkpoint(
+            request, spec.id, source, bound, partitions, schema, multi_pass=False
+        )
+    engine = PassEngine(resolved, bound, opened)
     try:
         with engine:
             state = engine.run(source, partitions, FoldJob(plan.state_type))
@@ -316,11 +420,27 @@ def fit(
         rows = _count_rows(source, partitions, bound)
         return ScaleFitResult(
             plan.invalid_support(rows),
-            _provenance(source, partitions, rows, None, bound, execution=engine.provenance()),
+            _provenance(
+                source,
+                partitions,
+                rows,
+                None,
+                bound,
+                execution=engine.provenance(),
+                checkpoint=engine.checkpoint_provenance(),
+            ),
         )
     return ScaleFitResult(
         plan.estimate(state),
-        _provenance(source, partitions, state.count, state, bound, execution=engine.provenance()),
+        _provenance(
+            source,
+            partitions,
+            state.count,
+            state,
+            bound,
+            execution=engine.provenance(),
+            checkpoint=engine.checkpoint_provenance(),
+        ),
     )
 
 

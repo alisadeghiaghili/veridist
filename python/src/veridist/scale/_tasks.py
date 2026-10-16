@@ -68,6 +68,14 @@ class Job(Protocol):
         """The value of no rows: merging it into another changes nothing."""
         ...
 
+    def checkpoint_key(self) -> tuple[object, ...]:
+        """The exact identity of the pass: what is folded and every parameter it is folded at.
+
+        A canonical record of integers, strings and tuples of them (a float is its
+        hexadecimal form). A stored partition state is reused only under an equal key.
+        """
+        ...
+
 
 @dataclass(frozen=True, slots=True)
 class FoldJob:
@@ -83,6 +91,9 @@ class FoldJob:
 
     def identity(self) -> MergeableState[Any]:
         return self.state_type.empty()
+
+    def checkpoint_key(self) -> tuple[object, ...]:
+        return ("fold", self.state_type.STATE_TAG, self.state_type.SCHEMA_VERSION)
 
 
 @dataclass(frozen=True, slots=True)

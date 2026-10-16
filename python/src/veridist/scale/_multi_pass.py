@@ -41,7 +41,7 @@ from dataclasses import dataclass
 from fractions import Fraction
 from functools import partial
 from math import exp, fsum, isfinite, log
-from typing import Any, Final
+from typing import Any, Final, Protocol
 
 from veridist.engine.provenance import ScalePassProvenance
 from veridist.families.gumbel import (
@@ -81,11 +81,19 @@ from veridist.scale._planner import (
 from veridist.scale._sources import BatchReader, Partition, Source
 from veridist.scale._tasks import FoldJob
 
-Kernel = Callable[[Any], Any]
-"""Maps one validated float64 batch to its centred observations ``w`` (all at most zero).
 
-A kernel that a process executor runs must be picklable, so the kernels of the fits are the
-small classes below and not closures."""
+class Kernel(Protocol):
+    """Maps one validated float64 batch to its centred observations ``w`` (all at most zero).
+
+    A kernel that a process executor runs must be picklable, so the kernels of the fits are
+    the small classes below and not closures. ``key`` is its exact identity, a record of
+    its name and the hexadecimal form of every number it holds.
+    """
+
+    def __call__(self, batch: Any) -> Any: ...
+
+    def key(self) -> tuple[object, ...]: ...
+
 
 SUMS_PER_CANDIDATE: Final = 3
 
@@ -209,6 +217,15 @@ class ProfileJob:
     def identity(self) -> ProfileAccumulator:
         return ProfileAccumulator(len(self.parameters))
 
+    def checkpoint_key(self) -> tuple[object, ...]:
+        return (
+            "profile",
+            PROFILE_TAG,
+            PROFILE_SCHEMA_VERSION,
+            *self.kernel.key(),
+            tuple(parameter.hex() for parameter in self.parameters),
+        )
+
 
 def _pilot_pass(
     ledger: PassLedger, source: Source, state_type: type[PilotState], engine: PassEngine
@@ -311,6 +328,9 @@ class WeibullKernel:
     def __call__(self, batch: Any) -> Any:
         return logarithms(batch) - self.peak_log
 
+    def key(self) -> tuple[object, ...]:
+        return ("weibull", self.peak_log.hex())
+
 
 def fit_weibull_min(
     source: Source,
@@ -412,6 +432,14 @@ class GumbelKernel:
 
     def __call__(self, batch: Any) -> Any:
         return self.minimum_standardised - (batch - self.center) / self.peak
+
+    def key(self) -> tuple[object, ...]:
+        return (
+            "gumbel",
+            self.minimum_standardised.hex(),
+            self.center.hex(),
+            self.peak.hex(),
+        )
 
 
 def fit_gumbel_right(

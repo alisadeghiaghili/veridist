@@ -89,6 +89,25 @@ MINIMUM_PASSES: Final = 3
 MAXIMUM_PASSES: Final = 2 + MAX_EXPANSION_PASSES + MAX_NEWTON_PASSES
 
 
+def plan_identity() -> tuple[object, ...]:
+    """The constants that fix the pass sequence, as a canonical record.
+
+    Two runs that share it and the exact sums of every pass take the same passes, so a
+    stored pass is only replayed under the plan that made it. Floats are their exact
+    hexadecimal form.
+    """
+
+    return (
+        GRID_POINTS,
+        INITIAL_LOG_WINDOW.hex(),
+        tuple(limit.hex() for limit in EXPANSION_LOG_LIMITS),
+        LOG_DOMAIN_LIMIT.hex(),
+        MAX_NEWTON_PASSES,
+        CONVERGENCE_TOLERANCE.hex(),
+        MAX_HERMITE_BISECTIONS,
+    )
+
+
 class PassRole(StrEnum):
     """What a pass is for; the value is its name in the provenance record."""
 
@@ -425,6 +444,7 @@ __all__ = [
     "ProfileSums",
     "check_pass_budget",
     "hermite_root",
+    "plan_identity",
     "plan_passes",
     "score",
     "solve_profile",
