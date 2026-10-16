@@ -148,9 +148,11 @@ class JobTests(StoreCase):
         blocker = self.root / "file"
         blocker.write_bytes(b"x")
         store = SQLitePartitionStore(blocker / "job.db")
-        self.expect(
+        error = self.expect(
             store.create_job, ScaleCheckpointErrorCode.STORE_STORAGE_FAILED, "d" * 64, (), ()
         )
+        self.assertNotIn(str(self.root), str(error))
+        self.assertEqual(blocker.read_bytes(), b"x")
 
     def test_a_job_can_be_created_in_an_empty_database_file(self) -> None:
         sqlite3.connect(self.path).close()
@@ -775,6 +777,91 @@ class StorageFailureTests(StoreCase):
             holder.execute("ROLLBACK")
             holder.close()
         self.assertTrue(store.commit_partition(0, KEY, "p#0", FP_A, "metadata", STATE))
+
+    def operations(self) -> list[tuple[str, Any, tuple[Any, ...]]]:
+        return [
+            ("read_job", self.store.read_job, ()),
+            ("read_pass", self.store.read_pass, (0, KEY)),
+            ("read_ledger", self.store.read_ledger, ()),
+            ("create_job", self.store.create_job, ("d" * 64, COMPONENTS, MANIFEST)),
+            (
+                "commit_partition",
+                self.store.commit_partition,
+                (0, KEY, "p#0", FP_A, "metadata", STATE),
+            ),
+            ("amend_job", self.store.amend_job, ()),
+        ]
+
+    def test_a_path_that_cannot_be_inspected_is_a_storage_failure_on_every_platform(self) -> None:
+        # POSIX raises ENOTDIR (and Python 3.11 PermissionError) from some path checks that
+        # Windows answers with "absent"; the errors are injected so every platform runs them.
+        for error in (NotADirectoryError(20, "/secret/dir"), PermissionError(13, "/secret/dir")):
+            for name, call, arguments in self.operations():
+                with (
+                    self.subTest(error=type(error).__name__, call=name),
+                    mock.patch.object(Path, "exists", side_effect=error),
+                ):
+                    raised = self.expect(
+                        call, ScaleCheckpointErrorCode.STORE_STORAGE_FAILED, *arguments
+                    )
+                    self.assertIsNone(raised.detail)
+                    self.assertNotIn("secret", str(raised))
+                    self.assertIsNone(raised.__cause__)
+        self.assertFalse(self.path.exists())
+
+    def test_an_unmakeable_parent_directory_is_a_storage_failure_on_every_platform(self) -> None:
+        for error in (NotADirectoryError(20, "/secret/dir"), FileExistsError(17, "/secret/dir")):
+            with (
+                self.subTest(error=type(error).__name__),
+                mock.patch.object(Path, "mkdir", side_effect=error),
+            ):
+                raised = self.expect(
+                    self.store.create_job,
+                    ScaleCheckpointErrorCode.STORE_STORAGE_FAILED,
+                    "d" * 64,
+                    COMPONENTS,
+                    MANIFEST,
+                )
+                self.assertNotIn("secret", str(raised))
+        self.assertFalse(self.path.exists())
+
+    def test_a_connection_that_cannot_be_made_is_a_storage_failure_on_every_platform(self) -> None:
+        self.started()
+        for name, call, arguments in self.operations():
+            if name == "create_job":
+                continue
+            with (
+                self.subTest(call=name),
+                mock.patch(
+                    "veridist.scale._partition_store.sqlite3.connect",
+                    side_effect=NotADirectoryError(20, "/secret/dir"),
+                ),
+            ):
+                raised = self.expect(
+                    call, ScaleCheckpointErrorCode.STORE_STORAGE_FAILED, *arguments
+                )
+                self.assertNotIn("secret", str(raised))
+
+    def test_a_cleanup_that_fails_does_not_replace_the_failure_it_follows(self) -> None:
+        # ``unlink(missing_ok=True)`` ignores only a missing file: below a regular file POSIX
+        # raises ENOTDIR, which must not hide the error of the creation that is being undone.
+        for error in (NotADirectoryError(20, "/secret/dir"), PermissionError(13, "/secret/dir")):
+            with (
+                self.subTest(error=type(error).__name__),
+                mock.patch.object(Path, "unlink", side_effect=error),
+                mock.patch.object(
+                    SQLitePartitionStore, "_commit", staticmethod(_lose_before_commit)
+                ),
+            ):
+                raised = self.expect(
+                    self.store.create_job,
+                    ScaleCheckpointErrorCode.STORE_COMMIT_UNCERTAIN,
+                    "d" * 64,
+                    COMPONENTS,
+                    MANIFEST,
+                )
+                self.assertNotIn("secret", str(raised))
+            self.path.unlink(missing_ok=True)
 
     def test_a_storage_error_without_a_symbolic_name_has_no_detail(self) -> None:
         from veridist.scale._partition_store import _storage_failed

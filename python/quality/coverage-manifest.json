@@ -131,7 +131,7 @@
     "src/veridist/scale/_kernels.py": {"statements": 26, "branches": 12},
     "src/veridist/scale/_multi_pass.py": {"statements": 191, "branches": 32},
     "src/veridist/scale/_one_pass.py": {"statements": 115, "branches": 2},
-    "src/veridist/scale/_partition_store.py": {"statements": 270, "branches": 68},
+    "src/veridist/scale/_partition_store.py": {"statements": 283, "branches": 68},
     "src/veridist/scale/_pilot.py": {"statements": 121, "branches": 44},
     "src/veridist/scale/_planner.py": {"statements": 179, "branches": 32},
     "src/veridist/scale/_polars.py": {"statements": 52, "branches": 10},

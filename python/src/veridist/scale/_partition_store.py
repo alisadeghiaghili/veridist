@@ -109,8 +109,12 @@ _PAIR_SEPARATOR: Final = "\x1e"
 T = TypeVar("T")
 
 
-def _storage_failed(error: sqlite3.Error | None = None) -> ScaleCheckpointError:
-    """A storage failure; only SQLite's symbolic error name is ever attached."""
+def _storage_failed(error: Exception | None = None) -> ScaleCheckpointError:
+    """A storage failure; only SQLite's symbolic error name is ever attached.
+
+    An operating-system error carries a path and a platform message, so it contributes
+    nothing: it is the typed failure alone.
+    """
 
     name = getattr(error, "sqlite_errorname", None)
     detail = name if isinstance(name, str) and name else None
@@ -233,7 +237,12 @@ class SQLitePartitionStore:
 
         connection: sqlite3.Connection | None = None
         try:
-            connection = sqlite3.connect(self._path, timeout=self._timeout, isolation_level=None)
+            try:
+                connection = sqlite3.connect(
+                    self._path, timeout=self._timeout, isolation_level=None
+                )
+            except OSError:
+                raise _storage_failed() from None
             if write:
                 connection.execute("PRAGMA synchronous = FULL")
             yield connection
@@ -242,6 +251,32 @@ class SQLitePartitionStore:
         finally:
             if connection is not None:
                 connection.close()
+
+    def _exists(self) -> bool:
+        """Whether the database file exists; a path that cannot be inspected is a failure.
+
+        ``Path.exists`` hides some operating-system errors and raises others depending on
+        the platform and the Python version (a path below a regular file, a directory that
+        cannot be searched), so every one that surfaces is the typed storage failure.
+        """
+
+        try:
+            return self._path.exists()
+        except OSError:
+            raise _storage_failed() from None
+
+    def _discard(self) -> None:
+        """Remove the file that a failed creation made; the failure that led here stands.
+
+        The removal is best effort: its own error (``missing_ok`` ignores only a file that
+        is absent, not a path below a regular file or one that cannot be searched) must
+        not replace the error that is being handled.
+        """
+
+        try:
+            self._path.unlink(missing_ok=True)
+        except OSError:
+            pass
 
     @staticmethod
     def _commit(connection: sqlite3.Connection) -> None:
@@ -290,7 +325,7 @@ class SQLitePartitionStore:
         not exist is ``STORE_STORAGE_FAILED``, and is not created.
         """
 
-        if existing and not self._path.exists():
+        if existing and not self._exists():
             raise _storage_failed()
         acknowledgement_lost = False
         with self._opened(write=True) as connection:
@@ -334,7 +369,7 @@ class SQLitePartitionStore:
         or ``STORE_STORAGE_FAILED`` for anything that is not a sound job.
         """
 
-        if not self._path.exists():
+        if not self._exists():
             return None
         with self._opened() as connection:
             if not self._require_format(connection):
@@ -371,7 +406,7 @@ class SQLitePartitionStore:
 
         text = _encode_components(components)
         entries = tuple(manifest)
-        created = not self._path.exists()
+        created = not self._exists()
 
         def work(connection: sqlite3.Connection) -> None:
             if self._tables(connection):
@@ -410,7 +445,7 @@ class SQLitePartitionStore:
             self._transact(work, confirm, existing=False)
         except BaseException:
             if created:
-                self._path.unlink(missing_ok=True)
+                self._discard()
             raise
 
     @staticmethod
@@ -480,7 +515,7 @@ class SQLitePartitionStore:
         returned: ``STORE_DIGEST_MISMATCH`` or ``STORE_DECODE_FAILED`` otherwise.
         """
 
-        if not self._path.exists():
+        if not self._exists():
             return {}
         with self._opened() as connection:
             if not self._require_format(connection):
@@ -570,7 +605,7 @@ class SQLitePartitionStore:
     def read_ledger(self) -> dict[int, LedgerEntry]:
         """The completed passes by index, each verified: its row and the merged state's digest."""
 
-        if not self._path.exists():
+        if not self._exists():
             return {}
         with self._opened() as connection:
             if not self._require_format(connection):
