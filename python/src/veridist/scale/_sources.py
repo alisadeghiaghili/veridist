@@ -36,13 +36,25 @@ Re-reading. A source is read again by a fit that needs several passes. A source 
 can be read only once says so with a ``single_use`` attribute that is ``True`` (see
 :func:`is_single_use`); a multi-pass fit refuses it before reading unless a local spool
 is requested (:mod:`veridist.scale._spool`).
+
+Parallel reading. A fit given an executor (:mod:`veridist.scale._executors`) reads the
+partitions of a pass on several threads or processes. A source takes part only if it says
+so: ``parallel_obstacle(kind, partitions)`` returns ``None`` when the partitions can be read
+by workers of that :class:`ExecutorKind`, and otherwise the :class:`DowngradeReason` why
+they cannot, in which case the pass is read serially and the reason is recorded. A source
+without the method is not read in parallel (``UNDECLARED_SOURCE``). Workers of an executor
+that uses processes receive ``worker_source()`` if the source has it, else the source
+itself, and it must be picklable and must not carry data (a source that holds its data in
+memory names ``IN_MEMORY_DATA``). A source that cannot be read again after a failure part
+way through a partition says so with ``retryable`` set to ``False``; a failed partition of
+every other source may be read again from the start (see :mod:`veridist.scale._tasks`).
 """
 
 from __future__ import annotations
 
 import hashlib
 import re
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any, Final, Protocol, TypeVar, runtime_checkable
@@ -119,15 +131,49 @@ class Partition:
         return self.fingerprint is not None
 
 
-@runtime_checkable
-class Source(Protocol):
-    """What every source provides; see the module documentation."""
+class ExecutorKind(StrEnum):
+    """How the partitions of a pass are read: in turn, on threads or on processes."""
 
-    def partitions(self) -> tuple[Partition, ...]: ...
+    SERIAL = "serial"
+    THREADS = "threads"
+    PROCESSES = "processes"
+
+
+class DowngradeReason(StrEnum):
+    """Why a pass that was to run in parallel was read serially; closed, locale neutral."""
+
+    SINGLE_PARTITION = "single_partition"
+    """Fewer than two partitions: there is nothing to split."""
+
+    SINGLE_USE_SOURCE = "single_use_source"
+    """The source can be read once only, so it cannot be read by several workers."""
+
+    ENGINE_MANAGED = "engine_managed"
+    """A dataframe or query engine owns the read and runs its own threads in this process."""
+
+    IN_MEMORY_DATA = "in_memory_data"
+    """The data is in this process's memory; handing it to worker processes would copy it."""
+
+    UNDECLARED_SOURCE = "undeclared_source"
+    """The source does not say that it can be read by several workers."""
+
+    SPOOL_FIRST_PASS = "spool_first_pass"
+    """The first pass writes the spool and does so in canonical order, one partition at a time."""
+
+
+class BatchReader(Protocol):
+    """What reading one partition needs: its validated batches."""
 
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS
     ) -> Iterator[Any]: ...
+
+
+@runtime_checkable
+class Source(BatchReader, Protocol):
+    """What every source provides; see the module documentation."""
+
+    def partitions(self) -> tuple[Partition, ...]: ...
 
 
 def is_single_use(source: object) -> bool:
@@ -138,6 +184,32 @@ def is_single_use(source: object) -> bool:
     """
 
     return getattr(source, "single_use", False) is True
+
+
+def parallel_obstacle(
+    source: object, kind: ExecutorKind, partitions: Sequence[Partition]
+) -> DowngradeReason | None:
+    """Why ``source`` cannot be read by workers of ``kind``, or ``None`` if it can.
+
+    A source answers with its ``parallel_obstacle(kind, partitions)`` method; one without
+    the method is ``UNDECLARED_SOURCE``.
+    """
+
+    method = getattr(source, "parallel_obstacle", None)
+    if method is None:
+        return DowngradeReason.UNDECLARED_SOURCE
+    obstacle: DowngradeReason | None = method(kind, partitions)
+    return obstacle
+
+
+def is_retryable(source: object) -> bool:
+    """Whether a partition read that failed part way may be read again from the start.
+
+    A source that says ``retryable`` is ``False`` is not; a single-use source is not either
+    (a stream that has been consumed cannot be replayed). Every other source is.
+    """
+
+    return getattr(source, "retryable", True) is True and not is_single_use(source)
 
 
 def check_max_rows(max_rows: object) -> int:
@@ -229,20 +301,28 @@ def float64_values(values: Any) -> Any:
 
 
 class NumpySource:
-    """A single-partition source over a one-dimensional numpy array.
+    """A source over a one-dimensional numpy array: one partition, or contiguous row ranges.
 
     The array is read where it is, never copied: batches of a float64 array are
     views, and an array of another supported dtype is widened one batch at a time.
-    The caller must not modify the array while it is being read. The partition
-    fingerprint is at level ``CONTENT``: the SHA-256 of the array's dtype, shape
-    and bytes, computed in bounded blocks each time ``partitions()`` is called.
+    The caller must not modify the array while it is being read.
+
+    Without ``partition_rows`` there is one partition, ``"array"``, whose fingerprint is at
+    level ``CONTENT``: the SHA-256 of the array's dtype, shape and bytes, computed in
+    bounded blocks each time ``partitions()`` is called. With ``partition_rows`` (a built-in
+    integer of at least one) the array is cut into consecutive ranges of that many rows (the
+    last may be shorter), partition ``"array#<n>"`` being the ``n``-th, each fingerprinted
+    like the whole array together with its first row. A fit depends on the multiset of the
+    values only, so the partitioning changes no state and no result; it only lets an
+    executor read the ranges at the same time. The data is in this process's memory, so
+    only threads can read the ranges in parallel.
     """
 
     PARTITION_ID: Final = "array"
 
-    __slots__ = ("_values",)
+    __slots__ = ("_partition_rows", "_values")
 
-    def __init__(self, values: object) -> None:
+    def __init__(self, values: object, *, partition_rows: int | None = None) -> None:
         np = numpy_module()
         if not isinstance(values, np.ndarray) or isinstance(values, np.ma.MaskedArray):
             raise TypeError("values must be a numpy.ndarray")
@@ -251,32 +331,68 @@ class NumpySource:
         kind, size = values.dtype.kind, values.dtype.itemsize
         if not (kind in "iu" or (kind == "f" and size in (4, 8))):
             raise ScaleSourceError(ScaleSourceErrorCode.UNSUPPORTED_DTYPE)
+        if partition_rows is not None:
+            if type(partition_rows) is not int:
+                raise TypeError("partition_rows must be a built-in integer or None")
+            if partition_rows < 1:
+                raise ValueError("partition_rows must be at least 1")
         self._values: Any = values
+        self._partition_rows = partition_rows
 
-    def _content_digest(self) -> str:
+    @staticmethod
+    def _content_digest(values: Any) -> str:
         np = numpy_module()
-        values = self._values
         digest = hashlib.new(FINGERPRINT_ALGORITHM)
         for start in range(0, int(values.shape[0]), HASH_BLOCK_ROWS):
             digest.update(np.ascontiguousarray(values[start : start + HASH_BLOCK_ROWS]))
         return digest.hexdigest()
 
+    def _range_count(self) -> int:
+        """How many row ranges the array is cut into (an empty array has one, empty)."""
+
+        step = self._partition_rows
+        assert step is not None
+        return max(1, -(-int(self._values.shape[0]) // step))
+
     def partitions(self) -> tuple[Partition, ...]:
-        """The one partition, with a content fingerprint."""
+        """The partitions, each with a content fingerprint: one, or one per row range."""
 
         values = self._values
-        fingerprint = canonical_digest(
-            "numpy", values.dtype.str, (int(values.shape[0]),), self._content_digest()
-        )
-        return (
-            Partition(
-                self.PARTITION_ID,
-                0,
-                int(values.shape[0]),
-                fingerprint,
-                FingerprintLevel.CONTENT,
-            ),
-        )
+        step = self._partition_rows
+        if step is None:
+            total = int(values.shape[0])
+            fingerprint = canonical_digest(
+                "numpy", values.dtype.str, (total,), self._content_digest(values)
+            )
+            return (
+                Partition(self.PARTITION_ID, 0, total, fingerprint, FingerprintLevel.CONTENT),
+            )
+        found: list[Partition] = []
+        for index in range(self._range_count()):
+            part = values[index * step : (index + 1) * step]
+            rows = int(part.shape[0])
+            fingerprint = canonical_digest(
+                "numpy", values.dtype.str, (rows,), index * step, self._content_digest(part)
+            )
+            found.append(
+                Partition(
+                    f"{self.PARTITION_ID}#{index}",
+                    index,
+                    rows,
+                    fingerprint,
+                    FingerprintLevel.CONTENT,
+                )
+            )
+        return tuple(found)
+
+    def parallel_obstacle(
+        self, kind: ExecutorKind, partitions: Sequence[Partition]
+    ) -> DowngradeReason | None:
+        """Threads read the ranges in place; processes would need a copy of the data."""
+
+        if kind is ExecutorKind.PROCESSES:
+            return DowngradeReason.IN_MEMORY_DATA
+        return None
 
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS
@@ -284,21 +400,38 @@ class NumpySource:
         """Validated float64 batches of at most ``max_rows`` rows, in array order."""
 
         bound = check_max_rows(max_rows)
-        if not isinstance(partition, Partition) or partition.id != self.PARTITION_ID:
+        if not isinstance(partition, Partition):
             raise ValueError("partition does not belong to this source")
-        return self._read(bound)
+        return self._read(self._range(partition), bound)
 
-    def _read(self, max_rows: int) -> Iterator[Any]:
+    def _range(self, partition: Partition) -> tuple[int, int]:
+        """The first row and the end of the rows of ``partition``."""
+
+        total = int(self._values.shape[0])
+        step = self._partition_rows
+        if step is None:
+            if partition.id != self.PARTITION_ID:
+                raise ValueError("partition does not belong to this source")
+            return 0, total
+        name, separator, number = partition.id.rpartition("#")
+        known = name == self.PARTITION_ID and separator and number.isascii() and number.isdigit()
+        if not known or int(number) >= self._range_count():
+            raise ValueError("partition does not belong to this source")
+        start = int(number) * step
+        return start, min(start + step, total)
+
+    def _read(self, rows: tuple[int, int], max_rows: int) -> Iterator[Any]:
         values = self._values
-        for start in range(0, int(values.shape[0]), max_rows):
-            yield float64_values(values[start : start + max_rows])
+        first, end = rows
+        for start in range(first, end, max_rows):
+            yield float64_values(values[start : min(start + max_rows, end)])
 
 
 StateT = TypeVar("StateT", bound=MergeableState[Any])
 
 
 def fold_partition(
-    source: Source,
+    source: BatchReader,
     partition: Partition,
     state_type: type[StateT],
     *,

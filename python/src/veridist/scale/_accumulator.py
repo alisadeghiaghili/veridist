@@ -325,7 +325,18 @@ class ExactSum:
         count, integers = _codec.decode_frame(
             data, tag=STATE_TAG, version=SCHEMA_VERSION, integer_count=1
         )
-        units = integers[0]
+        return cls.from_units(count, integers[0], limits)
+
+    @classmethod
+    def from_units(
+        cls, count: int, units: int, limits: AccumulatorLimits = DEFAULT_LIMITS
+    ) -> Self:
+        """The accumulator of ``count`` values whose exact sum is ``units`` canonical units.
+
+        ``ScaleStateError`` with ``STATE_BYTES_INVALID`` when ``units`` is beyond what
+        ``count`` finite values can sum to.
+        """
+
         if abs(units) > count * MAX_ELEMENT_UNITS:
             raise ScaleStateError(ScaleStateErrorCode.STATE_BYTES_INVALID)
         restored = cls(limits)

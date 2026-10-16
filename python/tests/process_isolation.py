@@ -1,11 +1,14 @@
-"""Keep tests that use thread-pool libraries out of forked copies of a process that used them.
+"""Keep tests that use thread pools out of forked copies of a process that used them.
 
 Mutation testing forks one child per mutant from a runner that has already run the
 whole suite in the same process.  Polars and DuckDB start native worker threads on
 first use, and a thread does not survive ``fork``: the child inherits a pool whose
 workers no longer exist, so the first query that waits for one never returns.  The
 runner sees a child that neither passes nor fails until its time limit expires, and
-reports the mutant as timed out instead of killed or survived.
+reports the mutant as timed out instead of killed or survived.  The executors of the
+scale fit start thread pools and process pools of their own, and the tests that run them
+(they name ``ThreadExecutor``, ``ProcessExecutor`` or a pool class, or use the shared
+executor fixtures) are kept out of forked children in the same way.
 
 The remedy is to give such a child a fresh interpreter at the moment it first needs
 one.  Before the first test that uses Polars or DuckDB, the forked child replaces
@@ -35,7 +38,11 @@ EXPECTED_PACKAGE_VARIABLE = "VERIDIST_TEST_EXPECTED_PACKAGE"
 REFUSED_EXIT_CODE = 70
 """Exit code of a replacement process that imported a different copy of the package."""
 
-_LIBRARIES = re.compile(r"polars|duckdb|scale_frame_fixtures")
+_LIBRARIES = re.compile(
+    r"polars|duckdb|scale_frame_fixtures"
+    r"|ThreadExecutor|ProcessExecutor|ThreadPoolExecutor|ProcessPoolExecutor"
+    r"|scale_executor_fixtures"
+)
 
 forked = False
 """Whether this process was created by ``fork`` after this module was imported."""
@@ -56,7 +63,7 @@ def install() -> None:
 
 
 def uses_thread_pool_libraries(path: Path) -> bool:
-    """Whether the test module at ``path`` names Polars, DuckDB or their shared fixtures."""
+    """Whether the test module at ``path`` names Polars, DuckDB, an executor or their fixtures."""
 
     if path not in _uses_libraries:
         try:

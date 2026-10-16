@@ -51,6 +51,15 @@ closed first, then the whole directory is removed. A failure to delete is
 ``SPOOL_UNAVAILABLE``; it is raised only when nothing else is in flight, so that it never
 replaces the error or the interrupt that is being handled. No message or attribute holds a
 path or a value.
+
+Parallel reads. The first pass of a spooled fit writes the spool, one partition after the
+other in canonical order, so it is read serially (``SPOOL_FIRST_PASS``) and a partition that
+fails in it is not read again (the source would be asked for it a second time while the
+spool holds half of it). Every later pass reads files that exist, and an executor may read
+them in parallel: threads share the :class:`Spool` (its handle list is what cleanup closes),
+worker processes receive a :class:`SpoolReplay`, a picklable description of the sealed files
+that opens and verifies them exactly as the spool does and never writes or deletes. The
+fit ends its pool before the spool's directory is deleted.
 """
 
 from __future__ import annotations
@@ -60,8 +69,9 @@ import os
 import shutil
 import sys
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass
+from functools import partial
 from types import TracebackType
 from typing import Any, Final
 
@@ -69,7 +79,14 @@ from veridist.engine.provenance import ScaleSpoolPartitionProvenance, ScaleSpool
 from veridist.scale._arrow import pyarrow_module
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._kernels import numpy_module
-from veridist.scale._sources import DEFAULT_MAX_ROWS, Partition, Source, check_max_rows
+from veridist.scale._sources import (
+    DEFAULT_MAX_ROWS,
+    DowngradeReason,
+    ExecutorKind,
+    Partition,
+    Source,
+    check_max_rows,
+)
 
 DIRECTORY_PREFIX: Final = "veridist-spool-"
 """The name every spool directory starts with."""
@@ -177,6 +194,73 @@ def _hashed(digest: Any, values: Any) -> None:
     digest.update(numpy_module().ascontiguousarray(values, dtype="<f8"))
 
 
+def spool_schema(pa: Any) -> Any:
+    """The schema of every spool file: the one float64 column, without nulls."""
+
+    return pa.schema([pa.field(COLUMN_NAME, pa.float64(), nullable=False)])
+
+
+def _open_file(pa: Any, path: str) -> tuple[Any, Any]:
+    """Open a spool file for reading: its handle and its Arrow file reader."""
+
+    handle = pa.memory_map(path, "r") if MEMORY_MAP else pa.OSFile(path, "rb")
+    try:
+        return handle, pa.ipc.open_file(handle)
+    except BaseException:
+        handle.close()
+        raise
+
+
+def _close(handle: Any) -> None:
+    handle.close()
+
+
+def _replay_entry(
+    pa: Any,
+    schema: Any,
+    entry: _Entry,
+    max_rows: int,
+    open_reader: Callable[[str], tuple[Any, Any]],
+    release: Callable[[Any], None],
+) -> Iterator[Any]:
+    """Read one sealed partition back in pieces of at most ``max_rows`` rows, verified.
+
+    Every difference from what was written (schema, batch count, a batch larger than the
+    largest written, row count, digest, a missing or truncated file) is ``SPOOL_CHANGED``,
+    raised before the last piece is handed over. ``open_reader`` opens the file and
+    ``release`` closes the handle, which is closed whether the read ends or fails.
+    """
+
+    handle = None
+    try:
+        handle, reader = open_reader(entry.path)
+        if reader.num_record_batches != entry.batches or not reader.schema.equals(schema):
+            raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED)
+        digest = hashlib.sha256()
+        rows = 0
+        held = None
+        for index in range(entry.batches):
+            record = reader.get_batch(index)
+            if record.num_rows > entry.largest:
+                raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED)
+            values = record.column(0).to_numpy(zero_copy_only=True)
+            _hashed(digest, values)
+            rows += record.num_rows
+            for start in range(0, record.num_rows, max_rows):
+                if held is not None:
+                    yield held
+                held = values[start : start + max_rows]
+        if rows != entry.rows or digest.hexdigest() != entry.digest:
+            raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED)
+        if held is not None:
+            yield held
+    except (OSError, pa.ArrowException):
+        raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED) from None
+    finally:
+        if handle is not None:
+            release(handle)
+
+
 def _create_file(path: str) -> Any:
     """A new binary file at ``path``, for its owner only; it must not exist."""
 
@@ -200,6 +284,30 @@ class SpooledSource:
     def partitions(self) -> tuple[Partition, ...]:
         return self._source.partitions()
 
+    @property
+    def retryable(self) -> bool:
+        """Whether a failed partition may be read again; asked at the start of a pass.
+
+        It is false until a partition has been written, so the pass that writes the spool is
+        never read again partition by partition, and true from then on.
+        """
+
+        return self._spool.sealed
+
+    def parallel_obstacle(
+        self, kind: ExecutorKind, partitions: Sequence[Partition]
+    ) -> DowngradeReason | None:
+        """Only the first pass, which writes the spool, cannot be read in parallel."""
+
+        if self._spool.holds(partitions):
+            return None
+        return DowngradeReason.SPOOL_FIRST_PASS
+
+    def worker_source(self) -> SpoolReplay:
+        """What a worker process reads: the sealed files, not the underlying source."""
+
+        return self._spool.replay()
+
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS
     ) -> Iterator[Any]:
@@ -219,7 +327,7 @@ class Spool:
         pa = pyarrow_module()
         self._pa = pa
         self._policy = policy
-        self._schema = pa.schema([pa.field(COLUMN_NAME, pa.float64(), nullable=False)])
+        self._schema = spool_schema(pa)
         self._begun: set[str] = set()
         self._sealed: dict[str, _Entry] = {}
         self._handles: list[Any] = []
@@ -249,6 +357,22 @@ class Spool:
         """The source that reads ``source`` once and then the spool."""
 
         return SpooledSource(self, source)
+
+    @property
+    def sealed(self) -> bool:
+        """Whether the spool holds every partition it has begun, and at least one."""
+
+        return bool(self._sealed) and len(self._sealed) == len(self._begun)
+
+    def holds(self, partitions: Sequence[Partition]) -> bool:
+        """Whether every one of ``partitions`` has been written to the spool completely."""
+
+        return all(partition.id in self._sealed for partition in partitions)
+
+    def replay(self) -> SpoolReplay:
+        """A picklable reader of the partitions that are sealed now."""
+
+        return SpoolReplay(dict(self._sealed))
 
     def provenance(self) -> ScaleSpoolProvenance:
         """The row count and the digest of every partition the spool holds, in read order."""
@@ -332,37 +456,9 @@ class Spool:
             raise
 
     def _replay(self, entry: _Entry, max_rows: int) -> Iterator[Any]:
-        pa = self._pa
-        handle = None
-        try:
-            handle, reader = self._open_reader(entry.path)
-            if reader.num_record_batches != entry.batches or not reader.schema.equals(
-                self._schema
-            ):
-                raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED)
-            digest = hashlib.sha256()
-            rows = 0
-            held = None
-            for index in range(entry.batches):
-                record = reader.get_batch(index)
-                if record.num_rows > entry.largest:
-                    raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED)
-                values = record.column(0).to_numpy(zero_copy_only=True)
-                _hashed(digest, values)
-                rows += record.num_rows
-                for start in range(0, record.num_rows, max_rows):
-                    if held is not None:
-                        yield held
-                    held = values[start : start + max_rows]
-            if rows != entry.rows or digest.hexdigest() != entry.digest:
-                raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED)
-            if held is not None:
-                yield held
-        except (OSError, pa.ArrowException):
-            raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED) from None
-        finally:
-            if handle is not None:
-                self._release(handle)
+        return _replay_entry(
+            self._pa, self._schema, entry, max_rows, self._open_reader, self._release
+        )
 
     def _release(self, handle: Any) -> None:
         """Close one handle and forget it (it may already be gone if the spool was deleted)."""
@@ -393,3 +489,33 @@ class Spool:
         if failed:
             return _refused(ScaleSourceErrorCode.SPOOL_UNAVAILABLE, HINT_CLEANUP)
         return None
+
+
+class SpoolReplay:
+    """A read-only, picklable view of the partitions a spool had sealed when it was made.
+
+    It holds the file locations and the digests, nothing else, so it crosses a process
+    boundary cheaply and a worker can read, and verify, any of its partitions. It never
+    writes, never deletes and does not keep handles open between reads.
+    """
+
+    WORKER_MODULES: Final = ("pyarrow",)
+    """What a worker process imports before its first task."""
+
+    __slots__ = ("_entries",)
+
+    def __init__(self, entries: dict[str, _Entry]) -> None:
+        self._entries = entries
+
+    def batches(
+        self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS
+    ) -> Iterator[Any]:
+        """Verified pieces of at most ``max_rows`` rows; ``SPOOL_CHANGED`` for a partition the
+        spool did not seal."""
+
+        bound = check_max_rows(max_rows)
+        entry = self._entries.get(partition.id) if isinstance(partition, Partition) else None
+        if entry is None:
+            raise _refused(ScaleSourceErrorCode.SPOOL_CHANGED, HINT_CHANGED)
+        pa = pyarrow_module()
+        return _replay_entry(pa, spool_schema(pa), entry, bound, partial(_open_file, pa), _close)

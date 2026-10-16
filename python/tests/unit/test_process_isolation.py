@@ -35,6 +35,36 @@ class LibraryDetectionTests(unittest.TestCase):
         path = self.module("test_b.py", "from tests.unit.scale_frame_fixtures import code_of\n")
         self.assertTrue(isolation.uses_thread_pool_libraries(path))
 
+    def test_a_module_that_starts_executors_is_detected(self) -> None:
+        for text in (
+            "from veridist.scale._executors import ThreadExecutor\n",
+            "executor = ProcessExecutor(2)\n",
+            "from concurrent.futures import ThreadPoolExecutor\n",
+            "from concurrent.futures import ProcessPoolExecutor\n",
+            "from tests.unit.scale_executor_fixtures import NoLeaksTestCase\n",
+        ):
+            with self.subTest(text=text):
+                path = self.module("test_g.py", text)
+                isolation._uses_libraries.clear()
+                self.assertTrue(isolation.uses_thread_pool_libraries(path))
+
+    def test_the_executor_tests_of_this_suite_are_detected(self) -> None:
+        unit = Path(__file__).resolve().parent
+        for name in (
+            "test_scale_executors.py",
+            "test_scale_executor_fit.py",
+            "test_scale_executor_processes.py",
+            "test_scale_spool_parallel.py",
+        ):
+            with self.subTest(module=name):
+                self.assertTrue(isolation.uses_thread_pool_libraries(unit / name))
+
+    def test_modules_that_only_use_the_task_pieces_are_not_detected(self) -> None:
+        unit = Path(__file__).resolve().parent
+        for name in ("test_scale_tasks.py", "test_scale_parallel_sources.py"):
+            with self.subTest(module=name):
+                self.assertFalse(isolation.uses_thread_pool_libraries(unit / name))
+
     def test_other_modules_and_unreadable_files_are_not(self) -> None:
         plain = self.module("test_c.py", "import numpy\nimport pyarrow\n")
         self.assertFalse(isolation.uses_thread_pool_libraries(plain))

@@ -33,13 +33,15 @@ dropped, before the same connection is used for another query.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import Any, Final
 
 from veridist.scale._arrow import check_column_name, column_batches, load_optional
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._sources import (
     DEFAULT_MAX_ROWS,
+    DowngradeReason,
+    ExecutorKind,
     FingerprintLevel,
     Partition,
     check_max_rows,
@@ -122,6 +124,13 @@ class DuckDBSource:
         """The one partition: unknown row count, no fingerprint, hence not resumable."""
 
         return (Partition(self.PARTITION_ID, 0, None, None, FingerprintLevel.NONE),)
+
+    def parallel_obstacle(
+        self, kind: ExecutorKind, partitions: Sequence[Partition]
+    ) -> DowngradeReason | None:
+        """The relation is bound to its connection, which runs one result at a time."""
+
+        return DowngradeReason.ENGINE_MANAGED
 
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS

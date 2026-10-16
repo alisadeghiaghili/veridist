@@ -61,6 +61,7 @@ from typing import Any, Final
 from veridist.engine.provenance import (
     SCALE_PROVENANCE_SCHEMA_VERSION,
     ScaleEnvironmentProvenance,
+    ScaleExecutionProvenance,
     ScalePartitionProvenance,
     ScalePassProvenance,
     ScaleProvenance,
@@ -85,6 +86,7 @@ from veridist.scale._estimates import (
     fit_lognormal_state,
     fit_normal_state,
 )
+from veridist.scale._executors import Executor, PassEngine, resolve_executor
 from veridist.scale._multi_pass import MultiPassResult, fit_gumbel_right, fit_weibull_min
 from veridist.scale._one_pass import ExponentialState, GammaState, LognormalState, NormalState
 from veridist.scale._pilot import PilotState
@@ -100,11 +102,11 @@ from veridist.scale._sources import (
     Partition,
     Source,
     check_max_rows,
-    fold_partition,
     is_single_use,
 )
 from veridist.scale._spool import HINT_REQUIRED, Spool, SpoolPolicy
 from veridist.scale._state import MergeableState
+from veridist.scale._tasks import FoldJob
 
 SOURCE_KINDS: Final[dict[type, str]] = {
     NumpySource: "numpy",
@@ -161,25 +163,11 @@ _PLANS: Final[dict[FamilyId, _Plan]] = {
 }
 
 
-_MULTI_PASS: Final[dict[FamilyId, Callable[[Source, PassLedger, int], MultiPassResult]]] = {
+_MULTI_PASS: Final[dict[FamilyId, Callable[[Source, PassLedger, PassEngine], MultiPassResult]]] = {
     FamilyId.WEIBULL_MIN: fit_weibull_min,
     FamilyId.GUMBEL_RIGHT: fit_gumbel_right,
 }
 """The multi-pass families: each reads the source as often as its plan needs."""
-
-
-def _fold_partitions(
-    source: Source,
-    partitions: tuple[Partition, ...],
-    state_type: type[MergeableState[Any]],
-    max_rows: int,
-) -> MergeableState[Any]:
-    """The state of the given partitions, merged in the order given."""
-
-    state = state_type.empty()
-    for partition in partitions:
-        state = state.merge(fold_partition(source, partition, state_type, max_rows=max_rows))
-    return state
 
 
 def _count_rows(source: Source, partitions: tuple[Partition, ...], max_rows: int) -> int:
@@ -210,6 +198,7 @@ def _provenance(
     max_rows: int,
     passes: ScalePassProvenance | None = None,
     spool: ScaleSpoolProvenance | None = None,
+    execution: ScaleExecutionProvenance | None = None,
 ) -> ScaleProvenance:
     state_record = None
     if state is not None:
@@ -227,6 +216,7 @@ def _provenance(
         ScaleEnvironmentProvenance(numpy_version(), numeric_environment_digest()),
         passes,
         spool,
+        execution,
     )
 
 
@@ -236,6 +226,7 @@ def _fit_multi_pass(
     max_rows: int,
     pass_budget: int,
     spool: SpoolPolicy | None,
+    executor: Executor | None,
 ) -> ScaleFitResult:
     """A multi-pass fit; the pass budget has been validated and the plan accepted it.
 
@@ -247,14 +238,17 @@ def _fit_multi_pass(
     partitions = source.partitions()
     ledger = PassLedger(partitions, pass_budget, bounds)
     run = _MULTI_PASS[family]
+    engine = PassEngine(executor, max_rows)
     if spool is None:
         if is_single_use(source):
             raise ScaleSourceError(ScaleSourceErrorCode.SPOOL_REQUIRED, HINT_REQUIRED)
-        outcome = run(source, ledger, max_rows)
+        with engine:
+            outcome = run(source, ledger, engine)
         record = None
     else:
-        with Spool(spool) as local:
-            outcome = run(local.source(source), ledger, max_rows)
+        # The engine is left first: no worker holds a spool file when the directory goes.
+        with Spool(spool) as local, engine:
+            outcome = run(local.source(source), ledger, engine)
             record = local.provenance()
     return ScaleFitResult(
         outcome.fit,
@@ -266,6 +260,7 @@ def _fit_multi_pass(
             max_rows,
             outcome.passes,
             record,
+            engine.provenance(),
         ),
     )
 
@@ -277,6 +272,7 @@ def fit(
     max_rows: int = DEFAULT_MAX_ROWS,
     pass_budget: int = PASS_BUDGET_DEFAULT,
     spool: SpoolPolicy | None = None,
+    executor: Executor | str | None = None,
 ) -> ScaleFitResult:
     """Fit ``family`` to the exact observations of ``source``.
 
@@ -288,8 +284,12 @@ def fit(
     multi-pass family reads it as many times as its plan needs, at most ``pass_budget``.
     ``spool`` is ``None`` or a :class:`~veridist.scale._spool.SpoolPolicy`: the explicit
     request for a local spool, which a multi-pass family needs for a source that can be
-    read only once and a one-pass family ignores. See the module documentation for the
-    result and the refusals.
+    read once and a one-pass family ignores. ``executor`` is ``None`` (the partitions are
+    read in turn), ``"serial"``, a :class:`~veridist.scale._executors.ThreadExecutor` or a
+    :class:`~veridist.scale._executors.ProcessExecutor`: the partitions of every pass are then
+    read by that executor, with no change to the result, the state or its digest; see
+    :mod:`veridist.scale._executors`. See the module documentation for the result and the
+    refusals.
     """
 
     spec = FAMILY_REGISTRY.lookup(family)
@@ -299,12 +299,15 @@ def fit(
         raise TypeError("source must provide partitions() and batches()")
     if spool is not None and not isinstance(spool, SpoolPolicy):
         raise TypeError("spool must be a SpoolPolicy or None")
+    resolved = resolve_executor(executor)
     plan = _PLANS.get(spec.id)
     if plan is None:
-        return _fit_multi_pass(source, spec.id, bound, budget, spool)
+        return _fit_multi_pass(source, spec.id, bound, budget, spool, resolved)
     partitions = source.partitions()
+    engine = PassEngine(resolved, bound)
     try:
-        state = _fold_partitions(source, partitions, plan.state_type, bound)
+        with engine:
+            state = engine.run(source, partitions, FoldJob(plan.state_type))
     except ScaleStateError as error:
         if error.code is not ScaleStateErrorCode.VALUE_OUT_OF_SUPPORT or (
             plan.invalid_support is None
@@ -312,10 +315,12 @@ def fit(
             raise
         rows = _count_rows(source, partitions, bound)
         return ScaleFitResult(
-            plan.invalid_support(rows), _provenance(source, partitions, rows, None, bound)
+            plan.invalid_support(rows),
+            _provenance(source, partitions, rows, None, bound, execution=engine.provenance()),
         )
     return ScaleFitResult(
-        plan.estimate(state), _provenance(source, partitions, state.count, state, bound)
+        plan.estimate(state),
+        _provenance(source, partitions, state.count, state, bound, execution=engine.provenance()),
     )
 
 

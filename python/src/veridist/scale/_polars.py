@@ -33,13 +33,15 @@ failure and propagates unchanged.
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+from collections.abc import Iterator, Sequence
 from typing import Any, Final
 
 from veridist.scale._arrow import check_column_name, column_batches, load_optional
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._sources import (
     DEFAULT_MAX_ROWS,
+    DowngradeReason,
+    ExecutorKind,
     FingerprintLevel,
     Partition,
     check_max_rows,
@@ -105,6 +107,13 @@ class PolarsSource:
         no fingerprint, hence not resumable."""
 
         return (Partition(self.PARTITION_ID, 0, self._rows, None, FingerprintLevel.NONE),)
+
+    def parallel_obstacle(
+        self, kind: ExecutorKind, partitions: Sequence[Partition]
+    ) -> DowngradeReason | None:
+        """Polars runs the plan with its own threads and the frame lives in this process."""
+
+        return DowngradeReason.ENGINE_MANAGED
 
     def batches(
         self, partition: Partition, *, max_rows: int = DEFAULT_MAX_ROWS

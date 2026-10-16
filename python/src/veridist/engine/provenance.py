@@ -36,6 +36,17 @@ _SHA256 = re.compile(r"[0-9a-f]{64}")
 _FINGERPRINT = re.compile(r"sha256:[0-9a-f]{64}")
 _FINGERPRINT_LEVELS = frozenset({"none", "metadata", "content"})
 _SCALE_PASS_ROLES = frozenset({"statistics", "grid", "expansion", "iteration"})
+_SCALE_EXECUTORS = frozenset({"serial", "threads", "processes"})
+_SCALE_DOWNGRADES = frozenset(
+    {
+        "single_partition",
+        "single_use_source",
+        "engine_managed",
+        "in_memory_data",
+        "undeclared_source",
+        "spool_first_pass",
+    }
+)
 _MAX_SEED = 2**128 - 1
 
 
@@ -771,6 +782,85 @@ class ScaleSpoolProvenance:
 
 
 @dataclass(frozen=True, slots=True)
+class ScaleExecutionPassProvenance:
+    """How one data pass of a scale fit was executed.
+
+    ``executor`` is what read the partitions (``"serial"``, ``"threads"`` or
+    ``"processes"``) and ``workers`` how many threads or processes did (1 when serial).
+    ``tasks`` is the number of partitions and ``retries`` how many times a partition was read
+    again after a transient error. ``downgrade`` is the reason the pass was read serially
+    though the fit asked for threads or processes, and ``None`` when it was not.
+    """
+
+    executor: str
+    workers: int
+    tasks: int
+    retries: int
+    downgrade: str | None
+
+    def __post_init__(self) -> None:
+        if self.executor not in _SCALE_EXECUTORS:
+            raise ValueError("executor must be serial, threads or processes")
+        _require_positive_integer("workers", self.workers)
+        _require_non_negative_integer("tasks", self.tasks)
+        _require_non_negative_integer("retries", self.retries)
+        if self.downgrade is not None and self.downgrade not in _SCALE_DOWNGRADES:
+            raise ValueError("downgrade must be a known reason or None")
+        if self.executor == "serial" and self.workers != 1:
+            raise ValueError("a serial pass has one worker")
+        if self.downgrade is not None and self.executor != "serial":
+            raise ValueError("only a serial pass was downgraded")
+
+
+@dataclass(frozen=True, slots=True)
+class ScaleExecutionProvenance:
+    """The executor a scale fit was given and what each of its data passes did with it.
+
+    ``executor`` and ``requested_workers`` are the request (``"serial"`` and 1 for the serial
+    executor). ``passes`` has one record per data pass in order; for a multi-pass fit they
+    are the passes of ``ScaleProvenance.passes`` and for a one-pass fit there is one.
+    ``effective_workers`` is the most workers any pass used, ``retries`` the re-reads of all
+    passes and ``downgrade`` the reason of the first downgraded pass, if any. A request is
+    capped by the cores of the host and by the number of partitions, so the effective count
+    can be lower without a downgrade. The record holds no data value and no path.
+    """
+
+    executor: str
+    requested_workers: int
+    passes: tuple[ScaleExecutionPassProvenance, ...]
+
+    def __post_init__(self) -> None:
+        if self.executor not in _SCALE_EXECUTORS:
+            raise ValueError("executor must be serial, threads or processes")
+        _require_positive_integer("requested_workers", self.requested_workers)
+        if self.executor == "serial" and self.requested_workers != 1:
+            raise ValueError("the serial executor has one worker")
+        if type(self.passes) is not tuple or any(
+            type(item) is not ScaleExecutionPassProvenance for item in self.passes
+        ):
+            raise TypeError("passes must be a tuple of execution pass provenance")
+        for item in self.passes:
+            if item.workers > self.requested_workers:
+                raise ValueError("a pass cannot use more workers than were requested")
+            if item.downgrade is None and item.executor != self.executor:
+                raise ValueError("a pass that was not downgraded used the requested executor")
+            if self.executor == "serial" and item.downgrade is not None:
+                raise ValueError("the serial executor is not downgraded")
+
+    @property
+    def effective_workers(self) -> int:
+        return max((item.workers for item in self.passes), default=1)
+
+    @property
+    def retries(self) -> int:
+        return sum(item.retries for item in self.passes)
+
+    @property
+    def downgrade(self) -> str | None:
+        return next((item.downgrade for item in self.passes if item.downgrade is not None), None)
+
+
+@dataclass(frozen=True, slots=True)
 class ScaleProvenance:
     """Closed facts about a fit computed from a scale source (provenance schema 2).
 
@@ -782,7 +872,8 @@ class ScaleProvenance:
     evaluated in. ``passes`` is the pass record of a multi-pass fit and ``None`` for a
     fit that reads its source once. ``spool`` is the record of the local spool a fit
     used and ``None`` for a fit that used none; its partitions are those of
-    ``partitions``. The record holds no data value and no path.
+    ``partitions``. ``execution`` is the record of the executor a fit was given and ``None``
+    for a fit that was given none. The record holds no data value and no path.
     """
 
     schema_version: str
@@ -795,6 +886,7 @@ class ScaleProvenance:
     environment: ScaleEnvironmentProvenance
     passes: ScalePassProvenance | None = None
     spool: ScaleSpoolProvenance | None = None
+    execution: ScaleExecutionProvenance | None = None
 
     def __post_init__(self) -> None:
         if self.schema_version != SCALE_PROVENANCE_SCHEMA_VERSION:
@@ -826,6 +918,12 @@ class ScaleProvenance:
                 raise ValueError("a spool holds exactly the partitions of the source")
             if self.spool.row_count != self.row_count:
                 raise ValueError("the spool must hold exactly the rows the fit read")
+        if self.execution is not None:
+            if type(self.execution) is not ScaleExecutionProvenance:
+                raise TypeError("execution provenance must be typed or None")
+            expected = 1 if self.passes is None else self.passes.pass_count
+            if len(self.execution.passes) != expected:
+                raise ValueError("an execution record has one entry per data pass")
 
 
 def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
@@ -890,6 +988,24 @@ def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
             ],
             "row_count": record.spool.row_count,
         }
+    if record.execution is not None:
+        value["execution"] = {
+            "downgrade": record.execution.downgrade,
+            "effective_workers": record.execution.effective_workers,
+            "executor": record.execution.executor,
+            "passes": [
+                {
+                    "downgrade": item.downgrade,
+                    "executor": item.executor,
+                    "retries": item.retries,
+                    "tasks": item.tasks,
+                    "workers": item.workers,
+                }
+                for item in record.execution.passes
+            ],
+            "requested_workers": record.execution.requested_workers,
+            "retries": record.execution.retries,
+        }
     return json.dumps(
         value,
         ensure_ascii=False,
@@ -918,6 +1034,8 @@ __all__ = [
     "RngPolicy",
     "RngProvenance",
     "ScaleEnvironmentProvenance",
+    "ScaleExecutionPassProvenance",
+    "ScaleExecutionProvenance",
     "ScalePartitionProvenance",
     "ScalePassProvenance",
     "ScalePassRecord",
