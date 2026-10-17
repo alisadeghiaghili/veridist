@@ -54,7 +54,10 @@ This document defines the 2.1 release boundary for package version `2.1.0`.
   whose refit fails is counted in `failed_replicates`, not retried. A p-value is
   a Monte Carlo estimate with a binomial standard error, and the cost is the
   number of replicates times the cost of one fit (an assessment adds one such
-  run per family). Passing the adequacy gate means a family was not rejected,
+  run per family). Both accept at most 100000 observations by default: a
+  larger sample raises `RefitGofRefused` (code `SCALE_REFIT_REFUSED`) before
+  anything is fitted or drawn, and the limit can be raised with the
+  `max_observations` keyword. Passing the adequacy gate means a family was not rejected,
   not that it is the true model, and AIC ranks only the families compared. The
   calibration evidence is a seeded simulation on a declared grid only
   (sample sizes 30 and 100, one or two parameter settings for each

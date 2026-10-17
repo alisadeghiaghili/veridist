@@ -4,6 +4,23 @@ This changelog covers only the nested `veridist` package. The repository-root
 legacy changelog describes the frozen `distfit_pro` history and is not a
 Veridist release record.
 
+## [Unreleased]
+
+### Changed
+
+- `refit_monte_carlo_gof` and `assess_families` now refuse a sample of more
+  than 100000 observations by default, raising the new `RefitGofRefused`
+  (reason `ROW_LIMIT_EXCEEDED`) before anything is fitted or drawn. Every
+  replicate draws and refits the whole sample, so the earlier behaviour ran
+  refits of arbitrary length on large samples. Pass `max_observations=` (a
+  positive integer) to raise or lower the limit; a sample is never
+  subsampled, and a `max_observations` that is not a positive integer raises
+  `ValueError`. The default is the new public constant
+  `REFIT_MAX_OBSERVATIONS` (`100_000`) in `veridist.inference`.
+  `RefitGofRefused` is a `VeridistError` and a `ValueError` whose `code` is
+  `SCALE_REFIT_REFUSED`, with the `reason` (a `RefitRefusedReason`) and the
+  `limit` in force.
+
 ## [2.1.0] - 2026-10-09
 
 ### Added

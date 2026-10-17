@@ -61,7 +61,11 @@ Dieses Dokument definiert die Release-Grenze 2.1 für Paketversion `2.1.0`.
   `failed_replicates` gezählt und nicht erneut versucht. Ein p-Wert ist eine
   Monte-Carlo-Schätzung mit binomialem Standardfehler, und der Aufwand ist die
   Zahl der Wiederholungen mal dem Aufwand einer Anpassung (eine Bewertung
-  fügt je Familie einen solchen Lauf hinzu). Das Bestehen der
+  fügt je Familie einen solchen Lauf hinzu). Beide akzeptieren standardmäßig
+  höchstens 100000 Beobachtungen: Eine größere Stichprobe löst
+  `RefitGofRefused` (Code `SCALE_REFIT_REFUSED`) aus, bevor etwas angepasst
+  oder gezogen wird, und das Limit lässt sich mit dem Schlüsselwortargument
+  `max_observations` anheben. Das Bestehen der
   Angemessenheitsprüfung bedeutet nur, dass eine Familie nicht verworfen
   wurde, nicht dass sie das wahre Modell ist, und das AIC ordnet nur die
   verglichenen Familien. Der Kalibrierungsnachweis ist eine Simulation mit
