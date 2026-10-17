@@ -115,6 +115,10 @@ class PassRole(StrEnum):
     GRID = "grid"
     EXPANSION = "expansion"
     ITERATION = "iteration"
+    PROFILE_WINDOW = "profile_window"
+    PROFILE_REFINEMENT = "profile_refinement"
+    PROFILE_CONFIRMATION = "profile_confirmation"
+    GOF = "gof"
 
 
 @dataclass(frozen=True, slots=True)

@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping, Sequence, Sized
 from dataclasses import dataclass
 from enum import StrEnum
 from importlib import import_module
+from itertools import islice
 from math import expm1, fsum, isfinite, log, sqrt
 from typing import Any, Final, cast
 
@@ -16,6 +17,7 @@ from veridist.engine.errors import VeridistError
 from veridist.families.dispatch import fit as _fit_family
 from veridist.families.registry import FAMILY_REGISTRY, FamilyId
 from veridist.families.results import FitSuccess
+from veridist.scale._sources import Source
 from veridist.statistics.distributions import cdf, sample
 
 
@@ -30,6 +32,46 @@ class GofStatistic(StrEnum):
 class SelectionCode(StrEnum):
     SELECTED = "SELECTED"
     NONE_ADEQUATE = "NONE_ADEQUATE"
+
+
+REFIT_MAX_OBSERVATIONS: Final = 100_000
+"""The most observations a refit Monte Carlo run accepts unless the caller raises the limit.
+
+Every replicate draws and refits as many observations as the sample has, so the cost is the
+replicate count times the cost of a fit of that size; beyond this the run is refused, never run on
+a subsample.
+"""
+
+
+class RefitRefusedReason(StrEnum):
+    """Why a refit Monte Carlo run was refused before it started."""
+
+    ROW_LIMIT_EXCEEDED = "ROW_LIMIT_EXCEEDED"
+    SCALE_SOURCE = "SCALE_SOURCE"
+
+
+class RefitGofRefused(VeridistError, ValueError):
+    """Refit Monte Carlo goodness of fit was refused for a sample too large to simulate.
+
+    ``code`` is ``"SCALE_REFIT_REFUSED"`` and ``reason`` a :class:`RefitRefusedReason`;
+    ``limit`` is the observation limit in force (``max_observations``). Nothing was simulated and
+    nothing was subsampled. For data of this size use the large-n goodness-of-fit report of a scale
+    fit, which reports an effect size against a threshold of the caller's and no p-value.
+    """
+
+    code = "SCALE_REFIT_REFUSED"
+
+    def __init__(self, reason: RefitRefusedReason, limit: int) -> None:
+        super().__init__(
+            f"{self.code}: {reason.value}; refit Monte Carlo simulates the whole sample in every "
+            f"replicate and accepts at most {limit} observations; use the large-n goodness of fit "
+            "of a scale fit for data of this size"
+        )
+        self.reason = reason
+        self.limit = limit
+
+    def __reduce__(self) -> tuple[type[RefitGofRefused], tuple[RefitRefusedReason, int]]:
+        return (type(self), (self.reason, self.limit))
 
 
 class GofFitError(VeridistError, RuntimeError):
@@ -439,10 +481,26 @@ def _checked_gof_arguments(
     return spec.id, tuple(sorted(statistics, key=str)), int(cast(int, replicates))
 
 
-def _plain_values(observations: Iterable[float]) -> tuple[float, ...]:
-    """Collect the observations, which must be plain real numbers."""
+def _checked_limit(max_observations: object) -> int:
+    if not is_integer(max_observations) or cast(int, max_observations) < 1:
+        raise ValueError("max_observations must be a positive integer")
+    return int(cast(int, max_observations))
 
-    values = tuple(observations)
+
+def _plain_values(observations: Iterable[float], limit: int) -> tuple[float, ...]:
+    """Collect the observations, which must be plain real numbers and at most ``limit`` many.
+
+    A scale source, or more than ``limit`` observations, is refused (:class:`RefitGofRefused`)
+    before the rest of the observations are read.
+    """
+
+    if isinstance(observations, Source):
+        raise RefitGofRefused(RefitRefusedReason.SCALE_SOURCE, limit)
+    if isinstance(observations, Sized) and len(observations) > limit:
+        raise RefitGofRefused(RefitRefusedReason.ROW_LIMIT_EXCEEDED, limit)
+    values = tuple(islice(observations, limit + 1))
+    if len(values) > limit:
+        raise RefitGofRefused(RefitRefusedReason.ROW_LIMIT_EXCEEDED, limit)
     if not all(is_real(value) for value in values):
         raise TypeError(
             "observations must be plain real numbers: censored or typed observation objects "
@@ -477,6 +535,7 @@ def refit_monte_carlo_gof(
     statistics: frozenset[GofStatistic],
     replicates: int,
     rng: object,
+    max_observations: int = REFIT_MAX_OBSERVATIONS,
 ) -> RefitMonteCarloGof:
     """Calibrate EDF statistics of one family by refitting every Monte Carlo replicate.
 
@@ -499,11 +558,13 @@ def refit_monte_carlo_gof(
     counted in ``failed_replicates``; it is neither retried nor hidden, and if
     every replicate fails a ``RuntimeError`` is raised.
 
-    The cost is ``replicates`` times the cost of one fit to a sample of this size.
+    The cost is ``replicates`` times the cost of one fit to a sample of this size, so a sample of
+    more than ``max_observations`` observations (``REFIT_MAX_OBSERVATIONS`` unless raised), and a
+    scale source, are refused with :class:`RefitGofRefused`; the run is never made on a subsample.
     """
 
     family_id, requested, count = _checked_gof_arguments(family, statistics, replicates, rng)
-    values = _plain_values(observations)
+    values = _plain_values(observations, _checked_limit(max_observations))
     if family_id is FamilyId.EXPONENTIAL:
         return _exponential_refit_gof(values, requested, count, rng)
     floats = _model_values(family_id, values)
@@ -588,6 +649,7 @@ def assess_families(
     replicates: int,
     rng: object,
     adequacy_threshold: float = 0.05,
+    max_observations: int = REFIT_MAX_OBSERVATIONS,
 ) -> FamilyAssessment:
     """Fit several families to one sample, test each by refit Monte Carlo and select one.
 
@@ -612,7 +674,9 @@ def assess_families(
     each eligible family's Monte Carlo draws its replicates from ``rng`` in turn, so
     the result is reproducible for a given seed, sample, family order and
     ``replicates``.  A family that cannot be assessed draws nothing.  The cost is
-    the sum of one Monte Carlo run per eligible family.
+    the sum of one Monte Carlo run per eligible family; a sample of more than
+    ``max_observations`` observations, and a scale source, are refused with
+    :class:`RefitGofRefused` before any family is fitted.
     """
 
     np = import_module("numpy")
@@ -625,7 +689,7 @@ def assess_families(
         raise TypeError("rng must be a numpy.random.Generator")
     threshold = _checked_threshold(adequacy_threshold)
     count = int(replicates)
-    plain = _plain_values(observations)
+    plain = _plain_values(observations, _checked_limit(max_observations))
     if not plain:
         raise ValueError("observations must not be empty")
     try:
@@ -713,7 +777,10 @@ __all__ = [
     "GofStatistic",
     "InformationCriteria",
     "ModelSelection",
+    "REFIT_MAX_OBSERVATIONS",
+    "RefitGofRefused",
     "RefitMonteCarloGof",
+    "RefitRefusedReason",
     "SelectionCode",
     "assess_families",
     "compare_models",
