@@ -69,6 +69,10 @@ DEFAULT_MAX_ROWS: Final = 262144
 MAX_EXACT_INTEGER: Final = 1 << 53
 """The largest magnitude up to which every integer is exactly a float64."""
 
+VALUE_POLICY_VERSION: Final = 1
+"""The version of the value policy; it changes whenever a value is accepted, widened or
+refused differently, so that a stored state is never reused across two policies."""
+
 FINGERPRINT_ALGORITHM: Final = "sha256"
 HASH_BLOCK_ROWS: Final = 1 << 16
 """Rows hashed at a time when fingerprinting an array, so no copy of it is made."""

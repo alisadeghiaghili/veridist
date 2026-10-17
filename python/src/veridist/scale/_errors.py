@@ -81,3 +81,62 @@ class ScaleSourceError(VeridistError, ValueError):
         self,
     ) -> tuple[type[ScaleSourceError], tuple[ScaleSourceErrorCode, str | None]]:
         return (type(self), (self.code, self.hint))
+
+
+class ScaleCheckpointErrorCode(StrEnum):
+    """Closed, locale-neutral failure codes of partition-level checkpoints.
+
+    A failure of a partition whose fingerprint changed is the ``PARTITION_CHANGED`` of
+    :class:`ScaleSourceErrorCode`; the codes here are those of the store, of the identity
+    of a job and of the partitions it covers.
+    """
+
+    SOURCE_REVISION_UNAVAILABLE = "SOURCE_REVISION_UNAVAILABLE"
+    INCREMENTAL_UNSUPPORTED = "INCREMENTAL_UNSUPPORTED"
+    JOB_EXISTS = "JOB_EXISTS"
+    JOB_MISMATCH = "JOB_MISMATCH"
+    PARTITION_MISSING = "PARTITION_MISSING"
+    PARTITION_ADDED = "PARTITION_ADDED"
+    PARTITION_STATE_CONFLICT = "PARTITION_STATE_CONFLICT"
+    LEDGER_MISMATCH = "LEDGER_MISMATCH"
+    STORE_FORMAT_UNSUPPORTED = "STORE_FORMAT_UNSUPPORTED"
+    STORE_DECODE_FAILED = "STORE_DECODE_FAILED"
+    STORE_DIGEST_MISMATCH = "STORE_DIGEST_MISMATCH"
+    STORE_STORAGE_FAILED = "STORE_STORAGE_FAILED"
+    STORE_COMMIT_UNCERTAIN = "STORE_COMMIT_UNCERTAIN"
+
+
+class ScaleCheckpointError(VeridistError, ValueError):
+    """A checkpoint failure identified by its code and, at most, names of components.
+
+    ``components`` names the parts of the identity of a job that differ from the stored
+    one (``JOB_MISMATCH``) and is empty otherwise; ``detail`` is the symbolic name of a
+    storage error (for example ``SQLITE_BUSY``) when the store has one. Neither the
+    message nor an attribute ever carries a path, a partition identifier, a fingerprint,
+    a state or a value, and the error pickles.
+    """
+
+    def __init__(
+        self,
+        code: ScaleCheckpointErrorCode | str,
+        components: tuple[str, ...] = (),
+        detail: str | None = None,
+    ) -> None:
+        resolved = ScaleCheckpointErrorCode(code)
+        text = resolved.value
+        if components:
+            text += f" ({', '.join(components)})"
+        if detail is not None:
+            text += f" [{detail}]"
+        super().__init__(text)
+        self.code = resolved
+        self.components = components
+        self.detail = detail
+
+    def __reduce__(
+        self,
+    ) -> tuple[
+        type[ScaleCheckpointError],
+        tuple[ScaleCheckpointErrorCode, tuple[str, ...], str | None],
+    ]:
+        return (type(self), (self.code, self.components, self.detail))

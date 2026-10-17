@@ -861,6 +861,109 @@ class ScaleExecutionProvenance:
 
 
 @dataclass(frozen=True, slots=True)
+class ScaleCheckpointPassProvenance:
+    """What one data pass of a checkpointed fit did with the partition-state store.
+
+    ``partitions`` is the number of partitions of the pass and ``pass_index`` its place in
+    the fit. ``replayed`` says the whole pass was taken from the pass ledger: nothing was
+    read, and ``reused`` is then every partition. Otherwise ``reused`` partitions had a
+    committed state that was used without reading them and ``read`` partitions were read
+    and committed in this run (fewer than the rest when the run ended with a failure).
+    """
+
+    pass_index: int
+    partitions: int
+    replayed: bool
+    reused: int
+    read: int
+
+    def __post_init__(self) -> None:
+        _require_non_negative_integer("pass_index", self.pass_index)
+        _require_non_negative_integer("partitions", self.partitions)
+        _require_non_negative_integer("reused", self.reused)
+        _require_non_negative_integer("read", self.read)
+        if type(self.replayed) is not bool:
+            raise TypeError("replayed must be a bool")
+        if self.reused + self.read > self.partitions:
+            raise ValueError("reused and read partitions cannot exceed the partitions")
+        if self.replayed and (self.read != 0 or self.reused != self.partitions):
+            raise ValueError("a replayed pass reuses every partition and reads none")
+
+
+@dataclass(frozen=True, slots=True)
+class ScaleCheckpointProvenance:
+    """A scale fit used a partition-state store: the job, and what it reused and read.
+
+    ``store_kind`` and ``store_format_version`` name the store and ``job_digest_sha256`` is
+    the digest of the identity of the job. ``resumed`` says the store already held the job.
+    ``incremental`` repeats the request; ``added_partitions`` and ``removed_partitions``
+    count the partitions that joined or left the source since the job was started (accepted
+    by an incremental fit), ``recomputed_partitions`` the partitions that had changed and
+    were read again, and ``restarted`` says the stored passes of a multi-pass fit were
+    discarded because of that. ``passes`` has one record per data pass in order. The record
+    holds no path, partition identifier, fingerprint or state.
+    """
+
+    store_kind: str
+    store_format_version: int
+    job_digest_sha256: str
+    resumed: bool
+    incremental: bool
+    added_partitions: int
+    removed_partitions: int
+    recomputed_partitions: int
+    restarted: bool
+    passes: tuple[ScaleCheckpointPassProvenance, ...]
+
+    def __post_init__(self) -> None:
+        _require_token("store kind", self.store_kind)
+        _require_positive_integer("store_format_version", self.store_format_version)
+        _require_sha256("job digest", self.job_digest_sha256)
+        for name in ("resumed", "incremental", "restarted"):
+            if type(getattr(self, name)) is not bool:
+                raise TypeError(f"{name} must be a bool")
+        _require_non_negative_integer("added_partitions", self.added_partitions)
+        _require_non_negative_integer("removed_partitions", self.removed_partitions)
+        _require_non_negative_integer("recomputed_partitions", self.recomputed_partitions)
+        if type(self.passes) is not tuple or any(
+            type(item) is not ScaleCheckpointPassProvenance for item in self.passes
+        ):
+            raise TypeError("passes must be a tuple of checkpoint pass provenance")
+        if tuple(item.pass_index for item in self.passes) != tuple(range(len(self.passes))):
+            raise ValueError("pass records are numbered from zero in order")
+        if not self.resumed and (
+            self.added_partitions
+            or self.removed_partitions
+            or self.recomputed_partitions
+            or self.restarted
+            or any(item.replayed or item.reused for item in self.passes)
+        ):
+            raise ValueError("a job that was started has nothing to reuse or amend")
+        if (self.added_partitions or self.removed_partitions) and not self.incremental:
+            raise ValueError("partitions are added or removed by an incremental fit only")
+        if self.restarted and not self.recomputed_partitions:
+            raise ValueError("a restart follows from a recomputed partition")
+
+    @property
+    def reused_partitions(self) -> int:
+        """The partitions whose committed state was used, over all passes."""
+
+        return sum(item.reused for item in self.passes)
+
+    @property
+    def read_partitions(self) -> int:
+        """The partitions read and committed in this run, over all passes."""
+
+        return sum(item.read for item in self.passes)
+
+    @property
+    def replayed_passes(self) -> int:
+        """The passes taken from the pass ledger."""
+
+        return sum(item.replayed for item in self.passes)
+
+
+@dataclass(frozen=True, slots=True)
 class ScaleProvenance:
     """Closed facts about a fit computed from a scale source (provenance schema 2).
 
@@ -887,6 +990,7 @@ class ScaleProvenance:
     passes: ScalePassProvenance | None = None
     spool: ScaleSpoolProvenance | None = None
     execution: ScaleExecutionProvenance | None = None
+    checkpoint: ScaleCheckpointProvenance | None = None
 
     def __post_init__(self) -> None:
         if self.schema_version != SCALE_PROVENANCE_SCHEMA_VERSION:
@@ -912,18 +1016,30 @@ class ScaleProvenance:
         if self.spool is not None:
             if type(self.spool) is not ScaleSpoolProvenance:
                 raise TypeError("spool provenance must be typed or None")
-            if tuple(item.ordinal for item in self.spool.partitions) != tuple(
+            spooled = tuple(item.ordinal for item in self.spool.partitions)
+            if self.checkpoint is None:
+                if spooled != tuple(item.ordinal for item in self.partitions):
+                    raise ValueError("a spool holds exactly the partitions of the source")
+                if self.spool.row_count != self.row_count:
+                    raise ValueError("the spool must hold exactly the rows the fit read")
+            elif len(set(spooled)) != len(spooled) or not set(spooled) <= {
                 item.ordinal for item in self.partitions
-            ):
-                raise ValueError("a spool holds exactly the partitions of the source")
-            if self.spool.row_count != self.row_count:
-                raise ValueError("the spool must hold exactly the rows the fit read")
+            }:
+                raise ValueError("a spool holds partitions of the source, each once")
         if self.execution is not None:
             if type(self.execution) is not ScaleExecutionProvenance:
                 raise TypeError("execution provenance must be typed or None")
             expected = 1 if self.passes is None else self.passes.pass_count
             if len(self.execution.passes) != expected:
                 raise ValueError("an execution record has one entry per data pass")
+        if self.checkpoint is not None:
+            if type(self.checkpoint) is not ScaleCheckpointProvenance:
+                raise TypeError("checkpoint provenance must be typed or None")
+            expected = 1 if self.passes is None else self.passes.pass_count
+            if len(self.checkpoint.passes) != expected:
+                raise ValueError("a checkpoint record has one entry per data pass")
+            if any(item.partitions > self.partition_count for item in self.checkpoint.passes):
+                raise ValueError("a pass cannot cover more partitions than the source has")
 
 
 def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
@@ -988,6 +1104,28 @@ def scale_provenance_to_canonical_json_bytes(record: ScaleProvenance) -> bytes:
             ],
             "row_count": record.spool.row_count,
         }
+    if record.checkpoint is not None:
+        value["checkpoint"] = {
+            "added_partitions": record.checkpoint.added_partitions,
+            "incremental": record.checkpoint.incremental,
+            "job_digest_sha256": record.checkpoint.job_digest_sha256,
+            "passes": [
+                {
+                    "partitions": item.partitions,
+                    "pass_index": item.pass_index,
+                    "read": item.read,
+                    "replayed": item.replayed,
+                    "reused": item.reused,
+                }
+                for item in record.checkpoint.passes
+            ],
+            "recomputed_partitions": record.checkpoint.recomputed_partitions,
+            "removed_partitions": record.checkpoint.removed_partitions,
+            "restarted": record.checkpoint.restarted,
+            "resumed": record.checkpoint.resumed,
+            "store_format_version": record.checkpoint.store_format_version,
+            "store_kind": record.checkpoint.store_kind,
+        }
     if record.execution is not None:
         value["execution"] = {
             "downgrade": record.execution.downgrade,
@@ -1033,6 +1171,8 @@ __all__ = [
     "PublicSourceId",
     "RngPolicy",
     "RngProvenance",
+    "ScaleCheckpointPassProvenance",
+    "ScaleCheckpointProvenance",
     "ScaleEnvironmentProvenance",
     "ScaleExecutionPassProvenance",
     "ScaleExecutionProvenance",

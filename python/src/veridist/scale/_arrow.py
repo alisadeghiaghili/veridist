@@ -351,6 +351,12 @@ class ParquetSource:
             raise ScaleSourceError(ScaleSourceErrorCode.SOURCE_NOT_FOUND)
         self._files: dict[str, Path] = dict(sorted(found.items()))
 
+    @property
+    def column(self) -> str:
+        """The name of the projected column."""
+
+        return self._column
+
     @staticmethod
     def _expand(path: Path) -> list[Path]:
         if path.is_dir():
