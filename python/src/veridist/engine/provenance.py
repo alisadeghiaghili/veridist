@@ -35,7 +35,21 @@ _SAFE_TOKEN = re.compile(r"[A-Za-z0-9][A-Za-z0-9._+-]{0,127}")
 _SHA256 = re.compile(r"[0-9a-f]{64}")
 _FINGERPRINT = re.compile(r"sha256:[0-9a-f]{64}")
 _FINGERPRINT_LEVELS = frozenset({"none", "metadata", "content"})
-_SCALE_PASS_ROLES = frozenset({"statistics", "grid", "expansion", "iteration"})
+_SCALE_PASS_ROLES = frozenset(
+    {
+        "statistics",
+        "grid",
+        "expansion",
+        "iteration",
+        "profile_window",
+        "profile_refinement",
+        "profile_confirmation",
+        "gof",
+    }
+)
+_SCALE_RANGED_ROLES = frozenset(
+    {"grid", "expansion", "profile_window", "profile_refinement", "profile_confirmation"}
+)
 _SCALE_EXECUTORS = frozenset({"serial", "threads", "processes"})
 _SCALE_DOWNGRADES = frozenset(
     {
@@ -671,15 +685,20 @@ class ScaleEnvironmentProvenance:
 
 @dataclass(frozen=True, slots=True)
 class ScalePassRecord:
-    """One read of the source by a multi-pass fit.
+    """One read of the source by a multi-pass fit or by inference from a fit.
 
     ``role`` is ``"statistics"`` (the first pass: the count, the exact sums and the
     extremes), ``"grid"`` (the initial grid of candidate parameter values),
     ``"expansion"`` (a further grid outward) or ``"iteration"`` (one Newton step, whose
-    last one also carries the report). ``points`` is the number of candidate parameter
-    values the pass evaluated (zero for ``"statistics"``). ``log_low`` and ``log_high``
-    are the smallest and largest natural logarithm of a candidate of a grid or an
-    expansion, fixed by the plan and not by the data, and ``None`` for the other roles.
+    last one also carries the report). The passes of inference from a fit are
+    ``"profile_window"`` (the nodes of the window of a profile likelihood),
+    ``"profile_refinement"`` (further nodes of the same window),
+    ``"profile_confirmation"`` (exact sums at the points the intervals are reported at) and
+    ``"gof"`` (the counts of the goodness-of-fit pass, one parameter vector).
+    ``points`` is the number of candidate parameter values the pass evaluated (zero for
+    ``"statistics"``). ``log_low`` and ``log_high`` are the smallest and largest natural
+    logarithm of a candidate of a pass over a range of candidates, and ``None`` for the
+    other roles.
     """
 
     role: str
@@ -689,7 +708,7 @@ class ScalePassRecord:
 
     def __post_init__(self) -> None:
         if self.role not in _SCALE_PASS_ROLES:
-            raise ValueError("pass role must be statistics, grid, expansion or iteration")
+            raise ValueError("pass role is not one of the scale pass roles")
         _require_non_negative_integer("points", self.points)
         for name, value in (("log_low", self.log_low), ("log_high", self.log_high)):
             if value is not None and (type(value) is not float or not isfinite(value)):
@@ -698,8 +717,8 @@ class ScalePassRecord:
             raise ValueError("log_low and log_high are given together or not at all")
         if self.log_low is not None and self.log_high is not None and self.log_low > self.log_high:
             raise ValueError("log_low must not exceed log_high")
-        if (self.role in {"grid", "expansion"}) != (self.log_low is not None):
-            raise ValueError("only a grid or an expansion has a logarithmic range")
+        if (self.role in _SCALE_RANGED_ROLES) != (self.log_low is not None):
+            raise ValueError("only a pass over a range of candidates has a logarithmic range")
         if (self.role == "statistics") != (self.points == 0):
             raise ValueError("only the statistics pass has no candidate points")
 

@@ -20,8 +20,10 @@ is not a function of fixed sufficient statistics, so the evidence of a fit is th
 observed information matrix at the maximum, built from the sums of the final pass
 (:class:`ProfileEvidence`). It answers the covariance, the standard errors, the Wald
 intervals and the Wald intervals of the derived quantities. A profile-likelihood interval
-needs the likelihood at other parameter values, that is, further passes over the data, so
-it is refused with ``NotImplementedError`` and never replaced by a Wald interval.
+needs the likelihood at other parameter values, that is, further passes over the data, which
+the evidence cannot make because it holds no source: ``uncertainty()`` refuses it with
+``NotImplementedError`` and never replaces it by a Wald interval, and
+:func:`veridist.scale._profile_intervals.profile_intervals` computes it from the source.
 """
 
 from __future__ import annotations
@@ -56,6 +58,7 @@ from veridist.scale._one_pass import (
     NormalStatistics,
 )
 from veridist.scale._planner import ProfileSums
+from veridist.scale._profile_basis import ProfileBasis
 
 ScaleStatistics = NormalStatistics | GammaStatistics | LognormalStatistics
 
@@ -277,8 +280,8 @@ class WaldUncertainty(FitUncertainty):
 
     Everything :class:`~veridist.families.uncertainty.FitUncertainty` reports from the
     covariance and the model's closed forms is available; a profile-likelihood interval of a
-    parameter or of a derived quantity would need further passes over the data and raises
-    ``NotImplementedError``.
+    parameter or of a derived quantity would need further passes over the data, which this
+    object cannot make, and raises ``NotImplementedError``.
     """
 
     def interval_details(
@@ -298,7 +301,8 @@ def _refuse_profile(method: object) -> None:
     if method == "profile":
         raise NotImplementedError(
             "profile likelihood intervals of a multi-pass scale fit need further passes over "
-            'the source and are not available; use method="wald"'
+            "the source: compute them with profile_intervals(source, result) of "
+            'veridist.scale._profile_intervals, or use method="wald"'
         )
 
 
@@ -309,18 +313,20 @@ class ProfileEvidence(FitEvidence):
     created by the scale fit and is not part of any public interface.
     """
 
-    __slots__ = ("_build", "_family", "_theta")
+    __slots__ = ("_build", "_family", "_theta", "basis")
 
     def __init__(
         self,
         family: FamilyId,
         theta: tuple[float, ...],
         build: Callable[[], Evaluation],
+        basis: ProfileBasis | None = None,
     ) -> None:
         super().__init__()
         self._theta = theta
         self._build = build
         self._family = family
+        self.basis = basis
 
     def uncertainty(
         self, family: FamilyId, parameters: Mapping[str, float]
