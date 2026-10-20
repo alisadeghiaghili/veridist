@@ -72,17 +72,22 @@ def ks_of(probabilities: np.ndarray) -> float:
     )
 
 
-def vectorized_edge_cuts(exponent: int, error: float) -> Any:
-    """``gof.edge_cuts`` on whole arrays: the same binary64 values, in a fraction of the time."""
+def oracle_cut_pair(exponent: int, error: float, index: int) -> tuple[float, float]:
+    """The cut pair of the interior edge ``index / 2**exponent``, rounded outward by ``math``."""
 
-    bins = 1 << exponent
-    if not 4.0 * error < 1.0 / bins:
-        raise ScaleInferenceError(ScaleInferenceErrorCode.GOF_RESOLUTION_UNSUPPORTED)
-    edges = np.arange(1, bins) / bins
-    cuts = np.empty(2 * (bins - 1), dtype=np.float64)
-    cuts[0::2] = np.nextafter(edges - error, -1.0)
-    cuts[1::2] = np.nextafter(edges + error, 2.0)
-    return cuts
+    edge = index / (1 << exponent)
+    return math.nextafter(edge - error, -1.0), math.nextafter(edge + error, 2.0)
+
+
+def widths(exponent: int) -> list[float]:
+    """Strip half-widths from none to just below the largest the bins allow."""
+
+    widest = 1.0 / (1 << exponent) / 4.0
+    return [0.0, 2.0**-1074, 2.0**-60, 2.0**-53, 2.0**-48, widest / 3.0, widest / 1.0000001]
+
+
+def float_bits(values: Any) -> list[int]:
+    return np.asarray(values, dtype=np.float64).view(np.uint64).tolist()
 
 
 def brute_enclosure(probabilities: list[float], exponent: int, error: float) -> gof.Enclosure:
@@ -135,13 +140,32 @@ class CutTests(unittest.TestCase):
             self.assertEqual(above, math.nextafter(edge + 0.01, 2.0))
         self.assertTrue(all(a < b for a, b in zip(cuts, cuts[1:], strict=False)))
 
-    def test_the_array_construction_of_the_cuts_gives_the_same_values(self) -> None:
-        for exponent, error in ((1, 0.0), (6, 1e-4), (12, 2.0**-30)):
-            with self.subTest(exponent=exponent):
-                self.assertEqual(
-                    gof.edge_cuts(exponent, error).tolist(),
-                    vectorized_edge_cuts(exponent, error).tolist(),
-                )
+    def test_the_cuts_equal_the_edge_by_edge_construction_bit_for_bit(self) -> None:
+        for exponent in range(1, 13):
+            for error in widths(exponent):
+                with self.subTest(exponent=exponent, error=error):
+                    expected = [
+                        cut
+                        for index in range(1, 1 << exponent)
+                        for cut in oracle_cut_pair(exponent, error, index)
+                    ]
+                    cuts = gof.edge_cuts(exponent, error)
+                    self.assertEqual(cuts.dtype, np.float64)
+                    self.assertEqual(cuts.shape, (len(expected),))
+                    self.assertEqual(float_bits(cuts), float_bits(expected))
+
+    def test_the_cuts_of_the_large_bin_counts_equal_the_construction_on_a_stride(self) -> None:
+        for exponent, stride in ((16, 997), (20, 65_537)):
+            bins = 1 << exponent
+            indices = sorted({*range(1, bins, stride), 1, 2, bins // 2, bins - 2, bins - 1})
+            for error in widths(exponent)[::2]:
+                with self.subTest(exponent=exponent, error=error):
+                    cuts = gof.edge_cuts(exponent, error)
+                    self.assertEqual(cuts.shape, (2 * (bins - 1),))
+                    expected = [cut for i in indices for cut in oracle_cut_pair(exponent, error, i)]
+                    taken = [cuts[2 * i - 2 + side] for i in indices for side in (0, 1)]
+                    self.assertEqual(float_bits(taken), float_bits(expected))
+                    self.assertTrue(bool((cuts[1:] > cuts[:-1]).all()))
 
     def test_one_edge_has_one_pair_of_cuts(self) -> None:
         cuts = gof.edge_cuts(1, 0.0)
@@ -538,11 +562,7 @@ class RefusalTests(unittest.TestCase):
     def test_the_extreme_bin_exponents_are_accepted(self) -> None:
         small = gof.large_n_gof(NumpySource(self.values), self.result, bin_exponent=1)
         self.assertEqual(small.bins, 2)
-        # the pure-Python construction of a million cut pairs is stood in for by the same values
-        # computed on whole arrays; the construction itself runs at this size in
-        # ``tests/statistical/test_scale_inference_full_size.py``
-        with mock.patch.object(gof, "edge_cuts", vectorized_edge_cuts):
-            large = gof.large_n_gof(NumpySource(self.values), self.result, bin_exponent=20)
+        large = gof.large_n_gof(NumpySource(self.values), self.result, bin_exponent=20)
         self.assertEqual(large.bins, 1 << 20)
         self.assertLess(large.ks_upper - large.ks_lower, 2e-6)
 

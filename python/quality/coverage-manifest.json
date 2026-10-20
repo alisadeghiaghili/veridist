@@ -134,7 +134,7 @@
     "src/veridist/scale/_evidence.py": {"statements": 122, "branches": 14},
     "src/veridist/scale/_executors.py": {"statements": 177, "branches": 62},
     "src/veridist/scale/_fit.py": {"statements": 122, "branches": 26},
-    "src/veridist/scale/_gof.py": {"statements": 234, "branches": 54},
+    "src/veridist/scale/_gof.py": {"statements": 233, "branches": 52},
     "src/veridist/scale/_inference_run.py": {"statements": 62, "branches": 14},
     "src/veridist/scale/_kernels.py": {"statements": 26, "branches": 12},
     "src/veridist/scale/_multi_pass.py": {"statements": 194, "branches": 32},

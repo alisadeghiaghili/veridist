@@ -162,11 +162,13 @@ def edge_cuts(exponent: int, error: float) -> Any:
     bins = bin_count(exponent)
     if not 4.0 * error < 1.0 / bins:
         raise ScaleInferenceError(ScaleInferenceErrorCode.GOF_RESOLUTION_UNSUPPORTED)
+    # ``index / bins`` is exact (a power of two divides exactly) and every other step is one
+    # correctly rounded binary64 operation, so the arrays hold the very values that an
+    # edge-by-edge construction gives
+    edges = np.arange(1, bins, dtype=np.float64) / bins
     cuts = np.empty(2 * (bins - 1), dtype=np.float64)
-    for index in range(1, bins):
-        edge = index / bins
-        cuts[2 * index - 2] = nextafter(edge - error, -1.0)
-        cuts[2 * index - 1] = nextafter(edge + error, 2.0)
+    cuts[0::2] = np.nextafter(edges - error, -1.0)
+    cuts[1::2] = np.nextafter(edges + error, 2.0)
     return cuts
 
 
