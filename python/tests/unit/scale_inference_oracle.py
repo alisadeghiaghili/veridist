@@ -178,9 +178,12 @@ class Likelihood:
         delta: Any,
         upper: bool,
         side_upper: bool,
+        iterations: int = 90,
     ) -> Any:
         """The largest (``upper``) or smallest value of ``quantity(k, second)`` along one side
-        of the boundary of the likelihood region, over ``[k_low, k_high]`` by golden section."""
+        of the boundary of the likelihood region, over ``[k_low, k_high]`` by ``iterations``
+        steps of golden section (the interval is cut to ``0.618**iterations`` of its width, and
+        the value is stationary at an interior extreme and read exactly at the ends)."""
 
         floor = maximum - delta / 2
         sign = 1 if upper else -1
@@ -193,7 +196,7 @@ class Likelihood:
         first = right - ratio * (right - left)
         second = left + ratio * (right - left)
         first_value, second_value = along(first), along(second)
-        for _ in range(90):
+        for _ in range(iterations):
             if first_value >= second_value:
                 right, second, second_value = second, first, first_value
                 first = right - ratio * (right - left)

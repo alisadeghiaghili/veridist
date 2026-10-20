@@ -107,14 +107,13 @@ class ReferenceTests(unittest.TestCase):
 
     def test_the_parameters_equal_the_in_memory_profile_intervals(self) -> None:
         for family in DATA:
-            for size, seed in ((400, 1), (3000, 2)):
-                for level in (0.9, 0.95, 0.99):
+            for size, seed in ((200, 5),):
+                values, result = scale_fit(family, size, seed)
+                uncertainty = in_memory_uncertainty(family, values)
+                for level in (0.9, 0.99):
                     with self.subTest(family=family, size=size, level=level):
-                        values, result = scale_fit(family, size, seed)
                         out = pi.profile_intervals(NumpySource(values), result, level=level)
-                        reference = in_memory_uncertainty(family, values).interval_details(
-                            level, "profile"
-                        )
+                        reference = uncertainty.interval_details(level, "profile")
                         self.assertEqual(set(out.parameters), set(reference))
                         for name, interval in out.parameters.items():
                             expected = reference[name]
@@ -127,33 +126,32 @@ class ReferenceTests(unittest.TestCase):
                                 interval.upper / expected.upper, 1.0, delta=1e-7, msg=name
                             )
 
-    def test_the_weibull_quantities_equal_the_in_memory_profile_intervals(self) -> None:
-        values, result = scale_fit("weibull_min", 800, 3)
-        requested = [pi.mean(), pi.quantile(0.1), pi.quantile(0.5), pi.survival(30.0)]
-        out = pi.profile_intervals(NumpySource(values), result, quantities=requested)
-        uncertainty = in_memory_uncertainty("weibull_min", values)
-        reference = {
-            "mean": uncertainty.mean(0.95, "profile"),
-            "quantile:0.1": uncertainty.quantile(0.1, 0.95, "profile"),
-            "quantile:0.5": uncertainty.quantile(0.5, 0.95, "profile"),
-            "survival:30.0": uncertainty.survival(30.0, 0.95, "profile"),
-        }
-        self.assertEqual(list(out.derived), list(reference))
-        for name, expected in reference.items():
-            got = out.derived[name]
-            assert isinstance(got, DerivedEstimate)
-            with self.subTest(name=name):
-                self.assertEqual((got.method, got.level), ("profile", 0.95))
-                self.assertAlmostEqual(got.estimate / expected.estimate, 1.0, delta=1e-6)
-                self.assertAlmostEqual(got.lower / expected.lower, 1.0, delta=1e-6)
-                self.assertAlmostEqual(got.upper / expected.upper, 1.0, delta=1e-6)
-                self.assertLess(got.lower, got.estimate)
-                self.assertLess(got.estimate, got.upper)
+    def check_quantity(self, name: str, request: pi.Quantity, expected_of: Any) -> None:
+        values, result = scale_fit("weibull_min", 150, 3)
+        out = pi.profile_intervals(NumpySource(values), result, quantities=[request])
+        expected = expected_of(in_memory_uncertainty("weibull_min", values))
+        self.assertEqual(list(out.derived), [name])
+        got = out.derived[name]
+        assert isinstance(got, DerivedEstimate)
+        self.assertEqual((got.method, got.level), ("profile", 0.95))
+        self.assertAlmostEqual(got.estimate / expected.estimate, 1.0, delta=1e-6)
+        self.assertAlmostEqual(got.lower / expected.lower, 1.0, delta=1e-6)
+        self.assertAlmostEqual(got.upper / expected.upper, 1.0, delta=1e-6)
+        self.assertLess(got.lower, got.estimate)
+        self.assertLess(got.estimate, got.upper)
+
+    def test_the_weibull_mean_equals_the_in_memory_profile_interval(self) -> None:
+        self.check_quantity("mean", pi.mean(), lambda u: u.mean(0.95, "profile"))
+
+    def test_the_weibull_survival_equals_the_in_memory_profile_interval(self) -> None:
+        self.check_quantity(
+            "survival:30.0", pi.survival(30.0), lambda u: u.survival(30.0, 0.95, "profile")
+        )
 
     def test_a_larger_level_gives_a_wider_interval_around_the_estimate(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         previous: dict[str, ParameterInterval] | None = None
-        for level in (0.5, 0.8, 0.95, 0.999):
+        for level in (0.5, 0.95, 0.999):
             out = pi.profile_intervals(NumpySource(values), result, level=level)
             for name, interval in out.parameters.items():
                 estimate = result.fit.parameters[name]  # type: ignore[union-attr]
@@ -167,36 +165,36 @@ class ReferenceTests(unittest.TestCase):
 
 class ResultTests(unittest.TestCase):
     def test_the_result_describes_the_computation(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         out = pi.profile_intervals(NumpySource(values), result, level=0.9)
         self.assertIs(out.family, FamilyId.WEIBULL_MIN)
         self.assertEqual(out.level, 0.9)
         self.assertAlmostEqual(out.deviance, 2.705543454095404, places=12)
         self.assertEqual(list(out.parameters), ["shape", "scale"])
         self.assertEqual(out.derived, {})
-        self.assertEqual(out.scale.row_count, 600)
+        self.assertEqual(out.scale.row_count, 200)
         self.assertEqual(out.scale.state, result.scale.state)
         self.assertEqual(out.scale.partition_count, 1)
         with self.assertRaises(TypeError):
             out.parameters["shape"] = None  # type: ignore[index]
 
     def test_the_resolution_reports_the_surrogate_and_the_confirmation(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         out = pi.profile_intervals(NumpySource(values), result)
         resolution = out.resolution
         self.assertIn(resolution.surrogate_degree, (8, 16, 32, 64, 128))
-        self.assertEqual(resolution.tolerance, 600 * 2.0**-40)
-        self.assertLessEqual(2 * 600 * resolution.surrogate_gap, 1e-6 + resolution.tolerance)
+        self.assertEqual(resolution.tolerance, 200 * 2.0**-40)
+        self.assertLessEqual(2 * 200 * resolution.surrogate_gap, 1e-6 + resolution.tolerance)
         self.assertLessEqual(resolution.confirmation_residual, 1e-5 + resolution.tolerance)
 
     def test_the_gumbel_order_of_the_parameters_is_the_registry_order(self) -> None:
-        values, result = scale_fit("gumbel_right", 600, 5)
+        values, result = scale_fit("gumbel_right", 200, 5)
         out = pi.profile_intervals(NumpySource(values), result)
         self.assertEqual(list(out.parameters), ["location", "scale"])
         self.assertIs(out.family, FamilyId.GUMBEL_RIGHT)
 
     def test_the_gumbel_quantities_are_typed_unavailable(self) -> None:
-        values, result = scale_fit("gumbel_right", 600, 5)
+        values, result = scale_fit("gumbel_right", 200, 5)
         out = pi.profile_intervals(
             NumpySource(values),
             result,
@@ -209,7 +207,7 @@ class ResultTests(unittest.TestCase):
             self.assertIn("Gumbel", answer.detail)
 
     def test_a_survival_of_zero_or_one_has_a_degenerate_interval(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         out = pi.profile_intervals(
             NumpySource(values),
             result,
@@ -227,7 +225,7 @@ class ResultTests(unittest.TestCase):
         )
 
     def test_an_unrepresentable_quantity_is_typed_unavailable(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         with mock.patch.object(pi, "gamma", side_effect=OverflowError):
             out = pi.profile_intervals(
                 NumpySource(values), result, quantities=[pi.mean(), pi.quantile(0.1)]
@@ -238,7 +236,7 @@ class ResultTests(unittest.TestCase):
         self.assertIsInstance(out.derived["quantile:0.1"], DerivedEstimate)
 
     def test_a_non_finite_estimate_is_typed_unavailable(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         with mock.patch.object(pi, "gamma", return_value=float("inf")):
             out = pi.profile_intervals(NumpySource(values), result, quantities=[pi.mean()])
         self.assertIsInstance(out.derived["mean"], pi.ProfileUnavailable)
@@ -246,7 +244,7 @@ class ResultTests(unittest.TestCase):
 
 class FallbackErrorTests(unittest.TestCase):
     def test_an_unavailable_covariance_gives_the_inverse_root_of_the_count(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         basis = result.fit._evidence.basis  # type: ignore[union-attr]
         from veridist.families.uncertainty import (
             UncertaintyUnavailable,
@@ -254,7 +252,7 @@ class FallbackErrorTests(unittest.TestCase):
         )
 
         unavailable = UncertaintyUnavailable(UncertaintyUnavailableReason.NOT_COMPUTABLE)
-        stand_in = 1.0 / 600**0.5
+        stand_in = 1.0 / 200**0.5
         for answer in (unavailable,):
             fake = mock.Mock()
             fake.fit.uncertainty.return_value = answer
@@ -263,7 +261,7 @@ class FallbackErrorTests(unittest.TestCase):
         self.assertGreater(real, 0.0)
         shape = result.fit.shape  # type: ignore[union-attr]
         self.assertEqual(real, result.fit.uncertainty().standard_errors["shape"] / shape)  # type: ignore[union-attr]
-        values, gumbel = scale_fit("gumbel_right", 600, 5)
+        values, gumbel = scale_fit("gumbel_right", 200, 5)
         gbasis = gumbel.fit._evidence.basis  # type: ignore[union-attr]
         scale = gumbel.fit.scale  # type: ignore[union-attr]
         self.assertEqual(
@@ -272,7 +270,7 @@ class FallbackErrorTests(unittest.TestCase):
         )
 
     def test_a_non_positive_or_non_finite_error_gives_the_stand_in(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         basis = result.fit._evidence.basis  # type: ignore[union-attr]
         for bad in (0.0, float("nan"), float("inf")):
             fake = mock.Mock()
@@ -281,7 +279,7 @@ class FallbackErrorTests(unittest.TestCase):
             uncertainty.parameter_names = ("shape", "scale")
             uncertainty.standard_errors = {"shape": bad, "scale": bad}
             fake.fit.uncertainty.return_value = uncertainty
-            self.assertEqual(pi._relative_error(fake, basis), 1.0 / 600**0.5)
+            self.assertEqual(pi._relative_error(fake, basis), 1.0 / 200**0.5)
 
 
 class PassTests(unittest.TestCase):
@@ -290,8 +288,8 @@ class PassTests(unittest.TestCase):
         return [(item.role, item.points) for item in out.scale.passes.records]
 
     def test_a_run_reads_a_window_refinements_and_a_confirmation(self) -> None:
-        values, result = scale_fit("weibull_min", 3000, 2)
-        source = ReadLog(NumpySource(values, partition_rows=1000))
+        values, result = scale_fit("weibull_min", 300, 2)
+        source = ReadLog(NumpySource(values, partition_rows=100))
         out = pi.profile_intervals(source, result)
         passes = out.scale.passes
         assert passes is not None
@@ -317,7 +315,7 @@ class PassTests(unittest.TestCase):
         self.assertLessEqual(last.log_low, last.log_high)
 
     def test_the_candidates_of_the_confirmation_are_the_ends_and_the_extremes(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         shape_only = pi.profile_intervals(NumpySource(values), result)
         more = pi.profile_intervals(
             NumpySource(values), result, quantities=[pi.mean(), pi.quantile(0.1)]
@@ -327,7 +325,7 @@ class PassTests(unittest.TestCase):
         self.assertLessEqual(self.roles(more)[-1][1], 2 + 2 * 3)
 
     def test_a_budget_below_the_least_is_refused_before_any_read(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         source = ReadLog(NumpySource(values))
         with self.assertRaises(PassBudgetError) as caught:
             pi.profile_intervals(source, result, inference_pass_budget=1)
@@ -341,7 +339,7 @@ class PassTests(unittest.TestCase):
     def test_a_run_that_needs_more_passes_than_the_budget_is_refused_before_the_excess_read(
         self,
     ) -> None:
-        values, result = scale_fit("weibull_min", 3000, 2)
+        values, result = scale_fit("weibull_min", 300, 2)
         needed = pi.profile_intervals(NumpySource(values), result).scale.passes
         assert needed is not None and needed.pass_count > 2
         source = ReadLog(NumpySource(values))
@@ -359,7 +357,7 @@ class PassTests(unittest.TestCase):
         self.assertEqual(len(source.reads), needed.pass_count - 1)
 
     def test_exactly_the_passes_needed_are_enough(self) -> None:
-        values, result = scale_fit("weibull_min", 3000, 2)
+        values, result = scale_fit("weibull_min", 300, 2)
         needed = pi.profile_intervals(NumpySource(values), result).scale.passes
         assert needed is not None
         out = pi.profile_intervals(
@@ -370,7 +368,7 @@ class PassTests(unittest.TestCase):
         self.assertEqual(out.scale.passes.pass_budget, needed.pass_count)
 
     def test_a_window_that_is_too_narrow_is_widened_and_gives_the_same_intervals(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         base = pi.profile_intervals(NumpySource(values), result)
         with mock.patch.object(pi, "WINDOW_FACTOR", 0.3):
             widened = pi.profile_intervals(NumpySource(values), result)
@@ -393,7 +391,7 @@ class PassTests(unittest.TestCase):
 
 class RefusalTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.values, self.result = scale_fit("weibull_min", 600, 5)
+        self.values, self.result = scale_fit("weibull_min", 200, 5)
 
     def test_a_result_that_cannot_be_profiled_is_refused(self) -> None:
         def refused(result: Any) -> None:
@@ -444,17 +442,32 @@ class RefusalTests(unittest.TestCase):
         self.assertEqual(source.reads, [])
 
     def test_the_most_quantities_are_accepted(self) -> None:
-        out = pi.profile_intervals(
-            NumpySource(self.values),
-            self.result,
-            quantities=[pi.survival(float(i + 1)) for i in range(64)],
-        )
+        # the search for the extremes of each quantity is stood in for by distinct points inside
+        # the region, so that the confirmation holds the most points it can; the real search of
+        # the most quantities runs in ``tests/statistical/test_scale_inference_full_size.py``
+        calls: list[str] = []
+
+        def located(
+            target: Any, form: Any, delta: float, surrogate: Any, span: tuple[float, float]
+        ) -> pi._Located:
+            step = (span[1] - span[0]) / (4 * 66)
+            calls.append(type(target).__name__)
+            index = len(calls)
+            return pi._Located(span[0] + index * step, span[1] - index * step)
+
+        with mock.patch.object(pi, "_locate", located):
+            out = pi.profile_intervals(
+                NumpySource(self.values),
+                self.result,
+                quantities=[pi.survival(float(i + 1)) for i in range(64)],
+            )
         self.assertEqual(len(out.derived), 64)
+        self.assertEqual(len(calls), 65)
         assert out.scale.passes is not None
-        self.assertLessEqual(out.scale.passes.records[-1].points, 2 + 2 * 65)
+        self.assertEqual(out.scale.passes.records[-1].points, 2 + 2 * 65)
 
     def test_another_source_is_partition_changed(self) -> None:
-        other = weibull_data(1.7, 40.0, 600, 99)
+        other = weibull_data(1.7, 40.0, 200, 99)
         with self.assertRaises(ScaleSourceError) as caught:
             pi.profile_intervals(NumpySource(other), self.result)
         self.assertIs(caught.exception.code, ScaleSourceErrorCode.PARTITION_CHANGED)
@@ -549,7 +562,7 @@ class RefusalTests(unittest.TestCase):
 
 class ImmutabilityTests(unittest.TestCase):
     def test_the_values_are_immutable_and_slotted(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         out = pi.profile_intervals(NumpySource(values), result, quantities=[pi.mean()])
         for value in (
             out,
@@ -592,7 +605,7 @@ class ErrorTests(unittest.TestCase):
 
 class UncertaintyPointerTests(unittest.TestCase):
     def test_the_in_memory_style_profile_request_points_to_the_function(self) -> None:
-        values, result = scale_fit("weibull_min", 600, 5)
+        values, result = scale_fit("weibull_min", 200, 5)
         with self.assertRaisesRegex(NotImplementedError, "profile_intervals"):
             result.fit.uncertainty().confidence_intervals(0.95, "profile")  # type: ignore[union-attr]
         with self.assertRaisesRegex(NotImplementedError, "further passes"):

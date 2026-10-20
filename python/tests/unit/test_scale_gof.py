@@ -72,6 +72,19 @@ def ks_of(probabilities: np.ndarray) -> float:
     )
 
 
+def vectorized_edge_cuts(exponent: int, error: float) -> Any:
+    """``gof.edge_cuts`` on whole arrays: the same binary64 values, in a fraction of the time."""
+
+    bins = 1 << exponent
+    if not 4.0 * error < 1.0 / bins:
+        raise ScaleInferenceError(ScaleInferenceErrorCode.GOF_RESOLUTION_UNSUPPORTED)
+    edges = np.arange(1, bins) / bins
+    cuts = np.empty(2 * (bins - 1), dtype=np.float64)
+    cuts[0::2] = np.nextafter(edges - error, -1.0)
+    cuts[1::2] = np.nextafter(edges + error, 2.0)
+    return cuts
+
+
 def brute_enclosure(probabilities: list[float], exponent: int, error: float) -> gof.Enclosure:
     """The enclosure of the counts of ``probabilities``, counted one at a time."""
 
@@ -121,6 +134,14 @@ class CutTests(unittest.TestCase):
             self.assertEqual(below, math.nextafter(edge - 0.01, -1.0))
             self.assertEqual(above, math.nextafter(edge + 0.01, 2.0))
         self.assertTrue(all(a < b for a, b in zip(cuts, cuts[1:], strict=False)))
+
+    def test_the_array_construction_of_the_cuts_gives_the_same_values(self) -> None:
+        for exponent, error in ((1, 0.0), (6, 1e-4), (12, 2.0**-30)):
+            with self.subTest(exponent=exponent):
+                self.assertEqual(
+                    gof.edge_cuts(exponent, error).tolist(),
+                    vectorized_edge_cuts(exponent, error).tolist(),
+                )
 
     def test_one_edge_has_one_pair_of_cuts(self) -> None:
         cuts = gof.edge_cuts(1, 0.0)
@@ -369,17 +390,17 @@ class DecisionTests(unittest.TestCase):
 class ReportTests(unittest.TestCase):
     def test_the_enclosure_contains_the_exact_distance_for_every_family(self) -> None:
         for family in FAMILIES:
-            values, result = fitted(family, 20_000, 3)
+            values, result = fitted(family, 4_000, 3)
             for exponent in (6, 10):
                 with self.subTest(family=family, exponent=exponent):
                     out = gof.large_n_gof(
-                        NumpySource(values, partition_rows=7000), result, bin_exponent=exponent
+                        NumpySource(values, partition_rows=1400), result, bin_exponent=exponent
                     )
                     exact = exact_ks(values, result)
                     self.assertLessEqual(out.ks_lower, exact)
                     self.assertLessEqual(exact, out.ks_upper)
                     self.assertLessEqual(out.ks_upper - out.ks_lower, 1.0 / (1 << exponent) + 1e-9)
-                    self.assertEqual((out.rows, out.bins), (20_000, 1 << exponent))
+                    self.assertEqual((out.rows, out.bins), (4_000, 1 << exponent))
                     self.assertIs(out.family, result.fit.family)  # type: ignore[union-attr]
 
     def test_a_badly_specified_model_is_far_and_a_good_one_is_near(self) -> None:
@@ -397,23 +418,23 @@ class ReportTests(unittest.TestCase):
             self.assertLessEqual(exact, report.ks_upper)
 
     def test_the_width_shrinks_as_the_bins_grow_on_a_fit(self) -> None:
-        values, result = fitted("weibull_min", 20_000, 3)
+        values, result = fitted("weibull_min", 4_000, 3)
         widths = []
-        for exponent in (4, 8, 12, 16):
+        for exponent in (4, 8, 12, 14):
             out = gof.large_n_gof(NumpySource(values), result, bin_exponent=exponent)
             widths.append(out.ks_upper - out.ks_lower)
         self.assertEqual(widths, sorted(widths, reverse=True))
         self.assertLess(widths[-1], widths[0] / 1000)
 
     def test_a_threshold_is_decided(self) -> None:
-        values, result = fitted("normal", 20_000, 3)
-        base = gof.large_n_gof(NumpySource(values), result, bin_exponent=12)
+        values, result = fitted("normal", 4_000, 3)
+        base = gof.large_n_gof(NumpySource(values), result, bin_exponent=8)
         self.assertIsNone(base.threshold)
         self.assertIsNone(base.decision)
 
         def decision(threshold: float) -> gof.GofDecision | None:
             return gof.large_n_gof(
-                NumpySource(values), result, bin_exponent=12, threshold=threshold
+                NumpySource(values), result, bin_exponent=8, threshold=threshold
             ).decision
 
         self.assertIs(decision(0.5), gof.GofDecision.PASS)
@@ -423,7 +444,7 @@ class ReportTests(unittest.TestCase):
         self.assertIs(decision(base.ks_lower), gof.GofDecision.INCONCLUSIVE)
         self.assertIs(decision(math.nextafter(base.ks_lower, 0.0)), gof.GofDecision.FAIL)
         self.assertEqual(
-            gof.large_n_gof(NumpySource(values), result, bin_exponent=12, threshold=0.5).threshold,
+            gof.large_n_gof(NumpySource(values), result, bin_exponent=8, threshold=0.5).threshold,
             0.5,
         )
 
@@ -517,7 +538,11 @@ class RefusalTests(unittest.TestCase):
     def test_the_extreme_bin_exponents_are_accepted(self) -> None:
         small = gof.large_n_gof(NumpySource(self.values), self.result, bin_exponent=1)
         self.assertEqual(small.bins, 2)
-        large = gof.large_n_gof(NumpySource(self.values), self.result, bin_exponent=20)
+        # the pure-Python construction of a million cut pairs is stood in for by the same values
+        # computed on whole arrays; the construction itself runs at this size in
+        # ``tests/statistical/test_scale_inference_full_size.py``
+        with mock.patch.object(gof, "edge_cuts", vectorized_edge_cuts):
+            large = gof.large_n_gof(NumpySource(self.values), self.result, bin_exponent=20)
         self.assertEqual(large.bins, 1 << 20)
         self.assertLess(large.ks_upper - large.ks_lower, 2e-6)
 

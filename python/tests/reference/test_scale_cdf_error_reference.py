@@ -23,6 +23,7 @@ mpmath.mp.dps = 40
 
 POINTS = 60
 MARGIN = 4.0
+QUICK_POINTS = 12
 
 CASES: dict[str, list[dict[str, float]]] = {
     "exponential": [{"rate": r} for r in (1e-6, 1e-2, 1.0, 50.0, 1e6)],
@@ -48,6 +49,40 @@ CASES: dict[str, list[dict[str, float]]] = {
 }
 
 
+# The parameters the collected test checks: for each family the ends of the grid above and one
+# value in the middle of it. The whole grid, at 60 points each, is in
+# ``tests/statistical/test_scale_inference_full_size.py``.
+QUICK_CASES: dict[str, list[dict[str, float]]] = {
+    "exponential": [{"rate": r} for r in (1e-6, 1.0, 1e6)],
+    "weibull_min": [
+        {"shape": 0.1, "scale": 1.0},
+        {"shape": 1.7, "scale": 1e3},
+        {"shape": 1000.0, "scale": 1.0},
+        {"shape": 1e4, "scale": 1e3},
+    ],
+    "gumbel_right": [
+        {"location": 0.0, "scale": 1e-3},
+        {"location": 5.0, "scale": 1.0},
+        {"location": 1e6, "scale": 100.0},
+    ],
+    "normal": [
+        {"mu": 0.0, "sigma": 1e-3},
+        {"mu": 5.0, "sigma": 1.0},
+        {"mu": 1e6, "sigma": 100.0},
+    ],
+    "lognormal": [
+        {"mu_log": 0.0, "sigma_log": 1e-3},
+        {"mu_log": 5.0, "sigma_log": 1.0},
+        {"mu_log": -20.0, "sigma_log": 3.0},
+    ],
+    "gamma": [
+        {"shape": 0.1, "scale": 1.0},
+        {"shape": 3.0, "scale": 50.0},
+        {"shape": 1000.0, "scale": 1.0},
+    ],
+}
+
+
 def exact_cdf(family: str, x: float, p: dict[str, float]) -> Any:
     point = mpmath.mpf(x)
     if family == "exponential":
@@ -68,16 +103,19 @@ def exact_cdf(family: str, x: float, p: dict[str, float]) -> Any:
 
 
 class CdfErrorReferenceTests(unittest.TestCase):
+    CASES = QUICK_CASES
+    POINTS = QUICK_POINTS
+
     def test_the_measured_error_is_below_a_quarter_of_the_declared_bound(self) -> None:
         rng = np.random.default_rng(7)
-        for family, grid in CASES.items():
+        for family, grid in self.CASES.items():
             for parameters in grid:
                 with self.subTest(family=family, parameters=parameters):
                     probabilities = np.concatenate(
                         [
-                            rng.uniform(1e-9, 1 - 1e-9, POINTS),
-                            10 ** rng.uniform(-14, -3, POINTS // 3),
-                            1 - 10 ** rng.uniform(-14, -3, POINTS // 3),
+                            rng.uniform(1e-9, 1 - 1e-9, self.POINTS),
+                            10 ** rng.uniform(-14, -3, self.POINTS // 3),
+                            1 - 10 ** rng.uniform(-14, -3, self.POINTS // 3),
                         ]
                     )
                     points = np.asarray(ppf(family, probabilities, **parameters))

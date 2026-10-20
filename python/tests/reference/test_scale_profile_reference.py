@@ -29,12 +29,17 @@ from veridist.scale._sources import NumpySource
 
 
 class ProfileReferenceTests(unittest.TestCase):
-    def test_the_weibull_intervals_equal_the_definition_at_forty_digits(self) -> None:
-        values = weibull_data(1.7, 40.0, 300, 4)
+    """The definition costs ``rows * iterations`` operations at 40 digits per end, so these
+    tests use few rows; the same checks at 200 rows and 60 steps are in
+    ``tests/statistical/test_scale_inference_full_size.py``."""
+
+    ROWS = 40
+    ITERATIONS = 30
+
+    def check_weibull(self, requested: list[pi.Quantity], names: tuple[str, ...]) -> None:
+        values = weibull_data(1.7, 40.0, self.ROWS, 4)
         result = fit(NumpySource(values), "weibull_min")
-        out = pi.profile_intervals(
-            NumpySource(values), result, quantities=[pi.quantile(0.1), pi.mean()]
-        )
+        out = pi.profile_intervals(NumpySource(values), result, quantities=requested)
         likelihood = Likelihood(values, "weibull")
         delta = chi_square_quantile(0.95)
         shape = out.parameters["shape"]
@@ -46,44 +51,37 @@ class ProfileReferenceTests(unittest.TestCase):
         )
         self.assertLess(relative(shape.lower, low), 1e-10)
         self.assertLess(relative(shape.upper, high), 1e-10)
-        level = -mpmath.log(1 - mpmath.mpf("0.1"))
-        for name, quantity in (
-            ("scale", lambda k, s: s),
-            ("quantile:0.1", lambda k, s: s * level ** (1 / k)),
-            ("mean", lambda k, s: s * mpmath.gamma(1 + 1 / k)),
-        ):
+        quantile_level = -mpmath.log(1 - mpmath.mpf("0.1"))
+        definitions: dict[str, Any] = {
+            "scale": lambda k, s: s,
+            "quantile:0.1": lambda k, s: s * quantile_level ** (1 / k),
+            "mean": lambda k, s: s * mpmath.gamma(1 + 1 / k),
+            "survival:30.0": lambda k, s: mpmath.exp(-((mpmath.mpf(30) / s) ** k)),
+        }
+        for name in names:
             got = out.parameters["scale"] if name == "scale" else out.derived[name]
             for upper in (False, True):
-                expected = likelihood.extreme(quantity, low, high, maximum, delta, upper, upper)
+                expected = likelihood.extreme(
+                    definitions[name], low, high, maximum, delta, upper, upper, self.ITERATIONS
+                )
                 reported = got.upper if upper else got.lower
                 with self.subTest(name=name, upper=upper):
                     self.assertLess(relative(reported, expected), 1e-10)
 
+    def test_the_weibull_shape_and_scale_equal_the_definition_at_forty_digits(self) -> None:
+        self.check_weibull([], ("scale",))
+
+    def test_the_weibull_quantile_equals_the_definition_at_forty_digits(self) -> None:
+        self.check_weibull([pi.quantile(0.1)], ("quantile:0.1",))
+
+    def test_the_weibull_mean_equals_the_definition_at_forty_digits(self) -> None:
+        self.check_weibull([pi.mean()], ("mean",))
+
     def test_the_weibull_survival_equals_the_definition_at_forty_digits(self) -> None:
-        values = weibull_data(1.7, 40.0, 300, 4)
-        result = fit(NumpySource(values), "weibull_min")
-        out = pi.profile_intervals(NumpySource(values), result, quantities=[pi.survival(30.0)])
-        likelihood = Likelihood(values, "weibull")
-        delta = chi_square_quantile(0.95)
-        shape = out.parameters["shape"]
-        low, high, maximum = likelihood.interval_of_k(
-            result.fit.shape,
-            delta,
-            shape.lower,
-            shape.upper,  # type: ignore[union-attr]
-        )
-
-        def survival(k: Any, s: Any) -> Any:
-            return mpmath.exp(-((mpmath.mpf(30) / s) ** k))
-
-        got = out.derived["survival:30.0"]
-        for upper in (False, True):
-            expected = likelihood.extreme(survival, low, high, maximum, delta, upper, upper)
-            reported = got.upper if upper else got.lower
-            self.assertLess(relative(reported, expected), 1e-10)
+        self.check_weibull([pi.survival(30.0)], ("survival:30.0",))
 
     def test_the_gumbel_intervals_equal_the_definition_at_forty_digits(self) -> None:
-        values = gumbel_data(5.0, 2.0, 300, 4)
+        values = gumbel_data(5.0, 2.0, self.ROWS, 4)
         result = fit(NumpySource(values), "gumbel_right")
         out = pi.profile_intervals(NumpySource(values), result)
         likelihood = Likelihood(values, "gumbel")
@@ -100,7 +98,9 @@ class ProfileReferenceTests(unittest.TestCase):
         self.assertLess(relative(scale.upper, high * unit), 1e-10)
         location = out.parameters["location"]
         for upper in (False, True):
-            expected = likelihood.extreme(lambda k, m: m, low, high, maximum, delta, upper, upper)
+            expected = likelihood.extreme(
+                lambda k, m: m, low, high, maximum, delta, upper, upper, self.ITERATIONS
+            )
             reported = location.upper if upper else location.lower
             self.assertLess(relative(reported, expected * unit), 1e-10)
 
