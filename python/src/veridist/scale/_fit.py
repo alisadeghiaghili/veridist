@@ -257,6 +257,39 @@ def _partition_record(partition: Partition) -> ScalePartitionProvenance:
     )
 
 
+def build_provenance(
+    source: Source,
+    partitions: tuple[Partition, ...],
+    row_count: int,
+    state: ScaleStateProvenance | None,
+    max_rows: int,
+    passes: ScalePassProvenance | None = None,
+    spool: ScaleSpoolProvenance | None = None,
+    execution: ScaleExecutionProvenance | None = None,
+    checkpoint: ScaleCheckpointProvenance | None = None,
+) -> ScaleProvenance:
+    """The scale provenance record of a computation over ``source``.
+
+    ``state`` is the record of the canonical state the numbers were derived from, if any. The
+    fit and the inference computed from a fit build their records here.
+    """
+
+    return ScaleProvenance(
+        SCALE_PROVENANCE_SCHEMA_VERSION,
+        SOURCE_KINDS.get(type(source), CUSTOM_SOURCE_KIND),
+        tuple(_partition_record(partition) for partition in partitions),
+        len(partitions),
+        row_count,
+        max_rows,
+        state,
+        ScaleEnvironmentProvenance(numpy_version(), numeric_environment_digest()),
+        passes,
+        spool,
+        execution,
+        checkpoint,
+    )
+
+
 def _provenance(
     source: Source,
     partitions: tuple[Partition, ...],
@@ -273,19 +306,8 @@ def _provenance(
         state_record = ScaleStateProvenance(
             state.STATE_TAG, state.SCHEMA_VERSION, sha256(state.to_bytes()).hexdigest()
         )
-    return ScaleProvenance(
-        SCALE_PROVENANCE_SCHEMA_VERSION,
-        SOURCE_KINDS.get(type(source), CUSTOM_SOURCE_KIND),
-        tuple(_partition_record(partition) for partition in partitions),
-        len(partitions),
-        row_count,
-        max_rows,
-        state_record,
-        ScaleEnvironmentProvenance(numpy_version(), numeric_environment_digest()),
-        passes,
-        spool,
-        execution,
-        checkpoint,
+    return build_provenance(
+        source, partitions, row_count, state_record, max_rows, passes, spool, execution, checkpoint
     )
 
 
@@ -444,4 +466,4 @@ def fit(
     )
 
 
-__all__ = ["CUSTOM_SOURCE_KIND", "SOURCE_KINDS", "ScaleFitResult", "fit"]
+__all__ = ["CUSTOM_SOURCE_KIND", "SOURCE_KINDS", "ScaleFitResult", "build_provenance", "fit"]

@@ -27,6 +27,7 @@ jobs:
           - families
           - engine
           - scale-fit
+          - scale-inference
           - scale-io
           - scale-runtime
     env:

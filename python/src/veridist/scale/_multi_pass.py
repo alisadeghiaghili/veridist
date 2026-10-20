@@ -78,6 +78,7 @@ from veridist.scale._planner import (
     ProfileSums,
     solve_profile,
 )
+from veridist.scale._profile_basis import ProfileBasis
 from veridist.scale._sources import BatchReader, Partition, Source
 from veridist.scale._tasks import FoldJob
 
@@ -309,12 +310,27 @@ def _weibull_report(
     )
     if not (isfinite(scale) and scale > 0.0 and isfinite(likelihood)):
         return _weibull_failure(WeibullFitFailureCode.OPTIMIZER_EXHAUSTED, count)
+    basis = ProfileBasis(
+        FamilyId.WEIBULL_MIN,
+        count,
+        sum_w,
+        fsum((count * log(shape), shape * sum_w, -count * solution.log_ratio, -float(count))),
+        WeibullKernel(peak_log),
+        shape,
+        solution.log_ratio,
+        solution.iterate,
+        solution.sums.s0,
+        peak_log,
+        1.0,
+        0.0,
+    )
     evidence = ProfileEvidence(
         FamilyId.WEIBULL_MIN,
         (shape, scale),
         partial(
             weibull_evaluation, count, shape, scale, solution.log_ratio, solution.sums, likelihood
         ),
+        basis,
     )
     return WeibullFitSuccess(shape, scale, likelihood, count, count, 0, _evidence=evidence)
 
@@ -405,6 +421,20 @@ def _gumbel_report(
     )
     if not (isfinite(location) and isfinite(scale) and scale > 0.0 and isfinite(likelihood)):
         return _gumbel_failure(GumbelFitFailureCode.OPTIMIZER_EXHAUSTED, count)
+    basis = ProfileBasis(
+        FamilyId.GUMBEL_RIGHT,
+        count,
+        sum_w,
+        fsum((count * log(rate), rate * sum_w, -count * solution.log_ratio, -float(count))),
+        GumbelKernel(minimum_standardised, center, peak),
+        rate,
+        solution.log_ratio,
+        solution.iterate,
+        solution.sums.s0,
+        center,
+        peak,
+        minimum_standardised,
+    )
     evidence = ProfileEvidence(
         FamilyId.GUMBEL_RIGHT,
         (location, scale),
@@ -418,6 +448,7 @@ def _gumbel_report(
             solution.sums,
             likelihood,
         ),
+        basis,
     )
     return GumbelFitSuccess(location, scale, likelihood, count, count, 0, _evidence=evidence)
 

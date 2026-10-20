@@ -70,7 +70,17 @@ class ConstantTests(unittest.TestCase):
 
     def test_the_roles_are_the_provenance_names(self) -> None:
         self.assertEqual(
-            [role.value for role in PassRole], ["statistics", "grid", "expansion", "iteration"]
+            [role.value for role in PassRole],
+            [
+                "statistics",
+                "grid",
+                "expansion",
+                "iteration",
+                "profile_window",
+                "profile_refinement",
+                "profile_confirmation",
+                "gof",
+            ],
         )
 
     def test_the_initial_grid_is_eight_points_geometric_over_the_window(self) -> None:

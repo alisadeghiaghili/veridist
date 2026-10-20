@@ -76,6 +76,14 @@
       "src/veridist/scale/_planner.py",
       "src/veridist/scale/_squares.py"
     ],
+    "scale-inference": [
+      "src/veridist/scale/_gof.py",
+      "src/veridist/scale/_inference_run.py",
+      "src/veridist/scale/_power_sums.py",
+      "src/veridist/scale/_profile_basis.py",
+      "src/veridist/scale/_profile_intervals.py",
+      "src/veridist/scale/_profile_math.py"
+    ],
     "scale-io": [
       "src/veridist/scale/_arrow.py",
       "src/veridist/scale/_checkpoint.py",

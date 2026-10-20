@@ -140,3 +140,40 @@ class ScaleCheckpointError(VeridistError, ValueError):
         tuple[ScaleCheckpointErrorCode, tuple[str, ...], str | None],
     ]:
         return (type(self), (self.code, self.components, self.detail))
+
+
+class ScaleInferenceErrorCode(StrEnum):
+    """Closed, locale-neutral failure codes of inference from a scale fit.
+
+    ``FIT_NOT_PROFILABLE``: the fit is not a successful fit of a multi-pass family that kept
+    its information (a failure, another family, or a result that was not made by the scale
+    fit). ``PROFILE_NOT_CONVERGED``: the likelihood could not be represented to the accuracy the
+    interval needs within the plan. ``PROFILE_UNBOUNDED``: the likelihood region reaches the edge
+    of the search domain of the fit, so the interval has no finite end there.
+    ``PROFILE_NOT_COMPUTABLE``: the profile likelihood could not
+    be evaluated (a non-finite sum). ``GOF_FIT_NOT_AVAILABLE``: the fit is a failure, so there is
+    no fitted distribution to compare the data with. ``GOF_NOT_REPRESENTABLE``: the fitted
+    distribution function is not a probability at some observation.
+    ``GOF_RESOLUTION_UNSUPPORTED``: the declared evaluation error of the fitted distribution
+    function is too large for that many bins (the strips around the bin edges would overlap).
+    """
+
+    FIT_NOT_PROFILABLE = "FIT_NOT_PROFILABLE"
+    PROFILE_NOT_CONVERGED = "PROFILE_NOT_CONVERGED"
+    PROFILE_UNBOUNDED = "PROFILE_UNBOUNDED"
+    PROFILE_NOT_COMPUTABLE = "PROFILE_NOT_COMPUTABLE"
+    GOF_FIT_NOT_AVAILABLE = "GOF_FIT_NOT_AVAILABLE"
+    GOF_NOT_REPRESENTABLE = "GOF_NOT_REPRESENTABLE"
+    GOF_RESOLUTION_UNSUPPORTED = "GOF_RESOLUTION_UNSUPPORTED"
+
+
+class ScaleInferenceError(VeridistError, ValueError):
+    """An inference failure identified only by its code; it never carries a data value."""
+
+    def __init__(self, code: ScaleInferenceErrorCode | str) -> None:
+        resolved = ScaleInferenceErrorCode(code)
+        super().__init__(resolved.value)
+        self.code = resolved
+
+    def __reduce__(self) -> tuple[type[ScaleInferenceError], tuple[ScaleInferenceErrorCode]]:
+        return (type(self), (self.code,))
