@@ -1,4 +1,4 @@
-"""Fail-closed validator for cache-bound formal mutation evidence (schema 3)."""
+"""Fail-closed validator for the cache-bound evidence of one mutation shard (schema 4)."""
 
 from __future__ import annotations
 
@@ -17,22 +17,23 @@ from mutation_evidence import (
     MUTMUT_VERSION,
     config_digest,
     input_digest,
-    module_minimum_scores,
+    module_of,
     mutation_manifest,
     official_status,
     reject_mutation_pragmas,
     score_excluding_type_check,
     scoring_status,
     sha256_bytes,
-    source_files,
+    shard_config_digest,
     source_tree_digest,
     strict_json,
 )
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 TOP_KEYS = frozenset(
     {
         "schema_version",
+        "shard",
         "source",
         "config",
         "environment",
@@ -213,13 +214,39 @@ def check(
     fixture: bool = False,
     mutants_root: Path | None = None,
     logs_root: Path | None = None,
+    shard: str | None = None,
 ) -> None:
+    """Validate one shard's evidence against the checkout, raw cache and logs.
+
+    Floors are not enforced here: a module can span several shards, so the per-module and
+    global minimum scores are only meaningful over the merged totals (see
+    ``merge_mutation_evidence.py``). Everything else is fail-closed per shard.
+    """
+
     exact(payload, set(TOP_KEYS), "evidence")
     if payload["schema_version"] != SCHEMA_VERSION:
         fail("unsupported mutation evidence schema")
-    files = source_files(project_root)
-    if not files:
-        fail("critical mutation scope is empty")
+    manifest = mutation_manifest(project_root)
+    shard_record = exact(payload["shard"], {"name", "files"}, "shard")
+    name = shard_record["name"]
+    if not isinstance(name, str) or name not in manifest["shards"]:
+        fail("evidence names an undeclared mutation shard")
+    if shard is not None and name != shard:
+        fail(f"evidence is for shard {name}, not {shard}")
+    files: list[str] = list(manifest["shards"][name])
+    declared_files = shard_record["files"]
+    if (
+        not isinstance(declared_files, list)
+        or [item.get("path") if isinstance(item, dict) else None for item in declared_files]
+        != files
+    ):
+        fail("shard file list drift")
+    for item in declared_files:
+        exact(item, {"path", "sha256"}, "shard file")
+        if sha256(item["sha256"], f"{item['path']}:sha256") != sha256_bytes(
+            (project_root / item["path"]).read_bytes()
+        ):
+            fail(f"shard file hash drift: {item['path']}")
     source = exact(payload["source"], {"commit", "tree_sha256", "cache_sha256"}, "source")
     if source["commit"] != ("fixture" if fixture else commit(project_root)) or source[
         "tree_sha256"
@@ -234,6 +261,8 @@ def check(
             "source_paths",
             "pytest_selection",
             "also_copy",
+            "only_mutate",
+            "effective_config_sha256",
         },
         "config",
     )
@@ -254,6 +283,8 @@ def check(
             "src/veridist/adapters",
             "src/veridist/reporting",
         ]
+        or config["only_mutate"] != files
+        or config["effective_config_sha256"] != shard_config_digest(project_root, files)
     ):
         fail("mutation configuration drift")
     env = exact(payload["environment"], {"python", "platform"}, "environment")
@@ -278,7 +309,6 @@ def check(
             "post_input_digest": current_digest,
         }:
             fail("input provenance drift")
-    manifest = mutation_manifest(project_root)
     reject_mutation_pragmas(project_root)
     baseline = phase(
         payload["baseline"],
@@ -391,25 +421,28 @@ def check(
         or total["generated"] != total["killed"] + total["survived"] + total["unresolved"]
     ):
         fail("totals drift")
+    shard_modules = [
+        module for module in CRITICAL_MODULES if any(module_of(item) == module for item in files)
+    ]
     modules = payload["modules"]
-    if not isinstance(modules, list) or len(modules) != len(CRITICAL_MODULES):
+    if not isinstance(modules, list) or len(modules) != len(shard_modules):
         fail("invalid module reports")
     module_map = {entry.get("module"): entry for entry in modules if isinstance(entry, dict)}
-    if set(module_map) != set(CRITICAL_MODULES):
+    if set(module_map) != set(shard_modules):
         fail("missing/duplicate module reports")
     for module, report in module_map.items():
         exact(report, {"module", *REPORT_COUNT_KEYS}, f"module {module}")
         for key in REPORT_COUNT_KEYS:
             if integer(report[key], f"{module}:{key}") != sum(
-                by_path[name][key] for name in files if f"/{module}/" in name
+                by_path[item][key] for item in files if module_of(item) == module
             ):
                 fail("module total drift")
     denominator = total["killed"] + total["survived"]
     if denominator == 0 or total["unresolved"]:
         fail("unresolved or zero-scored evidence")
     score = finite(payload["score"], "score")
-    if score != total["killed"] / denominator or score < 0.8:
-        fail("invalid/insufficient mutation score")
+    if score != total["killed"] / denominator:
+        fail("invalid mutation score")
     score_without_type_check = finite(
         payload["score_excluding_type_check"], "score_excluding_type_check"
     )
@@ -417,17 +450,10 @@ def check(
         total["killed"], total["survived"], total["type_check"]
     ):
         fail("invalid mutation score excluding type-check kills")
-    floors = module_minimum_scores(manifest["module_minimum_scores"])
-    for module, achieved in module_scores(payload).items():
-        if achieved < floors[module]:
-            fail(
-                f"module {module} mutation score {achieved:.4f} is below its minimum "
-                f"{floors[module]:.2f}"
-            )
 
 
 def module_scores(payload: dict[str, Any]) -> dict[str, float]:
-    """Return killed / (killed + survived) per critical module of validated evidence."""
+    """Return killed / (killed + survived) per module present in validated evidence."""
 
     scores: dict[str, float] = {}
     for entry in payload["modules"]:
@@ -435,12 +461,13 @@ def module_scores(payload: dict[str, Any]) -> dict[str, float]:
         if denominator == 0:
             fail(f"module {entry['module']} has no scored mutants")
         scores[entry["module"]] = entry["killed"] / denominator
-    return {module: scores[module] for module in CRITICAL_MODULES}
+    return {module: scores[module] for module in CRITICAL_MODULES if module in scores}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", type=Path, required=True)
+    parser.add_argument("--shard", required=True, help="name of the shard the evidence is for")
     parser.add_argument("--evidence", type=Path, required=True)
     parser.add_argument("--fixture", action="store_true")
     parser.add_argument("--mutants-root", type=Path)
@@ -458,12 +485,13 @@ def main() -> int:
             args.fixture,
             args.mutants_root.resolve() if args.mutants_root else None,
             args.logs_root.resolve() if args.logs_root else None,
+            args.shard,
         )
     except (OSError, ValueError) as error:
         print(f"MUTATION EVIDENCE FAIL: {error}", file=sys.stderr)
         return 1
     for module, achieved in module_scores(cast(dict[str, Any], payload)).items():
-        print(f"module {module}: mutation score {achieved:.4f}")
+        print(f"shard {args.shard} module {module}: mutation score {achieved:.4f}")
     print("MUTATION EVIDENCE PASS")
     return 0
 

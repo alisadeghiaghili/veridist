@@ -19,14 +19,16 @@ from mutation_evidence import (
     MUTMUT_WHEEL_SHA256,
     config_digest,
     input_digest,
+    module_of,
     mutation_config,
     mutation_manifest,
     official_status,
+    overlay_only_mutate,
     reject_mutation_pragmas,
     score_excluding_type_check,
     scoring_status,
     sha256_bytes,
-    source_files,
+    shard_config_digest,
     source_tree_digest,
     strict_json,
 )
@@ -145,8 +147,9 @@ def export(
     records: dict[str, str],
     pre_digest: str,
     post_digest: str,
+    shard: str,
+    files: list[str],
 ) -> None:
-    files = source_files(project_root)
     cache_parts: list[bytes] = []
     reports: list[dict[str, Any]] = []
     for path in files:
@@ -162,15 +165,25 @@ def export(
         {
             "module": module,
             **{
-                key: sum(int(report[key]) for report in reports if f"/{module}/" in report["path"])
+                key: sum(
+                    int(report[key]) for report in reports if module_of(report["path"]) == module
+                )
                 for key in totals
             },
         }
         for module in CRITICAL_MODULES
+        if any(module_of(path) == module for path in files)
     ]
     denominator = totals["killed"] + totals["survived"]
     payload = {
-        "schema_version": 3,
+        "schema_version": 4,
+        "shard": {
+            "name": shard,
+            "files": [
+                {"path": path, "sha256": sha256_bytes((project_root / path).read_bytes())}
+                for path in files
+            ],
+        },
         "source": {
             "commit": commit,
             "tree_sha256": source_tree_digest(project_root, files),
@@ -191,6 +204,8 @@ def export(
                 "src/veridist/adapters",
                 "src/veridist/reporting",
             ],
+            "only_mutate": list(files),
+            "effective_config_sha256": shard_config_digest(project_root, files),
         },
         "environment": {"python": sys.version, "platform": platform.platform()},
         "provenance": {
@@ -231,12 +246,31 @@ def verify_mutmut(wheel: Path) -> None:
         fail("installed mutmut version is not 3.7.0")
 
 
+def run_shard_mutation(project_root: Path, logs: Path, files: list[str]) -> dict[str, Any]:
+    """Run ``mutmut run`` restricted to ``files`` and restore the tracked configuration.
+
+    mutmut 3.7 reads its configuration from ``pyproject.toml`` in the working directory and
+    restricts mutation to the ``only_mutate`` fnmatch patterns found there, so the overlay is
+    written for this one process and the tracked bytes are put back before anything is hashed.
+    """
+
+    pyproject = project_root / "pyproject.toml"
+    tracked = pyproject.read_bytes()
+    pyproject.write_bytes(overlay_only_mutate(tracked.decode("utf-8"), files).encode("utf-8"))
+    try:
+        return run_logged(
+            ["mutmut", "run"], ["mutmut", "run"], project_root, logs / "mutmut.log", logs
+        )
+    finally:
+        pyproject.write_bytes(tracked)
+
+
 def publish_diagnostic(output: Path, error: Exception) -> None:
     """Persist an explicitly incomplete artifact when a started run cannot export evidence."""
     output.parent.mkdir(parents=True, exist_ok=True)
     staging = output.with_suffix(output.suffix + ".tmp")
     staging.write_text(
-        json.dumps({"schema_version": 3, "state": "incomplete", "error": str(error)}) + "\n",
+        json.dumps({"schema_version": 4, "state": "incomplete", "error": str(error)}) + "\n",
         encoding="utf-8",
     )
     staging.replace(output)
@@ -245,6 +279,7 @@ def publish_diagnostic(output: Path, error: Exception) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--project-root", type=Path, default=Path("."))
+    parser.add_argument("--shard", required=True, help="name of a shard in the mutation manifest")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--mutants-root", type=Path, default=Path("mutants"))
     parser.add_argument("--logs-dir", type=Path, default=Path("quality/mutation-logs"))
@@ -266,7 +301,10 @@ def main() -> int:
     try:
         if wheel is None:
             fail("--mutmut-wheel is required")
-        mutation_manifest(root)
+        shards = mutation_manifest(root)["shards"]
+        if args.shard not in shards:
+            fail(f"unknown mutation shard: {args.shard}")
+        files = list(shards[args.shard])
         mutation_config(root)
         reject_mutation_pragmas(root)
         commit = ensure_clean_tree(root)
@@ -281,9 +319,7 @@ def main() -> int:
         )
         started = True
         if baseline["state"] == "passed":
-            mutation = run_logged(
-                ["mutmut", "run"], ["mutmut", "run"], root, logs / "mutmut.log", logs
-            )
+            mutation = run_shard_mutation(root, logs, files)
         else:
             mutation = {"state": "not_run", "command": ["mutmut", "run"]}
         post_digest = input_digest(root)[1]
@@ -298,6 +334,8 @@ def main() -> int:
             records,
             pre_digest,
             post_digest,
+            args.shard,
+            files,
         )
         return 0 if baseline["state"] == mutation["state"] == "passed" else 1
     except (OSError, RuntimeError, ValueError, importlib.metadata.PackageNotFoundError) as error:
