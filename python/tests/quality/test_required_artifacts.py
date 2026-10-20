@@ -211,7 +211,8 @@ class RequiredQualityArtifactTests(unittest.TestCase):
         workflow = MUTATION_WORKFLOW.read_text(encoding="utf-8")
         for required in (
             "runs-on: ubuntu-latest",
-            "timeout-minutes: 120",
+            "timeout-minutes: 90",
+            "fail-fast: false",
             'python-version: "3.13"',
             "workflow_dispatch:",
             "pull_request:",
@@ -228,7 +229,9 @@ class RequiredQualityArtifactTests(unittest.TestCase):
             "--logs-root",
             "--mutants-root",
             "if: always()",
-            "python/mutants/**/*.meta",
+            "mutation-shard-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}",
+            "find . -type f -name '*.meta'",
+            "actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093",
             "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
             "ref: ${{ github.event.pull_request.head.sha || github.sha }}",
             "fetch-depth: 0",

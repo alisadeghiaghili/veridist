@@ -103,10 +103,10 @@ class MutationEvidenceV2Contracts(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     check_mutation_evidence.load_json(source)
 
-    def test_schema_v3_is_explicit_and_rejects_legacy_self_consistent_evidence(self) -> None:
-        self.assertIn("SCHEMA_VERSION = 3", CHECKER.read_text(encoding="utf-8"))
+    def test_schema_v4_is_explicit_and_rejects_legacy_self_consistent_evidence(self) -> None:
+        self.assertIn("SCHEMA_VERSION = 4", CHECKER.read_text(encoding="utf-8"))
         runner = (PYTHON_ROOT / "tools" / "run_mutation.py").read_text(encoding="utf-8")
-        self.assertEqual(runner.count('"schema_version": 3'), 2)
+        self.assertEqual(runner.count('"schema_version": 4'), 2)
         self.assertNotIn('"schema_version": 2', runner)
 
     def test_official_mutmut_status_mapping_is_complete_and_not_caller_controlled(self) -> None:
@@ -331,6 +331,7 @@ class MutationEvidenceV2Contracts(unittest.TestCase):
                 "tools/mutation_evidence.py",
                 "tools/run_mutation.py",
                 "tools/check_mutation_evidence.py",
+                "tools/merge_mutation_evidence.py",
             ]
             for relative in required:
                 target = root / relative
@@ -379,6 +380,7 @@ class MutationEvidenceV2Contracts(unittest.TestCase):
                 "tools/mutation_evidence.py",
                 "tools/run_mutation.py",
                 "tools/check_mutation_evidence.py",
+                "tools/merge_mutation_evidence.py",
             ):
                 target = root / relative
                 target.parent.mkdir(parents=True, exist_ok=True)

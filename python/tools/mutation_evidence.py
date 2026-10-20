@@ -10,7 +10,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 3  # mutation manifest; evidence has its own schema version
+SCHEMA_VERSION = 4  # mutation manifest (adds the shard map); evidence has its own schema version
 CRITICAL_MODULES = ("domain", "statistics", "families", "engine", "scale")
 MUTATION_TEST_SELECTION = (
     "tests/contract",
@@ -21,6 +21,9 @@ MUTATION_TEST_SELECTION = (
 )
 MUTMUT_VERSION = "3.7.0"
 MUTMUT_WHEEL_SHA256 = "1d2f9a1bfa4a474b2213df6b17223150b492bf4a85af0eda4fb322297337fb32"
+SHARD_NAME = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
+# ``only_mutate`` entries are fnmatch patterns; a production path must never contain one.
+GLOB_CHARACTERS = frozenset("*?[]\\")
 META_KEYS = frozenset(
     {
         "exit_code_by_key",
@@ -104,6 +107,15 @@ def source_files(project_root: Path) -> list[str]:
     )
 
 
+def module_of(path: str) -> str:
+    """Return the critical module (``domain``, ``scale``, ...) that owns a production file."""
+
+    prefix = "src/veridist/"
+    if not path.startswith(prefix):
+        raise ValueError(f"not a critical production path: {path}")
+    return path[len(prefix) :].split("/", 1)[0]
+
+
 def tree_files(project_root: Path, relative: str) -> list[str]:
     base = project_root / relative
     return sorted(
@@ -160,6 +172,53 @@ def module_minimum_scores(value: object) -> dict[str, float]:
     return floors
 
 
+def mutation_shards(project_root: Path, declared: object) -> dict[str, list[str]]:
+    """Validate the declared shard map against the production files on disk.
+
+    Every production file of a critical module must belong to exactly one shard, a shard
+    may only name such files, and file lists must be canonical (sorted, no repeats, no
+    glob characters, because mutmut matches ``only_mutate`` entries with ``fnmatch``).
+    """
+
+    if not isinstance(declared, dict) or not declared:
+        raise ValueError("mutation manifest shards must be a non-empty mapping")
+    expected = source_files(project_root)
+    known = set(expected)
+    owner: dict[str, str] = {}
+    shards: dict[str, list[str]] = {}
+    for name, files in declared.items():
+        if not isinstance(name, str) or SHARD_NAME.fullmatch(name) is None:
+            raise ValueError(f"invalid mutation shard name: {name!r}")
+        if (
+            not isinstance(files, list)
+            or not files
+            or any(not isinstance(item, str) for item in files)
+        ):
+            raise ValueError(f"mutation shard {name} must list at least one file")
+        if files != sorted(set(files)):
+            raise ValueError(f"mutation shard {name} files must be sorted and unique")
+        for path in files:
+            if GLOB_CHARACTERS & set(path):
+                raise ValueError(f"mutation shard {name} lists a glob character: {path}")
+            if path not in known:
+                raise ValueError(
+                    f"mutation shard {name} lists a file outside the critical scope: {path}"
+                )
+            if path in owner:
+                raise ValueError(
+                    f"production file is assigned to more than one mutation shard: {path} "
+                    f"({owner[path]}, {name})"
+                )
+            owner[path] = name
+        shards[name] = list(files)
+    unassigned = [path for path in expected if path not in owner]
+    if unassigned:
+        raise ValueError(
+            "production file is not assigned to a mutation shard: " + ", ".join(unassigned)
+        )
+    return shards
+
+
 def mutation_manifest(project_root: Path) -> dict[str, Any]:
     value = strict_json(
         (project_root / "quality" / "mutation-manifest.json").read_text(encoding="utf-8")
@@ -172,6 +231,7 @@ def mutation_manifest(project_root: Path) -> dict[str, Any]:
         "minimum_score",
         "module_minimum_scores",
         "pytest_selection",
+        "shards",
     }
     if not isinstance(value, dict) or set(value) != wanted:
         raise ValueError("invalid mutation manifest schema")
@@ -192,6 +252,7 @@ def mutation_manifest(project_root: Path) -> dict[str, Any]:
     ):
         raise ValueError("mutation manifest minimum score must be finite 0.8")
     module_minimum_scores(value["module_minimum_scores"])
+    mutation_shards(project_root, value["shards"])
     return value
 
 
@@ -240,12 +301,57 @@ def config_digest(project_root: Path) -> str:
     return sha256_text(canonical_json(mutation_config(project_root)))
 
 
+def shard_config(config: dict[str, Any], files: list[str]) -> dict[str, Any]:
+    """Return the mutmut configuration one shard runs: the binding config plus ``only_mutate``."""
+
+    return {**config, "only_mutate": list(files)}
+
+
+def shard_config_digest(project_root: Path, files: list[str]) -> str:
+    return sha256_text(canonical_json(shard_config(mutation_config(project_root), files)))
+
+
+_MUTMUT_TABLE = re.compile(r"^\[tool\.mutmut\][ \t]*(?:#[^\r\n]*)?\r?$", re.MULTILINE)
+
+
+def overlay_only_mutate(pyproject: str, files: list[str]) -> str:
+    """Return ``pyproject`` with ``only_mutate = files`` added to ``[tool.mutmut]``.
+
+    mutmut 3.7 reads ``only_mutate`` (fnmatch patterns over source paths such as
+    ``src/veridist/scale/_fit.py``) from ``[tool.mutmut]`` and mutates only matching files;
+    every other file under ``source_paths`` is copied unmutated and gets no ``.meta`` file.
+    The checked-in configuration must not carry the key, so the shard runner applies this
+    overlay for the duration of ``mutmut run`` only and restores the tracked bytes after.
+    """
+
+    import tomllib
+
+    matches = list(_MUTMUT_TABLE.finditer(pyproject))
+    if len(matches) != 1:
+        raise ValueError("pyproject.toml must contain exactly one [tool.mutmut] table")
+    original = tomllib.loads(pyproject)
+    table = original["tool"]["mutmut"]
+    if "only_mutate" in table:
+        raise ValueError("the tracked [tool.mutmut] table must not set only_mutate")
+    newline = pyproject.find("\n", matches[0].end())
+    if newline < 0:
+        raise ValueError("pyproject.toml ends inside the [tool.mutmut] header")
+    eol = "\r\n" if pyproject[newline - 1 : newline] == "\r" else "\n"
+    line = f"only_mutate = {json.dumps(list(files))}{eol}"
+    result = pyproject[: newline + 1] + line + pyproject[newline + 1 :]
+    expected = {**original, "tool": {**original["tool"], "mutmut": shard_config(table, files)}}
+    if tomllib.loads(result) != expected:
+        raise ValueError("only_mutate overlay changed more than the [tool.mutmut] table")
+    return result
+
+
 REQUIRED_NON_TEST_FILES = (
     "pyproject.toml",
     "quality/mutation-manifest.json",
     "tools/mutation_evidence.py",
     "tools/run_mutation.py",
     "tools/check_mutation_evidence.py",
+    "tools/merge_mutation_evidence.py",
     "../.github/workflows/mutation.yml",
 )
 

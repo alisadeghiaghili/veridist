@@ -84,6 +84,16 @@ a statistical or execution-path fix, put it under `tests/contract`,
 that job can see it; tests under other directories (for example `tests/docs`
 or `tests/quality`) are excluded from the mutation run by design.
 
+The workflow runs as parallel shards. `python/quality/mutation-manifest.json`
+assigns every production file of a critical module to exactly one shard
+(`shards`); a new file under `src/veridist/{domain,statistics,families,engine,scale}`
+fails `tests/quality` until you add it to a shard, and the matrix in
+`mutation.yml` must list the same shard names. Each shard runs the pinned
+`mutmut` on its files only (the runner adds `only_mutate` to `[tool.mutmut]`
+for that run) and uploads its evidence and raw cache; the `mutation / gate`
+job merges them with `tools/merge_mutation_evidence.py` and enforces the
+per-module and global minimum scores over the merged totals.
+
 ## Documentation parity (en/fa/de)
 
 User-facing documentation exists in English, Persian (fa), and German (de):

@@ -13,15 +13,29 @@ permissions:
 
 jobs:
   mutation:
-    name: mutation / critical statistical core
+    # One job per shard of python/quality/mutation-manifest.json.  The matrix must list
+    # exactly the shard names declared there; the gate rejects a missing or extra shard.
+    name: mutation / shard (${{ matrix.shard }})
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - domain
+          - statistics
+          - families
+          - engine
+          - scale-fit
+          - scale-io
+          - scale-runtime
     env:
       PYTHONUTF8: "1"
       PYTHONUNBUFFERED: "1"
       MUTMUT_VERSION: "3.7.0"
       MUTMUT_WHEEL: mutmut-3.7.0-py3-none-any.whl
       MUTMUT_WHEEL_SHA256: 1d2f9a1bfa4a474b2213df6b17223150b492bf4a85af0eda4fb322297337fb32
+      SHARD: ${{ matrix.shard }}
 
     steps:
       - name: Check out the exact triggering revision
@@ -86,41 +100,54 @@ jobs:
           fi
           test ! -e "$cache_root"
 
-      - name: Run the fail-closed mutation gate
+      - name: Run the fail-closed mutation shard
         id: mutation
         working-directory: python
         shell: bash
         run: |
           set -euo pipefail
-          output="$RUNNER_TEMP/mutation-evidence.json"
+          bundle="$RUNNER_TEMP/mutation-shard"
           python tools/run_mutation.py \
             --project-root . \
-            --output "$output" \
+            --shard "$SHARD" \
+            --output "$bundle/mutation-evidence.json" \
             --mutmut-wheel "$RUNNER_TEMP/$MUTMUT_WHEEL" \
-            --logs-dir "$RUNNER_TEMP/mutation-logs"
+            --logs-dir "$bundle/logs"
           python tools/check_mutation_evidence.py \
             --project-root . \
-            --evidence "$output" \
+            --shard "$SHARD" \
+            --evidence "$bundle/mutation-evidence.json" \
             --mutants-root "$GITHUB_WORKSPACE/python/mutants" \
-            --logs-root "$RUNNER_TEMP/mutation-logs"
+            --logs-root "$bundle/logs"
 
-      - name: Retain mutation evidence and raw cache
+      - name: Stage the raw mutmut cache beside the shard evidence
+        if: always()
+        working-directory: python
+        shell: bash
+        run: |
+          set -euo pipefail
+          bundle="$RUNNER_TEMP/mutation-shard"
+          mkdir -p "$bundle/mutants"
+          if [[ -d mutants ]]; then
+            (cd mutants && find . -type f -name '*.meta' -exec cp --parents {} "$bundle/mutants/" \;)
+          fi
+
+      - name: Retain shard evidence, logs and raw cache
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: mutation-${{ github.run_id }}-${{ github.run_attempt }}
+          name: mutation-shard-${{ matrix.shard }}-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: warn
-          path: |
-            ${{ runner.temp }}/mutation-evidence.json
-            ${{ runner.temp }}/mutation-logs/baseline.log
-            ${{ runner.temp }}/mutation-logs/mutmut.log
-            python/mutants/**/*.meta
+          path: ${{ runner.temp }}/mutation-shard
 
   mutation-gate:
     name: mutation / gate
     needs: [mutation]
     if: always()
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONUTF8: "1"
     steps:
       - name: Enforce fail-closed mutation evidence
         shell: bash
@@ -132,3 +159,39 @@ jobs:
             echo "critical mutation evidence did not succeed" >&2
             exit 1
           fi
+
+      - name: Check out the exact triggering revision
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Download every shard artifact of this run attempt
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: mutation-shard-*-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mutation-shards
+
+      - name: Merge the shard evidence and enforce the floors
+        working-directory: python
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/merge_mutation_evidence.py \
+            --project-root . \
+            --shards-root "$RUNNER_TEMP/mutation-shards" \
+            --output "$RUNNER_TEMP/mutation-merged.json"
+
+      - name: Retain the merged mutation summary
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: mutation-merged-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: ignore
+          path: ${{ runner.temp }}/mutation-merged.json

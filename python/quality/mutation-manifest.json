@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "production_root": "src/veridist",
   "critical_modules": ["domain", "statistics", "families", "engine", "scale"],
   "mutmut_version": "3.7.0",
@@ -17,5 +17,83 @@
     "tests/unit",
     "tests/conformance",
     "tests/property"
-  ]
+  ],
+  "shards": {
+    "domain": [
+      "src/veridist/domain/__init__.py",
+      "src/veridist/domain/_numeric.py",
+      "src/veridist/domain/arrays.py",
+      "src/veridist/domain/lifetimes.py",
+      "src/veridist/domain/values.py"
+    ],
+    "statistics": [
+      "src/veridist/statistics/__init__.py",
+      "src/veridist/statistics/_special.py",
+      "src/veridist/statistics/_vectorized.py",
+      "src/veridist/statistics/distributions.py",
+      "src/veridist/statistics/exponential.py",
+      "src/veridist/statistics/lifetime_log_likelihood.py",
+      "src/veridist/statistics/log_density.py",
+      "src/veridist/statistics/log_likelihood.py"
+    ],
+    "families": [
+      "src/veridist/families/__init__.py",
+      "src/veridist/families/_evidence.py",
+      "src/veridist/families/_models.py",
+      "src/veridist/families/_reliability.py",
+      "src/veridist/families/dispatch.py",
+      "src/veridist/families/exponential.py",
+      "src/veridist/families/gamma.py",
+      "src/veridist/families/gumbel.py",
+      "src/veridist/families/lognormal.py",
+      "src/veridist/families/normal.py",
+      "src/veridist/families/registry.py",
+      "src/veridist/families/results.py",
+      "src/veridist/families/uncertainty.py",
+      "src/veridist/families/weibull.py"
+    ],
+    "engine": [
+      "src/veridist/engine/__init__.py",
+      "src/veridist/engine/checkpoint.py",
+      "src/veridist/engine/data_source.py",
+      "src/veridist/engine/delivery.py",
+      "src/veridist/engine/errors.py",
+      "src/veridist/engine/outcome.py",
+      "src/veridist/engine/pass_budget.py",
+      "src/veridist/engine/provenance.py",
+      "src/veridist/engine/resume.py",
+      "src/veridist/engine/retry.py",
+      "src/veridist/engine/streaming.py"
+    ],
+    "scale-fit": [
+      "src/veridist/scale/_accumulator.py",
+      "src/veridist/scale/_estimates.py",
+      "src/veridist/scale/_fit.py",
+      "src/veridist/scale/_kernels.py",
+      "src/veridist/scale/_multi_pass.py",
+      "src/veridist/scale/_one_pass.py",
+      "src/veridist/scale/_pilot.py",
+      "src/veridist/scale/_planner.py",
+      "src/veridist/scale/_squares.py"
+    ],
+    "scale-io": [
+      "src/veridist/scale/_arrow.py",
+      "src/veridist/scale/_checkpoint.py",
+      "src/veridist/scale/_codec.py",
+      "src/veridist/scale/_duckdb.py",
+      "src/veridist/scale/_partition_store.py",
+      "src/veridist/scale/_polars.py",
+      "src/veridist/scale/_sources.py",
+      "src/veridist/scale/_spool.py",
+      "src/veridist/scale/_tasks.py"
+    ],
+    "scale-runtime": [
+      "src/veridist/scale/__init__.py",
+      "src/veridist/scale/_environment.py",
+      "src/veridist/scale/_errors.py",
+      "src/veridist/scale/_evidence.py",
+      "src/veridist/scale/_executors.py",
+      "src/veridist/scale/_state.py"
+    ]
+  }
 }
