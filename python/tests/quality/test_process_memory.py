@@ -18,6 +18,7 @@ EVIDENCE_TOOLS = (
     "collect_v1_execution_evidence",
     "run_scale_csv_exponential_evidence",
     "run_log_likelihood_scale_evidence",
+    "run_scale_engine_evidence",
 )
 
 
