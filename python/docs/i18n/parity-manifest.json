@@ -26,6 +26,11 @@
       "id": "DOC-PAGE-FAMILIES-LL",
       "source": "families-log-density-likelihood.md",
       "anchor": "veridist-families-log-density-likelihood"
+    },
+    {
+      "id": "DOC-PAGE-LARGE-DATA",
+      "source": "large-data.md",
+      "anchor": "veridist-large-data"
     }
   ],
   "messages": [
@@ -92,7 +97,7 @@
     {
       "id": "DOC-MSG-HOME-STREAM-BODY",
       "page": "index.md",
-      "source": "`IterableDataSource` adapts caller-owned chunk iterables with immutable source metadata. A `single_pass` source is acquired once and a second acquisition raises a typed pass-budget failure; replayable declarations require an explicit iterator factory. The CSV lifetime adapter with the documented input format remains the only bundled file adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a consumer, until `BufferedChunk.release()`; consumers must release received chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow, dataframe, database, RSS, throughput, or broad out-of-core claim."
+      "source": "`IterableDataSource` adapts caller-owned chunk iterables with immutable source metadata. A `single_pass` source is acquired once and a second acquisition raises a typed pass-budget failure; replayable declarations require an explicit iterator factory. The CSV lifetime adapter with the documented input format is the only bundled CSV adapter; Parquet, Arrow, Polars, DuckDB and numpy sources for exact data are provided separately by `veridist.scale`, described in the large-data guide. `BoundedChunkBuffer` charges a chunk while queued and while held by a consumer, until `BufferedChunk.release()`; consumers must release received chunks, normally in `finally`. This is not a generic CSV, RSS, throughput, or broad out-of-core claim."
     },
     {
       "id": "DOC-MSG-EXAMPLE-CAPTION",
@@ -943,6 +948,321 @@
       "id": "DOC-MSG-FAM-V2-03",
       "page": "families-log-density-likelihood.md",
       "source": "Right-censored observations have their own reducers, `reduce_lifetime_log_likelihood_chunks` and `reduce_value_log_likelihood_chunks`. They add the log survival of each censored observation to the same exact accumulation, so the total is again independent of chunking and order."
+    },
+    {
+      "id": "DOC-MSG-LD-01",
+      "page": "large-data.md",
+      "source": "Large data with `veridist.scale`"
+    },
+    {
+      "id": "DOC-MSG-LD-02",
+      "page": "large-data.md",
+      "source": "`veridist.scale` fits the six families to exact observations that are read from files, dataframes or a database in bounded batches, so the memory a fit needs does not grow with the number of rows. This page explains how to choose a source, how often the data is read, how to read it in parallel, how to continue an interrupted run, and how far the results can be trusted. Import the engine with `from veridist import scale`; its names are not exported at the top level of the package."
+    },
+    {
+      "id": "DOC-MSG-LD-03",
+      "page": "large-data.md",
+      "source": "What the scale engine does and does not do"
+    },
+    {
+      "id": "DOC-MSG-LD-04",
+      "page": "large-data.md",
+      "source": "The engine takes exact observations only: finite numbers without censoring, weights or truncation. It supports all six families: `exponential`, `normal`, `gamma` and `lognormal` read the data once, and `weibull_min` and `gumbel_right` read it several times. Right censoring at scale is not supported yet; use the in-memory `fit` for censored data."
+    },
+    {
+      "id": "DOC-MSG-LD-05",
+      "page": "large-data.md",
+      "source": "`scale.fit(source, family)` returns a `ScaleFitResult`. Its `fit` attribute is the same success or failure class that the in-memory fit of the family returns, and its `scale` attribute is a `ScaleProvenance`: a closed record of the partitions, the row count, the passes, the digest of the state the numbers were computed from, and the numeric environment. The record holds no data value."
+    },
+    {
+      "id": "DOC-MSG-LD-06",
+      "page": "large-data.md",
+      "source": "Parquet, Arrow, Polars and DuckDB sources need an optional extra: `pip install \"veridist[arrow]\"`, `pip install \"veridist[polars]\"` or `pip install \"veridist[duckdb]\"`. Importing `veridist.scale` imports none of them, and a missing extra is a `ScaleSourceError` with the code `OPTIONAL_DEPENDENCY_MISSING` and a hint that names the extra."
+    },
+    {
+      "id": "DOC-MSG-LD-07",
+      "page": "large-data.md",
+      "source": "Choose a source"
+    },
+    {
+      "id": "DOC-MSG-LD-08",
+      "page": "large-data.md",
+      "source": "A source names the column it reads when you build it, and is cut into partitions that can be read independently. The class names are the constructors:"
+    },
+    {
+      "id": "DOC-MSG-LD-09",
+      "page": "large-data.md",
+      "source": "`NumpySource(values, partition_rows=None)` reads a one-dimensional numpy array in place. It has one partition, or one per `partition_rows` rows, and every partition has a content fingerprint."
+    },
+    {
+      "id": "DOC-MSG-LD-10",
+      "page": "large-data.md",
+      "source": "`ParquetSource(paths, column, root=None, content_hash=False)` reads one column of Parquet files or directories, with one partition per file and row group. The fingerprint is a metadata fingerprint, or a content fingerprint with `content_hash=True`."
+    },
+    {
+      "id": "DOC-MSG-LD-11",
+      "page": "large-data.md",
+      "source": "`ArrowSource(data, column)` reads a pyarrow `Table`, `RecordBatch` or `RecordBatchReader`, or any object that exports `__arrow_c_stream__`. It has one partition and no fingerprint. A table or a batch can be read again; a reader or a stream can be read once."
+    },
+    {
+      "id": "DOC-MSG-LD-12",
+      "page": "large-data.md",
+      "source": "`PolarsSource(frame, column)` reads a Polars `DataFrame` or `LazyFrame` with one partition and no fingerprint, running a lazy plan with the streaming engine of Polars."
+    },
+    {
+      "id": "DOC-MSG-LD-13",
+      "page": "large-data.md",
+      "source": "`DuckDBSource(source, column)` reads a DuckDB relation, or a `(connection, sql)` pair, with one partition and no fingerprint."
+    },
+    {
+      "id": "DOC-MSG-LD-14",
+      "page": "large-data.md",
+      "source": "A fingerprint says what a partition covers. A content fingerprint hashes the data bytes. A metadata fingerprint hashes what the storage reports (the file identity and size, the modification time and the statistics of the row group): it detects a replaced or rewritten file, but not an in-place edit that keeps every reported property. No fingerprint means that the source cannot be recognised again without being consumed, so it cannot be checkpointed. A fingerprint guards against accidental change; it is not authentication."
+    },
+    {
+      "id": "DOC-MSG-LD-15",
+      "page": "large-data.md",
+      "source": "Every source applies the same value policy before a value reaches a statistic. A `float64` column is used as it is, a `float32` column is widened exactly, an integer column is accepted only when every value has magnitude at most `2**53`, and every other type is refused. A null is refused, never dropped, and so are NaN and infinity. A refusal is a `ScaleSourceError` with a closed code (`COLUMN_NOT_FOUND`, `UNSUPPORTED_DTYPE`, `LOSSY_CAST`, `NULL_VALUE`, `NAN_VALUE` or `NON_FINITE_VALUE`) raised before any value is used, and it never contains a data value."
+    },
+    {
+      "id": "DOC-MSG-LD-16",
+      "page": "large-data.md",
+      "source": "A value outside the support of the family, such as a negative time, is a `ScaleStateError` with the code `VALUE_OUT_OF_SUPPORT`. As in memory, `gamma`, `lognormal` and `weibull_min` return it instead as the fit failure `INVALID_SUPPORT`."
+    },
+    {
+      "id": "DOC-MSG-LD-17",
+      "page": "large-data.md",
+      "source": "Families, passes and the pass budget"
+    },
+    {
+      "id": "DOC-MSG-LD-18",
+      "page": "large-data.md",
+      "source": "`weibull_min` and `gumbel_right` have no fixed set of sufficient statistics, so the source is read several times: at least 3 and at most 17 times, as a root search plans it. `pass_budget` (default 8) is the number of reads you allow. A budget below 3 is refused before anything is read (`PASS_BUDGET_INSUFFICIENT`), and a run that would need a pass beyond the budget is refused before that pass is read (`PASS_BUDGET_EXCEEDED`). Both are a `PassBudgetError`, and no estimate is returned. Raise the budget for data that is hard to fit. The passes that were read are in `result.scale.passes`."
+    },
+    {
+      "id": "DOC-MSG-LD-19",
+      "page": "large-data.md",
+      "source": "Data problems that the in-memory fit also reports, such as `DEGENERATE_SAMPLE` or `BOUNDARY_SOLUTION`, are returned as a failure in `result.fit` and are not raised: check `isinstance(result.fit, FitSuccess)` before you read the parameters."
+    },
+    {
+      "id": "DOC-MSG-LD-20",
+      "page": "large-data.md",
+      "source": "`max_rows` (default 262144) bounds the rows of one batch, which is the unit of memory. It changes no result."
+    },
+    {
+      "id": "DOC-MSG-LD-21",
+      "page": "large-data.md",
+      "source": "Read the partitions in parallel"
+    },
+    {
+      "id": "DOC-MSG-LD-22",
+      "page": "large-data.md",
+      "source": "By default the partitions of a pass are read one after the other. `executor=` reads them concurrently: `scale.ThreadExecutor(workers)` on threads of this process, `scale.ProcessExecutor(workers)` on worker processes, or `\"serial\"` to record a serial run. The estimate, the state and its digest are identical for every executor and every number of workers; only the time changes."
+    },
+    {
+      "id": "DOC-MSG-LD-23",
+      "page": "large-data.md",
+      "source": "Choose the executor by where the time goes:"
+    },
+    {
+      "id": "DOC-MSG-LD-24",
+      "page": "large-data.md",
+      "source": "Threads start at once and share the memory of the process. numpy releases the interpreter lock only in parts of its work, so the gain is modest; use threads for data that lives in this process, such as a `NumpySource`, or when reading is dominated by input and output."
+    },
+    {
+      "id": "DOC-MSG-LD-25",
+      "page": "large-data.md",
+      "source": "Processes give real parallelism for the arithmetic, but a pool has a start-up cost: every worker is a new interpreter, started with `spawn` on every platform, that imports numpy and the library of the source before its first task. The cost is paid once per fit and shared by all its passes, so processes pay off for many large partitions (many Parquet files or row groups) and for a multi-pass family, and not for a small file. Put the entry point of a script that uses `scale.ProcessExecutor(4)` under `if __name__ == \"__main__\":`."
+    },
+    {
+      "id": "DOC-MSG-LD-26",
+      "page": "large-data.md",
+      "source": "A pass is read serially, never silently, when the request cannot be honoured. The reason is in `downgrade` of the pass record of `result.scale.execution`: `single_partition` (fewer than two partitions), `single_use_source` (a reader or a stream), `engine_managed` (Polars and DuckDB run their own threads), `in_memory_data` (processes would copy data held in memory) or `spool_first_pass` (the first pass of a spooled fit writes the spool in order)."
+    },
+    {
+      "id": "DOC-MSG-LD-27",
+      "page": "large-data.md",
+      "source": "The number of workers is the request, capped by 64, by the number of cores and by the number of partitions. With an executor, a partition whose read fails with a transient input or output error is read again, at most twice; the default `None` never repeats a read."
+    },
+    {
+      "id": "DOC-MSG-LD-28",
+      "page": "large-data.md",
+      "source": "A source that can be read only once: the spool"
+    },
+    {
+      "id": "DOC-MSG-LD-29",
+      "page": "large-data.md",
+      "source": "A multi-pass family reads its source several times. An `ArrowSource` over a reader or a stream can be read once, and a Polars plan or a DuckDB query would run again for every pass. Without a spool, a multi-pass fit of such a source is refused before anything is read (`SPOOL_REQUIRED`)."
+    },
+    {
+      "id": "DOC-MSG-LD-30",
+      "page": "large-data.md",
+      "source": "`spool=scale.ScaleSpoolPolicy(max_bytes=..., directory=...)` is the explicit remedy. The first pass writes the validated values to a private directory, every later pass reads that copy and checks it against its digests, and the directory is deleted when the fit ends, however it ends. The result is bit for bit the one the same fit without a spool gives. A one-pass family reads its source once and ignores the spool."
+    },
+    {
+      "id": "DOC-MSG-LD-31",
+      "page": "large-data.md",
+      "source": "`max_bytes` bounds the space the spool may use (`SPOOL_LIMIT_EXCEEDED`). `directory` must be an existing directory; pass `allow_system_temp=True` instead to use the system temporary directory. A spool file that changed or went missing is `SPOOL_CHANGED`. The spool needs the `arrow` extra, and `result.scale.spool` records its row count and one digest per partition, never a path."
+    },
+    {
+      "id": "DOC-MSG-LD-32",
+      "page": "large-data.md",
+      "source": "Checkpoint, resume and incremental fitting"
+    },
+    {
+      "id": "DOC-MSG-LD-33",
+      "page": "large-data.md",
+      "source": "`checkpoint=` takes a path or a `scale.SQLitePartitionStore` and keeps the exact state of every partition, and the merged result of every completed pass, in one local SQLite file. A run that was interrupted continues with `resume=True` and reads only the partitions that have no committed state. The result, its state digest and the provenance, except the checkpoint record, are bit for bit those of an uninterrupted run. Only a source whose partitions have a fingerprint can be checkpointed: `NumpySource` and `ParquetSource`. An `ArrowSource`, a `PolarsSource` or a `DuckDBSource` is refused (`SOURCE_REVISION_UNAVAILABLE`)."
+    },
+    {
+      "id": "DOC-MSG-LD-34",
+      "page": "large-data.md",
+      "source": "A store belongs to one job: the family, the column, the kind of source, `max_rows`, the value policy, the fingerprint levels, the state schema and the numeric environment. Without `resume=True`, a store that already holds a job is refused (`JOB_EXISTS`) and is never overwritten. With it, a store that holds another job is refused (`JOB_MISMATCH`), and the `components` of the error name what differs. The executor, the number of workers, the spool and the pass budget are not part of the job."
+    },
+    {
+      "id": "DOC-MSG-LD-35",
+      "page": "large-data.md",
+      "source": "Before anything is read, the partitions of the source are compared with the stored ones. A partition whose fingerprint changed is refused (`PARTITION_CHANGED`), a partition that is gone is `PARTITION_MISSING`, and a new one is `PARTITION_ADDED`; a refusal changes nothing. `recompute_changed=True` reads a changed partition again and replaces its state; a multi-pass fit then starts again from its first pass. `incremental=True`, together with `resume=True` and a one-pass family, fits a source that has gained partitions by reading only the new ones, and `allow_removed=True` also excludes partitions that are gone. A multi-pass family refuses `incremental` (`INCREMENTAL_UNSUPPORTED`), because a new partition changes the sums of every pass."
+    },
+    {
+      "id": "DOC-MSG-LD-36",
+      "page": "large-data.md",
+      "source": "The store is for one host and a local file system. Every row carries a checksum, so a damaged or unknown store is a typed `ScaleCheckpointError` (`STORE_DECODE_FAILED`, `STORE_DIGEST_MISMATCH`, `STORE_FORMAT_UNSUPPORTED`, `STORE_STORAGE_FAILED` or `STORE_COMMIT_UNCERTAIN`) and never a state that is used. This is an integrity check against accidental damage, not encryption or authentication. `result.scale.checkpoint` counts the partitions that were reused and read, and holds no path or fingerprint."
+    },
+    {
+      "id": "DOC-MSG-LD-37",
+      "page": "large-data.md",
+      "source": "Uncertainty and profile-likelihood intervals"
+    },
+    {
+      "id": "DOC-MSG-LD-38",
+      "page": "large-data.md",
+      "source": "A successful result reports `result.fit.uncertainty()` as an in-memory fit does, without reading the data again. For `normal`, `gamma` and `lognormal` it is computed from the exact sufficient statistics, and for `exponential` from the count and the total time. For `weibull_min` and `gumbel_right` it is the Wald uncertainty (covariance, standard errors and Wald intervals) from the observed information of the last pass; `method=\"profile\"` raises `NotImplementedError` there, because a profile likelihood needs more passes."
+    },
+    {
+      "id": "DOC-MSG-LD-39",
+      "page": "large-data.md",
+      "source": "`scale.profile_intervals(source, result, level=0.95, quantities=[...])` reads the source again and returns likelihood-ratio intervals for the parameters of a `weibull_min` or `gumbel_right` fit. For a Weibull fit it also returns intervals for derived quantities: `scale.mean()`, `scale.quantile(p)` and `scale.survival(t)`; for a Gumbel fit those entries are a typed `ProfileUnavailable`. It reads at least 2 and at most 9 passes, within its own `inference_pass_budget` (default 6), which is separate from the budget of the fit. `source` must be the data the fit was made from; another source is refused (`PARTITION_CHANGED`)."
+    },
+    {
+      "id": "DOC-MSG-LD-40",
+      "page": "large-data.md",
+      "source": "A failure is a `ScaleInferenceError` with the code `FIT_NOT_PROFILABLE`, `PROFILE_NOT_CONVERGED`, `PROFILE_UNBOUNDED` (an end of the interval lies beyond the search domain of the fit) or `PROFILE_NOT_COMPUTABLE`. An end is never silently replaced by a Wald end or an unbounded one."
+    },
+    {
+      "id": "DOC-MSG-LD-41",
+      "page": "large-data.md",
+      "source": "Goodness of fit at large n"
+    },
+    {
+      "id": "DOC-MSG-LD-42",
+      "page": "large-data.md",
+      "source": "At millions of rows a p-value answers whether the model is exactly right, which no model is. `scale.large_n_gof(source, result, threshold=0.01)` instead reports how far the data are from the fitted distribution, and lets you say how far is acceptable. It reads the source once more, at the fitted parameters of any of the six families, and returns a `LargeNGof`."
+    },
+    {
+      "id": "DOC-MSG-LD-43",
+      "page": "large-data.md",
+      "source": "The report holds an interval `[ks_lower, ks_upper]` that is certain to contain the Kolmogorov-Smirnov distance between the empirical and the fitted distribution function, certified up to `cdf_error`, the stated rounding error of the fitted distribution function. It also holds an interval for a binned total-variation distance and, if you gave a `threshold`, a `GofDecision`: `PASS` when `ks_upper` is at most the threshold, `FAIL` when `ks_lower` is above it, and `INCONCLUSIVE` when the interval contains it. There is no p-value and no asymptotic approximation, and none of the three decisions says that the model is true or false; the threshold is yours."
+    },
+    {
+      "id": "DOC-MSG-LD-44",
+      "page": "large-data.md",
+      "source": "`bin_exponent` (default 12, from 1 to 20) sets `2**k` bins: more bins narrow the interval. The report is one pass, so a source that can be read once is enough. A failure is a `ScaleInferenceError` with the code `GOF_FIT_NOT_AVAILABLE` (the fit is a failure), `GOF_NOT_REPRESENTABLE` or `GOF_RESOLUTION_UNSUPPORTED`."
+    },
+    {
+      "id": "DOC-MSG-LD-45",
+      "page": "large-data.md",
+      "source": "The refit Monte Carlo tests of `veridist.inference` (`refit_monte_carlo_gof` and `assess_families`) refit the sample for every replicate. They refuse a sample of more than 100000 observations by default and refuse a scale source, with `RefitGofRefused` (code `SCALE_REFIT_REFUSED`); they never subsample. For large data use `large_n_gof`."
+    },
+    {
+      "id": "DOC-MSG-LD-46",
+      "page": "large-data.md",
+      "source": "Reproducibility and the numeric environment"
+    },
+    {
+      "id": "DOC-MSG-LD-47",
+      "page": "large-data.md",
+      "source": "Within one numeric environment, the result of a fit, its state and the digest of the state are bit-identical for every batch size, partition order, way of splitting the rows into partitions or files, executor, number of workers, use of a spool, and point at which a run was interrupted and resumed. This is guaranteed and tested. Compare `result.scale.state.digest_sha256` of two runs to check it."
+    },
+    {
+      "id": "DOC-MSG-LD-48",
+      "page": "large-data.md",
+      "source": "The numeric environment is the CPU architecture, the operating system, the Python build and the numpy version. The logarithm and exponential of a platform are not correctly rounded, so the engine records a digest: the SHA-256 of the numpy version and of the results of `numpy.log` and `numpy.exp` over a fixed reference sample, in `result.scale.environment`. Equal digests mean that the two runs evaluated those functions identically. A checkpoint is tied to the digest: resuming in another environment is refused (`JOB_MISMATCH`, with `environment` among the components)."
+    },
+    {
+      "id": "DOC-MSG-LD-49",
+      "page": "large-data.md",
+      "source": "Across environments, bit identity is not promised. Results agree to within the rounding error of the `log`, `exp` and `pow` of the platforms, and the digest tells you which case you are in. For the families whose statistics are exact sums, equal bits are expected but not claimed. A scale fit also differs in the last bits from the in-memory fit of the same data, which uses another algorithm and a less exact sum."
+    },
+    {
+      "id": "DOC-MSG-LD-50",
+      "page": "large-data.md",
+      "source": "Memory, limits and stability"
+    },
+    {
+      "id": "DOC-MSG-LD-51",
+      "page": "large-data.md",
+      "source": "A worker holds one batch (at most `max_rows` values, 2 MiB of `float64` at the default) and a state whose size does not depend on the number of rows. This is a logical bound and not a promise about the memory of the process, which also holds the buffers of the libraries; with several workers the batches add up. A `NumpySource` reads an array that you already hold in memory."
+    },
+    {
+      "id": "DOC-MSG-LD-52",
+      "page": "large-data.md",
+      "source": "Not supported at scale: right censoring, weights, truncation, covariates, distributed executors, checkpoint stores other than local SQLite, source classes of your own, and bootstrap or refit Monte Carlo tests. The <a href=\"../../KNOWN_LIMITS.md\">known limits</a> record the exact boundary."
+    },
+    {
+      "id": "DOC-MSG-LD-53",
+      "page": "large-data.md",
+      "source": "Every name in `veridist.scale.__all__` is public API. It is not removed or changed incompatibly within a major version, and a deprecated form keeps working with a `DeprecationWarning` until the next major version, as everywhere in Veridist. The private modules `veridist.scale._*` and the byte formats of states, stores and spools are not API."
+    },
+    {
+      "id": "DOC-MSG-LD-54",
+      "page": "large-data.md",
+      "source": "Errors and their codes"
+    },
+    {
+      "id": "DOC-MSG-LD-55",
+      "page": "large-data.md",
+      "source": "Mistakes in the call are `TypeError` or `ValueError`. Every refusal that depends on the data, a source or a store is a `VeridistError` and a `ValueError` with a closed `code` and no data value, path or fingerprint:"
+    },
+    {
+      "id": "DOC-MSG-LD-56",
+      "page": "large-data.md",
+      "source": "`ScaleSourceError`: the codes `OPTIONAL_DEPENDENCY_MISSING`, `COLUMN_NOT_FOUND`, `UNSUPPORTED_DTYPE`, `LOSSY_CAST`, `NULL_VALUE`, `NAN_VALUE`, `NON_FINITE_VALUE`, `SOURCE_NOT_FOUND`, `SOURCE_UNREADABLE`, `SOURCE_CONSUMED`, `PARTITION_CHANGED`, `SPOOL_REQUIRED`, `SPOOL_LIMIT_EXCEEDED`, `SPOOL_CHANGED` and `SPOOL_UNAVAILABLE`."
+    },
+    {
+      "id": "DOC-MSG-LD-57",
+      "page": "large-data.md",
+      "source": "`ScaleStateError`: the codes `NON_FINITE_VALUE`, `VALUE_OUT_OF_SUPPORT`, `OBSERVATION_LIMIT_EXCEEDED`, `TOTAL_NOT_REPRESENTABLE`, `INCOMPATIBLE_STATE`, `STATE_BYTES_INVALID`, `STATE_TAG_MISMATCH` and `STATE_VERSION_UNSUPPORTED`."
+    },
+    {
+      "id": "DOC-MSG-LD-58",
+      "page": "large-data.md",
+      "source": "`ScaleCheckpointError`: the codes `SOURCE_REVISION_UNAVAILABLE`, `INCREMENTAL_UNSUPPORTED`, `JOB_EXISTS`, `JOB_MISMATCH`, `PARTITION_MISSING`, `PARTITION_ADDED`, `PARTITION_STATE_CONFLICT`, `LEDGER_MISMATCH`, `STORE_FORMAT_UNSUPPORTED`, `STORE_DECODE_FAILED`, `STORE_DIGEST_MISMATCH`, `STORE_STORAGE_FAILED` and `STORE_COMMIT_UNCERTAIN`."
+    },
+    {
+      "id": "DOC-MSG-LD-59",
+      "page": "large-data.md",
+      "source": "`ScaleInferenceError`: the codes `FIT_NOT_PROFILABLE`, `PROFILE_NOT_CONVERGED`, `PROFILE_UNBOUNDED`, `PROFILE_NOT_COMPUTABLE`, `GOF_FIT_NOT_AVAILABLE`, `GOF_NOT_REPRESENTABLE` and `GOF_RESOLUTION_UNSUPPORTED`."
+    },
+    {
+      "id": "DOC-MSG-LD-60",
+      "page": "large-data.md",
+      "source": "`PassBudgetError`: the codes `PASS_BUDGET_INSUFFICIENT` and `PASS_BUDGET_EXCEEDED`."
+    },
+    {
+      "id": "DOC-MSG-LD-61",
+      "page": "large-data.md",
+      "source": "For the other entry points of the package, see the <a href=\"api.html#veridist-api\">API guide</a>."
+    },
+    {
+      "id": "DOC-MSG-API-LD-01",
+      "page": "api.md",
+      "source": "Data larger than memory"
+    },
+    {
+      "id": "DOC-MSG-API-LD-02",
+      "page": "api.md",
+      "source": "`veridist.scale` fits the six families to exact observations that are read in bounded batches from Parquet files, Arrow data, Polars frames, DuckDB queries, or numpy arrays, with parallel readers, local checkpoints, profile-likelihood intervals, and a large-n goodness-of-fit report. Use the `veridist.scale` namespace (`import veridist.scale`); it is not exported at the top level. The <a href=\"large-data.md\">large-data guide</a> explains the sources, the number of passes, executors, resuming, and reproducibility; right censoring at scale is not supported yet."
     }
   ],
   "examples": [

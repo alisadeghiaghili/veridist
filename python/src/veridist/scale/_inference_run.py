@@ -37,7 +37,7 @@ from veridist.scale._fit import CUSTOM_SOURCE_KIND, SOURCE_KINDS, build_provenan
 from veridist.scale._partition_store import SQLitePartitionStore
 from veridist.scale._planner import PassLedger, PlanBounds, check_pass_budget
 from veridist.scale._sources import Source, check_max_rows, is_single_use
-from veridist.scale._spool import HINT_REQUIRED, Spool, SpoolPolicy
+from veridist.scale._spool import HINT_REQUIRED, ScaleSpoolPolicy, Spool
 
 ResultT = TypeVar("ResultT")
 
@@ -51,7 +51,7 @@ class InferenceOptions:
 
     max_rows: int
     budget: int
-    spool: SpoolPolicy | None
+    spool: ScaleSpoolPolicy | None
     executor: Executor | None
     request: CheckpointRequest | None
 
@@ -78,8 +78,8 @@ def check_options(
     passes = check_pass_budget(budget)
     if not isinstance(source, Source):
         raise TypeError("source must provide partitions() and batches()")
-    if spool is not None and not isinstance(spool, SpoolPolicy):
-        raise TypeError("spool must be a SpoolPolicy or None")
+    if spool is not None and not isinstance(spool, ScaleSpoolPolicy):
+        raise TypeError("spool must be a ScaleSpoolPolicy or None")
     resolved = resolve_executor(executor)
     request = resolve_checkpoint(checkpoint, resume, False, recompute_changed, False)
     return InferenceOptions(bound, passes, spool, resolved, request)

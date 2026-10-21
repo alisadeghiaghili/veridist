@@ -55,6 +55,11 @@
       <td align="right">همهٔ مشاهدات باید در حافظه جا شوند؛ انتخاب خودکار مدل وجود ندارد.</td>
     </tr>
     <tr>
+      <td align="right">برازش یکی از شش خانواده روی داده‌های دقیقی که در حافظه جا نمی‌شوند، از Parquet، Arrow، Polars، DuckDB یا numpy</td>
+      <td dir="ltr" align="left"><code class="literal">veridist.scale.fit</code></td>
+      <td align="right">فقط داده‌های دقیق و بدون سانسور؛ <a href="large-data.md">راهنمای داده‌های بزرگ</a> را ببینید.</td>
+    </tr>
+    <tr>
       <td align="right">محاسبهٔ چگالی، CDF، بقا، چندک یا نمونه برای یک مقدار یا یک آرایه</td>
       <td dir="ltr" align="left"><code class="literal">logpdf</code>، <code class="literal">cdf</code>، <code class="literal">sf</code>، <code class="literal">ppf</code>، <code class="literal">sample</code></td>
       <td align="right">از توزیعی استفاده می‌کنند که از قبل مشخص کرده‌اید؛ پارامتر برازش نمی‌کنند.</td>
@@ -275,6 +280,10 @@ SELECTED lognormal
 <p dir="rtl" align="right">برای فایل CSV، تابع <code dir="ltr">veridist.execution.fit_exponential_checkpointed_csv</code> همین کار را همراه با امکان لغو انجام می‌دهد. شما فایل، تعریف ستون‌ها، محدودیت اندازه، محل ذخیرهٔ وضعیت، شناسهٔ نسخهٔ داده و در صورت نیاز تابع <code dir="ltr">cancel(cursor)</code> را می‌دهید. شناسهٔ نسخه یک برچسب دلخواه نیست: باید دقیقاً برابر با گوارش <bdi dir="ltr">SHA-256</bdi> فعلیِ فایل CSV باشد که پیش از خواندن هر سطر، با پیمایش جریانی فایل محاسبه می‌شود. اگر اجرا لغو شود، بخش کامل‌شده ابتدا ذخیره می‌شود؛ اجرای بعدی می‌تواند از آخرین سطر ثبت‌شده ادامه دهد.</p>
 
 <p dir="rtl" align="right">فایل داده و شناسهٔ نسخهٔ آن باید بین دو اجرا ثابت بمانند: تغییر فایل، شناسهٔ منبع عمومیِ متفاوت، یا طرح‌وارهٔ ذخیره‌شدهٔ متفاوت، به‌جای ادامهٔ اجرا، یک عدم‌تطابق نوع‌دار برمی‌گرداند. برای ساخت ذخیرهٔ اولیهٔ یک فایل CSV، به‌جای ساختن دستیِ رکورد نقطهٔ بازرسی، از تابع <code dir="ltr">veridist.execution.create_checkpointed_csv_store</code> استفاده کنید. سازوکار ذخیرهٔ وضعیت<sup id="fnref-checkpoint"><a href="#fn-checkpoint">۲۰</a></sup> برای ادامهٔ محاسبه روی همان رایانه طراحی شده است. پیاده‌سازی فعلی از SQLite محلی استفاده می‌کند، اما سطرهای خام CSV را در آن کپی نمی‌کند. این فایل به‌صورت خودکار رمزگذاری یا احراز هویت نمی‌شود؛ بنابراین باید آن را مانند سایر فایل‌های کاری در محل امن نگه دارید. <a href="../../examples/checkpoint_resume.py">مثال ذخیره و ادامهٔ اجرا</a> روند دو مرحله‌ای را نشان می‌دهد.</p>
+
+<h2 dir="rtl" align="right">داده‌هایی بزرگ‌تر از حافظه</h2>
+
+<p dir="rtl" align="right">بستهٔ <code dir="ltr">veridist.scale</code> شش خانواده را به مشاهدات دقیقی برازش می‌دهد که در دسته‌های محدود از فایل‌های Parquet، داده‌های Arrow، قاب‌های Polars، پرس‌وجوهای DuckDB یا آرایه‌های numpy خوانده می‌شوند؛ با خوانندگان موازی، نقطه‌های بازرسی محلی، بازه‌های درست‌نمایی نمایه‌ای و گزارش مناسب‌بودن مدل برای n بزرگ. از فضای نام <code dir="ltr">veridist.scale</code> استفاده کنید (<code dir="ltr">import veridist.scale</code>)؛ این فضای نام در سطح بالای بسته صادر نمی‌شود. <a href="large-data.md">راهنمای داده‌های بزرگ</a> منبع‌ها، شمار گذرها، اجراکننده‌ها، ازسرگیری و تکرارپذیری را توضیح می‌دهد؛ سانسور راست در مقیاس بزرگ هنوز پشتیبانی نمی‌شود.</p>
 
 <h2 dir="rtl" align="right">ابزارهای سطح پایین<sup id="fnref-low-level-tools"><a href="#fn-low-level-tools">۲۱</a></sup> برای داده‌های آماده</h2>
 

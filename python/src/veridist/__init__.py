@@ -3,7 +3,8 @@
 The top level is the documented user API. Engine, provenance and delivery
 internals stay in their submodules (``veridist.engine`` and friends). The
 package imports only the standard library; ``numpy`` is loaded on first use of
-an array operation.
+an array operation. Fits of exact data that does not fit in memory are the
+separate public namespace ``veridist.scale``, which is not exported here.
 """
 
 __version__ = "2.1.0"

@@ -6,6 +6,41 @@ Veridist release record.
 
 ## [Unreleased]
 
+### Added
+
+- `veridist.scale`, the scale engine, is now a documented public API; it was an
+  internal namespace. It fits the six registered families to exact, uncensored
+  observations that are read in bounded batches: `fit(source, family)` with
+  `max_rows`, `pass_budget`, `executor`, `spool`, `checkpoint`, `resume`,
+  `incremental`, `recompute_changed`, and `allow_removed`; `profile_intervals`,
+  profile-likelihood intervals for a Weibull-minimum or right-Gumbel fit; and
+  `large_n_gof`, a certified Kolmogorov-Smirnov enclosure with a typed `PASS`,
+  `FAIL`, or `INCONCLUSIVE` decision against a threshold and no p-value. The
+  full list of names is `veridist.scale.__all__`, pinned by a contract test, and
+  they follow the package deprecation policy: no incompatible change within a
+  major version, and a deprecated form is removed no earlier than the next one.
+  `veridist.scale` is not exported at the top level of `veridist`.
+- The sources `NumpySource`, `ParquetSource`, `ArrowSource`, `PolarsSource`, and
+  `DuckDBSource` (optional extras `veridist[arrow]`, `veridist[polars]`, and
+  `veridist[duckdb]`); the executors `ThreadExecutor` and `ProcessExecutor`;
+  `ScaleSpoolPolicy`, the explicit local spool for sources that can be read only
+  once; `SQLitePartitionStore` for partition-level checkpoint, resume, and
+  incremental fitting on local SQLite; the result and provenance types
+  (`ScaleFitResult`, `ScaleProvenance`, and its records); and the typed errors
+  `ScaleSourceError`, `ScaleStateError`, `ScaleCheckpointError`,
+  `ScaleInferenceError`, and `PassBudgetError` with closed code enums. The
+  provenance records Polars and DuckDB fits as `polars` and `duckdb` instead of
+  `custom`.
+- A large-data guide in English, Persian, and German (`docs/source/large-data.md`
+  and its catalogs) with executable examples: sources and the value policy,
+  families and the pass budget, threads and processes, the spool, checkpoint,
+  resume and incremental fitting, profile intervals, the large-n report, and
+  the reproducibility tiers. Within one numeric environment a fit is
+  bit-identical for every batch size, partition layout, executor, spool, and
+  resume point; across environments no bit identity is claimed. The
+  `SCALE-ENGINE` entry in the known limits states the scope: exact data only,
+  right censoring at scale is not supported yet, and checkpoints are local.
+
 ### Changed
 
 - `refit_monte_carlo_gof` and `assess_families` now refuse a sample of more
