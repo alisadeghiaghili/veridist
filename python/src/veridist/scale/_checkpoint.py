@@ -28,8 +28,9 @@ partition that is gone is ``PARTITION_MISSING``; a partition that is new is
 ``PARTITION_ADDED``. Every refusal comes before any read and changes nothing. In a pass,
 every partition that has a committed state under the pass's exact parameters is not read;
 the others are, and each is committed the moment it returns, so an interrupted run loses at
-most the partitions in flight. The merged result is the merge, in canonical order, of the
-same exact states an uninterrupted run would have made, so it is bit for bit that result.
+most the partitions in flight. The merged result is the exact merge of the same states an
+uninterrupted run would have made, so it is bit for bit that result whatever the order in
+which they were merged.
 
 The pass ledger. When every partition of a pass is stored, the parent merges them, and
 commits the pass (its index, the exact record of its parameters and the merged state) in one
@@ -59,7 +60,7 @@ from __future__ import annotations
 
 import json
 import os
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from hashlib import sha256
 from typing import Final
@@ -224,9 +225,10 @@ class PassCheckpoint:
     """One pass of a checkpointed fit: what is stored, what is left to read, what was done.
 
     ``replayed`` is the merged state of the pass if the ledger holds it (nothing is read);
-    otherwise ``pending`` are the partitions to read, in canonical order, and ``reused`` the
-    bytes of the committed state of every other partition by ordinal. The parent calls
-    :meth:`commit` for each state a task returns and :meth:`finish` with the merged bytes.
+    otherwise ``pending`` are the partitions to read, in canonical order, and the committed
+    states of every other partition are handed out one at a time by :meth:`take_reused`. The
+    parent calls :meth:`commit` for each state a task returns and :meth:`finish` with the
+    merged bytes.
     """
 
     def __init__(
@@ -247,12 +249,24 @@ class PassCheckpoint:
         self._total = len(partitions)
         self.replayed = replayed
         self.reused = reused
+        self._reused_count = len(reused)
         self.pending: tuple[Partition, ...] = ()
         if replayed is None:
             self.pending = tuple(
                 partition for partition in partitions if partition.ordinal not in reused
             )
         self._read = 0
+
+    def take_reused(self) -> Iterator[bytes]:
+        """The committed states of the partitions that were not read, in canonical order.
+
+        ``reused`` holds them by ordinal until then. Each is handed over once and is no
+        longer held by this record once it has been yielded, so the caller can merge it and
+        drop it.
+        """
+
+        for ordinal in sorted(self.reused):
+            yield self.reused.pop(ordinal)
 
     def commit(self, outcome: TaskOutcome) -> None:
         """Commit the state one partition task returned; the parent is the only writer."""
@@ -281,7 +295,7 @@ class PassCheckpoint:
         if self.replayed is not None:
             return ScaleCheckpointPassProvenance(self._index, self._total, True, self._total, 0)
         return ScaleCheckpointPassProvenance(
-            self._index, self._total, False, len(self.reused), self._read
+            self._index, self._total, False, self._reused_count, self._read
         )
 
 

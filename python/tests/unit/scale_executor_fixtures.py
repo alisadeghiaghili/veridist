@@ -13,7 +13,7 @@ import time
 import unittest
 from collections.abc import Callable, Iterator
 from concurrent.futures import Future
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from typing import Any
 from unittest import mock
@@ -21,7 +21,9 @@ from unittest import mock
 import numpy as np
 
 from tests.unit.scale_arrow_fixtures import write_parquet
+from veridist.scale import _executors
 from veridist.scale._arrow import ParquetSource
+from veridist.scale._executors import PassEngine, ThreadExecutor
 from veridist.scale._sources import (
     DEFAULT_MAX_ROWS,
     DowngradeReason,
@@ -184,6 +186,36 @@ def cores(count: int) -> Iterator[None]:
 
     with mock.patch("veridist.scale._executors.available_cpus", return_value=count):
         yield
+
+
+class Scripted:
+    """An engine on a scripted pool, with ``wait`` routed to it; a context manager."""
+
+    def __init__(self, count: int, script: list[list[int]]) -> None:
+        self.pools: list[ScriptedPool] = []
+
+        def make(workers: int, modules: tuple[str, ...]) -> ScriptedPool:
+            pool = ScriptedPool(workers, modules, script)
+            self.pools.append(pool)
+            return pool
+
+        self.engine = PassEngine(ThreadExecutor(count, pool_factory=PoolRecorder(make)), 10)
+        self.stack = ExitStack()
+
+    def __enter__(self) -> PassEngine:
+        self.stack.enter_context(cores(64))
+        self.stack.enter_context(
+            mock.patch.object(_executors, "wait", lambda *a, **k: self.pools[0].wait(*a, **k))
+        )
+        self.stack.enter_context(self.engine)
+        return self.engine
+
+    def __exit__(self, *exc: Any) -> Any:
+        return self.stack.__exit__(*exc)
+
+    @property
+    def pool(self) -> ScriptedPool:
+        return self.pools[0]
 
 
 def parquet_dataset(

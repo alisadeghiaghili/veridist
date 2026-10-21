@@ -231,7 +231,7 @@ class ProfileJob:
 def _pilot_pass(
     ledger: PassLedger, source: Source, state_type: type[PilotState], engine: PassEngine
 ) -> PilotState:
-    """The first pass: the pilot state of the source, merged as the canonical tree."""
+    """The first pass: the pilot state of the source, its partition states merged exactly."""
 
     partitions = tuple(ledger.begin(PassRole.STATISTICS, 0))
     state: PilotState = engine.run(source, partitions, FoldJob(state_type))

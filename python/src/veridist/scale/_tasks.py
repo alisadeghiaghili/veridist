@@ -1,4 +1,4 @@
-"""Partition tasks: the unit of work an executor runs, its retry rule and the canonical merge.
+"""Partition tasks: the unit of work an executor runs and its retry rule.
 
 A pass over a source is a set of *partition tasks*, one per partition. A task is a pure
 function of its description: a :class:`PartitionTask` holds the source (or, for worker
@@ -10,8 +10,8 @@ kilobytes, are all that leaves a worker; data never does.
 Jobs. A job knows what is folded (:class:`FoldJob` folds a mergeable state; the multi-pass
 fit has one for the profile sums), how to read the bytes back, and the identity of the merge.
 Merging is exact, so the merged value does not depend on the order in which the bytes
-arrive or on the shape of the merge; :func:`merge_tree` nevertheless uses one shape, fixed
-by the partition ordinals, so that every executor merges the same way.
+arrive or on the shape of the merge: the executors merge each value into one running value as
+it arrives and drop it (:mod:`veridist.scale._executors`).
 
 Retry. A task that fails with a transient input or output error is run again from the start
 of its partition, at most ``PartitionTask.retries`` times (``MAX_PARTITION_RETRIES`` for an
@@ -24,10 +24,9 @@ reports how many times the partition was read again.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from importlib import import_module
-from typing import Any, Final, Protocol, TypeVar
+from typing import Any, Final, Protocol
 
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._sources import BatchReader, Partition, fold_partition
@@ -35,8 +34,6 @@ from veridist.scale._state import MergeableState
 
 MAX_PARTITION_RETRIES: Final = 2
 """How many times a partition is read again after a transient error (so at most 3 reads)."""
-
-MergedT = TypeVar("MergedT")
 
 
 def initialize_worker(modules: tuple[str, ...]) -> None:
@@ -151,25 +148,6 @@ def run_partition_task(task: PartitionTask) -> TaskOutcome:
     )
 
 
-def merge_tree(
-    items: Sequence[MergedT], merge: Callable[[MergedT, MergedT], MergedT], identity: MergedT
-) -> MergedT:
-    """Merge ``items`` (in the order of their partition ordinals) as a balanced binary tree.
-
-    Each level merges neighbours ``(0, 1)``, ``(2, 3)``, and so on; an odd item at the end
-    moves up unchanged, and the levels are as many as halving the count to one takes. The
-    shape depends on the number of items only. No items give ``identity``.
-    """
-
-    level = list(items) or [identity]
-    for _ in range((len(level) - 1).bit_length()):
-        level = [
-            merge(level[index], level[index + 1]) if index + 1 < len(level) else level[index]
-            for index in range(0, len(level), 2)
-        ]
-    return level[0]
-
-
 __all__ = [
     "MAX_PARTITION_RETRIES",
     "FoldJob",
@@ -178,6 +156,5 @@ __all__ = [
     "TaskOutcome",
     "initialize_worker",
     "is_transient",
-    "merge_tree",
     "run_partition_task",
 ]

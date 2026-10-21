@@ -11,7 +11,6 @@ import dataclasses
 import os
 import threading
 import unittest
-from contextlib import ExitStack
 from dataclasses import FrozenInstanceError
 from typing import Any
 from unittest import mock
@@ -24,6 +23,7 @@ from tests.unit.scale_executor_fixtures import (
     PartSource,
     PlainSource,
     PoolRecorder,
+    Scripted,
     ScriptedPool,
     cores,
 )
@@ -37,6 +37,7 @@ from veridist.scale._errors import (
     ScaleStateErrorCode,
 )
 from veridist.scale._executors import (
+    IN_FLIGHT_PER_WORKER,
     MAX_WORKERS,
     START_METHOD,
     WAIT_SLICE_SECONDS,
@@ -62,26 +63,26 @@ def parts(count: int, size: int = 6) -> list[np.ndarray]:
 
 
 class Node:
-    """A mergeable that records the shape of the merge that made it."""
+    """A mergeable that records which partitions were merged into it, each as often as it was."""
 
-    def __init__(self, shape: Any) -> None:
-        self.shape = shape
+    def __init__(self, members: tuple[int, ...]) -> None:
+        self.members = members
 
     def merge(self, other: Node) -> Node:
-        return Node((self.shape, other.shape))
+        return Node(tuple(sorted(self.members + other.members)))
 
 
 class ShapeJob:
-    """A job whose value is the nested tuple of the ordinals merged, in merge order."""
+    """A job whose value is the sorted ordinals of the partitions merged into it."""
 
     def run(self, source: Any, partition: Partition, max_rows: int) -> bytes:
         return str(partition.ordinal).encode()
 
     def restore(self, data: bytes) -> Node:
-        return Node(int(data))
+        return Node((int(data),))
 
     def identity(self) -> Node:
-        return Node("identity")
+        return Node(())
 
 
 class FailingJob(ShapeJob):
@@ -113,6 +114,7 @@ class ExecutorObjectTests(unittest.TestCase):
         self.assertEqual(_executors.THREAD_NAME_PREFIX, "veridist-scale")
         self.assertEqual(_executors.NUMPY_MODULE, "numpy")
         self.assertEqual(_executors.SERIAL_NAME, "serial")
+        self.assertEqual(IN_FLIGHT_PER_WORKER, 2)
 
     def test_the_kinds_and_worker_counts(self) -> None:
         self.assertIs(SerialExecutor().kind, ExecutorKind.SERIAL)
@@ -384,46 +386,18 @@ class ModeTests(NoLeaksTestCase):
         self.assertEqual(len(recorder.calls), 1)
 
 
-class Scripted:
-    """An engine on a scripted pool, with ``wait`` routed to it; a context manager."""
-
-    def __init__(self, count: int, script: list[list[int]]) -> None:
-        self.pools: list[ScriptedPool] = []
-
-        def make(workers: int, modules: tuple[str, ...]) -> ScriptedPool:
-            pool = ScriptedPool(workers, modules, script)
-            self.pools.append(pool)
-            return pool
-
-        self.engine = PassEngine(ThreadExecutor(count, pool_factory=PoolRecorder(make)), 10)
-        self.stack = ExitStack()
-
-    def __enter__(self) -> PassEngine:
-        self.stack.enter_context(cores(64))
-        self.stack.enter_context(
-            mock.patch.object(_executors, "wait", lambda *a, **k: self.pools[0].wait(*a, **k))
-        )
-        self.stack.enter_context(self.engine)
-        return self.engine
-
-    def __exit__(self, *exc: Any) -> Any:
-        return self.stack.__exit__(*exc)
-
-    @property
-    def pool(self) -> ScriptedPool:
-        return self.pools[0]
-
-
 class MergeOrderTests(NoLeaksTestCase):
-    def run_shape(self, count: int, script: list[list[int]]) -> tuple[Any, ScriptedPool]:
+    def run_members(
+        self, count: int, script: list[list[int]]
+    ) -> tuple[tuple[int, ...], ScriptedPool]:
         source = PartSource(parts(count, 1))
         scripted = Scripted(count, script)
         with scripted as engine:
             merged = engine.run(source, source.partitions(), ShapeJob())
-        return merged.shape, scripted.pool
+        return merged.members, scripted.pool
 
-    def test_the_merge_shape_is_fixed_by_the_ordinals_whatever_the_arrival_order(self) -> None:
-        expected = (((0, 1), (2, 3)), 4)
+    def test_every_partition_is_merged_exactly_once_whatever_the_arrival_order(self) -> None:
+        expected = (0, 1, 2, 3, 4)
         orders = (
             [[0], [1], [2], [3], [4]],
             [[4], [3], [2], [1], [0]],
@@ -432,11 +406,11 @@ class MergeOrderTests(NoLeaksTestCase):
         )
         for order in orders:
             with self.subTest(order=order):
-                shape, pool = self.run_shape(5, order)
-                self.assertEqual(shape, expected)
+                members, pool = self.run_members(5, order)
+                self.assertEqual(members, expected)
                 self.assertEqual(sorted(pool.ran), [0, 1, 2, 3, 4])
 
-    def test_results_that_arrive_late_in_a_real_pool_merge_the_same_way(self) -> None:
+    def test_results_that_arrive_late_in_a_real_pool_are_merged_the_same(self) -> None:
         gates = [threading.Event() for _ in range(4)]
 
         class Reversed(ShapeJob):
@@ -450,7 +424,7 @@ class MergeOrderTests(NoLeaksTestCase):
         source = PartSource(parts(4, 1))
         with cores(16), PassEngine(ThreadExecutor(4), 10) as engine:
             merged = engine.run(source, source.partitions(), Reversed())
-        self.assertEqual(merged.shape, ((0, 1), (2, 3)))
+        self.assertEqual(merged.members, (0, 1, 2, 3))
 
 
 class FailureTests(NoLeaksTestCase):
@@ -581,7 +555,7 @@ class FailureTests(NoLeaksTestCase):
         with cores(16), mock.patch.object(_executors, "wait", counting):
             with PassEngine(ThreadExecutor(2), 10) as engine:
                 merged = engine.run(source, source.partitions(), Slow())
-        self.assertEqual(merged.shape, (0, 1))
+        self.assertEqual(merged.members, (0, 1))
         self.assertGreaterEqual(len(waits), 3)
 
     def test_a_real_thread_pool_raises_the_error_the_task_raised_and_stops(self) -> None:
