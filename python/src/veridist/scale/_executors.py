@@ -4,10 +4,13 @@
 ``ThreadExecutor(workers=n)`` or ``ProcessExecutor(workers=n)``. Every data pass of the fit
 (the single pass of a one-pass family, every planned pass of a multi-pass one) is split into
 one task per partition (:mod:`veridist.scale._tasks`). Workers fold their partition into an
-exact state and return its canonical bytes; the parent merges the states as the fixed
-balanced tree over the partition ordinals (``merge_tree``). Merging is exact, so the
-estimate, the state bytes and the state digest are identical for every executor and every
-number of workers, and the arrival order of the results cannot matter.
+exact state and return its canonical bytes; the parent merges each state into one running
+value as the bytes arrive, in completion order, and drops it. Merging is exact (the sums are
+integers, and the canonical bytes encode the exact totals, not how they were accumulated), so
+the estimate, the state bytes and the state digest are identical for every executor, every
+number of workers, every arrival order and every shape of merge. The memory of a pass is
+therefore the running value, the state of the partition being merged and the tasks in flight
+(below): it does not grow with the number of partitions.
 
 ``None`` asks for nothing: the partitions are read one after the other as before the option
 existed, a failed read is not repeated and no execution record is made. The other executors
@@ -23,6 +26,11 @@ partition at a time in canonical order. The record of that pass holds the reason
 :class:`~veridist.scale._sources.DowngradeReason`. Later passes of a spooled fit read the
 spool's files, in parallel when the executor allows, each read checked against the digests
 as before.
+
+In flight. At most ``IN_FLIGHT_PER_WORKER`` tasks per worker are submitted and not yet
+merged: the next task is submitted when one returns, in canonical order. A result that has
+not been merged yet is therefore always one of a constant number, whatever the number of
+partitions.
 
 Workers. The number of workers is the request, capped by ``MAX_WORKERS``, by the number of
 cores (``os.cpu_count()``) and by the number of partitions. The pool is created when the first
@@ -46,7 +54,7 @@ progress return.
 from __future__ import annotations
 
 import os
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Sequence
 from concurrent.futures import (
     FIRST_COMPLETED,
     Future,
@@ -81,7 +89,6 @@ from veridist.scale._tasks import (
     PartitionTask,
     TaskOutcome,
     initialize_worker,
-    merge_tree,
     run_partition_task,
 )
 
@@ -91,6 +98,9 @@ MAX_WORKERS: Final = 64
 WAIT_SLICE_SECONDS: Final = 0.5
 """How long the parent waits for results before it looks again; also how soon an interrupt
 is noticed on a platform where a wait without a timeout cannot be interrupted."""
+
+IN_FLIGHT_PER_WORKER: Final = 2
+"""How many tasks per worker are submitted and not yet merged at any time."""
 
 START_METHOD: Final = "spawn"
 """How worker processes are started, on every platform."""
@@ -202,33 +212,71 @@ def resolve_executor(executor: object) -> Executor | None:
     return SerialExecutor()
 
 
-def _gather(futures: dict[Future[TaskOutcome], int], accept: Callable[[TaskOutcome], None]) -> None:
-    """Pass the outcome of each of ``futures`` (each mapped to its partition ordinal) to ``accept``.
+def _settle(
+    done: set[Future[TaskOutcome]],
+    pending: dict[Future[TaskOutcome], int],
+    failures: dict[int, Exception],
+    accept: Callable[[TaskOutcome], None],
+) -> None:
+    """Take the finished ``done`` out of ``pending``: accept each outcome or note its failure.
 
-    Outcomes are accepted as they arrive, in any order. The error of the lowest ordinal that
-    failed is raised once every task before it has returned; tasks after it are cancelled and
-    not waited for. An exception that is not an ``Exception`` is raised at once, and so is
-    one that ``accept`` raises.
+    It is a function of its own so that no finished future, and the result it holds, outlives
+    the call: what the parent holds is what is in ``pending``.
     """
 
-    pending = set(futures)
+    for future in done:
+        ordinal = pending.pop(future)
+        error = future.exception()
+        if error is None:
+            accept(future.result())
+        elif isinstance(error, Exception):
+            failures[ordinal] = error
+        else:
+            raise error
+
+
+def _gather(
+    pool: PoolExecutor,
+    tasks: Iterable[PartitionTask],
+    window: int,
+    accept: Callable[[TaskOutcome], None],
+) -> None:
+    """Run ``tasks`` (in ascending partition ordinal) on ``pool``, ``window`` of them at a time.
+
+    A task is submitted whenever fewer than ``window`` are unfinished, so no more than that
+    many results wait to be accepted. Outcomes are passed to ``accept`` as they arrive, in
+    any order. The error of the lowest ordinal that failed is raised once every task before
+    it has returned; no task is submitted after a failure and those after it are cancelled
+    and not waited for (every task not yet submitted is after every one submitted, so the
+    lowest failing ordinal is the one a serial read meets first). An exception that is not
+    an ``Exception`` is raised at once, and so is one that ``accept`` raises; the tasks not
+    finished are cancelled.
+    """
+
+    queue = iter(tasks)
+    pending: dict[Future[TaskOutcome], int] = {}
     failures: dict[int, Exception] = {}
-    while pending:
-        done, pending = wait(pending, timeout=WAIT_SLICE_SECONDS, return_when=FIRST_COMPLETED)
-        for future in done:
-            error = future.exception()
-            if error is None:
-                accept(future.result())
-            elif isinstance(error, Exception):
-                failures[futures[future]] = error
-            else:
-                raise error
-        if failures:
-            first = min(failures)
-            for future in pending:
-                if futures[future] > first:
+    try:
+        while True:
+            while not failures and len(pending) < window:
+                task = next(queue, None)
+                if task is None:
+                    break
+                pending[pool.submit(run_partition_task, task)] = task.partition.ordinal
+            if not pending:
+                break
+            done, _ = wait(set(pending), timeout=WAIT_SLICE_SECONDS, return_when=FIRST_COMPLETED)
+            _settle(done, pending, failures, accept)
+            del done
+            if failures:
+                first = min(failures)
+                for future in [item for item, ordinal in pending.items() if ordinal > first]:
                     future.cancel()
-            pending = {future for future in pending if futures[future] < first}
+                    del pending[future]
+    except BaseException:
+        for future in pending:
+            future.cancel()
+        raise
     if failures:
         raise failures[min(failures)]
 
@@ -312,34 +360,29 @@ class PassEngine:
         self,
         executor: ThreadExecutor | ProcessExecutor,
         workers: int,
-        tasks: list[PartitionTask],
+        reader: BatchReader,
+        tasks: Iterable[PartitionTask],
         accept: Callable[[TaskOutcome], None],
     ) -> None:
-        pool = self._pool_for(executor, workers, tasks[0].source)
-        futures: dict[Future[TaskOutcome], int] = {}
-        try:
-            for task in tasks:
-                futures[pool.submit(run_partition_task, task)] = task.partition.ordinal
-            _gather(futures, accept)
-        except BaseException:
-            for future in futures:
-                future.cancel()
-            raise
+        pool = self._pool_for(executor, workers, reader)
+        _gather(pool, tasks, workers * IN_FLIGHT_PER_WORKER, accept)
 
     def run(self, source: Source, partitions: Sequence[Partition], job: Job) -> Any:
         """Read ``partitions`` of ``source`` as one pass and return the merged ``job`` value.
 
         Errors are those of the tasks (see the module documentation); the pass is recorded
-        whether it returned or failed. With a checkpoint, a pass that the ledger holds is
-        returned without any read, the partitions that have a committed state are not read,
-        and the state of every other partition is committed by this (the parent) process
-        as its task returns.
+        whether it returned or failed. Each partition's state is merged into one running
+        value as it arrives and is then dropped, so the pass holds a constant number of
+        states whatever the number of partitions (the merge is exact, so the order does not
+        matter). With a checkpoint, a pass that the ledger holds is returned without any
+        read, the partitions that have a committed state are not read (each is merged into
+        the running value, one at a time, once the others are read), and the state of every
+        other partition is committed by this (the parent) process as its task returns.
         """
 
         step = None
         if self._checkpoint is not None:
             step = self._checkpoint.begin_pass(len(self._records), job, partitions)
-        reused: dict[int, bytes] = {} if step is None else step.reused
         if step is not None and step.replayed is not None:
             replayed = job.restore(step.replayed)
             self._record_pass(self._mode(source, ()), 0, 0)
@@ -353,16 +396,19 @@ class PassEngine:
         if kind is ExecutorKind.PROCESSES:
             worker_source = getattr(source, "worker_source", None)
             reader = source if worker_source is None else worker_source()
-        tasks = [
+        tasks = (
             PartitionTask(reader, partition, self._max_rows, job, retries)
             for partition in partitions
-        ]
-        outcomes: list[TaskOutcome] = []
+        )
+        merged = job.identity()
+        retried = 0
 
         def accept(outcome: TaskOutcome) -> None:
-            outcomes.append(outcome)
+            nonlocal merged, retried
+            retried += outcome.retries
             if step is not None:
                 step.commit(outcome)
+            merged = merged.merge(job.restore(outcome.data))
 
         try:
             if kind is ExecutorKind.SERIAL:
@@ -370,18 +416,12 @@ class PassEngine:
                     accept(run_partition_task(task))
             else:
                 assert isinstance(self._executor, ThreadExecutor | ProcessExecutor)
-                self._in_parallel(self._executor, workers, tasks, accept)
+                self._in_parallel(self._executor, workers, reader, tasks, accept)
         finally:
-            self._record_pass(
-                (kind, workers, reason), len(tasks), sum(item.retries for item in outcomes)
-            )
-        known = {**reused, **{outcome.ordinal: outcome.data for outcome in outcomes}}
-        merged = merge_tree(
-            [job.restore(known[ordinal]) for ordinal in sorted(known)],
-            lambda left, right: left.merge(right),
-            job.identity(),
-        )
+            self._record_pass((kind, workers, reason), len(partitions), retried)
         if step is not None:
+            for data in step.take_reused():
+                merged = merged.merge(job.restore(data))
             step.finish(merged.to_bytes())
         return merged
 
@@ -400,6 +440,7 @@ class PassEngine:
 
 
 __all__ = [
+    "IN_FLIGHT_PER_WORKER",
     "MAX_WORKERS",
     "START_METHOD",
     "WAIT_SLICE_SECONDS",

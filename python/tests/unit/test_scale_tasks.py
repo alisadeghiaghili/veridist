@@ -1,4 +1,4 @@
-"""Partition tasks: the job, the retry rule, the canonical merge and the worker initializer."""
+"""Partition tasks: the job, the retry rule, the tree-merge oracle and the worker initializer."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from unittest import mock
 import numpy as np
 
 from tests.unit.scale_fit_oracle import ListSource
+from tests.unit.scale_merge_oracle import merge_tree
 from veridist.scale import _tasks
 from veridist.scale._errors import (
     ScaleSourceError,
@@ -33,7 +34,6 @@ from veridist.scale._tasks import (
     TaskOutcome,
     initialize_worker,
     is_transient,
-    merge_tree,
     run_partition_task,
 )
 
@@ -244,7 +244,7 @@ class FoldJobTests(unittest.TestCase):
         self.assertEqual(pickle.loads(pickle.dumps(outcome)), outcome)
 
 
-class MergeTreeTests(unittest.TestCase):
+class MergeTreeOracleTests(unittest.TestCase):
     @staticmethod
     def join(left: Any, right: Any) -> Any:
         return (left, right)

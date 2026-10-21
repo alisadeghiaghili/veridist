@@ -529,6 +529,31 @@ class PassTests(CheckpointCase):
         self.assertEqual(again.pending, (self.partitions[1], self.partitions[3]))
         self.assertIsNone(again.replayed)
 
+    def test_reused_states_are_handed_out_once_in_canonical_order_and_still_counted(self) -> None:
+        run = self.open()
+        step = run.begin_pass(0, JOB, self.partitions)
+        for partition in (self.partitions[3], self.partitions[1]):
+            step.commit(self.outcome(partition))
+        again = self.open().begin_pass(0, JOB, self.partitions)
+        expected = [JOB.run(self.source, self.partitions[n], 100) for n in (1, 3)]
+        self.assertEqual(list(again.take_reused()), expected)
+        self.assertEqual(again.reused, {})
+        self.assertEqual(list(again.take_reused()), [])
+        record = again.record()
+        self.assertEqual((record.partitions, record.reused, record.read), (4, 2, 0))
+
+    def test_a_state_is_dropped_by_the_record_as_soon_as_it_is_handed_out(self) -> None:
+        run = self.open()
+        step = run.begin_pass(0, JOB, self.partitions)
+        for partition in self.partitions:
+            step.commit(self.outcome(partition))
+        again = self.open().begin_pass(0, JOB, self.partitions)
+        handed = again.take_reused()
+        next(handed)
+        self.assertEqual(sorted(again.reused), [1, 2, 3])
+        next(handed)
+        self.assertEqual(sorted(again.reused), [2, 3])
+
     def test_a_pass_that_is_not_the_stored_one_reuses_nothing(self) -> None:
         run = self.open()
         run.begin_pass(0, JOB, self.partitions).commit(self.outcome(self.partitions[0]))

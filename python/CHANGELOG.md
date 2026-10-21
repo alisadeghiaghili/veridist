@@ -43,6 +43,13 @@ Veridist release record.
 
 ### Changed
 
+- The scale fit merges the state of each partition into one running exact
+  value as soon as it is read and then drops it, instead of holding the state
+  of every partition until the end of the pass. The peak memory of a serial
+  Weibull-minimum or right-Gumbel fit no longer grows with the number of
+  partitions (it grew by about 1.4 MB per partition). Thread and process
+  executors submit at most twice as many tasks as workers at a time. The
+  estimates, state bytes, state digests and provenance are unchanged.
 - `refit_monte_carlo_gof` and `assess_families` now refuse a sample of more
   than 100000 observations by default, raising the new `RefitGofRefused`
   (reason `ROW_LIMIT_EXCEEDED`) before anything is fitted or drawn. Every
