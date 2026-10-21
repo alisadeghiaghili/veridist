@@ -48,11 +48,13 @@ in the API guide.
 `IterableDataSource` adapts caller-owned chunk iterables with immutable source
 metadata. A `single_pass` source is acquired once and a second acquisition
 raises a typed pass-budget failure; replayable declarations require an explicit
-iterator factory. The CSV lifetime adapter with the documented input format remains the only bundled file
-adapter. `BoundedChunkBuffer` charges a chunk while queued and while held by a
-consumer, until `BufferedChunk.release()`; consumers must release received
-chunks, normally in `finally`. This is not a generic CSV, Parquet, Arrow,
-dataframe, database, RSS, throughput, or broad out-of-core claim.
+iterator factory. The CSV lifetime adapter with the documented input format is
+the only bundled CSV adapter; Parquet, Arrow, Polars, DuckDB and numpy sources
+for exact data are provided separately by `veridist.scale`, described in the
+large-data guide. `BoundedChunkBuffer` charges a chunk while queued and while
+held by a consumer, until `BufferedChunk.release()`; consumers must release
+received chunks, normally in `finally`. This is not a generic CSV, RSS,
+throughput, or broad out-of-core claim.
 
 ```{literalinclude} examples/quickstart.py
 :language: python
@@ -63,6 +65,7 @@ dataframe, database, RSS, throughput, or broad out-of-core claim.
 :maxdepth: 2
 
 api
+large-data
 exponential-right-censoring
 families-log-density-likelihood
 ```

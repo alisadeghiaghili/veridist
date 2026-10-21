@@ -25,7 +25,7 @@ from veridist.scale import _profile_intervals as pi
 from veridist.scale._executors import SerialExecutor, ThreadExecutor
 from veridist.scale._fit import fit
 from veridist.scale._sources import NumpySource
-from veridist.scale._spool import SpoolPolicy
+from veridist.scale._spool import ScaleSpoolPolicy
 
 SIZE = 42
 """Rows of the data: small enough for the run of every variant to take milliseconds. The same
@@ -140,7 +140,7 @@ class ProfileInvarianceTests(NoLeaksTestCase):
             result = fit(NumpySource(values), family)
             base = pi.profile_intervals(NumpySource(values), result)
             with tempfile.TemporaryDirectory() as directory:
-                policy = SpoolPolicy(max_bytes=1 << 24, directory=Path(directory))
+                policy = ScaleSpoolPolicy(max_bytes=1 << 24, directory=Path(directory))
                 out = pi.profile_intervals(
                     NumpySource(values, partition_rows=self.SIZE // 3), result, spool=policy
                 )
@@ -164,7 +164,7 @@ class ProfileInvarianceTests(NoLeaksTestCase):
                 return super().batches(partition, max_rows=max_rows)
 
         with tempfile.TemporaryDirectory() as directory:
-            policy = SpoolPolicy(max_bytes=1 << 24, directory=Path(directory))
+            policy = ScaleSpoolPolicy(max_bytes=1 << 24, directory=Path(directory))
             out = pi.profile_intervals(Once(values), result, spool=policy)
         self.assertEqual(profile_bits(out), profile_bits(base))
         self.assertEqual(Once.reads, 1)

@@ -8,7 +8,7 @@ the values the first pass has validated, so that the source is read exactly once
 later pass reads the copy.
 
 It is never implicit. A fit uses a spool only when the caller passes a
-:class:`SpoolPolicy`; without one, a multi-pass family refuses a source that can be read
+:class:`ScaleSpoolPolicy`; without one, a multi-pass family refuses a source that can be read
 only once before it reads anything (``SPOOL_REQUIRED``). A one-pass family reads its
 source once and ignores the policy: it does not create a directory or a file.
 
@@ -108,9 +108,9 @@ MEMORY_MAP: Final = sys.platform != "win32"
 
 HINT_REQUIRED: Final = (
     "the source can be read only once but this family reads it several times; "
-    "pass spool=SpoolPolicy(...) to keep a local copy"
+    "pass spool=ScaleSpoolPolicy(...) to keep a local copy"
 )
-HINT_LIMIT: Final = "the spool would exceed max_bytes; raise max_bytes of the SpoolPolicy"
+HINT_LIMIT: Final = "the spool would exceed max_bytes; raise max_bytes of the ScaleSpoolPolicy"
 HINT_CHANGED: Final = (
     "the spool no longer holds what was written to it; it was changed or damaged"
 )
@@ -132,7 +132,7 @@ def batch_cost(rows: int) -> int:
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
-class SpoolPolicy:
+class ScaleSpoolPolicy:
     """The caller's explicit request for a local spool, and its limits.
 
     ``max_bytes`` is the budget (a built-in integer of at least one). ``directory`` is an
@@ -321,9 +321,9 @@ class Spool:
     directory (``SPOOL_UNAVAILABLE`` otherwise); nothing is created in the first case.
     """
 
-    def __init__(self, policy: SpoolPolicy) -> None:
-        if not isinstance(policy, SpoolPolicy):
-            raise TypeError("policy must be a SpoolPolicy")
+    def __init__(self, policy: ScaleSpoolPolicy) -> None:
+        if not isinstance(policy, ScaleSpoolPolicy):
+            raise TypeError("policy must be a ScaleSpoolPolicy")
         pa = pyarrow_module()
         self._pa = pa
         self._policy = policy

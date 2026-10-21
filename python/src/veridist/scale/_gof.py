@@ -77,7 +77,7 @@ from veridist.scale._errors import (
     ScaleStateError,
     ScaleStateErrorCode,
 )
-from veridist.scale._executors import PassEngine
+from veridist.scale._executors import Executor, PassEngine
 from veridist.scale._fit import ScaleFitResult
 from veridist.scale._inference_run import (
     StoreArgument,
@@ -428,7 +428,7 @@ def large_n_gof(
     threshold: float | None = None,
     inference_pass_budget: int = GOF_PASS_BUDGET_DEFAULT,
     max_rows: int = DEFAULT_MAX_ROWS,
-    executor: Any = None,
+    executor: Executor | str | None = None,
     checkpoint: StoreArgument | SQLitePartitionStore = None,
     resume: bool = False,
     recompute_changed: bool = False,

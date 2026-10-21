@@ -25,7 +25,7 @@ from tests.unit.scale_arrow_fixtures import write_parquet
 from veridist.scale._arrow import ArrowSource, ParquetSource
 from veridist.scale._errors import ScaleSourceError, ScaleSourceErrorCode
 from veridist.scale._fit import ScaleFitResult, fit
-from veridist.scale._spool import SpoolPolicy
+from veridist.scale._spool import ScaleSpoolPolicy
 
 SEED = 20261016
 BATCH = 262144
@@ -67,7 +67,7 @@ class StreamSpoolSweepTests(unittest.TestCase):
 
             reference = fit(ParquetSource(root / "data", "x"), family)
             streamed = fit(
-                source, family, spool=SpoolPolicy(directory=spools, max_bytes=size * 8 + 4096)
+                source, family, spool=ScaleSpoolPolicy(directory=spools, max_bytes=size * 8 + 4096)
             )
 
             self.assertEqual(sum(pulled), size)

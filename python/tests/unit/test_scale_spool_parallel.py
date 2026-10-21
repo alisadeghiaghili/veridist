@@ -35,7 +35,7 @@ from veridist.scale._sources import (
     Partition,
     is_retryable,
 )
-from veridist.scale._spool import Spool, SpoolPolicy, SpoolReplay
+from veridist.scale._spool import ScaleSpoolPolicy, Spool, SpoolReplay
 from veridist.scale._tasks import FoldJob
 
 
@@ -50,8 +50,8 @@ class TempCase(NoLeaksTestCase):
         self.addCleanup(directory.cleanup)
         self.directory = directory.name
 
-    def policy(self) -> SpoolPolicy:
-        return SpoolPolicy(max_bytes=10_000_000, directory=self.directory)
+    def policy(self) -> ScaleSpoolPolicy:
+        return ScaleSpoolPolicy(max_bytes=10_000_000, directory=self.directory)
 
 
 class Counting(PartSource):

@@ -301,8 +301,8 @@ def _refuse_profile(method: object) -> None:
     if method == "profile":
         raise NotImplementedError(
             "profile likelihood intervals of a multi-pass scale fit need further passes over "
-            "the source: compute them with profile_intervals(source, result) of "
-            'veridist.scale._profile_intervals, or use method="wald"'
+            "the source: compute them with veridist.scale.profile_intervals(source, result), "
+            'or use method="wald"'
         )
 
 

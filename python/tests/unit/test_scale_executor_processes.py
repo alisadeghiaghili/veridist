@@ -35,7 +35,7 @@ from veridist.scale._executors import (
     make_process_pool,
 )
 from veridist.scale._fit import fit
-from veridist.scale._spool import SpoolPolicy
+from veridist.scale._spool import ScaleSpoolPolicy
 
 WORKER_SECONDS = 120
 
@@ -130,7 +130,7 @@ class ProcessTests(NoLeaksTestCase):
             source,
             "weibull_min",
             executor=ProcessExecutor(2),
-            spool=SpoolPolicy(max_bytes=10_000_000, directory=spool_directory),
+            spool=ScaleSpoolPolicy(max_bytes=10_000_000, directory=spool_directory),
         )
         self.assertEqual(result.fit, base.fit)
         self.assertEqual(result.scale.state, base.scale.state)

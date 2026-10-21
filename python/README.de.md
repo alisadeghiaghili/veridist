@@ -194,6 +194,8 @@ speichert lokalen Neustartzustand für kompatible Exponential-Reduktionen,
 einschließlich des unterstützten CSV-Pfads. Halten Sie die Quellrevision stabil
 und folgen Sie dem [Checkpoint- und Fortsetzungsrezept](https://github.com/alisadeghiaghili/veridist/blob/main/python/examples/checkpoint_resume.py).
 
+Für exakte, unzensierte Beobachtungen, die nicht in den Speicher passen, passt `veridist.scale` jede der sechs Familien an Daten aus Parquet-Dateien, Arrow-Daten, Polars-Frames, DuckDB-Abfragen oder numpy-Arrays in begrenzten Stapeln an, mit Threads oder Prozessen, einem lokalen Spool für Quellen, die nur einmal gelesen werden können, Checkpoint, Fortsetzen und inkrementeller Anpassung auf Partitionsebene, Profil-Likelihood-Intervallen und einem Anpassungsgüte-Bericht für großes n ohne p-Wert. Installieren Sie die benötigten Quellen mit `pip install "veridist[arrow]"`, `pip install "veridist[polars]"` oder `pip install "veridist[duckdb]"`. Innerhalb einer numerischen Umgebung sind die Ergebnisse bitgleich, unabhängig von Stapelgröße, Partitionslayout, Executor und Fortsetzungspunkt. Rechtszensierung wird im großen Maßstab noch nicht unterstützt. Siehe den [Leitfaden für große Datenmengen](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/large-data.md).
+
 Erhaltene Skalierungsnachweise für den strikten CSV-/Exponentialpfad decken
 10k, 100k und 1m Zeilen bei Chunk-Grenzen von 32, 64 und 128 KiB ab. Sie
 stammen aus je einem Lauf auf einem Linux- und einem Windows-Runner

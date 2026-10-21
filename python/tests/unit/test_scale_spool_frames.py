@@ -30,7 +30,7 @@ from veridist.scale._duckdb import DuckDBSource
 from veridist.scale._fit import ScaleFitResult, fit
 from veridist.scale._polars import PolarsSource
 from veridist.scale._sources import DEFAULT_MAX_ROWS, Partition
-from veridist.scale._spool import SpoolPolicy
+from veridist.scale._spool import ScaleSpoolPolicy
 
 SIZE = 3000
 
@@ -74,7 +74,7 @@ class FrameSpoolTests(unittest.TestCase):
         self.root = Path(holder.name)
         self.directory = self.root / "spools"
         self.directory.mkdir()
-        self.policy = SpoolPolicy(directory=self.directory, max_bytes=1 << 24)
+        self.policy = ScaleSpoolPolicy(directory=self.directory, max_bytes=1 << 24)
 
     def cases(self, values: np.ndarray) -> dict[str, Any]:
         table = pa.table({"x": values})
