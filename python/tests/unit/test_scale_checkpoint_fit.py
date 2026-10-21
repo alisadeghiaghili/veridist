@@ -44,7 +44,7 @@ from veridist.scale._executors import ThreadExecutor
 from veridist.scale._fit import ScaleFitResult, fit
 from veridist.scale._partition_store import SQLitePartitionStore, _row_checksum
 from veridist.scale._sources import NumpySource
-from veridist.scale._spool import SpoolPolicy
+from veridist.scale._spool import ScaleSpoolPolicy
 
 PARTITIONS = 4
 ROWS = 480
@@ -397,7 +397,7 @@ class MultiPassResumeTests(CheckpointCase):
         base = self.run_fit(source, "weibull_min")
         assert base.scale.passes is not None
         count = base.scale.passes.pass_count
-        policy = SpoolPolicy(max_bytes=1 << 20, directory=self.root)
+        policy = ScaleSpoolPolicy(max_bytes=1 << 20, directory=self.root)
         for index, limits in enumerate(
             (
                 {"after": PARTITIONS + 2},
@@ -428,7 +428,7 @@ class MultiPassResumeTests(CheckpointCase):
         source = ParquetSource(root, "x")
         base = self.run_fit(source, "weibull_min")
         assert base.scale.passes is not None
-        policy = SpoolPolicy(max_bytes=1 << 20, directory=self.root)
+        policy = ScaleSpoolPolicy(max_bytes=1 << 20, directory=self.root)
         store = Interrupting(self.path, after_passes=base.scale.passes.pass_count - 1)
         with self.assertRaises(Interruption):
             self.run_fit(source, "weibull_min", checkpoint=store, spool=policy)
@@ -806,7 +806,7 @@ class UnresumableSourceTests(CheckpointCase):
                 ),
                 "weibull_min",
                 checkpoint=self.path,
-                spool=SpoolPolicy(max_bytes=1 << 20, directory=self.root),
+                spool=ScaleSpoolPolicy(max_bytes=1 << 20, directory=self.root),
             )
 
 

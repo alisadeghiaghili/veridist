@@ -62,7 +62,7 @@ from veridist.scale._errors import (
     ScaleSourceError,
     ScaleSourceErrorCode,
 )
-from veridist.scale._executors import PassEngine
+from veridist.scale._executors import Executor, PassEngine
 from veridist.scale._fit import ScaleFitResult
 from veridist.scale._inference_run import (
     StoreArgument,
@@ -93,7 +93,7 @@ from veridist.scale._profile_math import (
     surrogate_deviance,
 )
 from veridist.scale._sources import DEFAULT_MAX_ROWS, Source
-from veridist.scale._spool import SpoolPolicy
+from veridist.scale._spool import ScaleSpoolPolicy
 from veridist.statistics.distributions import ppf, sf
 
 PROFILE_PASS_BUDGET_DEFAULT: Final = 6
@@ -650,8 +650,8 @@ def profile_intervals(
     quantities: Sequence[Quantity] = (),
     inference_pass_budget: int = PROFILE_PASS_BUDGET_DEFAULT,
     max_rows: int = DEFAULT_MAX_ROWS,
-    spool: SpoolPolicy | None = None,
-    executor: Any = None,
+    spool: ScaleSpoolPolicy | None = None,
+    executor: Executor | str | None = None,
     checkpoint: StoreArgument | SQLitePartitionStore = None,
     resume: bool = False,
     recompute_changed: bool = False,

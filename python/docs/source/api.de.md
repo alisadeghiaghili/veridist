@@ -51,6 +51,11 @@ Für Betrugserkennung oder Cybersicherheit kann die Time-to-Event-CSV zu Fragen 
       <td>Alle Beobachtungen müssen in den Speicher passen; es gibt keine automatische Modellauswahl.</td>
     </tr>
     <tr>
+      <td>Eine von sechs Familien an exakte Daten anpassen, die nicht in den Speicher passen, aus Parquet, Arrow, Polars, DuckDB oder numpy</td>
+      <td><code class="literal">veridist.scale.fit</code></td>
+      <td>Nur exakte, unzensierte Daten; siehe den <a href="large-data.md">Leitfaden für große Datenmengen</a>.</td>
+    </tr>
+    <tr>
       <td>Dichte, CDF, Überlebensfunktion, Quantile oder Stichproben für einen Wert oder ein Array berechnen</td>
       <td><code class="literal">logpdf</code>, <code class="literal">cdf</code>, <code class="literal">sf</code>, <code class="literal">ppf</code>, <code class="literal">sample</code></td>
       <td>Sie verwenden eine bereits festgelegte Verteilung und passen keine Parameter an.</td>
@@ -271,6 +276,10 @@ Für Daten, die Ihr Programm bereits in kleine JSON-Abschnitte aufgeteilt hat, i
 Für CSV-Dateien erledigt `veridist.execution.fit_exponential_checkpointed_csv` dieselbe Arbeit mit Unterstützung für Abbruch. Sie übergeben die Datei, die Spaltendefinition, die Größenbeschränkungen, den Speicherort für den Zustand, die Revisionskennung der Daten und bei Bedarf einen Callback `cancel(cursor)`. Die Revisionskennung ist keine frei wählbare Bezeichnung: Sie muss genau dem aktuellen SHA-256-Hexdigest der CSV-Datei entsprechen, der durch Streaming der Datei berechnet wird, bevor eine Zeile gelesen wird. Wenn der Lauf abgebrochen wird, wird der abgeschlossene Teil zuerst gespeichert; der nächste Lauf kann ab der zuletzt aufgezeichneten Zeile fortsetzen.
 
 Die Datendatei und ihre Revisionskennung müssen zwischen zwei Läufen stabil bleiben: Eine geänderte Datei, eine andere öffentliche Quellkennung oder ein anderes gespeichertes Schema liefert statt einer Fortsetzung eine typisierte Nichtübereinstimmung. Verwenden Sie `veridist.execution.create_checkpointed_csv_store`, um den anfänglichen lokalen Speicher für eine CSV-Datei anzulegen, statt den Checkpoint-Datensatz von Hand zu erstellen. Der Checkpoint-Mechanismus<sup id="fnref-checkpoint"><a href="#fn-checkpoint">20</a></sup> ist dafür gedacht, eine Berechnung auf demselben Rechner fortzusetzen. Die aktuelle Implementierung verwendet lokales SQLite, kopiert aber keine rohen CSV-Zeilen in diesen Speicher. Die Datei wird nicht automatisch verschlüsselt oder authentifiziert; bewahren Sie sie daher wie andere Arbeitsdateien an einem sicheren Ort auf. Das <a href="../../examples/checkpoint_resume.py">Beispiel zum Speichern und Fortsetzen</a> zeigt den Ablauf in zwei Schritten.
+
+## Daten, die größer als der Speicher sind
+
+`veridist.scale` passt die sechs Familien an exakte Beobachtungen an, die in begrenzten Stapeln aus Parquet-Dateien, Arrow-Daten, Polars-Frames, DuckDB-Abfragen oder numpy-Arrays gelesen werden, mit parallelen Lesern, lokalen Checkpoints, Profil-Likelihood-Intervallen und einem Anpassungsgüte-Bericht für großes n. Verwenden Sie den Namensraum `veridist.scale` (`import veridist.scale`); er wird nicht auf oberster Ebene exportiert. Der <a href="large-data.md">Leitfaden für große Datenmengen</a> erklärt die Quellen, die Zahl der Durchläufe, die Executors, das Fortsetzen und die Reproduzierbarkeit; Rechtszensierung wird im großen Maßstab noch nicht unterstützt.
 
 ## Low-Level-Werkzeuge<sup id="fnref-low-level-tools"><a href="#fn-low-level-tools">21</a></sup> für vorbereitete Daten
 

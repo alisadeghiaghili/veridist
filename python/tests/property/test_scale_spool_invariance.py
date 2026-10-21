@@ -25,7 +25,7 @@ from tests.unit.scale_multi_pass_oracle import gumbel_sample, weibull_sample
 from veridist.scale._arrow import ArrowSource, ParquetSource
 from veridist.scale._fit import ScaleFitResult, fit
 from veridist.scale._sources import NumpySource
-from veridist.scale._spool import SpoolPolicy
+from veridist.scale._spool import ScaleSpoolPolicy
 
 SIZE = 120
 FAMILIES = ("weibull_min", "gumbel_right")
@@ -71,7 +71,7 @@ class SpoolInvarianceTests(unittest.TestCase):
         self.root = Path(holder.name)
         self.directory = self.root / "spools"
         self.directory.mkdir()
-        self.policy = SpoolPolicy(directory=self.directory, max_bytes=1 << 22)
+        self.policy = ScaleSpoolPolicy(directory=self.directory, max_bytes=1 << 22)
 
     def assertSame(self, spooled: ScaleFitResult, base: ScaleFitResult, label: str) -> None:
         with self.subTest(layout=label):
@@ -148,7 +148,7 @@ class SpoolInvarianceTests(unittest.TestCase):
 class SpoolDigestTests(unittest.TestCase):
     def test_the_recorded_digest_depends_on_the_values_only(self) -> None:
         with tempfile.TemporaryDirectory() as holder:
-            policy = SpoolPolicy(directory=holder, max_bytes=1 << 22)
+            policy = ScaleSpoolPolicy(directory=holder, max_bytes=1 << 22)
             for family in FAMILIES:
                 values = sample(family, 36)
                 digests = set()

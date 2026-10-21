@@ -22,12 +22,12 @@ Betrugserkennung und Cybersicherheit stellen häufig eine andere Frage: Ist ein 
 
 | Modell | Beschriebenes Verhalten | Eingabe |
 | --- | --- | --- |
-| Exponential | Konstante Ausfallrate über die Zeit | Striktes CSV oder vorbereitete Python-Daten |
-| Weibull-Minimum | Sinkende, konstante oder steigende Ausfallrate, abhängig von der Form | Vorbereitete Python-Daten |
-| Lognormal | Positive Lebensdauern, deren Logarithmus einem Normalmodell folgt | Vorbereitete Python-Daten |
-| Gamma | Positive Lebensdauern mit flexibler, rechtsschiefer Form | Vorbereitete Python-Daten |
-| Normal | Reelle Messwerte um einen Mittelwert | Vorbereitete Python-Daten |
-| Rechts-Gumbel | Reelle Maxima und andere Extremwerte | Vorbereitete Python-Daten |
+| Exponential | Konstante Ausfallrate über die Zeit | Striktes CSV, vorbereitete Python-Daten oder `veridist.scale` für große exakte Daten |
+| Weibull-Minimum | Sinkende, konstante oder steigende Ausfallrate, abhängig von der Form | Vorbereitete Python-Daten oder `veridist.scale` für große exakte Daten |
+| Lognormal | Positive Lebensdauern, deren Logarithmus einem Normalmodell folgt | Vorbereitete Python-Daten oder `veridist.scale` für große exakte Daten |
+| Gamma | Positive Lebensdauern mit flexibler, rechtsschiefer Form | Vorbereitete Python-Daten oder `veridist.scale` für große exakte Daten |
+| Normal | Reelle Messwerte um einen Mittelwert | Vorbereitete Python-Daten oder `veridist.scale` für große exakte Daten |
+| Rechts-Gumbel | Reelle Maxima und andere Extremwerte | Vorbereitete Python-Daten oder `veridist.scale` für große exakte Daten |
 
 Für den Einstieg über CSV steht nur das Exponentialmodell bereit. Die Datei muss UTF-8 sein und genau die zwei Spalten `time,event_observed` in dieser Reihenfolge enthalten. Die erste Spalte ist die Beobachtungsdauer. In der zweiten bedeutet `1`, dass der Ausfall beobachtet wurde, und `0`, dass bis zum Beobachtungsende kein Ausfall gesehen wurde. Veridist errät das Dateiformat nicht.
 
@@ -65,13 +65,15 @@ Vom Aufrufer bereitgestellte Datenblöcke können nacheinander reduziert werden.
 
 Erhaltene Nachweise decken den strikten exponentiellen CSV-Pfad mit 10 Tausend, 100 Tausend und 1 Million Zeilen sowie mehreren Chunk-Größen ab, gemessen am 2026-10-09 auf Linux- und Windows-Runnern. Sie beschreiben genau diese Läufe, nicht Geschwindigkeit oder Speicherverbrauch jedes Rechners und Datensatzes.
 
+Für exakte, unzensierte Daten, die nicht in den Speicher passen, passt `veridist.scale` jede der sechs Familien an Parquet-, Arrow-, Polars-, DuckDB- oder numpy-Quellen in begrenzten Stapeln an. Die Schätzung hängt weder von der Stapelgröße noch vom Partitionslayout, vom Executor oder vom Punkt ab, an dem ein unterbrochener Lauf fortgesetzt wurde: Innerhalb einer numerischen Umgebung ist das Ergebnis bitgleich, über Umgebungen hinweg stimmt es nur im Rahmen des Rundungsfehlers von `log`, `exp` und `pow` der Plattform überein. SQLite-Checkpoints auf Partitionsebene unterstützen Fortsetzen und inkrementelle Anpassung auf einem Host; es gibt keine verteilte Ausführung. Rechtszensierung im großen Maßstab wird noch nicht unterstützt, und noch keine erhaltene Geschwindigkeits- oder Speichermessung deckt `veridist.scale` ab. Siehe den [Leitfaden für große Datenmengen](../python/docs/source/large-data.md).
+
 Für kompatible exponentielle Reduktionen kann ein lokaler SQLite-Checkpoint den Zustand nach einer Unterbrechung bewahren. Vor dem Fortsetzen prüft Veridist Quellrevision, Prüfsumme, Checkpoint-Generation und verarbeitete Bereiche. Dauerhafte Wiederaufnahme ist auf einen Host und sein lokales Dateisystem begrenzt; sie ist keine verteilte Ausführung.
 
 Diese Prüfung ist unabhängig von einer einfacheren Absicherung innerhalb eines einzelnen CSV-Lesevorgangs: Veridist vergleicht die vom Betriebssystem gemeldete Identität der Datei -- Gerät, Inode, Größe und letzte Änderungszeit -- unmittelbar vor und nach diesem Lesevorgang. Das erkennt viele versehentliche Änderungen, ist aber kein Inhalts-Hash; ein Überschreiben an Ort und Stelle, das diese vier Werte unverändert lässt, wird dadurch nicht erkannt.
 
 ## Was wird noch nicht unterstützt?
 
-Die aktuelle Version unterstützt keine Kovariaten wie Temperatur oder Druck, analytischen Gewichte, freien Lageparameter, allgemeinen Dataframe-/Datenbankadapter, verteilte Checkpoints, Bootstrap-Stabilität der Auswahl oder Anpassungsgütetests und Modellauswahl für zensierte Beobachtungen. Die vollständige Grenze steht unter [bekannte Grenzen](../python/KNOWN_LIMITS.de.md), und beim Umstieg von Version 1.0 hilft die [Migrationsanleitung](../python/docs/migration-2.0.md).
+Die aktuelle Version unterstützt keine Kovariaten wie Temperatur oder Druck, analytischen Gewichte, freien Lageparameter, Rechtszensierung in der Engine für große Daten, Quelladapter über die mitgelieferten hinaus, verteilte Checkpoints, Bootstrap-Stabilität der Auswahl oder Anpassungsgütetests und Modellauswahl für zensierte Beobachtungen. Die vollständige Grenze steht unter [bekannte Grenzen](../python/KNOWN_LIMITS.de.md), und beim Umstieg von Version 1.0 hilft die [Migrationsanleitung](../python/docs/migration-2.0.md).
 
 ## Wie wird die Codequalität geprüft?
 

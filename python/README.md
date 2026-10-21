@@ -180,6 +180,8 @@ Likelihood tools can reduce caller-supplied chunks, with or without right censor
 
 SQLiteCheckpointStore retains local restart state for compatible Exponential reductions, including the supported CSV path. Keep the source revision stable and follow the [checkpoint and resume recipe](https://github.com/alisadeghiaghili/veridist/blob/main/python/examples/checkpoint_resume.py).
 
+For exact, uncensored observations that do not fit in memory, `veridist.scale` fits any of the six families from Parquet files, Arrow data, Polars frames, DuckDB queries, or numpy arrays in bounded batches, with threads or processes, a local spool for sources that can be read only once, partition-level checkpoint, resume, and incremental fitting, profile-likelihood intervals, and a large-n goodness-of-fit report without a p-value. Install the sources you need with `pip install "veridist[arrow]"`, `pip install "veridist[polars]"`, or `pip install "veridist[duckdb]"`. Within one numeric environment the results are bit-identical whatever the batch size, partition layout, executor, or resume point. Right censoring at scale is not supported yet. See the [large-data guide](https://github.com/alisadeghiaghili/veridist/blob/main/python/docs/source/large-data.md).
+
 Retained scale evidence for the strict CSV/Exponential path covers 10k, 100k, and 1m rows at 32, 64, and 128 KiB chunk limits. It comes from one run each on a Linux and a Windows runner (candidate commit `19ecf10`, 2026-10-09, CPython 3.11): 1m rows took 14 to 20 seconds, with peak process memory of about 40 to 45 MiB. These figures describe those runs only; they are not a speed or memory guarantee for other machines or data. Current durable resume runs on one machine with a local filesystem.
 
 ## How quality is checked

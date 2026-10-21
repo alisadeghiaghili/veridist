@@ -51,6 +51,11 @@ For fraud detection or cybersecurity, the time-to-event CSV may fit questions su
       <td>All observations must fit in memory; there is no automatic model selection.</td>
     </tr>
     <tr>
+      <td>Fit one of six families to exact data that is too large for memory, from Parquet, Arrow, Polars, DuckDB, or numpy</td>
+      <td><code class="literal">veridist.scale.fit</code></td>
+      <td>Exact, uncensored data only; see the <a href="large-data.md">large-data guide</a>.</td>
+    </tr>
+    <tr>
       <td>Calculate density, CDF, survival, quantiles, or samples for a value or an array</td>
       <td><code class="literal">logpdf</code>, <code class="literal">cdf</code>, <code class="literal">sf</code>, <code class="literal">ppf</code>, <code class="literal">sample</code></td>
       <td>They use a distribution you already specified; they do not fit parameters.</td>
@@ -271,6 +276,10 @@ For data that your program has already split into small JSON chunks, import `fit
 For CSV files, `veridist.execution.fit_exponential_checkpointed_csv` does the same work with cancellation support. You provide the file, the column definition, the size limits, the state storage location, the data revision identifier, and, if needed, a `cancel(cursor)` callback. The revision identifier is not a free-form label: it must equal the CSV file's current SHA-256 hex digest, computed by streaming the file before any row is read. If the run is cancelled, the completed part is saved first; the next run can continue from the last recorded row.
 
 The data file and its revision identifier must remain stable between runs: a changed file, a different public source identifier, or a different stored schema returns a typed mismatch instead of resuming. Use `veridist.execution.create_checkpointed_csv_store` to build the initial local store for one CSV file instead of constructing the checkpoint record by hand. The checkpoint mechanism<sup id="fnref-checkpoint"><a href="#fn-checkpoint">20</a></sup> is designed to continue a calculation on the same machine. The current implementation uses local SQLite, but it does not copy raw CSV rows into that store. The file is not automatically encrypted or authenticated, so keep it in a safe location like other working files. The [save-and-resume example](../../examples/checkpoint_resume.py) shows the two-step flow.
+
+## Data larger than memory
+
+`veridist.scale` fits the six families to exact observations that are read in bounded batches from Parquet files, Arrow data, Polars frames, DuckDB queries, or numpy arrays, with parallel readers, local checkpoints, profile-likelihood intervals, and a large-n goodness-of-fit report. Use the `veridist.scale` namespace (`import veridist.scale`); it is not exported at the top level. The <a href="large-data.md">large-data guide</a> explains the sources, the number of passes, executors, resuming, and reproducibility; right censoring at scale is not supported yet.
 
 ## Low-level tools<sup id="fnref-low-level-tools"><a href="#fn-low-level-tools">21</a></sup> for prepared data
 

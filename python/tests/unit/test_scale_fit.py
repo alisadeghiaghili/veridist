@@ -9,7 +9,9 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+import duckdb
 import numpy as np
+import polars as pl
 import pyarrow as pa
 
 from tests.unit.scale_arrow_fixtures import write_parquet
@@ -33,6 +35,7 @@ from veridist.families.lognormal import (
 from veridist.families.normal import NormalFitFailure, NormalFitFailureCode, NormalFitSuccess
 from veridist.families.registry import FamilyId
 from veridist.scale._arrow import ArrowSource, ParquetSource
+from veridist.scale._duckdb import DuckDBSource
 from veridist.scale._environment import numeric_environment_digest, numpy_version
 from veridist.scale._errors import (
     ScaleSourceError,
@@ -52,6 +55,7 @@ from veridist.scale._one_pass import (
     LognormalState,
     NormalState,
 )
+from veridist.scale._polars import PolarsSource
 from veridist.scale._sources import (
     DEFAULT_MAX_ROWS,
     NumpySource,
@@ -221,8 +225,27 @@ class ProvenanceTests(unittest.TestCase):
 
     def test_the_bundled_sources_have_names(self) -> None:
         self.assertEqual(
-            SOURCE_KINDS, {NumpySource: "numpy", ArrowSource: "arrow", ParquetSource: "parquet"}
+            SOURCE_KINDS,
+            {
+                NumpySource: "numpy",
+                ArrowSource: "arrow",
+                ParquetSource: "parquet",
+                PolarsSource: "polars",
+                DuckDBSource: "duckdb",
+            },
         )
+
+    def test_a_polars_and_a_duckdb_fit_record_their_own_source_kind(self) -> None:
+        values = np.array([1.0, 2.0, 4.0, 8.0])
+        frame = pl.DataFrame({"x": values})
+        self.assertEqual(fit(PolarsSource(frame, "x"), "gamma").scale.source_kind, "polars")
+        connection = duckdb.connect()
+        try:
+            query = "select unnest([1.0, 2.0, 4.0, 8.0])::double as x"
+            source = DuckDBSource((connection, query), "x")
+            self.assertEqual(fit(source, "gamma").scale.source_kind, "duckdb")
+        finally:
+            connection.close()
 
     def test_an_arrow_source_is_not_resumable(self) -> None:
         table = pa.table({"x": np.array([1.0, 2.0, 4.0])})

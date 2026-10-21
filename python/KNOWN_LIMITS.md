@@ -11,7 +11,7 @@ This document defines the 2.1 release boundary for package version `2.1.0`.
 
 - `FIT-CSV-EXP`: the strict CSV path fits only a fixed-location, rate-only
   exponential model over exact and independently right-censored lifetimes.
-  The other families (Weibull-minimum, lognormal, gamma, normal, and right-Gumbel) are fitted over typed observations held in memory through `fit` and the per-family functions, not through a file-fitting API; `frequency_weights` are supported there. Analytic weights, covariates,
+  The other families (Weibull-minimum, lognormal, gamma, normal, and right-Gumbel) are fitted over typed observations held in memory through `fit` and the per-family functions, not through the CSV path; for exact data that is too large for memory, `veridist.scale` fits all six families (`SCALE-ENGINE`). `frequency_weights` are supported in memory only. Analytic weights, covariates,
   truncation, left censoring, interval censoring, and free location parameters
   remain unsupported.
 - `CSV-STRICT`: the bundled file adapter accepts only UTF-8 CSV with exactly
@@ -31,9 +31,11 @@ This document defines the 2.1 release boundary for package version `2.1.0`.
   or incomplete gamma function and Veridist has no scipy runtime dependency.
   Goodness-of-fit tests and model selection are described under `INFERENCE-GOF`.
 - `STREAM-SOURCE`: `IterableDataSource` adapts caller-owned chunk iterables.
-  The package bundles no Parquet, Arrow, dataframe, database, or network
-  adapter. Durable resume is limited to the strict lifetime CSV path and local
-  SQLite on one host; it is not a distributed checkpoint store. For
+  Apart from the CSV adapter, the package bundles no network adapter, and the
+  sources of `veridist.scale` are described under `SCALE-ENGINE`. Durable
+  resume is limited to the strict lifetime CSV path and the partition
+  checkpoints of `veridist.scale`, both on local SQLite on one host; it is not
+  a distributed checkpoint store. For
   `fit_exponential_checkpointed_csv`, the source revision must equal the CSV
   file's current SHA-256 hex digest, checked against the file on disk before
   any row is read; a changed file, a different public source identifier, or a
@@ -96,6 +98,33 @@ This document defines the 2.1 release boundary for package version `2.1.0`.
 - `MEMORY-BOUND`: the delivery bound covers queued payload and active consumer
   leases until explicit release. It is a logical retained-payload bound, not a
   portable RSS ceiling.
+- `SCALE-ENGINE`: `veridist.scale` fits the six registered families to exact,
+  uncensored, finite observations that are read in bounded batches. Right
+  censoring, frequency and analytic weights, truncation, covariates, and free
+  location parameters are not supported at scale; use the in-memory fits for
+  censored data. The sources are numpy arrays, Parquet files, Arrow tables,
+  readers, and streams (`veridist[arrow]`), Polars frames (`veridist[polars]`),
+  and DuckDB relations (`veridist[duckdb]`); a source class of your own is not
+  part of the public API. Only sources whose partitions have a fingerprint
+  (`NumpySource` and `ParquetSource`) can be checkpointed and resumed; an Arrow,
+  Polars, or DuckDB source is not resumable (`SOURCE_REVISION_UNAVAILABLE`), and
+  a reader or a stream can be read once, so a multi-pass family refuses it
+  without a spool (`SPOOL_REQUIRED`). `weibull_min` and `gumbel_right` read the
+  source at least 3 and at most 17 times, within a `pass_budget` of 8 by
+  default; profile-likelihood intervals, only for those two families, read at
+  least 2 and at most 9 further passes within their own budget (6 by default);
+  the large-n goodness-of-fit report is one pass and an enclosure of the
+  Kolmogorov-Smirnov distance, never a p-value. Checkpoints are local SQLite on
+  one host and are tied to the numeric environment; there is no distributed
+  executor. A batch holds at most `max_rows` values (262144 by default) and a
+  state does not grow with the number of rows; this is a logical bound, not an
+  RSS ceiling. Within one numeric environment the results are bit-identical for
+  every batch size, partition layout, executor, worker count, spool, and resume
+  point; across platforms, Python builds, and numpy versions only agreement
+  within the rounding error of `log`, `exp`, and `pow` is expected, and no
+  numeric tolerance is declared. No retained throughput or memory measurement
+  covers this engine, and the refit Monte Carlo tests of `INFERENCE-GOF` refuse
+  every scale source.
 - `SCALE-EVIDENCE`: measurements apply only to their exact adapter, family,
   workload, platform, Python version, chunk limit, and candidate SHA. They do
   not establish universal throughput, generic big-data support, or a broad

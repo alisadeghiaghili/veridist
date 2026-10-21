@@ -23,7 +23,7 @@ either case. The pass count and the record of the passes are in the provenance
 
 Spool. A multi-pass family reads its source several times, which a source that can be read
 only once (an Arrow reader or stream) does not allow and which is wasteful when a read is
-expensive. ``spool=SpoolPolicy(...)`` (:mod:`veridist.scale._spool`) is the explicit,
+expensive. ``spool=ScaleSpoolPolicy(...)`` (:mod:`veridist.scale._spool`) is the explicit,
 opt-in remedy: the first pass writes the values it validated to a private local directory,
 the source is not read again, every later pass reads that copy and verifies it against its
 digests, and the directory is deleted when the fit ends, however it ends. Without a spool,
@@ -96,6 +96,7 @@ from veridist.scale._checkpoint import (
     require_resumable,
     resolve_checkpoint,
 )
+from veridist.scale._duckdb import DuckDBSource
 from veridist.scale._environment import numeric_environment_digest, numpy_version
 from veridist.scale._errors import (
     ScaleSourceError,
@@ -127,6 +128,7 @@ from veridist.scale._planner import (
     plan_identity,
     plan_passes,
 )
+from veridist.scale._polars import PolarsSource
 from veridist.scale._sources import (
     DEFAULT_MAX_ROWS,
     NumpySource,
@@ -135,7 +137,7 @@ from veridist.scale._sources import (
     check_max_rows,
     is_single_use,
 )
-from veridist.scale._spool import HINT_REQUIRED, Spool, SpoolPolicy
+from veridist.scale._spool import HINT_REQUIRED, ScaleSpoolPolicy, Spool
 from veridist.scale._state import MergeableState
 from veridist.scale._tasks import FoldJob
 
@@ -143,6 +145,8 @@ SOURCE_KINDS: Final[dict[type, str]] = {
     NumpySource: "numpy",
     ArrowSource: "arrow",
     ParquetSource: "parquet",
+    PolarsSource: "polars",
+    DuckDBSource: "duckdb",
 }
 """The provenance name of each bundled source; any other source is ``"custom"``."""
 
@@ -316,7 +320,7 @@ def _fit_multi_pass(
     family: FamilyId,
     max_rows: int,
     pass_budget: int,
-    spool: SpoolPolicy | None,
+    spool: ScaleSpoolPolicy | None,
     executor: Executor | None,
     request: CheckpointRequest | None,
 ) -> ScaleFitResult:
@@ -377,7 +381,7 @@ def fit(
     *,
     max_rows: int = DEFAULT_MAX_ROWS,
     pass_budget: int = PASS_BUDGET_DEFAULT,
-    spool: SpoolPolicy | None = None,
+    spool: ScaleSpoolPolicy | None = None,
     executor: Executor | str | None = None,
     checkpoint: SQLitePartitionStore | str | os.PathLike[str] | None = None,
     resume: bool = False,
@@ -393,7 +397,7 @@ def fit(
     ``pass_budget`` the number of times the source may be read. A one-pass family reads
     ``source`` once, partition by partition, in the source's canonical order; a
     multi-pass family reads it as many times as its plan needs, at most ``pass_budget``.
-    ``spool`` is ``None`` or a :class:`~veridist.scale._spool.SpoolPolicy`: the explicit
+    ``spool`` is ``None`` or a :class:`~veridist.scale._spool.ScaleSpoolPolicy`: the explicit
     request for a local spool, which a multi-pass family needs for a source that can be
     read once and a one-pass family ignores. ``executor`` is ``None`` (the partitions are
     read in turn), ``"serial"``, a :class:`~veridist.scale._executors.ThreadExecutor` or a
@@ -413,8 +417,8 @@ def fit(
     budget = check_pass_budget(pass_budget)
     if not isinstance(source, Source):
         raise TypeError("source must provide partitions() and batches()")
-    if spool is not None and not isinstance(spool, SpoolPolicy):
-        raise TypeError("spool must be a SpoolPolicy or None")
+    if spool is not None and not isinstance(spool, ScaleSpoolPolicy):
+        raise TypeError("spool must be a ScaleSpoolPolicy or None")
     resolved = resolve_executor(executor)
     request = resolve_checkpoint(checkpoint, resume, incremental, recompute_changed, allow_removed)
     plan = _PLANS.get(spec.id)

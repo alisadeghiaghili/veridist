@@ -1,4 +1,4 @@
-"""Typed failures of the internal mergeable-state namespace.
+"""Typed failures of the scale engine, public through :mod:`veridist.scale`.
 
 Programmer errors (a wrong container, dtype or shape) are the built-in
 ``TypeError`` and ``ValueError``, as elsewhere in the package. Failures that
@@ -18,7 +18,7 @@ from veridist.engine.errors import VeridistError
 
 
 class ScaleStateErrorCode(StrEnum):
-    """Closed, locale-neutral failure codes of the mergeable-state namespace."""
+    """Closed, locale-neutral failure codes of the data-dependent and stored-state failures."""
 
     NON_FINITE_VALUE = "NON_FINITE_VALUE"
     VALUE_OUT_OF_SUPPORT = "VALUE_OUT_OF_SUPPORT"

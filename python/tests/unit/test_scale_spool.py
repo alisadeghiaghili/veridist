@@ -44,9 +44,9 @@ from veridist.scale._sources import (
 from veridist.scale._spool import (
     BATCH_FRAMING_BYTES,
     FILE_FRAMING_BYTES,
+    ScaleSpoolPolicy,
     Spool,
     SpooledSource,
-    SpoolPolicy,
     batch_cost,
 )
 
@@ -144,8 +144,8 @@ class TempCase(unittest.TestCase):
         self.directory = self.root / "spools"
         self.directory.mkdir()
 
-    def policy(self, max_bytes: int = 1 << 24) -> SpoolPolicy:
-        return SpoolPolicy(directory=self.directory, max_bytes=max_bytes)
+    def policy(self, max_bytes: int = 1 << 24) -> ScaleSpoolPolicy:
+        return ScaleSpoolPolicy(directory=self.directory, max_bytes=max_bytes)
 
     def assert_clean(self) -> None:
         self.assertEqual(entries(self.directory), [])
@@ -175,11 +175,11 @@ class ConstantTests(unittest.TestCase):
         self.assertEqual(
             _spool.HINT_REQUIRED,
             "the source can be read only once but this family reads it several times; "
-            "pass spool=SpoolPolicy(...) to keep a local copy",
+            "pass spool=ScaleSpoolPolicy(...) to keep a local copy",
         )
         self.assertEqual(
             _spool.HINT_LIMIT,
-            "the spool would exceed max_bytes; raise max_bytes of the SpoolPolicy",
+            "the spool would exceed max_bytes; raise max_bytes of the ScaleSpoolPolicy",
         )
         self.assertEqual(
             _spool.HINT_CHANGED,
@@ -205,7 +205,7 @@ class ConstantTests(unittest.TestCase):
                 spool_directory.mkdir()
                 data = np.arange(1.0, sum(sizes) + 1.0)
                 source = ListSource([data])
-                with Spool(SpoolPolicy(directory=spool_directory, max_bytes=1 << 26)) as spool:
+                with Spool(ScaleSpoolPolicy(directory=spool_directory, max_bytes=1 << 26)) as spool:
                     spooled = spool.source(_Chunked(source, sizes))
                     (partition,) = spooled.partitions()
                     list(spooled.batches(partition))
@@ -239,44 +239,44 @@ class _Chunked:
 
 class PolicyTests(unittest.TestCase):
     def test_the_fields_and_defaults(self) -> None:
-        policy = SpoolPolicy(directory="spools", max_bytes=10)
+        policy = ScaleSpoolPolicy(directory="spools", max_bytes=10)
         self.assertEqual((policy.directory, policy.max_bytes), ("spools", 10))
         self.assertIs(policy.allow_system_temp, False)
-        system = SpoolPolicy(max_bytes=1, allow_system_temp=True)
+        system = ScaleSpoolPolicy(max_bytes=1, allow_system_temp=True)
         self.assertIsNone(system.directory)
         self.assertIs(system.allow_system_temp, True)
 
     def test_a_policy_is_frozen_and_takes_keywords_only(self) -> None:
-        policy = SpoolPolicy(directory="spools", max_bytes=10)
+        policy = ScaleSpoolPolicy(directory="spools", max_bytes=10)
         with self.assertRaises(FrozenInstanceError):
             policy.max_bytes = 3  # type: ignore[misc]
         with self.assertRaises(TypeError):
-            SpoolPolicy("spools", 10)  # type: ignore[misc]
+            ScaleSpoolPolicy("spools", 10)  # type: ignore[misc]
         self.assertEqual(replace(policy, max_bytes=11).max_bytes, 11)
 
     def test_the_budget_is_a_positive_built_in_integer(self) -> None:
         for bad in (True, 1.0, "10", None, 2**20 + 0.5):
             with self.subTest(max_bytes=bad), self.assertRaises(TypeError):
-                SpoolPolicy(directory="spools", max_bytes=bad)  # type: ignore[arg-type]
+                ScaleSpoolPolicy(directory="spools", max_bytes=bad)  # type: ignore[arg-type]
         for bad in (0, -1):
             with self.subTest(max_bytes=bad), self.assertRaises(ValueError):
-                SpoolPolicy(directory="spools", max_bytes=bad)
-        self.assertEqual(SpoolPolicy(directory="spools", max_bytes=1).max_bytes, 1)
+                ScaleSpoolPolicy(directory="spools", max_bytes=bad)
+        self.assertEqual(ScaleSpoolPolicy(directory="spools", max_bytes=1).max_bytes, 1)
 
     def test_a_spool_never_chooses_where_to_write(self) -> None:
         with self.assertRaises(ValueError):
-            SpoolPolicy(max_bytes=10)
+            ScaleSpoolPolicy(max_bytes=10)
         with self.assertRaises(ValueError):
-            SpoolPolicy(directory=None, max_bytes=10, allow_system_temp=False)
+            ScaleSpoolPolicy(directory=None, max_bytes=10, allow_system_temp=False)
 
     def test_a_directory_and_the_system_directory_are_exclusive(self) -> None:
         with self.assertRaises(ValueError):
-            SpoolPolicy(directory="spools", max_bytes=10, allow_system_temp=True)
+            ScaleSpoolPolicy(directory="spools", max_bytes=10, allow_system_temp=True)
 
     def test_the_system_flag_is_a_bool(self) -> None:
         for bad in (1, 0, "yes", None):
             with self.subTest(flag=bad), self.assertRaises(TypeError):
-                SpoolPolicy(max_bytes=10, allow_system_temp=bad)  # type: ignore[arg-type]
+                ScaleSpoolPolicy(max_bytes=10, allow_system_temp=bad)  # type: ignore[arg-type]
 
     def test_the_directory_is_a_text_path(self) -> None:
         class BytesPath:
@@ -285,24 +285,24 @@ class PolicyTests(unittest.TestCase):
 
         for bad in (3, b"spools", BytesPath(), ["spools"]):
             with self.subTest(directory=bad), self.assertRaises(TypeError):
-                SpoolPolicy(directory=bad, max_bytes=10)  # type: ignore[arg-type]
-        SpoolPolicy(directory=Path("spools"), max_bytes=10)
+                ScaleSpoolPolicy(directory=bad, max_bytes=10)  # type: ignore[arg-type]
+        ScaleSpoolPolicy(directory=Path("spools"), max_bytes=10)
 
     def test_the_base_directory_is_absolute_or_the_system_one(self) -> None:
         self.assertEqual(
-            SpoolPolicy(max_bytes=1, allow_system_temp=True).base_directory(),
+            ScaleSpoolPolicy(max_bytes=1, allow_system_temp=True).base_directory(),
             tempfile.gettempdir(),
         )
         self.assertEqual(
-            SpoolPolicy(directory=".", max_bytes=1).base_directory(), os.path.abspath(".")
+            ScaleSpoolPolicy(directory=".", max_bytes=1).base_directory(), os.path.abspath(".")
         )
         with tempfile.TemporaryDirectory() as holder:
             self.assertEqual(
-                SpoolPolicy(directory=Path(holder), max_bytes=1).base_directory(),
+                ScaleSpoolPolicy(directory=Path(holder), max_bytes=1).base_directory(),
                 os.path.abspath(holder),
             )
             self.assertEqual(
-                SpoolPolicy(directory=holder, max_bytes=1).base_directory(),
+                ScaleSpoolPolicy(directory=holder, max_bytes=1).base_directory(),
                 os.path.abspath(holder),
             )
 
@@ -526,7 +526,7 @@ class SpoolMechanicsTests(TempCase):
     def test_a_missing_or_unusable_directory_is_unavailable_and_names_no_path(self) -> None:
         missing = self.root / "absent"
         with self.assertRaises(ScaleSourceError) as caught:
-            Spool(SpoolPolicy(directory=missing, max_bytes=10))
+            Spool(ScaleSpoolPolicy(directory=missing, max_bytes=10))
         self.assertIs(caught.exception.code, CODES.SPOOL_UNAVAILABLE)
         self.assertEqual(caught.exception.hint, _spool.HINT_UNAVAILABLE)
         self.assertEqual(str(caught.exception), f"SPOOL_UNAVAILABLE: {_spool.HINT_UNAVAILABLE}")
@@ -536,13 +536,13 @@ class SpoolMechanicsTests(TempCase):
         plain = self.root / "plain"
         plain.write_text("x", encoding="utf-8")
         self.assertEqual(
-            code_of(lambda: Spool(SpoolPolicy(directory=plain, max_bytes=10))),
+            code_of(lambda: Spool(ScaleSpoolPolicy(directory=plain, max_bytes=10))),
             CODES.SPOOL_UNAVAILABLE,
         )
 
     def test_the_system_directory_is_used_when_the_policy_allows_it(self) -> None:
         with mock.patch.object(tempfile, "gettempdir", return_value=str(self.directory)):
-            with Spool(SpoolPolicy(max_bytes=10, allow_system_temp=True)):
+            with Spool(ScaleSpoolPolicy(max_bytes=10, allow_system_temp=True)):
                 (private,) = entries(self.directory)
                 self.assertTrue(private.startswith("veridist-spool-"))
         self.assert_clean()
@@ -1269,7 +1269,7 @@ class RefusalTests(TempCase):
     def test_the_spool_argument_is_validated_before_any_read(self) -> None:
         for family in ("weibull_min", "exponential"):
             source = Counting(NumpySource(weibull()))
-            for bad in ({"max_bytes": 5}, True, "spools", 5, SpoolPolicy):
+            for bad in ({"max_bytes": 5}, True, "spools", 5, ScaleSpoolPolicy):
                 with self.subTest(family=family, spool=bad), self.assertRaises(TypeError):
                     fit(source, family, spool=bad)  # type: ignore[arg-type]
             self.assertEqual(source.batch_calls, 0)
@@ -1287,7 +1287,7 @@ class RefusalTests(TempCase):
 
     def test_an_unusable_directory_is_refused_before_any_read(self) -> None:
         source = Counting(NumpySource(weibull()))
-        policy = SpoolPolicy(directory=self.root / "absent", max_bytes=1 << 20)
+        policy = ScaleSpoolPolicy(directory=self.root / "absent", max_bytes=1 << 20)
         self.assertEqual(
             code_of(lambda: fit(source, "weibull_min", spool=policy)), CODES.SPOOL_UNAVAILABLE
         )
@@ -1484,7 +1484,7 @@ class FitTests(TempCase):
             result = fit(
                 stream_source(weibull()),
                 "weibull_min",
-                spool=SpoolPolicy(max_bytes=1 << 24, allow_system_temp=True),
+                spool=ScaleSpoolPolicy(max_bytes=1 << 24, allow_system_temp=True),
             )
         self.assertIsNotNone(result.scale.spool)
         self.assert_clean()

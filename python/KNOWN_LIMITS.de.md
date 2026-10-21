@@ -11,7 +11,7 @@ Dieses Dokument definiert die Release-Grenze 2.1 für Paketversion `2.1.0`.
 
 - `FIT-CSV-EXP`: Der strikte CSV-Pfad passt nur ein Exponentialmodell mit
   festem Ort und Rate für exakte und unabhängig rechtszensierte Lebensdauern
-  an. Die übrigen Familien (Weibull-Minimum, Lognormal, Gamma, Normal und Rechts-Gumbel) werden über typisierte Beobachtungen im Speicher mit `fit` und den Funktionen je Familie angepasst, nicht über eine Datei-API; `frequency_weights` werden dort unterstützt. Analytische Gewichte,
+  an. Die übrigen Familien (Weibull-Minimum, Lognormal, Gamma, Normal und Rechts-Gumbel) werden über typisierte Beobachtungen im Speicher mit `fit` und den Funktionen je Familie angepasst, nicht über den CSV-Pfad; für exakte Daten, die nicht in den Speicher passen, passt `veridist.scale` alle sechs Familien an (`SCALE-ENGINE`). `frequency_weights` werden nur im Speicher unterstützt. Analytische Gewichte,
   Kovariaten, Trunkierung, Links- und Intervallzensierung sowie freie
   Ortsparameter bleiben nicht unterstützt.
 - `CSV-STRICT`: Der mitgelieferte Dateiadapter akzeptiert nur UTF-8-CSV mit
@@ -33,9 +33,11 @@ Dieses Dokument definiert die Release-Grenze 2.1 für Paketversion `2.1.0`.
   `erfc` noch die unvollständige Gammafunktion kennt und Veridist scipy nicht
   als Laufzeitabhängigkeit hat. Anpassungsgütetests und Modellauswahl werden unter `INFERENCE-GOF` beschrieben.
 - `STREAM-SOURCE`: `IterableDataSource` adaptiert Chunk-Iterables des Aufrufers.
-  Das Paket enthält keinen Parquet-, Arrow-, Dataframe-, Datenbank- oder
-  Netzwerkadapter. Dauerhafte Fortsetzung ist auf den strikten Lebensdauer-CSV-
-  Pfad und lokales SQLite auf einem Rechner begrenzt; ein verteilter
+  Abgesehen vom CSV-Adapter enthält das Paket keinen Netzwerkadapter; die
+  Quellen von `veridist.scale` stehen unter `SCALE-ENGINE`. Dauerhafte
+  Fortsetzung ist auf den strikten Lebensdauer-CSV-Pfad und die
+  Partitions-Checkpoints von `veridist.scale` begrenzt, beide auf lokalem
+  SQLite auf einem Rechner; ein verteilter
   Checkpoint-Store fehlt. Bei `fit_exponential_checkpointed_csv` muss die
   Revisionskennung genau dem aktuellen SHA-256-Hexdigest der CSV-Datei
   entsprechen, geprüft gegen die Datei auf der Festplatte, bevor eine Zeile
@@ -109,6 +111,37 @@ Dieses Dokument definiert die Release-Grenze 2.1 für Paketversion `2.1.0`.
 - `MEMORY-BOUND`: Die Liefergrenze umfasst Nutzdaten in der Warteschlange und
   aktive Verbraucher-Leases bis zur ausdrücklichen Freigabe. Sie ist eine
   logische Grenze für gehaltene Nutzdaten, keine portable RSS-Obergrenze.
+- `SCALE-ENGINE`: `veridist.scale` passt die sechs registrierten Familien an
+  exakte, unzensierte, endliche Beobachtungen an, die in begrenzten Stapeln
+  gelesen werden. Rechtszensierung, Häufigkeits- und analytische Gewichte,
+  Trunkierung, Kovariaten und freie Ortsparameter werden im großen Maßstab nicht
+  unterstützt; verwenden Sie für zensierte Daten die Anpassungen im Speicher.
+  Die Quellen sind numpy-Arrays, Parquet-Dateien, Arrow-Tabellen, -Reader und
+  -Streams (`veridist[arrow]`), Polars-Frames (`veridist[polars]`) und
+  DuckDB-Relationen (`veridist[duckdb]`); eine eigene Quellklasse gehört nicht
+  zur öffentlichen API. Nur Quellen, deren Partitionen einen Fingerabdruck haben
+  (`NumpySource` und `ParquetSource`), können mit Checkpoint fortgesetzt werden;
+  eine Arrow-, Polars- oder DuckDB-Quelle ist nicht fortsetzbar
+  (`SOURCE_REVISION_UNAVAILABLE`), und ein Reader oder Stream kann nur einmal
+  gelesen werden, sodass eine Mehrdurchlauf-Familie ihn ohne Spool ablehnt
+  (`SPOOL_REQUIRED`). `weibull_min` und `gumbel_right` lesen die Quelle
+  mindestens 3- und höchstens 17-mal, innerhalb eines `pass_budget` von
+  standardmäßig 8; Profil-Likelihood-Intervalle, nur für diese beiden Familien,
+  lesen mindestens 2 und höchstens 9 weitere Durchläufe innerhalb ihres eigenen
+  Budgets (standardmäßig 6); der Anpassungsgüte-Bericht für großes n ist ein
+  Durchlauf und eine Einschließung des Kolmogorov-Smirnov-Abstands, nie ein
+  p-Wert. Checkpoints sind lokales SQLite auf einem Host und an die numerische
+  Umgebung gebunden; es gibt keinen verteilten Executor. Ein Stapel enthält
+  höchstens `max_rows` Werte (standardmäßig 262144), und ein Zustand wächst
+  nicht mit der Zeilenzahl; das ist eine logische Schranke, keine RSS-Grenze.
+  Innerhalb einer numerischen Umgebung sind die Ergebnisse bitgleich für jede
+  Stapelgröße, jedes Partitionslayout, jeden Executor, jede Workerzahl, jeden
+  Spool und jeden Fortsetzungspunkt; über Plattformen, Python-Builds und
+  numpy-Versionen hinweg wird nur eine Übereinstimmung im Rahmen des
+  Rundungsfehlers von `log`, `exp` und `pow` erwartet, und es wird keine
+  numerische Toleranz erklärt. Keine erhaltene Durchsatz- oder
+  Speichermessung deckt diese Engine ab, und die Refit-Monte-Carlo-Tests von
+  `INFERENCE-GOF` lehnen jede Scale-Quelle ab.
 - `SCALE-EVIDENCE`: Messungen gelten nur für den exakten Adapter, die Familie,
   Arbeitslast, Plattform, Python-Version, Chunk-Grenze und Kandidaten-SHA. Sie
   belegen weder universellen Durchsatz noch allgemeine Big-Data-Unterstützung

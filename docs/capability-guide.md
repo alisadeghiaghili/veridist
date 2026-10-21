@@ -22,12 +22,12 @@ Fraud detection and cybersecurity often ask a different question: whether an amo
 
 | Model | Behaviour described | Input |
 | --- | --- | --- |
-| Exponential | A constant failure rate over time | Strict CSV or prepared Python data |
-| Weibull-minimum | A decreasing, constant, or increasing failure rate, depending on shape | Prepared Python data |
-| Lognormal | Positive lifetimes whose logarithm follows a Normal model | Prepared Python data |
-| Gamma | Positive lifetimes with a flexible, right-skewed shape | Prepared Python data |
-| Normal | Real-valued measurements around a mean | Prepared Python data |
-| Right-Gumbel | Real-valued maxima and other extreme measurements | Prepared Python data |
+| Exponential | A constant failure rate over time | Strict CSV, prepared Python data, or `veridist.scale` for large exact data |
+| Weibull-minimum | A decreasing, constant, or increasing failure rate, depending on shape | Prepared Python data, or `veridist.scale` for large exact data |
+| Lognormal | Positive lifetimes whose logarithm follows a Normal model | Prepared Python data, or `veridist.scale` for large exact data |
+| Gamma | Positive lifetimes with a flexible, right-skewed shape | Prepared Python data, or `veridist.scale` for large exact data |
+| Normal | Real-valued measurements around a mean | Prepared Python data, or `veridist.scale` for large exact data |
+| Right-Gumbel | Real-valued maxima and other extreme measurements | Prepared Python data, or `veridist.scale` for large exact data |
 
 For a CSV start, only the Exponential model is available. The file must be UTF-8 and contain exactly the two columns `time,event_observed`, in that order. The first column is the observation duration. In the second, `1` means that failure was observed and `0` means that no failure was observed by the end of observation. Veridist does not guess the file format.
 
@@ -65,13 +65,15 @@ Caller-owned chunks can be reduced sequentially. Successful binary64 log-density
 
 Retained evidence covers the strict exponential CSV path at 10 thousand, 100 thousand, and 1 million rows with several chunk sizes, measured on Linux and Windows runners on 2026-10-09. It documents those exact runs, not the speed or memory use of every machine and dataset.
 
+For exact, uncensored data that does not fit in memory, `veridist.scale` fits any of the six families from Parquet, Arrow, Polars, DuckDB, or numpy sources in bounded batches. The estimate does not depend on the batch size, the partition layout, the executor, or the point at which an interrupted run was resumed: within one numeric environment the result is bit-identical, and across environments it agrees only within the rounding error of the platform's `log`, `exp`, and `pow`. Partition-level SQLite checkpoints support resume and incremental fitting on one host; there is no distributed execution. Right censoring at scale is not supported yet, and no retained speed or memory measurement covers `veridist.scale` yet. See the [large-data guide](../python/docs/source/large-data.md).
+
 For compatible exponential reductions, a local SQLite checkpoint can preserve state after interruption. Before resuming, Veridist checks source revision, checksum, checkpoint generation, and processed ranges. Durable resume is limited to one host and its local filesystem; it is not distributed execution.
 
 That resume check is separate from a plainer guard made within a single CSV read: Veridist compares the file's operating-system identity -- device, inode, size, and last-modified time -- immediately before and after that read. This catches many accidental changes but is not a content hash, so an in-place rewrite that happens to preserve all four values is not detected.
 
 ## What is not supported yet?
 
-The current release does not support covariates such as temperature or pressure, analytic weights, free location parameters, generic dataframe/database adapters, distributed checkpoints, bootstrap selection stability, or goodness-of-fit tests and model selection for censored observations. See [known limits](../python/KNOWN_LIMITS.md) for the complete release boundary, and the [migration guide](../python/docs/migration-2.0.md) when moving from version 1.0.
+The current release does not support covariates such as temperature or pressure, analytic weights, free location parameters, right censoring in the large-data engine, source adapters beyond the bundled ones, distributed checkpoints, bootstrap selection stability, or goodness-of-fit tests and model selection for censored observations. See [known limits](../python/KNOWN_LIMITS.md) for the complete release boundary, and the [migration guide](../python/docs/migration-2.0.md) when moving from version 1.0.
 
 ## How is code quality checked?
 
