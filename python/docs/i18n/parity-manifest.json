@@ -337,7 +337,7 @@
     {
       "id": "DOC-MSG-EXP-20",
       "page": "exponential-right-censoring.md",
-      "source": "The retained `SCALE-CSV-EXP-01` evidence is a 2.0.0 measurement of this CSV input path and estimator only, at 10k, 100k, and 1m rows with 32 KiB, 64 KiB, and 128 KiB chunk sizes. It was taken on 2026-10-09 from candidate commit `19ecf1062978fe0f894625e65b5a113ba1b68166`, one run each on a Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a checker tied to that commit accepts it. Each run records its provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">15</a></sup> (candidate commit, clean checkout, platform, Python version, and measurement method). For 1m rows the run took 14.1 to 18.9 seconds on Linux and 14.8 to 19.8 seconds on Windows, with peak process memory of 40.2 to 45.0 MiB on Linux and 40.7 MiB on Windows. Every run read the file once and stayed within its configured chunk limit. These are the timings of those runs, not a guarantee of speed or memory on other machines or data."
+      "source": "The retained `SCALE-CSV-EXP-01` evidence is a 2.2.0 measurement of this CSV input path and estimator only, at 10k, 100k, and 1m rows with 32 KiB, 64 KiB, and 128 KiB chunk sizes. It was taken on 2026-10-21 from candidate commit `e316d125e0ae434beaf0c69ebeee3238c1076f6b`, one run each on a Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a checker tied to that commit accepts it. Each run records its provenance<sup id=\"fnref-provenance\"><a href=\"#fn-provenance\">15</a></sup> (candidate commit, clean checkout, platform, Python version, and measurement method). For 1m rows the run took 14.4 to 19.7 seconds on Linux and 15.2 to 21.2 seconds on Windows, with peak process memory of 40.2 to 43.8 MiB on Linux and 41.3 MiB on Windows. Every run read the file once and stayed within its configured chunk limit. These are the timings of those runs, not a guarantee of speed or memory on other machines or data."
     },
     {
       "id": "DOC-MSG-EXP-21",
@@ -462,7 +462,7 @@
     {
       "id": "DOC-MSG-FAM-EVIDENCE-BODY",
       "page": "families-log-density-likelihood.md",
-      "source": "`LLR-06` retains generated-stream measurements of the exact-state log-likelihood reducer for each of the five scalar families (`normal`, `gamma`, `weibull_min`, `lognormal`, `gumbel_right`) at 10k/100k/1m observations and three chunk sizes (1,024, 8,192, and 65,536). They were taken on 2026-10-09 from candidate commit `19ecf1062978fe0f894625e65b5a113ba1b68166`, one run each on a Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a schema-v5 checker accepts them. Each run used the public `IterableDataSource` single-pass route, bound the candidate SHA, recorded one outer acquisition and every yielded observation, and agreed bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. At 1m observations, elapsed time was 3.2 to 9.2 seconds on Linux and 3.3 to 10.6 seconds on Windows depending on the family, with peak process memory of 25.8 MiB on Linux and 25.3 MiB on Windows. Elapsed time and `tracemalloc` values remain descriptive only."
+      "source": "`LLR-06` retains generated-stream measurements of the exact-state log-likelihood reducer for each of the five scalar families (`normal`, `gamma`, `weibull_min`, `lognormal`, `gumbel_right`) at 10k/100k/1m observations and three chunk sizes (1,024, 8,192, and 65,536). They were taken on 2026-10-21 from candidate commit `e316d125e0ae434beaf0c69ebeee3238c1076f6b`, one run each on a Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), and a schema-v5 checker accepts them. Each run used the public `IterableDataSource` single-pass route, bound the candidate SHA, recorded one outer acquisition and every yielded observation, and agreed bitwise with the independent exact-unit oracle and 2162-bit algorithmic bound. At 1m observations, elapsed time was 3.1 to 9.2 seconds on Linux and 3.4 to 11.3 seconds on Windows depending on the family, with peak process memory of 25.98 MiB on Linux and 26.25 MiB on Windows. Elapsed time and `tracemalloc` values remain descriptive only."
     },
     {
       "id": "DOC-MSG-FAM-EVIDENCE-LIMIT",
@@ -1213,6 +1213,51 @@
       "id": "DOC-MSG-LD-53",
       "page": "large-data.md",
       "source": "Every name in `veridist.scale.__all__` is public API. It is not removed or changed incompatibly within a major version, and a deprecated form keeps working with a `DeprecationWarning` until the next major version, as everywhere in Veridist. The private modules `veridist.scale._*` and the byte formats of states, stores and spools are not API."
+    },
+    {
+      "id": "DOC-MSG-LD-62",
+      "page": "large-data.md",
+      "source": "Retained measurements"
+    },
+    {
+      "id": "DOC-MSG-LD-63",
+      "page": "large-data.md",
+      "source": "The `veridist-scale-evidence` workflow measured the scale engine on 2026-10-21 from candidate commit `e316d125e0ae434beaf0c69ebeee3238c1076f6b`, with one measurement worker, on a GitHub Actions Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), each with 4 vCPUs. The data are exponential observations in Parquet files, fitted with `max_rows` 262144 and a `pass_budget` of 8, once with the serial executor and once with four processes. The ladder is 1 million, 10 million and 100 million rows on both runners, and 1 billion rows on Linux only, where just the four families that read the data once were measured. The files `python/evidence/scale-engine-2.2.0-linux.json` and `python/evidence/scale-engine-2.2.0-windows.json` are kept in the source repository, not in the distribution archives, and `tools/check_scale_engine_evidence.py` accepts them for that commit."
+    },
+    {
+      "id": "DOC-MSG-LD-64",
+      "page": "large-data.md",
+      "source": "At 100 million rows on Linux, the four one-pass families took 1.3 to 5.4 seconds with the serial executor and 1.8 to 3.7 seconds with four processes, `exponential` being the fastest and `lognormal` the slowest. `weibull_min` took 57.9 seconds serially and 26.4 seconds with four processes, in 6 passes; `gumbel_right` took 39.8 and 18.7 seconds, in 4 passes."
+    },
+    {
+      "id": "DOC-MSG-LD-65",
+      "page": "large-data.md",
+      "source": "At 100 million rows on Windows, the four one-pass families took 1.9 to 7.6 seconds serially and 1.8 to 4.5 seconds with four processes. `weibull_min` took 83.1 and 45.6 seconds, in 6 passes, and `gumbel_right` 59.4 and 32.8 seconds, in 4 passes."
+    },
+    {
+      "id": "DOC-MSG-LD-66",
+      "page": "large-data.md",
+      "source": "At 1 billion rows on Linux, the four one-pass families took 13.1 to 57.5 seconds serially and 12.3 to 30.1 seconds with four processes: `exponential` took 13.1 and 12.3 seconds and `lognormal` 57.5 and 30.1 seconds."
+    },
+    {
+      "id": "DOC-MSG-LD-67",
+      "page": "large-data.md",
+      "source": "The peak resident set size (RSS) of the measuring process, which does not include the worker processes, was 221.6 MiB in every Linux cell at 100 million and at 1 billion rows: it was the same at both sizes. On Windows at 100 million rows it was 78.4 to 97.8 MiB with the serial executor and 56.1 to 59.7 MiB with four processes."
+    },
+    {
+      "id": "DOC-MSG-LD-68",
+      "page": "large-data.md",
+      "source": "A one-pass family read the data once at every size. `weibull_min` took 6 passes at every size up to 100 million rows, and `gumbel_right` took 6 passes up to 10 million rows and 4 passes at 100 million rows, within the `pass_budget` of 8."
+    },
+    {
+      "id": "DOC-MSG-LD-69",
+      "page": "large-data.md",
+      "source": "For every family at every size, the digests of the result, the state and the passes were identical in four fits of the same rows: with the serial executor, with four processes, with a second partition layout, and in a run that was interrupted part-way and resumed from its checkpoint. That holds for all 22 combinations of family and size on Linux and all 18 on Windows."
+    },
+    {
+      "id": "DOC-MSG-LD-70",
+      "page": "large-data.md",
+      "source": "These are descriptive measurements of those runs, on one kind of data and one Python build per platform, and not guarantees of speed or memory on other machines, data or settings."
     },
     {
       "id": "DOC-MSG-LD-54",

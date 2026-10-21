@@ -139,29 +139,50 @@ Dieses Dokument definiert die Release-Grenze 2.1 für Paketversion `2.1.0`.
   Spool und jeden Fortsetzungspunkt; über Plattformen, Python-Builds und
   numpy-Versionen hinweg wird nur eine Übereinstimmung im Rahmen des
   Rundungsfehlers von `log`, `exp` und `pow` erwartet, und es wird keine
-  numerische Toleranz erklärt. Keine erhaltene Durchsatz- oder
-  Speichermessung deckt diese Engine ab, und die Refit-Monte-Carlo-Tests von
+  numerische Toleranz erklärt. Erhaltene Messungen dieser Engine sind unter
+  `SCALE-EVIDENCE` beschrieben, und die Refit-Monte-Carlo-Tests von
   `INFERENCE-GOF` lehnen jede Scale-Quelle ab.
 - `SCALE-EVIDENCE`: Messungen gelten nur für den exakten Adapter, die Familie,
   Arbeitslast, Plattform, Python-Version, Chunk-Grenze und Kandidaten-SHA. Sie
   belegen weder universellen Durchsatz noch allgemeine Big-Data-Unterstützung
-  oder eine breite Out-of-Core-Fähigkeit. Die erhaltenen Messungen für 2.0.0
+  oder eine breite Out-of-Core-Fähigkeit. Die erhaltenen Messungen für 2.2.0
   liegen im Verzeichnis `python/evidence/` des Quell-Repositorys (sie sind nicht
-  Teil der Distributionsarchive). Sie wurden am 2026-10-09 am Kandidaten-Commit
-  `19ecf1062978fe0f894625e65b5a113ba1b68166` mit einem Messworker auf einem
+  Teil der Distributionsarchive). Sie wurden am 2026-10-21 am Kandidaten-Commit
+  `e316d125e0ae434beaf0c69ebeee3238c1076f6b` mit einem Messworker auf einem
   GitHub-Actions-Linux-Runner (CPython 3.11.17) und einem Windows-Runner
-  (CPython 3.11.9) erstellt und werden von
+  (CPython 3.11.9), beide mit 4 vCPUs, erstellt und werden von
+  `tools/check_scale_engine_evidence.py`,
   `tools/check_scale_csv_exponential_evidence.py` und
   `tools/check_log_likelihood_scale_evidence.py` akzeptiert. Bei 1.000.000
   Zeilen dauerte die strikte exponentielle CSV-Anpassung über die Chunk-Grenzen
-  32, 64 und 128 KiB unter Linux 14,1 bis 18,9 Sekunden und unter Windows 14,8
-  bis 19,8 Sekunden; der Spitzenwert des Prozessspeichers (RSS) lag bei 40,2 bis
-  45,0 MiB unter Linux und 40,7 MiB unter Windows. Der Reduzierer für den
-  exakten Log-Likelihood-Zustand benötigte für eine Million Beobachtungen je nach
-  Familie 3,2 bis 9,2 Sekunden unter Linux und 3,3 bis 10,6 Sekunden unter
+  32, 64 und 128 KiB unter Linux 14,4 bis 19,7 Sekunden und unter Windows 15,2
+  bis 21,2 Sekunden; der Spitzenwert des Prozessspeichers (RSS) lag bei 40,2 bis
+  43,8 MiB unter Linux und 41,3 MiB unter Windows. Der Reduzierer für den
+  exakten Log-Likelihood-Zustand benötigte für eine Million Beobachtungen je
+  nach Familie 3,1 bis 9,2 Sekunden unter Linux und 3,4 bis 11,3 Sekunden unter
   Windows (die Lognormal-Familie ist am langsamsten), bei einem RSS-Spitzenwert
-  von 25,8 MiB unter Linux und 25,3 MiB unter Windows. Das sind beschreibende
-  Zeitmessungen dieser Läufe, keine Garantien.
+  von 25,98 MiB unter Linux und 26,25 MiB unter Windows. Für die Scale-Engine
+  (`veridist.scale`), die exponentielle Beobachtungen in Parquet-Dateien mit
+  `max_rows` 262144 und einem `pass_budget` von 8 angepasst hat, umfasst die
+  Leiter auf beiden Runnern 1.000.000, 10.000.000 und 100.000.000 Zeilen und nur
+  unter Linux 1.000.000.000 Zeilen, dort nur für die vier
+  Einzeldurchlauf-Familien. Bei 100.000.000 Zeilen benötigten die
+  Einzeldurchlauf-Familien unter Linux 1,3 bis 5,4 Sekunden mit dem seriellen
+  Executor und 1,8 bis 3,7 Sekunden mit vier Prozessen, `weibull_min` 57,9 und
+  26,4 Sekunden in 6 Durchläufen und `gumbel_right` 39,8 und 18,7 Sekunden in 4
+  Durchläufen; unter Windows benötigten die Einzeldurchlauf-Familien seriell 1,9
+  bis 7,6 Sekunden und mit vier Prozessen 1,8 bis 4,5 Sekunden, `weibull_min`
+  83,1 und 45,6 Sekunden und `gumbel_right` 59,4 und 32,8 Sekunden. Bei
+  1.000.000.000 Zeilen benötigten die Einzeldurchlauf-Familien unter Linux
+  seriell 13,1 bis 57,5 Sekunden und mit vier Prozessen 12,3 bis 30,1 Sekunden.
+  Der RSS-Spitzenwert des Messprozesses (die Worker sind nicht enthalten) betrug
+  in jeder Linux-Zelle bei 100.000.000 und 1.000.000.000 Zeilen 221,6 MiB und
+  unter Windows bei 100.000.000 Zeilen 78,4 bis 97,8 MiB (seriell) und 56,1 bis
+  59,7 MiB (vier Prozesse). Für jede Familie und jede Zeilenzahl waren die
+  Digests von Ergebnis, Zustand und Durchläufen über den seriellen Executor,
+  vier Prozesse, ein zweites Partitionslayout und einen unterbrochenen und
+  fortgesetzten Lauf hinweg identisch. Das sind beschreibende Zeitmessungen
+  dieser Läufe, keine Garantien.
 - `LICENSE`: Das Paket verwendet BUSL-1.1; das ist eine quelltextverfügbare,
   aber keine Open-Source-Lizenz. Die zusätzliche Nutzungserlaubnis in `LICENSE`
   gestattet die produktive Nutzung nur für nichtkommerzielle Zwecke (private

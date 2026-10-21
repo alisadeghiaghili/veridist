@@ -749,11 +749,147 @@ msgstr ""
 " Veridist. Die privaten Module `veridist.scale._*` und die Byte-Formate "
 "von Zuständen, Stores und Spools gehören nicht zur API."
 
-#: 7a863859abcd43c0bbcbe26781044b33 docs/source/large-data.md:263
+#: 5d3bc2a5361a47b2adc72c1024cb2c22 docs/source/large-data.md:263
+msgid "Retained measurements"
+msgstr "Erhaltene Messungen"
+
+#: a92eb5daf6b74b66be4cc83d51082607 docs/source/large-data.md:265
+msgid ""
+"The `veridist-scale-evidence` workflow measured the scale engine on "
+"2026-10-21 from candidate commit "
+"`e316d125e0ae434beaf0c69ebeee3238c1076f6b`, with one measurement "
+"worker, on a GitHub Actions Linux runner (CPython 3.11.17) and a "
+"Windows runner (CPython 3.11.9), each with 4 vCPUs. The data are "
+"exponential observations in Parquet files, fitted with `max_rows` "
+"262144 and a `pass_budget` of 8, once with the serial executor and "
+"once with four processes. The ladder is 1 million, 10 million and 100 "
+"million rows on both runners, and 1 billion rows on Linux only, where "
+"just the four families that read the data once were measured. The "
+"files `python/evidence/scale-engine-2.2.0-linux.json` and "
+"`python/evidence/scale-engine-2.2.0-windows.json` are kept in the "
+"source repository, not in the distribution archives, and "
+"`tools/check_scale_engine_evidence.py` accepts them for that commit."
+msgstr ""
+"Der Workflow `veridist-scale-evidence` hat die Scale-Engine am "
+"2026-10-21 am Kandidaten-Commit "
+"`e316d125e0ae434beaf0c69ebeee3238c1076f6b` mit einem Messworker auf "
+"einem GitHub-Actions-Linux-Runner (CPython 3.11.17) und einem "
+"Windows-Runner (CPython 3.11.9) gemessen, beide mit 4 vCPUs. Die Daten "
+"sind exponentielle Beobachtungen in Parquet-Dateien, angepasst mit "
+"`max_rows` 262144 und einem `pass_budget` von 8, einmal mit dem "
+"seriellen Executor und einmal mit vier Prozessen. Die Leiter umfasst "
+"auf beiden Runnern 1 Million, 10 Millionen und 100 Millionen Zeilen "
+"und nur unter Linux 1 Milliarde Zeilen, wobei dort nur die vier "
+"Familien gemessen wurden, die die Daten einmal lesen. Die Dateien "
+"`python/evidence/scale-engine-2.2.0-linux.json` und "
+"`python/evidence/scale-engine-2.2.0-windows.json` liegen im "
+"Quell-Repository, nicht in den Distributionsarchiven, und "
+"`tools/check_scale_engine_evidence.py` akzeptiert sie für diesen "
+"Commit."
+
+#: 308d445670f84f149add17ed02d46073 docs/source/large-data.md:267
+msgid ""
+"At 100 million rows on Linux, the four one-pass families took 1.3 to "
+"5.4 seconds with the serial executor and 1.8 to 3.7 seconds with four "
+"processes, `exponential` being the fastest and `lognormal` the "
+"slowest. `weibull_min` took 57.9 seconds serially and 26.4 seconds "
+"with four processes, in 6 passes; `gumbel_right` took 39.8 and 18.7 "
+"seconds, in 4 passes."
+msgstr ""
+"Bei 100 Millionen Zeilen unter Linux benötigten die vier "
+"Einzeldurchlauf-Familien 1,3 bis 5,4 Sekunden mit dem seriellen "
+"Executor und 1,8 bis 3,7 Sekunden mit vier Prozessen, wobei "
+"`exponential` am schnellsten und `lognormal` am langsamsten war. "
+"`weibull_min` benötigte seriell 57,9 Sekunden und mit vier Prozessen "
+"26,4 Sekunden, in 6 Durchläufen; `gumbel_right` benötigte 39,8 und "
+"18,7 Sekunden, in 4 Durchläufen."
+
+#: 895a1871d0c845c6928ff6ab6f3ebd6f docs/source/large-data.md:268
+msgid ""
+"At 100 million rows on Windows, the four one-pass families took 1.9 to "
+"7.6 seconds serially and 1.8 to 4.5 seconds with four processes. "
+"`weibull_min` took 83.1 and 45.6 seconds, in 6 passes, and "
+"`gumbel_right` 59.4 and 32.8 seconds, in 4 passes."
+msgstr ""
+"Bei 100 Millionen Zeilen unter Windows benötigten die vier "
+"Einzeldurchlauf-Familien seriell 1,9 bis 7,6 Sekunden und mit vier "
+"Prozessen 1,8 bis 4,5 Sekunden. `weibull_min` benötigte 83,1 und 45,6 "
+"Sekunden, in 6 Durchläufen, und `gumbel_right` 59,4 und 32,8 Sekunden, "
+"in 4 Durchläufen."
+
+#: 5644fa3793df43ab803c6c7a7aaf5183 docs/source/large-data.md:269
+msgid ""
+"At 1 billion rows on Linux, the four one-pass families took 13.1 to "
+"57.5 seconds serially and 12.3 to 30.1 seconds with four processes: "
+"`exponential` took 13.1 and 12.3 seconds and `lognormal` 57.5 and 30.1 "
+"seconds."
+msgstr ""
+"Bei 1 Milliarde Zeilen unter Linux benötigten die vier "
+"Einzeldurchlauf-Familien seriell 13,1 bis 57,5 Sekunden und mit vier "
+"Prozessen 12,3 bis 30,1 Sekunden: `exponential` benötigte 13,1 und "
+"12,3 Sekunden und `lognormal` 57,5 und 30,1 Sekunden."
+
+#: 35c372f20d33402d92421f35ed5f4162 docs/source/large-data.md:270
+msgid ""
+"The peak resident set size (RSS) of the measuring process, which does "
+"not include the worker processes, was 221.6 MiB in every Linux cell at "
+"100 million and at 1 billion rows: it was the same at both sizes. On "
+"Windows at 100 million rows it was 78.4 to 97.8 MiB with the serial "
+"executor and 56.1 to 59.7 MiB with four processes."
+msgstr ""
+"Der Spitzenwert des residenten Speichers (RSS) des Messprozesses, der "
+"die Worker-Prozesse nicht einschließt, betrug in jeder Linux-Zelle bei "
+"100 Millionen und bei 1 Milliarde Zeilen 221,6 MiB: Er war bei beiden "
+"Größen gleich. Unter Windows bei 100 Millionen Zeilen lag er mit dem "
+"seriellen Executor bei 78,4 bis 97,8 MiB und mit vier Prozessen bei "
+"56,1 bis 59,7 MiB."
+
+#: fe891c7c683441728aed746494985c9e docs/source/large-data.md:271
+msgid ""
+"A one-pass family read the data once at every size. `weibull_min` took "
+"6 passes at every size up to 100 million rows, and `gumbel_right` took "
+"6 passes up to 10 million rows and 4 passes at 100 million rows, "
+"within the `pass_budget` of 8."
+msgstr ""
+"Eine Einzeldurchlauf-Familie las die Daten bei jeder Größe einmal. "
+"`weibull_min` benötigte bei jeder Größe bis 100 Millionen Zeilen 6 "
+"Durchläufe, und `gumbel_right` benötigte bis 10 Millionen Zeilen 6 "
+"Durchläufe und bei 100 Millionen Zeilen 4 Durchläufe, innerhalb des "
+"`pass_budget` von 8."
+
+#: 445e4495f3f94c11b8b4b6f19f8864bb docs/source/large-data.md:272
+msgid ""
+"For every family at every size, the digests of the result, the state "
+"and the passes were identical in four fits of the same rows: with the "
+"serial executor, with four processes, with a second partition layout, "
+"and in a run that was interrupted part-way and resumed from its "
+"checkpoint. That holds for all 22 combinations of family and size on "
+"Linux and all 18 on Windows."
+msgstr ""
+"Für jede Familie bei jeder Größe waren die Digests von Ergebnis, "
+"Zustand und Durchläufen in vier Anpassungen derselben Zeilen "
+"identisch: mit dem seriellen Executor, mit vier Prozessen, mit einem "
+"zweiten Partitionslayout und in einem Lauf, der mittendrin "
+"unterbrochen und von seinem Checkpoint fortgesetzt wurde. Das gilt für "
+"alle 22 Kombinationen aus Familie und Größe unter Linux und alle 18 "
+"unter Windows."
+
+#: 3d48616fcda04e328ba069eef36f2fcd docs/source/large-data.md:274
+msgid ""
+"These are descriptive measurements of those runs, on one kind of data "
+"and one Python build per platform, and not guarantees of speed or "
+"memory on other machines, data or settings."
+msgstr ""
+"Das sind beschreibende Messungen dieser Läufe, an einer Art von Daten "
+"und mit je einem Python-Build pro Plattform, und keine Garantien für "
+"Geschwindigkeit oder Speicher auf anderen Maschinen, Daten oder "
+"Einstellungen."
+
+#: 7a863859abcd43c0bbcbe26781044b33 docs/source/large-data.md:276
 msgid "Errors and their codes"
 msgstr "Fehler und ihre Codes"
 
-#: ac3b88c37a134e35a6314b5506f177d0 docs/source/large-data.md:265
+#: ac3b88c37a134e35a6314b5506f177d0 docs/source/large-data.md:278
 msgid ""
 "Mistakes in the call are `TypeError` or `ValueError`. Every refusal that "
 "depends on the data, a source or a store is a `VeridistError` and a "
@@ -764,7 +900,7 @@ msgstr ""
 "`VeridistError` und ein `ValueError` mit einem geschlossenen `code` und "
 "ohne Datenwert, Pfad oder Fingerabdruck:"
 
-#: a5a54141d78a4eb89946467bfd9e4405 docs/source/large-data.md:267
+#: a5a54141d78a4eb89946467bfd9e4405 docs/source/large-data.md:280
 msgid ""
 "`ScaleSourceError`: the codes `OPTIONAL_DEPENDENCY_MISSING`, "
 "`COLUMN_NOT_FOUND`, `UNSUPPORTED_DTYPE`, `LOSSY_CAST`, `NULL_VALUE`, "
@@ -790,7 +926,7 @@ msgstr ""
 "`INCOMPATIBLE_STATE`, `STATE_BYTES_INVALID`, `STATE_TAG_MISMATCH` und "
 "`STATE_VERSION_UNSUPPORTED`."
 
-#: 5f3e047cb9be4adc824863e299db81f0 docs/source/large-data.md:269
+#: 5f3e047cb9be4adc824863e299db81f0 docs/source/large-data.md:282
 msgid ""
 "`ScaleCheckpointError`: the codes `SOURCE_REVISION_UNAVAILABLE`, "
 "`INCREMENTAL_UNSUPPORTED`, `JOB_EXISTS`, `JOB_MISMATCH`, "
@@ -806,7 +942,7 @@ msgstr ""
 "`STORE_DIGEST_MISMATCH`, `STORE_STORAGE_FAILED` und "
 "`STORE_COMMIT_UNCERTAIN`."
 
-#: afad1e48f1714e5f929226d88d71cfff docs/source/large-data.md:270
+#: afad1e48f1714e5f929226d88d71cfff docs/source/large-data.md:283
 msgid ""
 "`ScaleInferenceError`: the codes `FIT_NOT_PROFILABLE`, "
 "`PROFILE_NOT_CONVERGED`, `PROFILE_UNBOUNDED`, `PROFILE_NOT_COMPUTABLE`, "
@@ -818,7 +954,7 @@ msgstr ""
 "`GOF_FIT_NOT_AVAILABLE`, `GOF_NOT_REPRESENTABLE` und "
 "`GOF_RESOLUTION_UNSUPPORTED`."
 
-#: 81ca5e87c7c2442cabc4250a685eb3e3 docs/source/large-data.md:271
+#: 81ca5e87c7c2442cabc4250a685eb3e3 docs/source/large-data.md:284
 msgid ""
 "`PassBudgetError`: the codes `PASS_BUDGET_INSUFFICIENT` and "
 "`PASS_BUDGET_EXCEEDED`."
@@ -826,7 +962,7 @@ msgstr ""
 "`PassBudgetError`: die Codes `PASS_BUDGET_INSUFFICIENT` und "
 "`PASS_BUDGET_EXCEEDED`."
 
-#: 485553916a614004ac843e9ad21862cc docs/source/large-data.md:273
+#: 485553916a614004ac843e9ad21862cc docs/source/large-data.md:286
 msgid ""
 "For the other entry points of the package, see the <a href=\"api.html"
 "#veridist-api\">API guide</a>."

@@ -40,6 +40,19 @@ Veridist release record.
   resume point; across environments no bit identity is claimed. The
   `SCALE-ENGINE` entry in the known limits states the scope: exact data only,
   right censoring at scale is not supported yet, and checkpoints are local.
+- Retained scale evidence for 2.2.0 in `evidence/`:
+  `scale-engine-2.2.0-{linux,windows}.json` (the scale engine, schema 1),
+  `scale-csv-exponential-2.2.0-{linux,windows}.json` (schema 3) and
+  `scale-log-likelihood-2.2.0-{linux,windows}.json` (schema 5), measured on
+  2026-10-21 from candidate commit `e316d125e0ae434beaf0c69ebeee3238c1076f6b`
+  by the `veridist-scale-evidence` workflow (one measurement worker, CPython
+  3.11.17 on Linux and 3.11.9 on Windows, 4 vCPUs each). The engine ladder is
+  1e6, 1e7 and 1e8 rows on both runners and 1e9 rows on Linux, the latter for
+  the four one-pass families only. They replace the six 2.0.0 files
+  (`scale-csv-exponential-2.0.0-*.json` and `scale-log-likelihood-2.0.0-*.json`,
+  taken from candidate commit `19ecf1062978fe0f894625e65b5a113ba1b68166`).
+  The files are kept in the source repository only; they are not part of the
+  sdist or wheel. A test validates every retained file with its checker.
 
 ### Changed
 
@@ -62,6 +75,18 @@ Veridist release record.
   `RefitGofRefused` is a `VeridistError` and a `ValueError` whose `code` is
   `SCALE_REFIT_REFUSED`, with the `reason` (a `RefitRefusedReason`) and the
   `limit` in force.
+
+### Documentation
+
+- The large-data guide (en/fa/de) has a new section, "Retained measurements",
+  that reports the elapsed times, peak process memory, pass counts and
+  invariance proofs of the scale engine from the retained 2.2.0 evidence as
+  descriptive measurements of those runs. The repository-root and package
+  READMEs (en/fa/de), the capability guide, the exponential and log-likelihood
+  documentation pages (with their `.po` catalogs and the parity manifest) and
+  `KNOWN_LIMITS` (`SCALE-ENGINE` and `SCALE-EVIDENCE`) now cite the 2.2.0
+  evidence in place of the 2.0.0 evidence and no longer say that no retained
+  measurement covers the scale engine.
 
 ## [2.1.0] - 2026-10-09
 

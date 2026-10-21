@@ -122,27 +122,46 @@ This document defines the 2.1 release boundary for package version `2.1.0`.
   every batch size, partition layout, executor, worker count, spool, and resume
   point; across platforms, Python builds, and numpy versions only agreement
   within the rounding error of `log`, `exp`, and `pow` is expected, and no
-  numeric tolerance is declared. No retained throughput or memory measurement
-  covers this engine, and the refit Monte Carlo tests of `INFERENCE-GOF` refuse
-  every scale source.
+  numeric tolerance is declared. Retained measurements of this engine are
+  described under `SCALE-EVIDENCE`, and the refit Monte Carlo tests of
+  `INFERENCE-GOF` refuse every scale source.
 - `SCALE-EVIDENCE`: measurements apply only to their exact adapter, family,
   workload, platform, Python version, chunk limit, and candidate SHA. They do
   not establish universal throughput, generic big-data support, or a broad
-  out-of-core capability. The retained 2.0.0 measurements are in the source
+  out-of-core capability. The retained 2.2.0 measurements are in the source
   repository's `python/evidence/` directory (they are not part of the
-  distribution archives). They were taken on 2026-10-09 from candidate commit
-  `19ecf1062978fe0f894625e65b5a113ba1b68166` with one measurement worker, on a
+  distribution archives). They were taken on 2026-10-21 from candidate commit
+  `e316d125e0ae434beaf0c69ebeee3238c1076f6b` with one measurement worker, on a
   GitHub Actions Linux runner (CPython 3.11.17) and a Windows runner (CPython
-  3.11.9), and are accepted by `tools/check_scale_csv_exponential_evidence.py`
-  and `tools/check_log_likelihood_scale_evidence.py`. For 1,000,000 rows, the
-  strict CSV exponential fit took 14.1 to 18.9 seconds on Linux and 14.8 to
-  19.8 seconds on Windows across the 32, 64 and 128 KiB chunk limits, with peak
-  process memory (RSS) of 40.2 to 45.0 MiB on Linux and 40.7 MiB on Windows. The
-  exact-state log-likelihood reducer took 3.2 to 9.2 seconds on Linux and 3.3 to
-  10.6 seconds on Windows for one million observations, depending on the family
-  (the lognormal family is the slowest), with a peak RSS of 25.8 MiB on Linux and
-  25.3 MiB on Windows. These are descriptive timings of those runs, not
-  guarantees.
+  3.11.9), both with 4 vCPUs, and are accepted by
+  `tools/check_scale_engine_evidence.py`,
+  `tools/check_scale_csv_exponential_evidence.py`, and
+  `tools/check_log_likelihood_scale_evidence.py`. For 1,000,000 rows, the strict
+  CSV exponential fit took 14.4 to 19.7 seconds on Linux and 15.2 to 21.2
+  seconds on Windows across the 32, 64 and 128 KiB chunk limits, with peak
+  process memory (RSS) of 40.2 to 43.8 MiB on Linux and 41.3 MiB on Windows. The
+  exact-state log-likelihood reducer took 3.1 to 9.2 seconds on Linux and 3.4 to
+  11.3 seconds on Windows for one million observations, depending on the family
+  (the lognormal family is the slowest), with a peak RSS of 25.98 MiB on Linux
+  and 26.25 MiB on Windows. For the scale engine (`veridist.scale`), which
+  fitted exponential observations in Parquet files with `max_rows` 262144 and a
+  `pass_budget` of 8, the ladder is 1,000,000, 10,000,000, and 100,000,000 rows
+  on both runners and 1,000,000,000 rows on Linux only, for the four one-pass
+  families only. At 100,000,000 rows on Linux, the one-pass families took 1.3 to
+  5.4 seconds with the serial executor and 1.8 to 3.7 seconds with four
+  processes, `weibull_min` took 57.9 and 26.4 seconds in 6 passes, and
+  `gumbel_right` took 39.8 and 18.7 seconds in 4 passes; on Windows the one-pass
+  families took 1.9 to 7.6 seconds serially and 1.8 to 4.5 seconds with four
+  processes, `weibull_min` 83.1 and 45.6 seconds, and `gumbel_right` 59.4 and
+  32.8 seconds. At 1,000,000,000 rows on Linux, the one-pass families took 13.1
+  to 57.5 seconds serially and 12.3 to 30.1 seconds with four processes. The
+  peak RSS of the measuring process (the workers are not included) was 221.6 MiB
+  in every Linux cell at 100,000,000 and 1,000,000,000 rows, and 78.4 to 97.8
+  MiB (serial) and 56.1 to 59.7 MiB (four processes) on Windows at 100,000,000
+  rows. For every family and row count, the result, state, and pass digests were
+  identical across the serial and process executors, a second partition layout,
+  and an interrupted and resumed run. These are descriptive timings of those
+  runs, not guarantees.
 - `LICENSE`: the package uses BUSL-1.1, which is source-available and not an
   open-source license. The additional use grant in `LICENSE` permits production
   use only for non-commercial purposes (personal use, academic research and

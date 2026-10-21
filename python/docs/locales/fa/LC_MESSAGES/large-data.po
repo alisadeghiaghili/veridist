@@ -704,11 +704,137 @@ msgstr ""
 "Veridist. ماژول‌های خصوصی `veridist.scale._*` و قالب‌های بایتی وضعیت‌ها، "
 "ذخیره‌گاه‌ها و اسپول‌ها API نیستند."
 
-#: 7a863859abcd43c0bbcbe26781044b33 docs/source/large-data.md:263
+#: 3f7058efb1e64be39f161e395c7bc830 docs/source/large-data.md:263
+msgid "Retained measurements"
+msgstr "اندازه‌گیری‌های نگه‌داشته‌شده"
+
+#: b6423b36f28540d1a832c1121ac6f7de docs/source/large-data.md:265
+msgid ""
+"The `veridist-scale-evidence` workflow measured the scale engine on "
+"2026-10-21 from candidate commit "
+"`e316d125e0ae434beaf0c69ebeee3238c1076f6b`, with one measurement "
+"worker, on a GitHub Actions Linux runner (CPython 3.11.17) and a "
+"Windows runner (CPython 3.11.9), each with 4 vCPUs. The data are "
+"exponential observations in Parquet files, fitted with `max_rows` "
+"262144 and a `pass_budget` of 8, once with the serial executor and "
+"once with four processes. The ladder is 1 million, 10 million and 100 "
+"million rows on both runners, and 1 billion rows on Linux only, where "
+"just the four families that read the data once were measured. The "
+"files `python/evidence/scale-engine-2.2.0-linux.json` and "
+"`python/evidence/scale-engine-2.2.0-windows.json` are kept in the "
+"source repository, not in the distribution archives, and "
+"`tools/check_scale_engine_evidence.py` accepts them for that commit."
+msgstr ""
+"گردش‌کار `veridist-scale-evidence` موتور scale را در 2026-10-21 روی "
+"کامیت کاندید `e316d125e0ae434beaf0c69ebeee3238c1076f6b`، با یک کارگر "
+"اندازه‌گیری، روی یک اجراکنندهٔ لینوکس در GitHub Actions (CPython "
+"3.11.17) و یک اجراکنندهٔ ویندوز (CPython 3.11.9)، هر دو با 4 vCPU، "
+"اندازه‌گیری کرد. داده‌ها مشاهدات نمایی در فایل‌های Parquet هستند که با "
+"`max_rows` برابر 262144 و `pass_budget` برابر 8 برازش شدند، یک بار با "
+"اجراکنندهٔ ترتیبی و یک بار با چهار فرایند. نردبان اندازه‌ها روی هر دو "
+"اجراکننده 1 میلیون، 10 میلیون و 100 میلیون سطر است و فقط روی لینوکس 1 "
+"میلیارد سطر، که در آن تنها چهار خانواده‌ای اندازه‌گیری شدند که داده را "
+"یک بار می‌خوانند. فایل‌های "
+"`python/evidence/scale-engine-2.2.0-linux.json` و "
+"`python/evidence/scale-engine-2.2.0-windows.json` در مخزن منبع "
+"نگه‌داری می‌شوند، نه در بایگانی‌های توزیع، و "
+"`tools/check_scale_engine_evidence.py` آن‌ها را برای همان کامیت "
+"می‌پذیرد."
+
+#: a2a94afa221a44fcaf72698c8d27002b docs/source/large-data.md:267
+msgid ""
+"At 100 million rows on Linux, the four one-pass families took 1.3 to "
+"5.4 seconds with the serial executor and 1.8 to 3.7 seconds with four "
+"processes, `exponential` being the fastest and `lognormal` the "
+"slowest. `weibull_min` took 57.9 seconds serially and 26.4 seconds "
+"with four processes, in 6 passes; `gumbel_right` took 39.8 and 18.7 "
+"seconds, in 4 passes."
+msgstr ""
+"در 100 میلیون سطر روی لینوکس، چهار خانوادهٔ یک‌گذره با اجراکنندهٔ "
+"ترتیبی 1.3 تا 5.4 ثانیه و با چهار فرایند 1.8 تا 3.7 ثانیه طول کشیدند؛ "
+"`exponential` سریع‌ترین و `lognormal` کندترین بود. `weibull_min` "
+"به‌صورت ترتیبی 57.9 ثانیه و با چهار فرایند 26.4 ثانیه، در 6 گذر، طول "
+"کشید؛ `gumbel_right` 39.8 و 18.7 ثانیه، در 4 گذر."
+
+#: e41b233052f144469bf66cd5f37124a3 docs/source/large-data.md:268
+msgid ""
+"At 100 million rows on Windows, the four one-pass families took 1.9 to "
+"7.6 seconds serially and 1.8 to 4.5 seconds with four processes. "
+"`weibull_min` took 83.1 and 45.6 seconds, in 6 passes, and "
+"`gumbel_right` 59.4 and 32.8 seconds, in 4 passes."
+msgstr ""
+"در 100 میلیون سطر روی ویندوز، چهار خانوادهٔ یک‌گذره به‌صورت ترتیبی 1.9 "
+"تا 7.6 ثانیه و با چهار فرایند 1.8 تا 4.5 ثانیه طول کشیدند. "
+"`weibull_min` 83.1 و 45.6 ثانیه، در 6 گذر، و `gumbel_right` 59.4 و "
+"32.8 ثانیه، در 4 گذر، طول کشید."
+
+#: bc69f0d9db7d4e4bbda4a7693f7072de docs/source/large-data.md:269
+msgid ""
+"At 1 billion rows on Linux, the four one-pass families took 13.1 to "
+"57.5 seconds serially and 12.3 to 30.1 seconds with four processes: "
+"`exponential` took 13.1 and 12.3 seconds and `lognormal` 57.5 and 30.1 "
+"seconds."
+msgstr ""
+"در 1 میلیارد سطر روی لینوکس، چهار خانوادهٔ یک‌گذره به‌صورت ترتیبی 13.1 "
+"تا 57.5 ثانیه و با چهار فرایند 12.3 تا 30.1 ثانیه طول کشیدند: "
+"`exponential` 13.1 و 12.3 ثانیه و `lognormal` 57.5 و 30.1 ثانیه."
+
+#: efc9fae25a8b4371a226ce0a37ceb91a docs/source/large-data.md:270
+msgid ""
+"The peak resident set size (RSS) of the measuring process, which does "
+"not include the worker processes, was 221.6 MiB in every Linux cell at "
+"100 million and at 1 billion rows: it was the same at both sizes. On "
+"Windows at 100 million rows it was 78.4 to 97.8 MiB with the serial "
+"executor and 56.1 to 59.7 MiB with four processes."
+msgstr ""
+"اوج حافظهٔ مقیمِ (RSS) فرایند اندازه‌گیر، که فرایندهای کارگر را شامل "
+"نمی‌شود، در هر سلول لینوکس در 100 میلیون و در 1 میلیارد سطر 221.6 MiB "
+"بود: در هر دو اندازه یکسان بود. روی ویندوز در 100 میلیون سطر با "
+"اجراکنندهٔ ترتیبی 78.4 تا 97.8 MiB و با چهار فرایند 56.1 تا 59.7 MiB "
+"بود."
+
+#: 53deb8124bca4c899e3440abf9c9e858 docs/source/large-data.md:271
+msgid ""
+"A one-pass family read the data once at every size. `weibull_min` took "
+"6 passes at every size up to 100 million rows, and `gumbel_right` took "
+"6 passes up to 10 million rows and 4 passes at 100 million rows, "
+"within the `pass_budget` of 8."
+msgstr ""
+"یک خانوادهٔ یک‌گذره در هر اندازه داده را یک بار خواند. `weibull_min` "
+"در هر اندازه تا 100 میلیون سطر 6 گذر لازم داشت، و `gumbel_right` تا 10 "
+"میلیون سطر 6 گذر و در 100 میلیون سطر 4 گذر، در چارچوب `pass_budget` "
+"برابر 8."
+
+#: db6284c6976b400d8ac98a7332df02f4 docs/source/large-data.md:272
+msgid ""
+"For every family at every size, the digests of the result, the state "
+"and the passes were identical in four fits of the same rows: with the "
+"serial executor, with four processes, with a second partition layout, "
+"and in a run that was interrupted part-way and resumed from its "
+"checkpoint. That holds for all 22 combinations of family and size on "
+"Linux and all 18 on Windows."
+msgstr ""
+"برای هر خانواده در هر اندازه، گوارش‌های نتیجه، وضعیت و گذرها در چهار "
+"برازشِ همان سطرها یکسان بودند: با اجراکنندهٔ ترتیبی، با چهار فرایند، "
+"با چیدمان دومِ افراز، و در اجرایی که میانهٔ کار قطع شد و از نقطهٔ "
+"بازرسی‌اش ازسرگرفته شد. این برای هر 22 ترکیب خانواده و اندازه روی "
+"لینوکس و هر 18 ترکیب روی ویندوز برقرار است."
+
+#: c20e75d1600d48acaab0f276d255e3ca docs/source/large-data.md:274
+msgid ""
+"These are descriptive measurements of those runs, on one kind of data "
+"and one Python build per platform, and not guarantees of speed or "
+"memory on other machines, data or settings."
+msgstr ""
+"این‌ها اندازه‌گیری‌های توصیفیِ همان اجراها هستند، روی یک نوع داده و یک "
+"ساخت پایتون برای هر سکو، و تضمین سرعت یا حافظه روی ماشین‌ها، دادهٔ "
+"دیگر یا تنظیمات دیگر نیستند."
+
+#: 7a863859abcd43c0bbcbe26781044b33 docs/source/large-data.md:276
 msgid "Errors and their codes"
 msgstr "خطاها و کدهای آن‌ها"
 
-#: ac3b88c37a134e35a6314b5506f177d0 docs/source/large-data.md:265
+#: ac3b88c37a134e35a6314b5506f177d0 docs/source/large-data.md:278
 msgid ""
 "Mistakes in the call are `TypeError` or `ValueError`. Every refusal that "
 "depends on the data, a source or a store is a `VeridistError` and a "
@@ -718,7 +844,7 @@ msgstr ""
 "داده، یک منبع یا یک ذخیره‌گاه بستگی دارد یک `VeridistError` و یک "
 "`ValueError` است با `code` بسته و بدون مقدار داده، مسیر یا اثر انگشت:"
 
-#: a5a54141d78a4eb89946467bfd9e4405 docs/source/large-data.md:267
+#: a5a54141d78a4eb89946467bfd9e4405 docs/source/large-data.md:280
 msgid ""
 "`ScaleSourceError`: the codes `OPTIONAL_DEPENDENCY_MISSING`, "
 "`COLUMN_NOT_FOUND`, `UNSUPPORTED_DTYPE`, `LOSSY_CAST`, `NULL_VALUE`, "
@@ -744,7 +870,7 @@ msgstr ""
 "`INCOMPATIBLE_STATE`، `STATE_BYTES_INVALID`، `STATE_TAG_MISMATCH` و "
 "`STATE_VERSION_UNSUPPORTED`."
 
-#: 5f3e047cb9be4adc824863e299db81f0 docs/source/large-data.md:269
+#: 5f3e047cb9be4adc824863e299db81f0 docs/source/large-data.md:282
 msgid ""
 "`ScaleCheckpointError`: the codes `SOURCE_REVISION_UNAVAILABLE`, "
 "`INCREMENTAL_UNSUPPORTED`, `JOB_EXISTS`, `JOB_MISMATCH`, "
@@ -760,7 +886,7 @@ msgstr ""
 "`STORE_DIGEST_MISMATCH`، `STORE_STORAGE_FAILED` و "
 "`STORE_COMMIT_UNCERTAIN`."
 
-#: afad1e48f1714e5f929226d88d71cfff docs/source/large-data.md:270
+#: afad1e48f1714e5f929226d88d71cfff docs/source/large-data.md:283
 msgid ""
 "`ScaleInferenceError`: the codes `FIT_NOT_PROFILABLE`, "
 "`PROFILE_NOT_CONVERGED`, `PROFILE_UNBOUNDED`, `PROFILE_NOT_COMPUTABLE`, "
@@ -772,7 +898,7 @@ msgstr ""
 "`GOF_FIT_NOT_AVAILABLE`، `GOF_NOT_REPRESENTABLE` و "
 "`GOF_RESOLUTION_UNSUPPORTED`."
 
-#: 81ca5e87c7c2442cabc4250a685eb3e3 docs/source/large-data.md:271
+#: 81ca5e87c7c2442cabc4250a685eb3e3 docs/source/large-data.md:284
 msgid ""
 "`PassBudgetError`: the codes `PASS_BUDGET_INSUFFICIENT` and "
 "`PASS_BUDGET_EXCEEDED`."
@@ -780,7 +906,7 @@ msgstr ""
 "`PassBudgetError`: کدهای `PASS_BUDGET_INSUFFICIENT` و "
 "`PASS_BUDGET_EXCEEDED`."
 
-#: 485553916a614004ac843e9ad21862cc docs/source/large-data.md:273
+#: 485553916a614004ac843e9ad21862cc docs/source/large-data.md:286
 msgid ""
 "For the other entry points of the package, see the <a href=\"api.html"
 "#veridist-api\">API guide</a>."
