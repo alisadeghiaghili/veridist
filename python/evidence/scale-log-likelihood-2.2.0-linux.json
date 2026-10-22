@@ -1,5 +1,5 @@
 {
-  "artifact_sha256": "e13b5cc73d3afb50d582b137f132a3bb36832a94bf561bc7b1b50d2a836b9489",
+  "artifact_sha256": "3ca243fb9957fd69df5a39e1de154a37eeaa15ed431d4cadca71a504d4d123ad",
   "cells": [
     {
       "actual": {
@@ -8,11 +8,11 @@
         "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.03735937000000433,
+      "elapsed_seconds": 0.03659676099999842,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2683
       },
       "one_pass": {
@@ -25,7 +25,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 267670.46660580306
+      "throughput_rows_per_second": 273248.2254372301
     },
     {
       "actual": {
@@ -34,11 +34,11 @@
         "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.03675572200000232,
+      "elapsed_seconds": 0.03546798900000425,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2667
       },
       "one_pass": {
@@ -51,7 +51,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 272066.4826009776
+      "throughput_rows_per_second": 281944.37525056186
     },
     {
       "actual": {
@@ -60,11 +60,11 @@
         "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.036619617999996024,
+      "elapsed_seconds": 0.03547030600000056,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2620
       },
       "one_pass": {
@@ -77,7 +77,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 273077.6710997118
+      "throughput_rows_per_second": 281925.95801118383
     },
     {
       "actual": {
@@ -86,11 +86,11 @@
         "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.362726741000003,
+      "elapsed_seconds": 0.3658629079999969,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2628
       },
       "one_pass": {
@@ -103,7 +103,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 275689.6271951429
+      "throughput_rows_per_second": 273326.4231311496
     },
     {
       "actual": {
@@ -112,11 +112,11 @@
         "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.3679705489999989,
+      "elapsed_seconds": 0.3543648850000025,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2612
       },
       "one_pass": {
@@ -129,7 +129,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 271760.8794284248
+      "throughput_rows_per_second": 282195.0036048275
     },
     {
       "actual": {
@@ -138,11 +138,11 @@
         "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.3709706550000007,
+      "elapsed_seconds": 0.3541910420000036,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2597
       },
       "one_pass": {
@@ -155,7 +155,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 269563.1006177559
+      "throughput_rows_per_second": 282333.50972213177
     },
     {
       "actual": {
@@ -164,11 +164,11 @@
         "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 3.6852391839999967,
+      "elapsed_seconds": 3.548648596999996,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2581
       },
       "one_pass": {
@@ -181,7 +181,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 271352.8078019049
+      "throughput_rows_per_second": 281797.41461169004
     },
     {
       "actual": {
@@ -190,11 +190,11 @@
         "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 3.636961569999997,
+      "elapsed_seconds": 3.5155442129999983,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2557
       },
       "one_pass": {
@@ -207,7 +207,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 274954.78870292293
+      "throughput_rows_per_second": 284450.98096110916
     },
     {
       "actual": {
@@ -216,11 +216,11 @@
         "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 3.6047121000000004,
+      "elapsed_seconds": 3.5359276230000063,
       "family": "normal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2542
       },
       "one_pass": {
@@ -233,7 +233,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 277414.66509905184
+      "throughput_rows_per_second": 282811.2186163937
     },
     {
       "actual": {
@@ -242,11 +242,11 @@
         "total_log_likelihood_hex": "-0x1.3880000000000p+13"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.0370283090000072,
+      "elapsed_seconds": 0.03663078200000314,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2446
       },
       "one_pass": {
@@ -259,7 +259,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 270063.6423877217
+      "throughput_rows_per_second": 272994.4449452142
     },
     {
       "actual": {
@@ -268,11 +268,11 @@
         "total_log_likelihood_hex": "-0x1.3880000000000p+13"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.036959832000007964,
+      "elapsed_seconds": 0.036507338999996364,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2430
       },
       "one_pass": {
@@ -285,7 +285,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 270564.0003990777
+      "throughput_rows_per_second": 273917.52655544126
     },
     {
       "actual": {
@@ -294,11 +294,11 @@
         "total_log_likelihood_hex": "-0x1.3880000000000p+13"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.03703742599999771,
+      "elapsed_seconds": 0.03639368499999307,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2375
       },
       "one_pass": {
@@ -311,7 +311,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 269997.1644897952
+      "throughput_rows_per_second": 274772.94481176895
     },
     {
       "actual": {
@@ -320,11 +320,11 @@
         "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.3688277029999938,
+      "elapsed_seconds": 0.3632353319999879,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2407
       },
       "one_pass": {
@@ -337,7 +337,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 271129.30831012357
+      "throughput_rows_per_second": 275303.6150128791
     },
     {
       "actual": {
@@ -346,11 +346,11 @@
         "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.3675164109999969,
+      "elapsed_seconds": 0.3647019459999967,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2407
       },
       "one_pass": {
@@ -363,7 +363,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 272096.69284673344
+      "throughput_rows_per_second": 274196.5078519238
     },
     {
       "actual": {
@@ -372,11 +372,11 @@
         "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.36646029399999236,
+      "elapsed_seconds": 0.36096807999999214,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2408
       },
       "one_pass": {
@@ -389,7 +389,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 272880.85950179934
+      "throughput_rows_per_second": 277032.8057816142
     },
     {
       "actual": {
@@ -398,11 +398,11 @@
         "total_log_likelihood_hex": "-0x1.e848000000000p+19"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 3.6644958220000063,
+      "elapsed_seconds": 3.599968286999996,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2408
       },
       "one_pass": {
@@ -415,7 +415,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 272888.836165795
+      "throughput_rows_per_second": 277780.224790075
     },
     {
       "actual": {
@@ -424,11 +424,11 @@
         "total_log_likelihood_hex": "-0x1.e848000000000p+19"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 3.655279632999992,
+      "elapsed_seconds": 3.638346157000001,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2432
       },
       "one_pass": {
@@ -441,7 +441,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 273576.88067746314
+      "throughput_rows_per_second": 274850.1535721247
     },
     {
       "actual": {
@@ -450,11 +450,11 @@
         "total_log_likelihood_hex": "-0x1.e848000000000p+19"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 3.6725219119999792,
+      "elapsed_seconds": 3.5996544839999842,
       "family": "gamma",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2457
       },
       "one_pass": {
@@ -467,7 +467,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 272292.4529687614
+      "throughput_rows_per_second": 277804.4405219655
     },
     {
       "actual": {
@@ -476,11 +476,11 @@
         "total_log_likelihood_hex": "-0x1.7f90e6f7f1890p+11"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.03961931899999627,
+      "elapsed_seconds": 0.03863076400000409,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2524
       },
       "one_pass": {
@@ -493,7 +493,7 @@
         "oracle_total_units_bit_length": 1086
       },
       "rows": 10000,
-      "throughput_rows_per_second": 252402.11726004028
+      "throughput_rows_per_second": 258861.04660003464
     },
     {
       "actual": {
@@ -502,11 +502,11 @@
         "total_log_likelihood_hex": "-0x1.7f90e6f7f1890p+11"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.03949142100000813,
+      "elapsed_seconds": 0.03857273500000247,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2548
       },
       "one_pass": {
@@ -519,7 +519,7 @@
         "oracle_total_units_bit_length": 1086
       },
       "rows": 10000,
-      "throughput_rows_per_second": 253219.55368478489
+      "throughput_rows_per_second": 259250.47834952228
     },
     {
       "actual": {
@@ -528,11 +528,11 @@
         "total_log_likelihood_hex": "-0x1.7f90e6f7f1890p+11"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.03898614900001007,
+      "elapsed_seconds": 0.038711616000000504,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2517
       },
       "one_pass": {
@@ -545,7 +545,7 @@
         "oracle_total_units_bit_length": 1086
       },
       "rows": 10000,
-      "throughput_rows_per_second": 256501.35385255457
+      "throughput_rows_per_second": 258320.39664786585
     },
     {
       "actual": {
@@ -554,11 +554,11 @@
         "total_log_likelihood_hex": "-0x1.df7520b5edeb3p+14"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.3882045299999959,
+      "elapsed_seconds": 0.38456147400000873,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2549
       },
       "one_pass": {
@@ -571,7 +571,7 @@
         "oracle_total_units_bit_length": 1089
       },
       "rows": 100000,
-      "throughput_rows_per_second": 257596.16973042808
+      "throughput_rows_per_second": 260036.44868491878
     },
     {
       "actual": {
@@ -580,11 +580,11 @@
         "total_log_likelihood_hex": "-0x1.df7520b5edeb3p+14"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.3922710020000011,
+      "elapsed_seconds": 0.3856403849999879,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2549
       },
       "one_pass": {
@@ -597,7 +597,7 @@
         "oracle_total_units_bit_length": 1089
       },
       "rows": 100000,
-      "throughput_rows_per_second": 254925.80254504696
+      "throughput_rows_per_second": 259308.94141183668
     },
     {
       "actual": {
@@ -606,11 +606,11 @@
         "total_log_likelihood_hex": "-0x1.df7520b5edeb3p+14"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.38907882199998767,
+      "elapsed_seconds": 0.3852555209999764,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2550
       },
       "one_pass": {
@@ -623,7 +623,7 @@
         "oracle_total_units_bit_length": 1089
       },
       "rows": 100000,
-      "throughput_rows_per_second": 257017.33002574777
+      "throughput_rows_per_second": 259567.98682712746
     },
     {
       "actual": {
@@ -632,11 +632,11 @@
         "total_log_likelihood_hex": "-0x1.2ba93471b4b30p+18"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 3.897226111000009,
+      "elapsed_seconds": 3.859369321999992,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2550
       },
       "one_pass": {
@@ -649,7 +649,7 @@
         "oracle_total_units_bit_length": 1093
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 256592.7589311478
+      "throughput_rows_per_second": 259109.69294894603
     },
     {
       "actual": {
@@ -658,11 +658,11 @@
         "total_log_likelihood_hex": "-0x1.2ba93471b4b30p+18"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 3.8868837740000117,
+      "elapsed_seconds": 3.8423783629999946,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2550
       },
       "one_pass": {
@@ -675,7 +675,7 @@
         "oracle_total_units_bit_length": 1093
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 257275.50864503853
+      "throughput_rows_per_second": 260255.47344047477
     },
     {
       "actual": {
@@ -684,11 +684,11 @@
         "total_log_likelihood_hex": "-0x1.2ba93471b4b30p+18"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 3.8633488799999895,
+      "elapsed_seconds": 3.8705388519999815,
       "family": "weibull_min",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2551
       },
       "one_pass": {
@@ -701,7 +701,7 @@
         "oracle_total_units_bit_length": 1093
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 258842.7892642206
+      "throughput_rows_per_second": 258361.95895134367
     },
     {
       "actual": {
@@ -710,11 +710,11 @@
         "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.09241992200000482,
+      "elapsed_seconds": 0.09310610200000724,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3610
       },
       "one_pass": {
@@ -727,7 +727,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 108201.77926572453
+      "throughput_rows_per_second": 107404.3460653011
     },
     {
       "actual": {
@@ -736,11 +736,11 @@
         "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.09197142600001484,
+      "elapsed_seconds": 0.09245119900000986,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3610
       },
       "one_pass": {
@@ -753,7 +753,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 108729.42211419431
+      "throughput_rows_per_second": 108165.17371504217
     },
     {
       "actual": {
@@ -762,11 +762,11 @@
         "total_log_likelihood_hex": "-0x1.1f2b1528f7d65p+13"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.09271468500000424,
+      "elapsed_seconds": 0.09316328599999224,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3579
       },
       "one_pass": {
@@ -779,7 +779,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 107857.77894838927
+      "throughput_rows_per_second": 107338.42084531918
     },
     {
       "actual": {
@@ -788,11 +788,11 @@
         "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.9235869629999911,
+      "elapsed_seconds": 0.9234595510000077,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3611
       },
       "one_pass": {
@@ -805,7 +805,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 108273.50753759066
+      "throughput_rows_per_second": 108288.44630142243
     },
     {
       "actual": {
@@ -814,11 +814,11 @@
         "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.916544488999989,
+      "elapsed_seconds": 0.9243304199999898,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3611
       },
       "one_pass": {
@@ -831,7 +831,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 109105.45118121506
+      "throughput_rows_per_second": 108186.42104194852
     },
     {
       "actual": {
@@ -840,11 +840,11 @@
         "total_log_likelihood_hex": "-0x1.66f5da7335cbfp+16"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.9125808100000086,
+      "elapsed_seconds": 0.9189098579999779,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3612
       },
       "one_pass": {
@@ -857,7 +857,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 109579.33686990313
+      "throughput_rows_per_second": 108824.60246715778
     },
     {
       "actual": {
@@ -866,11 +866,11 @@
         "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 9.160308163999986,
+      "elapsed_seconds": 9.226246282999995,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3612
       },
       "one_pass": {
@@ -883,7 +883,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 109166.63305389663
+      "throughput_rows_per_second": 108386.4411730012
     },
     {
       "actual": {
@@ -892,11 +892,11 @@
         "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 9.121420064000006,
+      "elapsed_seconds": 9.150659113000017,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3612
       },
       "one_pass": {
@@ -909,7 +909,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 109632.05213481541
+      "throughput_rows_per_second": 109281.74546239356
     },
     {
       "actual": {
@@ -918,11 +918,11 @@
         "total_log_likelihood_hex": "-0x1.c0b35110033eep+19"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 9.154128301000014,
+      "elapsed_seconds": 9.174933777999968,
       "family": "lognormal",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 3613
       },
       "one_pass": {
@@ -935,7 +935,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 109240.33038631959
+      "throughput_rows_per_second": 108992.61228433506
     },
     {
       "actual": {
@@ -944,11 +944,11 @@
         "total_log_likelihood_hex": "-0x1.3880000000000p+13"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.03252381200002219,
+      "elapsed_seconds": 0.0318400720000227,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2401
       },
       "one_pass": {
@@ -961,7 +961,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 307467.0336919048
+      "throughput_rows_per_second": 314069.6415508379
     },
     {
       "actual": {
@@ -970,11 +970,11 @@
         "total_log_likelihood_hex": "-0x1.3880000000000p+13"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.03256498799999008,
+      "elapsed_seconds": 0.03169098099999701,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2449
       },
       "one_pass": {
@@ -987,7 +987,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 307078.26454605313
+      "throughput_rows_per_second": 315547.1899087297
     },
     {
       "actual": {
@@ -996,11 +996,11 @@
         "total_log_likelihood_hex": "-0x1.3880000000000p+13"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.03217753600000606,
+      "elapsed_seconds": 0.031555966999974316,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2418
       },
       "one_pass": {
@@ -1013,7 +1013,7 @@
         "oracle_total_units_bit_length": 1088
       },
       "rows": 10000,
-      "throughput_rows_per_second": 310775.81577402685
+      "throughput_rows_per_second": 316897.2765121772
     },
     {
       "actual": {
@@ -1022,11 +1022,11 @@
         "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 0.3241780120000044,
+      "elapsed_seconds": 0.3155001469999661,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2450
       },
       "one_pass": {
@@ -1039,7 +1039,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 308472.4944269158
+      "throughput_rows_per_second": 316957.0630976941
     },
     {
       "actual": {
@@ -1048,11 +1048,11 @@
         "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 0.3193052109999712,
+      "elapsed_seconds": 0.31741529200002105,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2450
       },
       "one_pass": {
@@ -1065,7 +1065,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 313179.9812687962
+      "throughput_rows_per_second": 315044.68285035674
     },
     {
       "actual": {
@@ -1074,11 +1074,11 @@
         "total_log_likelihood_hex": "-0x1.86a0000000000p+16"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 0.3198608359999753,
+      "elapsed_seconds": 0.3149146349999796,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2451
       },
       "one_pass": {
@@ -1091,7 +1091,7 @@
         "oracle_total_units_bit_length": 1091
       },
       "rows": 100000,
-      "throughput_rows_per_second": 312635.9614717187
+      "throughput_rows_per_second": 317546.3725272929
     },
     {
       "actual": {
@@ -1100,11 +1100,11 @@
         "total_log_likelihood_hex": "-0x1.e848000000000p+19"
       },
       "chunk_size": 1024,
-      "elapsed_seconds": 3.190784214999951,
+      "elapsed_seconds": 3.117887603999975,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2451
       },
       "one_pass": {
@@ -1117,7 +1117,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 313402.5783689717
+      "throughput_rows_per_second": 320729.9707395123
     },
     {
       "actual": {
@@ -1126,11 +1126,11 @@
         "total_log_likelihood_hex": "-0x1.e848000000000p+19"
       },
       "chunk_size": 8192,
-      "elapsed_seconds": 3.2144385230000125,
+      "elapsed_seconds": 3.18047761400004,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2451
       },
       "one_pass": {
@@ -1143,7 +1143,7 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 311096.3214398971
+      "throughput_rows_per_second": 314418.18536880525
     },
     {
       "actual": {
@@ -1152,11 +1152,11 @@
         "total_log_likelihood_hex": "-0x1.e848000000000p+19"
       },
       "chunk_size": 65536,
-      "elapsed_seconds": 3.1648398450000172,
+      "elapsed_seconds": 3.1169596550000165,
       "family": "gumbel_right",
       "memory": {
         "rss_delta_bytes": 0,
-        "rss_peak_bytes": 27095040,
+        "rss_peak_bytes": 27238400,
         "tracemalloc_peak_bytes": 2452
       },
       "one_pass": {
@@ -1169,20 +1169,20 @@
         "oracle_total_units_bit_length": 1094
       },
       "rows": 1000000,
-      "throughput_rows_per_second": 315971.754962531
+      "throughput_rows_per_second": 320825.4551501388
     }
   ],
   "run": {
-    "candidate_git_sha": "19ecf1062978fe0f894625e65b5a113ba1b68166",
+    "candidate_git_sha": "e316d125e0ae434beaf0c69ebeee3238c1076f6b",
     "generator": "fixed-supported-family-v1",
     "git_dirty": false,
-    "git_sha": "19ecf1062978fe0f894625e65b5a113ba1b68166",
+    "git_sha": "e316d125e0ae434beaf0c69ebeee3238c1076f6b",
     "measurement_workers": 1,
     "methodology": {
       "passes": "elapsed-untraced-then-memory-traced-v1",
       "rss": "process-peak-v1"
     },
-    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "platform": "Linux-7.0.0-1017-azure-x86_64-with-glibc2.39",
     "python": {
       "implementation": "CPython",
       "version": "3.11.17"

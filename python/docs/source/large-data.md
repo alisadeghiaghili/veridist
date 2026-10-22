@@ -260,6 +260,19 @@ Not supported at scale: right censoring, weights, truncation, covariates, distri
 
 Every name in `veridist.scale.__all__` is public API. It is not removed or changed incompatibly within a major version, and a deprecated form keeps working with a `DeprecationWarning` until the next major version, as everywhere in Veridist. The private modules `veridist.scale._*` and the byte formats of states, stores and spools are not API.
 
+## Retained measurements
+
+The `veridist-scale-evidence` workflow measured the scale engine on 2026-10-21 from candidate commit `e316d125e0ae434beaf0c69ebeee3238c1076f6b`, with one measurement worker, on a GitHub Actions Linux runner (CPython 3.11.17) and a Windows runner (CPython 3.11.9), each with 4 vCPUs. The data are exponential observations in Parquet files, fitted with `max_rows` 262144 and a `pass_budget` of 8, once with the serial executor and once with four processes. The ladder is 1 million, 10 million and 100 million rows on both runners, and 1 billion rows on Linux only, where just the four families that read the data once were measured. The files `python/evidence/scale-engine-2.2.0-linux.json` and `python/evidence/scale-engine-2.2.0-windows.json` are kept in the source repository, not in the distribution archives, and `tools/check_scale_engine_evidence.py` accepts them for that commit.
+
+* At 100 million rows on Linux, the four one-pass families took 1.3 to 5.4 seconds with the serial executor and 1.8 to 3.7 seconds with four processes, `exponential` being the fastest and `lognormal` the slowest. `weibull_min` took 57.9 seconds serially and 26.4 seconds with four processes, in 6 passes; `gumbel_right` took 39.8 and 18.7 seconds, in 4 passes.
+* At 100 million rows on Windows, the four one-pass families took 1.9 to 7.6 seconds serially and 1.8 to 4.5 seconds with four processes. `weibull_min` took 83.1 and 45.6 seconds, in 6 passes, and `gumbel_right` 59.4 and 32.8 seconds, in 4 passes.
+* At 1 billion rows on Linux, the four one-pass families took 13.1 to 57.5 seconds serially and 12.3 to 30.1 seconds with four processes: `exponential` took 13.1 and 12.3 seconds and `lognormal` 57.5 and 30.1 seconds.
+* The peak resident set size (RSS) of the measuring process, which does not include the worker processes, was 221.6 MiB in every Linux cell at 100 million and at 1 billion rows: it was the same at both sizes. On Windows at 100 million rows it was 78.4 to 97.8 MiB with the serial executor and 56.1 to 59.7 MiB with four processes.
+* A one-pass family read the data once at every size. `weibull_min` took 6 passes at every size up to 100 million rows, and `gumbel_right` took 6 passes up to 10 million rows and 4 passes at 100 million rows, within the `pass_budget` of 8.
+* For every family at every size, the digests of the result, the state and the passes were identical in four fits of the same rows: with the serial executor, with four processes, with a second partition layout, and in a run that was interrupted part-way and resumed from its checkpoint. That holds for all 22 combinations of family and size on Linux and all 18 on Windows.
+
+These are descriptive measurements of those runs, on one kind of data and one Python build per platform, and not guarantees of speed or memory on other machines, data or settings.
+
 ## Errors and their codes
 
 Mistakes in the call are `TypeError` or `ValueError`. Every refusal that depends on the data, a source or a store is a `VeridistError` and a `ValueError` with a closed `code` and no data value, path or fingerprint:

@@ -205,10 +205,11 @@ Für exakte, unzensierte Beobachtungen, die nicht in den Speicher passen, passt 
 Erhaltene Skalierungsnachweise für den strikten CSV-/Exponentialpfad decken
 10k, 100k und 1m Zeilen bei Chunk-Grenzen von 32, 64 und 128 KiB ab. Sie
 stammen aus je einem Lauf auf einem Linux- und einem Windows-Runner
-(Kandidaten-Commit `19ecf10`, 2026-10-09, CPython 3.11): 1m Zeilen benötigten
-14 bis 20 Sekunden bei einem Spitzenwert des Prozessspeichers von etwa 40 bis
-45 MiB. Diese Werte beschreiben nur diese Läufe; sie sind keine Geschwindigkeits-
-oder Speichergarantie für andere Maschinen oder Daten. Dauerhafte
+(Kandidaten-Commit `e316d12`, 2026-10-21, CPython 3.11): 1m Zeilen benötigten
+14 bis 21 Sekunden bei einem Spitzenwert des Prozessspeichers von etwa 40 bis
+44 MiB. Diese Werte beschreiben nur diese Läufe; sie sind keine Geschwindigkeits-
+oder Speichergarantie für andere Maschinen oder Daten. Erhaltene Messungen von
+`veridist.scale` bis zu 1 Milliarde Zeilen stehen im selben Leitfaden. Dauerhafte
 Wiederaufnahme läuft auf einer Maschine mit lokalem Dateisystem.
 
 ## Wie Qualität geprüft wird
