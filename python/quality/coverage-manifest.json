@@ -127,7 +127,7 @@
     "src/veridist/scale/_arrow.py": {"statements": 212, "branches": 72},
     "src/veridist/scale/_checkpoint.py": {"statements": 162, "branches": 50},
     "src/veridist/scale/_codec.py": {"statements": 76, "branches": 22},
-    "src/veridist/scale/_duckdb.py": {"statements": 53, "branches": 10},
+    "src/veridist/scale/_duckdb.py": {"statements": 56, "branches": 10},
     "src/veridist/scale/_environment.py": {"statements": 37, "branches": 8},
     "src/veridist/scale/_errors.py": {"statements": 86, "branches": 4},
     "src/veridist/scale/_estimates.py": {"statements": 135, "branches": 26},
