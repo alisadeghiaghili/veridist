@@ -128,7 +128,10 @@ class ReleaseMetadataTests(unittest.TestCase):
         citation = yaml.safe_load((ROOT / "CITATION.cff").read_text("utf-8"))
         self.assertEqual(citation["doi"], "10.5281/zenodo.23269843")
         dois = {item["value"] for item in citation["identifiers"] if item["type"] == "doi"}
-        self.assertEqual(dois, {"10.5281/zenodo.23269843", "10.5281/zenodo.23269844"})
+        self.assertEqual(
+            dois,
+            {"10.5281/zenodo.23269843", "10.5281/zenodo.23602544", "10.5281/zenodo.23269844"},
+        )
 
     def test_rejects_a_non_zenodo_or_malformed_doi(self) -> None:
         for doi in ("10.1000/other", "https://doi.org/10.5281/zenodo.1", "10.5281/zenodo."):
