@@ -7,7 +7,7 @@ an array operation. Fits of exact data that does not fit in memory are the
 separate public namespace ``veridist.scale``, which is not exported here.
 """
 
-__version__ = "2.1.0"
+__version__ = "2.2.0"
 
 from veridist.adapters.csv_lifetimes import CsvLifetimeLimits, CsvLifetimeSchema
 from veridist.domain.arrays import lifetimes_from_arrays, values_from_arrays

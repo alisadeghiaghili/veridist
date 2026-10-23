@@ -290,10 +290,10 @@ class LargeDataSurroundingDocsTests(unittest.TestCase):
 
     def test_the_changelog_announces_the_public_scale_engine_once(self) -> None:
         changelog = (PYTHON_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-        unreleased = changelog.partition("## [Unreleased]")[2].partition("\n## [")[0]
-        self.assertEqual(unreleased.count("\n### Added"), 1)
-        self.assertEqual(unreleased.count("\n### Changed"), 1)
-        self.assertIn("veridist.scale", unreleased.partition("### Added")[2])
+        section = changelog.partition("## [2.2.0] - 2026-10-23")[2].partition("\n## [")[0]
+        self.assertEqual(section.count("\n### Added"), 1)
+        self.assertEqual(section.count("\n### Changed"), 1)
+        self.assertIn("veridist.scale", section.partition("### Added")[2])
 
 
 if __name__ == "__main__":
