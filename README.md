@@ -229,7 +229,7 @@ These are development directions, not currently supported features or promised r
 
 ## Cite Veridist
 
-Cite the version that produced your result. The [citation guide](docs/citing-veridist.md) provides IEEE, APA 7, Chicago, MLA 9, Harvard, Vancouver, BibTeX, RIS, EndNote XML, and CSL-JSON formats. [CITATION.cff](CITATION.cff) is the canonical machine-readable record. Every release is archived on Zenodo. The DOI [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843) always resolves to the latest release, and Veridist 2.1.0 has its own DOI, [10.5281/zenodo.23269844](https://doi.org/10.5281/zenodo.23269844).
+Cite the version that produced your result. The [citation guide](docs/citing-veridist.md) provides IEEE, APA 7, Chicago, MLA 9, Harvard, Vancouver, BibTeX, RIS, EndNote XML, and CSL-JSON formats. [CITATION.cff](CITATION.cff) is the canonical machine-readable record. Every release is archived on Zenodo. The DOI [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843) always resolves to the latest release, and Veridist 2.2.0 has its own DOI, [10.5281/zenodo.23602544](https://doi.org/10.5281/zenodo.23602544).
 
 ## Author and research profiles
 

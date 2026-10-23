@@ -23,5 +23,8 @@ identifiers:
     value: 10.5281/zenodo.23269843
     description: "Concept DOI that always resolves to the latest Veridist release (all versions)."
   - type: doi
+    value: 10.5281/zenodo.23602544
+    description: "Version DOI for Veridist 2.2.0 (this version)."
+  - type: doi
     value: 10.5281/zenodo.23269844
     description: "Version DOI for the earlier Veridist 2.1.0 release."
