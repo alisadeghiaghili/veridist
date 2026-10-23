@@ -8,7 +8,8 @@ installs both.
 :class:`DuckDBSource` reads one column of a DuckDB relation, or of the result of a
 query given as a ``(connection, sql)`` pair (the pair is turned into a relation
 with ``connection.sql(sql)``, so the statement must be a query that returns rows;
-anything else is a programmer error). It is one partition. Its fingerprint level is
+anything else, a ``CREATE``, ``INSERT``, ``SET`` and the like, is a programmer error
+and is refused before it runs). It is one partition. Its fingerprint level is
 ``NONE``: a query can read anything, and a result is not a stored object whose
 identity can be recognised again without running it, so the partition is *not
 resumable* and any later resume must refuse it.
@@ -66,9 +67,9 @@ def to_arrow_reader(relation: Any, max_rows: int) -> Any:
     """Run a relation and return its Arrow ``RecordBatchReader`` of at most ``max_rows`` rows.
 
     This is the only call of DuckDB's result-streaming API, which has had two names
-    (``fetch_arrow_reader`` before DuckDB 1.5.0); the extra's minimum version is the
-    first with ``to_arrow_reader``. A failing query is raised by this call or by
-    the reader, as a ``duckdb.Error``.
+    (``fetch_arrow_reader`` before DuckDB 1.5.0, deprecated since DuckDB 2.0); the
+    extra's minimum version is the first with ``to_arrow_reader``. A failing query is
+    raised by this call or by the reader, as a ``duckdb.Error``.
     """
 
     return relation.to_arrow_reader(max_rows)
@@ -78,6 +79,25 @@ def _quoted(name: str) -> str:
     """``name`` as a quoted SQL identifier, so any column name is taken literally."""
 
     return '"' + name.replace('"', '""') + '"'
+
+
+def _returns_rows(duckdb: Any, connection: Any, sql: str) -> bool:
+    """Whether the last statement of ``sql`` produces a result set and nothing else.
+
+    DuckDB 1.x makes ``connection.sql`` return ``None`` for a statement without a
+    result set, and DuckDB 2.0 returns a relation with a ``Count`` or ``Success``
+    column instead, so the relation cannot tell a query from a ``CREATE``, ``INSERT``
+    or ``SET``. The parsed statement can, on every supported version: a query
+    expects exactly a result set, whereas a statement that changes rows or nothing
+    (an ``INSERT ... RETURNING`` included) does not. Deciding before the statement
+    runs also means a refused statement never changes the database. An empty
+    string, or one holding only comments, has no statement and no rows.
+    """
+
+    statements = connection.extract_statements(sql)
+    return bool(statements) and statements[-1].expected_result_type == [
+        duckdb.ExpectedResultType.QUERY_RESULT
+    ]
 
 
 def _as_relation(duckdb: Any, source: object) -> Any:
@@ -95,10 +115,10 @@ def _as_relation(duckdb: Any, source: object) -> Any:
             "source must be a duckdb relation or a (connection, sql) pair "
             "of a duckdb connection and a query string"
         )
-    relation = source[0].sql(source[1])
-    if relation is None:
+    connection, sql = source
+    if not _returns_rows(duckdb, connection, sql):
         raise ValueError("sql must be a query that returns rows")
-    return relation
+    return connection.sql(sql)
 
 
 class DuckDBSource:

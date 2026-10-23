@@ -76,6 +76,22 @@ Veridist release record.
   `SCALE_REFIT_REFUSED`, with the `reason` (a `RefitRefusedReason`) and the
   `limit` in force.
 
+### Fixed
+
+- `DuckDBSource` works with DuckDB 2.0. DuckDB 2.0 changed `connection.sql` to
+  return a relation (with a `Count` or `Success` column) for a statement that
+  has no result set, where DuckDB 1.x returned `None`, so a `(connection, sql)`
+  pair holding a `CREATE`, `INSERT`, `SET` or the like was no longer refused
+  with `ValueError` ("sql must be a query that returns rows") and failed later
+  with `COLUMN_NOT_FOUND`. The statement is now classified from its parsed
+  result type before it runs, identically on DuckDB 1.5 and 2.0: only a query
+  whose result is a set of rows is accepted, anything else, including an
+  `INSERT ... RETURNING`, an empty string and a comment, is refused, and a
+  refused statement no longer changes the database. The `duckdb` extra keeps
+  its lower bound `duckdb>=1.5.0` and gains no upper bound, and the continuous
+  integration now also runs the suite on the oldest supported DuckDB, Arrow and
+  Polars.
+
 ### Documentation
 
 - The large-data guide (en/fa/de) has a new section, "Retained measurements",
