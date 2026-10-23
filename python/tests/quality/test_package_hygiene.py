@@ -28,7 +28,7 @@ class PackageHygieneTests(unittest.TestCase):
 
     def test_package_and_declared_namespaces_import_with_stdlib_only(self) -> None:
         package = importlib.import_module("veridist")
-        self.assertEqual(package.__version__, "2.1.0")
+        self.assertEqual(package.__version__, "2.2.0")
         for namespace in ("domain", "statistics", "families", "engine", "scale"):
             importlib.import_module(f"veridist.{namespace}")
 

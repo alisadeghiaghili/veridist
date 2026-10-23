@@ -4,7 +4,7 @@ This changelog covers only the nested `veridist` package. The repository-root
 legacy changelog describes the frozen `distfit_pro` history and is not a
 Veridist release record.
 
-## [Unreleased]
+## [2.2.0] - 2026-10-23
 
 ### Added
 
