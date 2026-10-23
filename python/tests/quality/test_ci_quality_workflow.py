@@ -121,6 +121,46 @@ class VeridistWorkflowContractTests(unittest.TestCase):
         self.assertNotIn("--deselect", block)
         self.assertNotIn("-k ", block)
 
+    def test_minimum_job_runs_the_suite_against_the_oldest_supported_data_libraries(
+        self,
+    ) -> None:
+        job = re.search(r"(?ms)^  tests-minimum:$(.*?)(?=^  \S|\Z)", self.workflow)
+        self.assertIsNotNone(job)
+        block = job.group(0)
+        self.assertIn("name: veridist / tests (minimum data libraries)", block)
+        self.assertIn("runs-on: ubuntu-latest", block)
+        self.assertIn('python-version: "3.11"', block)
+        self.assertEqual(re.findall(r"python-version:", block), ["python-version:"])
+        self.assertIn("working-directory: python", block)
+        self.assertIn(
+            f"uses: {CHECKOUT_PIN}\n        with:\n          fetch-depth: 0", block
+        )
+        self.assertIn(
+            'python -m pip install -e ".[test,arrow,polars,duckdb]" "duckdb==1.5.0" '
+            '"pyarrow==16.1.0" "polars==1.37.0"',
+            block,
+        )
+        self.assertEqual(
+            re.findall(r"python -m pytest.*", block),
+            ["python -m pytest --ignore=tests/docs/test_docs_toolchain.py"],
+        )
+        self.assertNotIn("continue-on-error", block)
+        self.assertNotIn("--deselect", block)
+        self.assertNotIn("-k ", block)
+
+    def test_the_minimum_data_library_pins_are_the_declared_lower_bounds(self) -> None:
+        extras = tomllib.loads(PYPROJECT_PATH.read_text(encoding="utf-8"))["project"][
+            "optional-dependencies"
+        ]
+        self.assertIn("duckdb>=1.5.0", extras["duckdb"])
+        self.assertIn("pyarrow>=16.1", extras["arrow"])
+        self.assertIn("polars>=1.37.0", extras["polars"])
+        job = re.search(r"(?ms)^  tests-minimum:$(.*?)(?=^  \S|\Z)", self.workflow)
+        self.assertIsNotNone(job)
+        for pin in ("duckdb==1.5.0", "pyarrow==16.1.0", "polars==1.37.0"):
+            with self.subTest(pin=pin):
+                self.assertIn(pin, job.group(0))
+
     def test_package_job_builds_checks_and_installs_the_wheel_outside_checkout(self) -> None:
         self.assertIn("  package:", self.workflow)
         self.assertIn("name: veridist / package", self.workflow)
@@ -258,12 +298,14 @@ class VeridistWorkflowContractTests(unittest.TestCase):
         self.assertIn("  veridist-gate:", self.workflow)
         self.assertIn("name: veridist / gate", self.workflow)
         self.assertIn(
-            "needs: [static, tests, tests-os, package, docs, browser-rtl]", self.workflow
+            "needs: [static, tests, tests-minimum, tests-os, package, docs, browser-rtl]",
+            self.workflow,
         )
         self.assertIn("if: always()", self.workflow)
         for result in (
             "needs.static.result",
             "needs.tests.result",
+            "needs.tests-minimum.result",
             "needs.tests-os.result",
             "needs.package.result",
             "needs.docs.result",
@@ -272,13 +314,25 @@ class VeridistWorkflowContractTests(unittest.TestCase):
             with self.subTest(result=result):
                 self.assertIn(result, self.workflow)
         self.assertIn("TEST_OS_RESULT: ${{ needs.tests-os.result }}", self.workflow)
-        self.assertIn('"$TEST_RESULT" "$TEST_OS_RESULT" "$PACKAGE_RESULT"', self.workflow)
+        self.assertIn("TEST_MINIMUM_RESULT: ${{ needs.tests-minimum.result }}", self.workflow)
+        self.assertIn(
+            '"$TEST_RESULT" "$TEST_MINIMUM_RESULT" "$TEST_OS_RESULT" "$PACKAGE_RESULT"',
+            self.workflow,
+        )
         self.assertNotIn("continue-on-error", self.workflow)
         self.assertNotIn("|| true", self.workflow)
 
     def test_aggregate_gate_runs_from_the_checkout_root_without_a_checkout(self) -> None:
         self.assertNotIn("defaults:\n  run:\n    working-directory: python", self.workflow)
-        for job in ("static", "tests", "tests-os", "package", "docs", "browser-rtl"):
+        for job in (
+            "static",
+            "tests",
+            "tests-minimum",
+            "tests-os",
+            "package",
+            "docs",
+            "browser-rtl",
+        ):
             with self.subTest(job=job):
                 job_block = re.search(
                     rf"(?ms)^  {job}:$(.*?)(?=^  \S|\Z)", self.workflow

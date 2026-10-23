@@ -164,8 +164,44 @@ class DuckDBInputTests(unittest.TestCase):
                 DuckDBSource(relation, column)  # type: ignore[arg-type]
 
     def test_a_statement_that_returns_no_rows_is_a_programmer_error(self) -> None:
-        with self.assertRaisesRegex(ValueError, "^sql must be a query that returns rows$"):
-            DuckDBSource((self.connection, "create table t(a double)"), "a")
+        self.connection.sql("create table kept(a double)")
+        refused = [
+            "create table t(a double)",
+            "insert into kept values (1.5)",
+            "insert into kept values (2.5) returning a",
+            "delete from kept",
+            "set threads = 1",
+            "begin",
+            "drop table kept",
+            "",
+            "-- only a comment",
+            "select 1.5::double as a; create table t(a double)",
+        ]
+        for statement in refused:
+            with (
+                self.subTest(sql=statement),
+                self.assertRaisesRegex(ValueError, "^sql must be a query that returns rows$"),
+            ):
+                DuckDBSource((self.connection, statement), "a")
+        # A refused statement is refused before it runs, so nothing changed.
+        self.assertEqual(self.connection.sql("select count(*) from kept").fetchall(), [(0,)])
+        self.assertEqual(self.connection.sql("show tables").fetchall(), [("kept",)])
+
+    def test_a_query_is_accepted_whatever_its_form(self) -> None:
+        self.connection.sql("create table t(a double)")
+        self.connection.sql("insert into t values (1.5), (2.5)")
+        queries = {
+            "select a from t": [1.5, 2.5],
+            "with q as (select a from t) select a from q": [1.5, 2.5],
+            "from t": [1.5, 2.5],
+            "select * from (values (1.5::double), (2.5::double)) as v(a)": [1.5, 2.5],
+            "select a from t where false": [],
+            "set threads = 1; select a from t": [1.5, 2.5],
+        }
+        for query, expected in queries.items():
+            with self.subTest(sql=query):
+                source = DuckDBSource((self.connection, query), "a")
+                self.assertEqual(sorted(values_of(source)), expected)
 
     def test_arguments_are_validated_when_batches_is_called(self) -> None:
         source = DuckDBSource(self.connection.sql(SELECT), "x")
