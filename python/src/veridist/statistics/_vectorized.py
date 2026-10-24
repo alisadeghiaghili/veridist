@@ -14,6 +14,7 @@ exactly and are correct, but not fast.
 
 from __future__ import annotations
 
+import math
 from collections.abc import Callable, Mapping
 from importlib import import_module
 from typing import Any, Final, TypeAlias
@@ -188,6 +189,9 @@ def finish_logpdf(spec: FamilySpec, point: Any, raw: Any) -> Any:
 # ``numpy.errstate(all="ignore")`` by ``evaluate_native``.
 
 
+_LOG_TWO: Final = math.log(2.0)
+
+
 def _exponential_logpdf(x: Any, p: Mapping[str, Any]) -> Any:
     np = _numpy()
     return np.log(p["rate"]) - p["rate"] * x
@@ -199,7 +203,13 @@ def _weibull_min_logpdf(x: Any, p: Mapping[str, Any]) -> Any:
     # ``(x - scale) / scale`` is exact in the numerator for ``scale/2 <= x <= 2*scale``
     # (Sterbenz), which covers the ``|delta| <= 0.5`` branch that uses it.
     delta = (x - scale) / scale
-    log_ratio = np.where(np.abs(delta) <= 0.5, np.log1p(delta), np.log(x) - np.log(scale))
+    # Far from one the binary exponents are split off first (like the scalar kernel), so no
+    # ``log(x) - log(scale)`` cancellation of two large logarithms is left and a subnormal
+    # ``x`` keeps its exact mantissa.
+    x_mantissa, x_exponent = np.frexp(x)
+    scale_mantissa, scale_exponent = np.frexp(scale)
+    far_ratio = np.log(x_mantissa / scale_mantissa) + (x_exponent - scale_exponent) * _LOG_TWO
+    log_ratio = np.where(np.abs(delta) <= 0.5, np.log1p(delta), far_ratio)
     exponent = shape * log_ratio
     near = np.log(shape) - np.log(scale) - 1.0 - log_ratio - (np.expm1(exponent) - exponent)
     far = np.log(shape) - np.log(scale) + (shape - 1.0) * log_ratio - np.exp(exponent)
