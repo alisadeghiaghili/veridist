@@ -246,7 +246,7 @@ rate=0.5; events=1; censored=1
 
 <h2 dir="rtl" align="right">استناد به <bdi dir="ltr">Veridist</bdi></h2>
 
-به همان نسخه‌ای استناد کنید که نتیجه با آن تولید شده است. [راهنمای استناد](https://github.com/alisadeghiaghili/veridist/blob/main/docs/citing-veridist.md) قالب‌های IEEE، APA 7، Chicago، MLA 9، Harvard، Vancouver، BibTeX، RIS، EndNote XML و CSL-JSON را ارائه می‌کند. [CITATION.cff](https://github.com/alisadeghiaghili/veridist/blob/main/CITATION.cff) مرجع ماشین‌خوان است. هر نسخه در Zenodo بایگانی می‌شود. شناسهٔ <bdi dir="ltr">DOI</bdi> به‌صورت [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843) همیشه به آخرین نسخه می‌رسد و <bdi dir="ltr">Veridist 2.2.0</bdi> شناسهٔ <bdi dir="ltr">DOI</bdi> خودش را دارد: [10.5281/zenodo.23602544](https://doi.org/10.5281/zenodo.23602544).
+به همان نسخه‌ای استناد کنید که نتیجه با آن تولید شده است. [راهنمای استناد](https://github.com/alisadeghiaghili/veridist/blob/main/docs/citing-veridist.md) قالب‌های IEEE، APA 7، Chicago، MLA 9، Harvard، Vancouver، BibTeX، RIS، EndNote XML و CSL-JSON را ارائه می‌کند. [CITATION.cff](https://github.com/alisadeghiaghili/veridist/blob/main/CITATION.cff) مرجع ماشین‌خوان است. هر نسخه در Zenodo بایگانی می‌شود. شناسهٔ <bdi dir="ltr">DOI</bdi> به‌صورت [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843) همیشه به آخرین نسخه می‌رسد و <bdi dir="ltr">Veridist 2.2.1</bdi> شناسهٔ <bdi dir="ltr">DOI</bdi> خودش را دارد: [10.5281/zenodo.23638718](https://doi.org/10.5281/zenodo.23638718).
 
 <h2 dir="rtl" align="right">نویسنده و پروفایل‌های پژوهشی</h2>
 
