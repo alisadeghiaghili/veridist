@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use Veridist, please cite its released version and retained evidence."
 title: "Veridist"
-version: 2.2.0
-date-released: 2026-10-23
+version: 2.2.1
+date-released: 2026-10-25
 doi: 10.5281/zenodo.23269843
 type: software
 abstract: "Evidence-first Python distribution fitting with reproducible inference and explicit statistical contracts."
@@ -16,7 +16,7 @@ authors:
     orcid: "https://orcid.org/0000-0002-5938-3291"
     website: "https://zil.ink/thedatascientist"
 repository-code: "https://github.com/alisadeghiaghili/veridist"
-url: "https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0"
+url: "https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1"
 license: BUSL-1.1
 identifiers:
   - type: doi
@@ -24,7 +24,7 @@ identifiers:
     description: "Concept DOI that always resolves to the latest Veridist release (all versions)."
   - type: doi
     value: 10.5281/zenodo.23602544
-    description: "Version DOI for Veridist 2.2.0 (this version)."
+    description: "Version DOI for the earlier Veridist 2.2.0 release."
   - type: doi
     value: 10.5281/zenodo.23269844
     description: "Version DOI for the earlier Veridist 2.1.0 release."

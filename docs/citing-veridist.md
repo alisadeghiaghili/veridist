@@ -4,7 +4,7 @@ Cite the released version that produced your result. In a report or reproducible
 analysis, also state the model family and relevant data assumptions. The
 canonical machine-readable record is [`CITATION.cff`](../CITATION.cff).
 
-The examples below cite Veridist 2.2.0. For another release, take the version,
+The examples below cite Veridist 2.2.1. For another release, take the version,
 publication date, and release URL from `CITATION.cff`; do not represent an
 unversioned repository page as the exact software release.
 
@@ -17,7 +17,7 @@ Every release is archived on Zenodo, which assigns two kinds of DOI:
   the `doi` recorded in [`CITATION.cff`](../CITATION.cff).
 - **Version DOI**. It resolves to exactly one release. Use it when the result
   depends on that release. [10.5281/zenodo.23602544](https://doi.org/10.5281/zenodo.23602544)
-  resolves to exactly Veridist 2.2.0, and
+  resolves to exactly the earlier Veridist 2.2.0, and
   [10.5281/zenodo.23269844](https://doi.org/10.5281/zenodo.23269844) to the
   earlier Veridist 2.1.0.
 
@@ -38,33 +38,32 @@ The author's verified ORCID iD is
 ## IEEE
 
 ```text
-S. A. Sadeghi Aghili, “Veridist,” ver. 2.2.0, Oct. 2026. [Online]. Available:
-https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0
+S. A. Sadeghi Aghili, “Veridist,” ver. 2.2.1, Oct. 2026. [Online]. Available:
+https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1
 ```
 
 ## APA 7
 
 ```text
-Sadeghi Aghili, S. A. (2026). Veridist (Version 2.2.0) [Computer software].
-https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0
+Sadeghi Aghili, S. A. (2026). Veridist (Version 2.2.1) [Computer software].
+https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1
 ```
 
 ## BibTeX
 
 The `doi` field is the concept DOI. Replace it with the version DOI
-`10.5281/zenodo.23602544` to cite exactly 2.2.0, or with the version DOI
-shown on the Zenodo record of another release you cite (for example
-`10.5281/zenodo.23269844` for 2.1.0).
+shown on the Zenodo record of the release you cite (for example
+`10.5281/zenodo.23602544` for 2.2.0 or `10.5281/zenodo.23269844` for 2.1.0).
 
 ```bibtex
 @software{sadeghi_aghili_veridist_2026,
   author  = {Sadeghi Aghili, Seyed Ali},
   title   = {Veridist},
-  version = {2.2.0},
+  version = {2.2.1},
   month   = oct,
   year    = {2026},
   doi     = {10.5281/zenodo.23269843},
-  url     = {https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0}
+  url     = {https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1}
 }
 ```
 
@@ -75,9 +74,9 @@ TY  - COMP
 AU  - Sadeghi Aghili, Seyed Ali
 TI  - Veridist
 PY  - 2026
-DA  - 2026/10/23
-VL  - 2.2.0
-UR  - https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0
+DA  - 2026/10/25
+VL  - 2.2.1
+UR  - https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1
 ER  -
 ```
 
@@ -89,8 +88,8 @@ ER  -
   <contributors><authors><author>Sadeghi Aghili, Seyed Ali</author></authors></contributors>
   <titles><title>Veridist</title></titles>
   <dates><year>2026</year></dates>
-  <volume>2.2.0</volume>
-  <urls><related-urls><url>https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0</url></related-urls></urls>
+  <volume>2.2.1</volume>
+  <urls><related-urls><url>https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1</url></related-urls></urls>
 </record>
 ```
 
@@ -102,36 +101,36 @@ ER  -
   "type": "software",
   "title": "Veridist",
   "author": [{"family": "Sadeghi Aghili", "given": "Seyed Ali"}],
-  "version": "2.2.0",
-  "issued": {"date-parts": [[2026, 10, 23]]},
-  "URL": "https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0"
+  "version": "2.2.1",
+  "issued": {"date-parts": [[2026, 10, 25]]},
+  "URL": "https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1"
 }
 ```
 
 ## Chicago author-date
 
 ```text
-Sadeghi Aghili, Seyed Ali. 2026. Veridist, version 2.2.0. Computer software.
-https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0.
+Sadeghi Aghili, Seyed Ali. 2026. Veridist, version 2.2.1. Computer software.
+https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1.
 ```
 
 ## MLA 9
 
 ```text
-Sadeghi Aghili, Seyed Ali. Veridist. Version 2.2.0, 23 Oct. 2026,
-https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0.
+Sadeghi Aghili, Seyed Ali. Veridist. Version 2.2.1, 25 Oct. 2026,
+https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1.
 ```
 
 ## Harvard
 
 ```text
-Sadeghi Aghili, S.A. (2026) Veridist. Version 2.2.0 [Computer software]. Available at:
-https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0 (Accessed: date).
+Sadeghi Aghili, S.A. (2026) Veridist. Version 2.2.1 [Computer software]. Available at:
+https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1 (Accessed: date).
 ```
 
 ## Vancouver
 
 ```text
-Sadeghi Aghili SA. Veridist [computer program]. Version 2.2.0. 2026 Oct 23. Available
-from: https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.0
+Sadeghi Aghili SA. Veridist [computer program]. Version 2.2.1. 2026 Oct 25. Available
+from: https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1
 ```

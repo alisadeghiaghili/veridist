@@ -1,6 +1,6 @@
 # Known limits for Veridist 2.2
 
-This document defines the 2.2 release boundary for package version `2.2.0`.
+This document defines the 2.2 release boundary for package version `2.2.1`.
 
 ## What these limits mean in common applications
 
