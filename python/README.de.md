@@ -280,8 +280,8 @@ XML und CSL-JSON. [CITATION.cff](https://github.com/alisadeghiaghili/veridist/bl
 ist der kanonische maschinenlesbare Eintrag.
 
 Jede Release ist bei Zenodo archiviert. Der DOI [10.5281/zenodo.23269843](https://doi.org/10.5281/zenodo.23269843)
-führt immer zur neuesten Release; Veridist 2.2.0 hat den eigenen DOI
-[10.5281/zenodo.23602544](https://doi.org/10.5281/zenodo.23602544).
+führt immer zur neuesten Release; Veridist 2.2.1 hat den eigenen DOI
+[10.5281/zenodo.23638718](https://doi.org/10.5281/zenodo.23638718).
 
 ## Autor- und Forschungsprofile
 

@@ -16,8 +16,10 @@ Every release is archived on Zenodo, which assigns two kinds of DOI:
   latest release. Use it to cite Veridist as software in general, and it is
   the `doi` recorded in [`CITATION.cff`](../CITATION.cff).
 - **Version DOI**. It resolves to exactly one release. Use it when the result
-  depends on that release. [10.5281/zenodo.23602544](https://doi.org/10.5281/zenodo.23602544)
-  resolves to exactly the earlier Veridist 2.2.0, and
+  depends on that release. [10.5281/zenodo.23638718](https://doi.org/10.5281/zenodo.23638718)
+  resolves to exactly Veridist 2.2.1;
+  [10.5281/zenodo.23602544](https://doi.org/10.5281/zenodo.23602544) to the earlier
+  Veridist 2.2.0, and
   [10.5281/zenodo.23269844](https://doi.org/10.5281/zenodo.23269844) to the
   earlier Veridist 2.1.0.
 
@@ -52,7 +54,8 @@ https://github.com/alisadeghiaghili/veridist/releases/tag/v2.2.1
 ## BibTeX
 
 The `doi` field is the concept DOI. Replace it with the version DOI
-shown on the Zenodo record of the release you cite (for example
+`10.5281/zenodo.23638718` to cite exactly 2.2.1, or with the version DOI
+shown on the Zenodo record of another release you cite (for example
 `10.5281/zenodo.23602544` for 2.2.0 or `10.5281/zenodo.23269844` for 2.1.0).
 
 ```bibtex

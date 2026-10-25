@@ -130,7 +130,12 @@ class ReleaseMetadataTests(unittest.TestCase):
         dois = {item["value"] for item in citation["identifiers"] if item["type"] == "doi"}
         self.assertEqual(
             dois,
-            {"10.5281/zenodo.23269843", "10.5281/zenodo.23602544", "10.5281/zenodo.23269844"},
+            {
+                "10.5281/zenodo.23269843",
+                "10.5281/zenodo.23638718",
+                "10.5281/zenodo.23602544",
+                "10.5281/zenodo.23269844",
+            },
         )
 
     def test_rejects_a_non_zenodo_or_malformed_doi(self) -> None:
