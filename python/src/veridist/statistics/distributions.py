@@ -28,7 +28,7 @@ from __future__ import annotations
 import warnings
 from collections.abc import Callable, Mapping
 from importlib import import_module
-from math import copysign, erfc, exp, expm1, fsum, inf, isfinite, lgamma, log, log1p, nan, sqrt
+from math import copysign, erfc, exp, expm1, fsum, inf, isfinite, lgamma, log, log1p, nan, pi, sqrt
 from types import MappingProxyType
 from typing import Any, Final, TypeAlias, overload
 
@@ -44,6 +44,8 @@ from veridist.statistics.log_density import (
     LogDensityErrorCode,
     LogDensitySuccess,
     _evaluate_validated_log_density,
+    _log1pmx,
+    _stirling_error,
 )
 
 _SQRT_TWO = sqrt(2.0)
@@ -137,6 +139,44 @@ _GAMMA_EPS = 2e-16
 _GAMMA_MAXIT = 512
 
 
+#: Shapes from here on use the deviance form of the incomplete-gamma prefactor.  The direct
+#: form's cancellation error grows like ``shape * log(shape)`` (about 6e-13 at 512, 7e-12 at
+#: 5000, as relative error of ``P`` and ``Q``), so below this it stays bit-for-bit as it was.
+_STABLE_PREFACTOR_SHAPE = 512.0
+
+
+def _log_gamma_prefactor_terms(shape: float, value: float, log_value: float) -> tuple[float, ...]:
+    """Return terms summing to ``-value + shape*log(value) - lgamma(shape)``.
+
+    The three terms are each of order ``shape*log(shape)`` and cancel to the much smaller
+    log-density scale, losing about ``shape * log(shape)`` units of the last place (relative
+    error near ``1e-11`` in ``P`` and ``Q`` at shape ``1e4``).  From
+    ``_STABLE_PREFACTOR_SHAPE`` on the equivalent deviance form
+    ``shape*(log(y) - y + 1) + log(shape/(2*pi))/2 - stirling(shape)`` with
+    ``y = value/shape`` is used instead, which has no such cancellation.  ``log_value`` is the
+    natural logarithm of ``value``.
+    """
+
+    if shape < _STABLE_PREFACTOR_SHAPE:
+        return (-value, shape * log_value, -lgamma(shape))
+    delta = (value - shape) / shape
+    if abs(delta) <= 0.5:
+        # ``value - shape`` is exact for ``shape/2 <= value <= 2*shape`` (Sterbenz).
+        deviance = shape * _log1pmx(delta)
+    else:
+        deviance = shape * fsum((log_value - log(shape), -value / shape, 1.0))
+    return (deviance, 0.5 * log(shape / (2.0 * pi)), -_stirling_error(shape))
+
+
+def _log_gamma_prefactor(shape: float, value: float, log_value: float) -> float:
+    """Return ``-value + shape*log(value) - lgamma(shape)`` without large-shape cancellation."""
+
+    terms = _log_gamma_prefactor_terms(shape, value, log_value)
+    if shape < _STABLE_PREFACTOR_SHAPE:
+        return terms[0] + terms[1] + terms[2]
+    return fsum(terms)
+
+
 def _upper_gamma_continued_fraction(shape: float, value: float) -> float:
     """Return ``h`` with ``Q(shape, value) = exp(-value + shape*log(value) - lgamma(shape)) * h``.
 
@@ -194,10 +234,10 @@ def _regularized_gamma_pq(shape: float, value: float) -> tuple[float, float]:
                 break
         else:
             raise ArithmeticError("gamma series expansion failed to converge")
-        lower = min(1.0, total * exp(-value + shape * log(value) - lgamma(shape)))
+        lower = min(1.0, total * exp(_log_gamma_prefactor(shape, value, log(value))))
         return lower, 1.0 - lower
     h = _upper_gamma_continued_fraction(shape, value)
-    upper = max(0.0, min(1.0, exp(-value + shape * log(value) - lgamma(shape)) * h))
+    upper = max(0.0, min(1.0, exp(_log_gamma_prefactor(shape, value, log(value))) * h))
     return 1.0 - upper, upper
 
 
@@ -281,7 +321,7 @@ def _log_regularized_gamma_q(shape: float, value: float, log_value: float) -> fl
 
     if value >= shape + 1.0:
         h = _upper_gamma_continued_fraction(shape, value)
-        return fsum((-value, shape * log_value, -lgamma(shape), log(h)))
+        return fsum((*_log_gamma_prefactor_terms(shape, value, log_value), log(h)))
     if shape < _SMALL_SHAPE:
         return _log_upper_gamma_small_shape(shape, value, log_value)
     if value < _GAMMA_FPMIN:

@@ -4,6 +4,43 @@ This changelog covers only the nested `veridist` package. The repository-root
 legacy changelog describes the frozen `distfit_pro` history and is not a
 Veridist release record.
 
+## [Unreleased]
+
+### Fixed
+
+- The scalar gamma log-density (`logpdf`, `evaluate_log_density`, and the
+  array form of `logpdf`, which uses the same kernel) lost accuracy in the lower
+  tail for shapes of 8 and more. Below a ratio `x / (shape * scale)` of one half
+  it rounded `ratio - 1` to binary64, which keeps no information about the
+  ratio once it is small: below about `1e-8` a whole range of observations
+  returned one quantised value (at shape 100, three observations with true values
+  -3581.0, -3579.5 and -3504.1 all gave -3540.1656), and the scaled error
+  `|computed - true| / max(1, |true|)` reached about 2e-2, on roughly one in five
+  adversarial points for each of shapes 10, 100, 1000 and 1e4. The lower tail
+  is now evaluated from the exact ratio and its logarithm, and the scaled error
+  against mpmath is at most 1e-13 on the whole support for every shape tested,
+  down to subnormal observations. A value that was already accurate does not
+  move by more than 1e-14 (scaled), and ratios of one half and more, and all
+  shapes below 8, are bit-for-bit unchanged.
+- `cdf`, `sf`, `ppf` and the censored log-likelihood terms lost digits near the
+  mode for shapes of 512 and more, because the prefactor
+  `exp(-x + shape*log(x) - lgamma(shape))` cancels terms of size
+  `shape*log(shape)`: the relative error reached 1e-12 at shape 1000 and 1e-11
+  at shape 5000. From shape 512 the prefactor is evaluated in its deviance form
+  and the error is at most 2e-13; below 512 the results are bit-for-bit
+  unchanged.
+- The Weibull-minimum log-density (scalar and array forms) took the logarithm of
+  `x / scale` far from one as `log(x) - log(scale)`, which cancels when both
+  logarithms are large (an extreme scale, a subnormal `x`) and was amplified by
+  the exponential of `shape * log(x / scale)`: the relative error reached 4e-12.
+  It now splits off the binary exponents first and the error is at most 2e-13.
+- Fits on ordinary data are unaffected: `fit_gamma` and the scale gamma fit do
+  not evaluate the log-density, and the 21 measured fits (shapes 0.7 to 1000,
+  exact and right-censored) return bit-for-bit the same shape, scale and
+  log-likelihood as before. Only a right-censored fit whose shape is 512 or
+  more can change, and then only at the optimizer's stopping tolerance, because
+  the log-survival terms above changed in the last digits.
+
 ## [2.2.0] - 2026-10-23
 
 ### Added

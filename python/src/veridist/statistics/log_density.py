@@ -7,7 +7,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from decimal import Decimal, localcontext
 from enum import StrEnum
-from math import exp, expm1, fsum, isfinite, lgamma, log, log1p, pi, ulp
+from math import exp, expm1, frexp, fsum, isfinite, lgamma, log, log1p, pi, ulp
 from types import MappingProxyType
 from typing import Final, TypeAlias, cast
 
@@ -75,6 +75,7 @@ class LogDensityFailure:
 LogDensityResult: TypeAlias = LogDensitySuccess | LogDensityFailure
 _Evaluator: TypeAlias = Callable[[float, Mapping[str, float]], float]
 _LOG_SQRT_TWO_PI: Final = 0.5 * log(2.0 * pi)
+_LOG_TWO: Final = log(2.0)
 
 
 class _NumericalOverflow(Exception):
@@ -144,17 +145,24 @@ def _normal(observation: float, parameters: Mapping[str, float]) -> float:
 def _gamma(observation: float, parameters: Mapping[str, float]) -> float:
     shape = parameters["shape"]
     scale = parameters["scale"]
-    delta = _ratio_minus_one(observation, shape, scale)
     if shape >= 8.0:
-        if delta == -1.0:
-            # The exact positive ratio can round below binary64 resolution here.
-            # Its log-density remains finite, but the deviance representation
-            # would call log1p(-1); use the stable far-left direct form instead.
-            log_observation = _finite_intermediate(log(observation))
-            quotient = _finite_intermediate(observation / scale)
-            log_gamma = _finite_intermediate(lgamma(shape))
-            scale_term = _finite_intermediate(shape * log(scale))
-            return (shape - 1.0) * log_observation - quotient - log_gamma - scale_term
+        delta = _ratio_minus_one(observation, shape, scale)
+        if delta < -0.5:
+            # ``delta`` is the exact ratio minus one rounded to binary64, so below
+            # ``-0.5`` it carries an absolute error of about 1e-16 that ``log1p`` and
+            # ``log1pmx`` blow up by ``1 / ratio``, and at ``-1.0`` it holds no
+            # information at all.  Work from the ratio itself instead.
+            ratio, log_ratio = _ratio_and_log(observation, shape, scale)
+            deviance = _finite_intermediate(shape * fsum((log_ratio, -ratio, 1.0)))
+            return fsum(
+                (
+                    -log(scale),
+                    -0.5 * (log(2.0 * pi) + log(shape)),
+                    -_stirling_error(shape),
+                    deviance,
+                    -log_ratio,
+                )
+            )
         deviance = _finite_intermediate(shape * _log1pmx(delta))
         return fsum(
             (
@@ -260,8 +268,8 @@ def _decimal_precision(observation: float, mean: float, sigma: float) -> int:
 _LOG_MAX_FLOAT: Final = log(float.fromhex("0x1.fffffffffffffp+1023"))
 
 
-def _ratio_minus_one(numerator: float, *denominators: float) -> float:
-    """Return an exact-binary ratio minus one without rounded products."""
+def _ratio_terms(numerator: float, *denominators: float) -> tuple[int, int]:
+    """Return the exact binary ratio as positive integers ``(top, bottom)``."""
 
     numerator_value, numerator_scale = numerator.as_integer_ratio()
     denominator_value = numerator_scale
@@ -269,7 +277,14 @@ def _ratio_minus_one(numerator: float, *denominators: float) -> float:
         value, scale = denominator.as_integer_ratio()
         numerator_value *= scale
         denominator_value *= value
-    return _integer_ratio_to_float(numerator_value - denominator_value, denominator_value)
+    return numerator_value, denominator_value
+
+
+def _ratio_minus_one(numerator: float, *denominators: float) -> float:
+    """Return an exact-binary ratio minus one without rounded products."""
+
+    top, bottom = _ratio_terms(numerator, *denominators)
+    return _integer_ratio_to_float(top - bottom, bottom)
 
 
 def _scaled_difference(left: float, right: float, scale: float) -> float:
@@ -299,7 +314,40 @@ def _log_ratio(numerator: float, denominator: float) -> float:
     delta = _ratio_minus_one(numerator, denominator)
     if isfinite(delta) and abs(delta) <= 0.5:
         return log1p(delta)
-    return _finite_intermediate(log(numerator) - log(denominator))
+    # Split off the binary exponents so no ``log(numerator) - log(denominator)`` cancellation
+    # of two large logarithms is left, and a subnormal operand keeps its exact mantissa.
+    numerator_mantissa, numerator_exponent = frexp(numerator)
+    denominator_mantissa, denominator_exponent = frexp(denominator)
+    return (
+        log(numerator_mantissa / denominator_mantissa)
+        + (numerator_exponent - denominator_exponent) * _LOG_TWO
+    )
+
+
+def _log_exact_ratio(top: int, bottom: int) -> float:
+    """Return ``log(top / bottom)`` for positive integers, formed without subtracting logarithms.
+
+    The ratio is split as ``mantissa * 2**shift`` with ``mantissa`` in ``(1/2, 2)``
+    rounded once from the exact quotient, so the result keeps a relative error of
+    about ``2**-52`` even when ``top / bottom`` is subnormal or underflows to zero and
+    when ``log(top)`` and ``log(bottom)`` are both several hundred in magnitude.  The
+    absolute error is about ``2**-53 * max(1, |shift|)``, which is negligible for the
+    ratios outside ``[1/2, 3/2]`` it is used for here.
+    """
+
+    shift = top.bit_length() - bottom.bit_length()
+    if shift >= 0:
+        mantissa = top / (bottom << shift)
+    else:
+        mantissa = (top << -shift) / bottom
+    return shift * _LOG_TWO + log(mantissa)
+
+
+def _ratio_and_log(numerator: float, *denominators: float) -> tuple[float, float]:
+    """Return the exact ratio rounded to binary64 (zero on underflow) and its logarithm."""
+
+    top, bottom = _ratio_terms(numerator, *denominators)
+    return _integer_ratio_to_float(top, bottom), _log_exact_ratio(top, bottom)
 
 
 def _log1pmx(delta: float) -> float:
