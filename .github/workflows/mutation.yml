@@ -24,6 +24,7 @@ jobs:
         shard:
           - domain
           - statistics
+          - statistics-kernels
           - families
           - engine
           - scale-fit

@@ -36,6 +36,12 @@
       "src/veridist/statistics/log_density.py",
       "src/veridist/statistics/log_likelihood.py"
     ],
+    "statistics-kernels": [
+      "src/veridist/statistics/_logerrors.py",
+      "src/veridist/statistics/_loggamma.py",
+      "src/veridist/statistics/_logmath.py",
+      "src/veridist/statistics/_logprob.py"
+    ],
     "families": [
       "src/veridist/families/__init__.py",
       "src/veridist/families/_evidence.py",
