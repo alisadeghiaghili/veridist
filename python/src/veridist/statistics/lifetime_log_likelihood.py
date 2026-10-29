@@ -69,17 +69,33 @@ parameters.
 
 from __future__ import annotations
 
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from decimal import Decimal, localcontext
 from hashlib import sha256
+from itertools import islice
 from math import exp, expm1, inf, isfinite, log, log1p
 from typing import Final
 
-from veridist.domain.lifetimes import ExactLifetime, RightCensoredLifetime
-from veridist.domain.values import ExactValue, RightCensoredValue
+from veridist.domain._combinations import ANALYTIC_WEIGHTS_MESSAGE
+from veridist.domain._numeric import is_integer
+from veridist.domain.coarsening import CoarseningAssumption
+from veridist.domain.lifetimes import (
+    ExactLifetime,
+    IntervalCensoredLifetime,
+    LeftCensoredLifetime,
+    RightCensoredLifetime,
+)
+from veridist.domain.values import (
+    ExactValue,
+    IntervalCensoredValue,
+    LeftCensoredValue,
+    RightCensoredValue,
+)
+from veridist.engine.errors import CapabilityCode, CapabilityError
 from veridist.engine.streaming import StreamSource, iter_stream
 from veridist.families.lognormal import _log_normal_sf
 from veridist.families.registry import FAMILY_REGISTRY, FamilyId
+from veridist.statistics._log_contributions import BATCH_SIZE, ContributionEvaluator, is_new_data
 from veridist.statistics.distributions import _log_regularized_gamma_q
 from veridist.statistics.log_density import (
     _LOG_MAX_FLOAT,
@@ -88,7 +104,6 @@ from veridist.statistics.log_density import (
     LogDensityResult,
     LogDensitySuccess,
     _decimal_precision,
-    _evaluate_validated_log_density,
     _finite_intermediate,
     _log_ratio,
     _lognormal_needs_decimal,
@@ -113,6 +128,13 @@ SUPPORTED_LIFETIME_FAMILIES: Final = frozenset(
 )
 #: The whole-real-line families the value reducer admits.
 SUPPORTED_VALUE_FAMILIES: Final = frozenset({FamilyId.NORMAL, FamilyId.GUMBEL_RIGHT})
+#: The observation types each reducer admits.
+_LIFETIME_TYPES: Final = frozenset(
+    {ExactLifetime, RightCensoredLifetime, LeftCensoredLifetime, IntervalCensoredLifetime}
+)
+_VALUE_TYPES: Final = frozenset(
+    {ExactValue, RightCensoredValue, LeftCensoredValue, IntervalCensoredValue}
+)
 _FINGERPRINT_DOMAIN: Final = "veridist.lifetime_log_likelihood.v1"
 _VALUE_FINGERPRINT_DOMAIN: Final = "veridist.value_log_likelihood.v1"
 #: Below ``-700`` the Gumbel survival ``1 - exp(-exp(-z))`` is exactly 1 in binary64.
@@ -220,91 +242,142 @@ def _fingerprint(domain: str, family: FamilyId, validated: Mapping[str, float]) 
     return sha256(payload.encode("ascii")).hexdigest()
 
 
+_MISSING: Final = object()
+
+
+def _weighted_rows(
+    chunks: StreamSource[Iterable[object]] | Iterable[Iterable[object]],
+    frequency_weights: Iterable[Iterable[int]] | None,
+) -> Iterator[tuple[object, int]]:
+    """The observations of ``chunks`` one by one with their frequency weight (1 without weights).
+
+    ``frequency_weights`` holds one chunk of weights per chunk of observations, of the same
+    length; a weight is a non-negative integer.
+    """
+
+    weight_chunks = None if frequency_weights is None else iter(frequency_weights)
+    for chunk in iter_stream(chunks):
+        if not isinstance(chunk, Iterable):
+            raise TypeError("each chunk must be an iterable of observations")
+        if weight_chunks is None:
+            for observation in chunk:
+                yield observation, 1
+            continue
+        weights = next(weight_chunks, _MISSING)
+        if weights is _MISSING:
+            raise ValueError("frequency_weights must have one chunk per chunk of observations")
+        if not isinstance(weights, Iterable):
+            raise TypeError("each chunk of frequency_weights must be an iterable of integers")
+        iterator = iter(weights)
+        for observation in chunk:
+            weight = next(iterator, _MISSING)
+            if weight is _MISSING:
+                raise ValueError("frequency_weights must match observations")
+            if not is_integer(weight) or weight < 0:  # type: ignore[operator]
+                raise TypeError("frequency_weights must be non-negative integers")
+            yield observation, int(weight)  # type: ignore[call-overload]
+        if next(iterator, _MISSING) is not _MISSING:
+            raise ValueError("frequency_weights must match observations")
+    if weight_chunks is not None and next(weight_chunks, _MISSING) is not _MISSING:
+        raise ValueError("frequency_weights must have one chunk per chunk of observations")
+
+
 def _reduce(
     family: FamilyId,
     chunks: StreamSource[Iterable[object]] | Iterable[Iterable[object]],
     validated: Mapping[str, float],
     fingerprint_domain: str,
-    exact_type: type,
-    censored_type: type,
-    read: Callable[[object], float],
+    admitted: frozenset[type],
+    frequency_weights: Iterable[Iterable[int]] | None,
 ) -> LogLikelihoodResult:
     fingerprint = _fingerprint(fingerprint_domain, family, validated)
     identity = tuple(
         validated[parameter.name].hex() for parameter in FAMILY_REGISTRY.families[family].parameters
     )
+    evaluator = ContributionEvaluator(family, validated, _evaluate_log_survival)
     accumulator = _ExactAccumulator()
-    for chunk in iter_stream(chunks):
-        if not isinstance(chunk, Iterable):
-            raise TypeError("each chunk must be an iterable of observations")
-        for observation in chunk:
-            evaluated: LogDensityResult
-            if type(observation) is exact_type:
-                evaluated = _evaluate_validated_log_density(family, validated, read(observation))
-            elif type(observation) is censored_type:
-                evaluated = _evaluate_log_survival(family, validated, read(observation))
-            else:
-                evaluated = LogDensityFailure(family, LogDensityErrorCode.NONFINITE_OBSERVATION)
-            if type(evaluated) is LogDensityFailure:
-                return LogLikelihoodFailure(
-                    family,
-                    LogLikelihoodErrorCode.SCALAR_EVALUATION_FAILURE,
-                    accumulator.observation_count,
-                    evaluated.code,
-                )
-            assert isinstance(evaluated, LogDensitySuccess)
+    assumption: CoarseningAssumption | None = None
+
+    def failure(
+        code: LogLikelihoodErrorCode, scalar: LogDensityErrorCode | None
+    ) -> LogLikelihoodFailure:
+        return LogLikelihoodFailure(
+            family, code, accumulator.observation_count, scalar, assumption
+        )
+
+    rows = _weighted_rows(chunks, frequency_weights)
+    while batch := list(islice(rows, BATCH_SIZE)):
+        usable: list[tuple[object, int]] = []
+        foreign = False
+        for observation, weight in batch:
+            if type(observation) not in admitted:
+                foreign = True
+                break
+            usable.append((observation, weight))
+        if assumption is None and any(is_new_data(observation) for observation, _ in usable):
+            assumption = CoarseningAssumption.INDEPENDENT_CENSORING_AND_TRUNCATION
+        weighted = [(observation, weight) for observation, weight in usable if weight > 0]
+        outcomes = evaluator.evaluate([observation for observation, _ in weighted])
+        for (_, weight), outcome in zip(weighted, outcomes, strict=True):
+            if isinstance(outcome, LogDensityErrorCode):
+                return failure(LogLikelihoodErrorCode.SCALAR_EVALUATION_FAILURE, outcome)
             try:
-                accumulator.add(evaluated.log_density)
+                accumulator.add(outcome, weight)
             except _ObservationLimitExceeded:
-                return LogLikelihoodFailure(
-                    family,
-                    LogLikelihoodErrorCode.OBSERVATION_LIMIT_EXCEEDED,
-                    accumulator.observation_count,
-                    None,
-                )
+                return failure(LogLikelihoodErrorCode.OBSERVATION_LIMIT_EXCEEDED, None)
+        if foreign:
+            return failure(
+                LogLikelihoodErrorCode.SCALAR_EVALUATION_FAILURE,
+                LogDensityErrorCode.NONFINITE_OBSERVATION,
+            )
     state = LogLikelihoodState._create(
         family, fingerprint, accumulator.observation_count, accumulator.total_units, identity
     )
     try:
         total = state.finalize()
     except _FinalTotalNotRepresentable:
-        return LogLikelihoodFailure(
-            family,
-            LogLikelihoodErrorCode.FINAL_TOTAL_NOT_REPRESENTABLE,
-            state.observation_count,
-            None,
-        )
-    return LogLikelihoodSuccess(family, fingerprint, state.observation_count, total)
+        return failure(LogLikelihoodErrorCode.FINAL_TOTAL_NOT_REPRESENTABLE, None)
+    return LogLikelihoodSuccess(family, fingerprint, state.observation_count, total, assumption)
 
 
-def _lifetime_time(observation: object) -> float:
-    assert isinstance(observation, ExactLifetime | RightCensoredLifetime)
-    return float(observation.time)
-
-
-def _real_value(observation: object) -> float:
-    assert isinstance(observation, ExactValue | RightCensoredValue)
-    return observation.value
+def _refuse_analytic_weights(analytic_weights: object) -> None:
+    if analytic_weights is not None:
+        raise CapabilityError(CapabilityCode.ANALYTIC_WEIGHTS_UNSUPPORTED, ANALYTIC_WEIGHTS_MESSAGE)
 
 
 def reduce_lifetime_log_likelihood_chunks(
     family: FamilyId,
     chunks: StreamSource[Iterable[object]] | Iterable[Iterable[object]],
     /,
+    *,
+    frequency_weights: Iterable[Iterable[int]] | None = None,
+    analytic_weights: object = None,
     **parameters: object,
 ) -> LogLikelihoodResult:
-    """Reduce exact and right-censored lifetimes into one log-likelihood.
+    """Reduce lifetime observations of any censoring kind and window into one log-likelihood.
 
     ``family`` must be ``EXPONENTIAL``, ``WEIBULL_MIN``, ``LOGNORMAL`` or
     ``GAMMA`` (any other family raises ``ValueError``; the real-line families
     use :func:`reduce_value_log_likelihood_chunks`), and ``parameters`` are its
     canonical parameters, validated before iteration. Each observation must be
-    an ``ExactLifetime`` (log-density term) or a ``RightCensoredLifetime``
-    (log-survival term); anything else, and every non-positive time, is a
-    typed failure rather than an exception. ``processed_count`` on a failure
-    counts only the successful observations before the terminal one and is
-    not a complete-input count; ``observation_count`` on success is the number
-    of exact plus censored observations.
+    an ``ExactLifetime`` (log-density term), a ``RightCensoredLifetime``
+    (log-survival term), a ``LeftCensoredLifetime`` (log-cdf term) or an
+    ``IntervalCensoredLifetime`` (log-probability of the interval), each optionally
+    carrying a truncation window whose log-probability is subtracted; anything else, and
+    every non-positive exact time, is a typed failure rather than an exception.
+    ``processed_count`` on a failure counts only the successful observations before the
+    terminal one and is not a complete-input count; ``observation_count`` on success is
+    the number of observations (replicates included).
+
+    ``frequency_weights`` is an optional iterable of chunks of non-negative integers, one
+    chunk per chunk of observations and of the same length: a row of weight ``w`` stands for
+    ``w`` replicates (its term is added ``w`` times, exactly, and counted ``w`` times) and a
+    zero weight removes it, so the result equals that of the replicated rows bit for bit.
+    ``analytic_weights`` is refused with a ``CapabilityError`` until they are available.
+
+    When the data holds a left- or interval-censored observation or a truncation window the
+    result records ``coarsening_assumption``, the independence assumption behind those terms;
+    for data of exact and right-censored observations without a window it is ``None``.
 
     ``chunks`` is consumed once; an already exhausted one-shot iterator is
     indistinguishable from an empty input and reduces to a success with
@@ -316,14 +389,9 @@ def reduce_lifetime_log_likelihood_chunks(
     validated = _validate_family_and_parameters(family, parameters)
     if family not in SUPPORTED_LIFETIME_FAMILIES:
         raise ValueError("family must be one of exponential, weibull_min, lognormal or gamma")
+    _refuse_analytic_weights(analytic_weights)
     return _reduce(
-        family,
-        chunks,
-        validated,
-        _FINGERPRINT_DOMAIN,
-        ExactLifetime,
-        RightCensoredLifetime,
-        _lifetime_time,
+        family, chunks, validated, _FINGERPRINT_DOMAIN, _LIFETIME_TYPES, frequency_weights
     )
 
 
@@ -331,32 +399,30 @@ def reduce_value_log_likelihood_chunks(
     family: FamilyId,
     chunks: StreamSource[Iterable[object]] | Iterable[Iterable[object]],
     /,
+    *,
+    frequency_weights: Iterable[Iterable[int]] | None = None,
+    analytic_weights: object = None,
     **parameters: object,
 ) -> LogLikelihoodResult:
-    """Reduce exact and right-censored real values into one log-likelihood.
+    """Reduce real-valued observations of any censoring kind and window into one log-likelihood.
 
     The counterpart of :func:`reduce_lifetime_log_likelihood_chunks` for the
     whole-real-line families: ``family`` must be ``NORMAL`` or
     ``GUMBEL_RIGHT`` (any other family raises ``ValueError``). Each
-    observation must be an ``ExactValue`` (log-density term) or a
-    ``RightCensoredValue`` (log-survival term); a lifetime observation or any
-    other object is a typed failure, and there is no support restriction on
-    the finite values. Everything else, including the single-pass behaviour of
-    ``chunks`` and the failure accounting, is as documented for the lifetime
-    reducer.
+    observation must be an ``ExactValue``, ``RightCensoredValue``, ``LeftCensoredValue``
+    or ``IntervalCensoredValue``, each optionally with a truncation window; a lifetime
+    observation or any other object is a typed failure, and there is no support restriction
+    on the finite values. Everything else, including the weights, the coarsening assumption,
+    the single-pass behaviour of ``chunks`` and the failure accounting, is as documented for
+    the lifetime reducer.
     """
 
     validated = _validate_family_and_parameters(family, parameters)
     if family not in SUPPORTED_VALUE_FAMILIES:
         raise ValueError("family must be one of normal or gumbel_right")
+    _refuse_analytic_weights(analytic_weights)
     return _reduce(
-        family,
-        chunks,
-        validated,
-        _VALUE_FINGERPRINT_DOMAIN,
-        ExactValue,
-        RightCensoredValue,
-        _real_value,
+        family, chunks, validated, _VALUE_FINGERPRINT_DOMAIN, _VALUE_TYPES, frequency_weights
     )
 
 

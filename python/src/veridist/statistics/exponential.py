@@ -7,7 +7,14 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from math import isfinite
 
-from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation, RightCensoredLifetime
+from veridist.domain._combinations import fit_unavailable
+from veridist.domain.lifetimes import (
+    ExactLifetime,
+    IntervalCensoredLifetime,
+    LeftCensoredLifetime,
+    LifetimeObservation,
+    RightCensoredLifetime,
+)
 from veridist.engine.retry import PureReducer
 
 
@@ -17,6 +24,24 @@ class _ReductionOverflow(Exception):
     def __init__(self, observation_count: int, event_count: int) -> None:
         self.observation_count = observation_count
         self.event_count = event_count
+
+
+def _plain_lifetime(observation: object) -> type:
+    """The type of an exact or right-censored lifetime without a truncation window.
+
+    The other lifetime kinds, and any kind with a window, are refused with the typed
+    ``CapabilityError`` of the fits (the exponential closed form does not take them yet); any
+    other object is a ``TypeError``.
+    """
+
+    kind = type(observation)
+    if kind is ExactLifetime or kind is RightCensoredLifetime:
+        if observation.truncation_lower is None and observation.truncation_upper is None:  # type: ignore[attr-defined]
+            return kind
+        raise fit_unavailable()
+    if kind is LeftCensoredLifetime or kind is IntervalCensoredLifetime:
+        raise fit_unavailable()
+    raise TypeError("observation must be an exact or right-censored lifetime")
 
 
 def _require_count(value: int, name: str) -> None:
@@ -92,11 +117,8 @@ class ExponentialReductionState:
     def add(self, observation: LifetimeObservation) -> ExponentialReductionState:
         """Return a new state after one validated exact or right-censored observation."""
 
-        if type(observation) is ExactLifetime:
-            return self._add_value(float(observation.time), 1, 1)
-        if type(observation) is RightCensoredLifetime:
-            return self._add_value(float(observation.time), 1, 0)
-        raise TypeError("observation must be an exact or right-censored lifetime")
+        kind = _plain_lifetime(observation)
+        return self._add_value(float(observation.time), 1, 1 if kind is ExactLifetime else 0)
 
     def merge(self, other: ExponentialReductionState) -> ExponentialReductionState:
         """Merge two compatible states; partition order has a tolerance-only contract."""
@@ -183,14 +205,9 @@ def reduce_exponential_chunks(
                 except _ReductionOverflow as error:
                     overflow_counts = (error.observation_count, error.event_count)
                     continue
-            if type(observation) is ExactLifetime:
-                assert overflow_counts is not None
-                overflow_counts = (overflow_counts[0] + 1, overflow_counts[1] + 1)
-            elif type(observation) is RightCensoredLifetime:
-                assert overflow_counts is not None
-                overflow_counts = (overflow_counts[0] + 1, overflow_counts[1])
-            else:
-                raise TypeError("observation must be an exact or right-censored lifetime")
+            events = 1 if _plain_lifetime(observation) is ExactLifetime else 0
+            assert overflow_counts is not None
+            overflow_counts = (overflow_counts[0] + 1, overflow_counts[1] + events)
     if overflow_counts is not None:
         raise _ReductionOverflow(*overflow_counts)
     return state

@@ -6,9 +6,26 @@ from collections.abc import Callable, Iterable, Sequence
 from math import exp, inf, isfinite
 from typing import TypeVar
 
+from veridist.domain._combinations import (
+    ANALYTIC_WEIGHTS_MESSAGE,
+    KEYWORD_MESSAGES,
+    require_fit_supported,
+)
 from veridist.domain._numeric import is_integer
-from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation, RightCensoredLifetime
-from veridist.domain.values import ExactValue, RealObservation, RightCensoredValue
+from veridist.domain.lifetimes import (
+    ExactLifetime,
+    IntervalCensoredLifetime,
+    LeftCensoredLifetime,
+    LifetimeObservation,
+    RightCensoredLifetime,
+)
+from veridist.domain.values import (
+    ExactValue,
+    IntervalCensoredValue,
+    LeftCensoredValue,
+    RealObservation,
+    RightCensoredValue,
+)
 from veridist.engine.errors import CapabilityCode, CapabilityError
 
 _Observation = TypeVar("_Observation")
@@ -24,7 +41,9 @@ def admitted_observations(
 ) -> tuple[LifetimeObservation, ...]:
     """Validate v1 semantics and expand integer frequencies exactly.
 
-    Only ``ExactLifetime`` and ``RightCensoredLifetime`` are admitted; any other
+    Only ``ExactLifetime`` and ``RightCensoredLifetime`` without a truncation window are
+    admitted.  The other lifetime kinds (left- and interval-censored, or any kind with a
+    window) raise a ``CapabilityError`` until fitting for them is available; any other
     observation (including the real-valued types) raises ``TypeError``.
     """
 
@@ -34,7 +53,12 @@ def admitted_observations(
         analytic_weights=analytic_weights,
         censoring=censoring,
         truncation=truncation,
-        kinds=(ExactLifetime, RightCensoredLifetime),
+        kinds=(
+            ExactLifetime,
+            RightCensoredLifetime,
+            LeftCensoredLifetime,
+            IntervalCensoredLifetime,
+        ),
         message="observations must be exact or independently right-censored lifetimes",
     )
 
@@ -49,8 +73,10 @@ def admitted_real_observations(
 ) -> tuple[RealObservation, ...]:
     """Validate v1 semantics and expand integer frequencies exactly, for real values.
 
-    Only ``ExactValue`` and ``RightCensoredValue`` are admitted; any other
-    observation (including the lifetime types) raises ``TypeError``.
+    Only ``ExactValue`` and ``RightCensoredValue`` without a truncation window are admitted.
+    The other value kinds (left- and interval-censored, or any kind with a window) raise a
+    ``CapabilityError`` until fitting for them is available; any other observation (including
+    the lifetime types) raises ``TypeError``.
     """
 
     return _admit(
@@ -59,7 +85,7 @@ def admitted_real_observations(
         analytic_weights=analytic_weights,
         censoring=censoring,
         truncation=truncation,
-        kinds=(ExactValue, RightCensoredValue),
+        kinds=(ExactValue, RightCensoredValue, LeftCensoredValue, IntervalCensoredValue),
         message="observations must be exact or independently right-censored real values",
     )
 
@@ -71,22 +97,25 @@ def _admit(
     analytic_weights: object | None,
     censoring: str,
     truncation: object | None,
-    kinds: tuple[type, type],
+    kinds: tuple[type, ...],
     message: str,
 ) -> tuple[_Observation, ...]:
     if analytic_weights is not None:
-        raise CapabilityError(CapabilityCode.ANALYTIC_WEIGHTS_UNSUPPORTED)
+        raise CapabilityError(CapabilityCode.ANALYTIC_WEIGHTS_UNSUPPORTED, ANALYTIC_WEIGHTS_MESSAGE)
     if truncation is not None:
-        raise CapabilityError(CapabilityCode.TRUNCATION_UNSUPPORTED)
-    unsupported = {"interval": CapabilityCode.INTERVAL_CENSORING_UNSUPPORTED,
-                   "left": CapabilityCode.LEFT_CENSORING_UNSUPPORTED}
+        raise CapabilityError(CapabilityCode.TRUNCATION_UNSUPPORTED, KEYWORD_MESSAGES["truncation"])
+    unsupported = {
+        "interval": CapabilityCode.INTERVAL_CENSORING_UNSUPPORTED,
+        "left": CapabilityCode.LEFT_CENSORING_UNSUPPORTED,
+    }
     if censoring in unsupported:
-        raise CapabilityError(unsupported[censoring])
+        raise CapabilityError(unsupported[censoring], KEYWORD_MESSAGES["censoring"])
     if censoring != "right":
         raise ValueError("censoring must be 'right', 'left', or 'interval'")
     values = tuple(observations)
     if any(type(value) not in kinds for value in values):
         raise TypeError(message)
+    require_fit_supported(values)
     if frequency_weights is None:
         return values
     weights = tuple(frequency_weights)

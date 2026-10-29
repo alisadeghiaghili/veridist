@@ -21,8 +21,11 @@
   "shards": {
     "domain": [
       "src/veridist/domain/__init__.py",
+      "src/veridist/domain/_combinations.py",
       "src/veridist/domain/_numeric.py",
+      "src/veridist/domain/_truncation.py",
       "src/veridist/domain/arrays.py",
+      "src/veridist/domain/coarsening.py",
       "src/veridist/domain/lifetimes.py",
       "src/veridist/domain/values.py"
     ],
@@ -37,6 +40,7 @@
       "src/veridist/statistics/log_likelihood.py"
     ],
     "statistics-kernels": [
+      "src/veridist/statistics/_log_contributions.py",
       "src/veridist/statistics/_logerrors.py",
       "src/veridist/statistics/_loggamma.py",
       "src/veridist/statistics/_logmath.py",

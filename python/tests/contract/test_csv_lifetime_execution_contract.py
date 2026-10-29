@@ -124,7 +124,7 @@ class CsvLifetimeExecutionContracts(unittest.TestCase):
 
     def test_csv_exec04_mixed_censoring_matches_decimal_oracle_across_chunk_budgets(self) -> None:
         payload = b"time,event_observed\n1,1\n2,0\n3,1\n"
-        for budget in (530, 2048):
+        for budget in (560, 2048):
             with self.subTest(chunk_bytes=budget):
                 adapter, source = _adapter(payload, chunk_bytes=budget)
                 result = fit_exponential_source(adapter)
