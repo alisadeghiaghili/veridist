@@ -18,8 +18,15 @@ from math import exp, fsum, isfinite, lgamma, log, pi
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
+from veridist.domain.coarsening import CoarseningAssumption
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
 from veridist.families._evidence import FitEvidence
+from veridist.families._fit_facts import (
+    FitDiagnostics,
+    ObservationSummary,
+    OptimumKind,
+    summarize_observations,
+)
 from veridist.families._reliability import (
     admitted_observations,
     expand_bracket,
@@ -70,6 +77,10 @@ class GammaFitFailure:
     complete: bool = False
     converged: bool = False
     restart_failures: int = 0
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
 
     @property
     def family(self) -> FamilyId:
@@ -99,6 +110,12 @@ class GammaFitSuccess:
     complete: bool = True
     location: float = 0.0
     _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
+    optimum: OptimumKind = field(default=OptimumKind.UNASSESSED, compare=False, repr=False)
+    diagnostics: FitDiagnostics | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.shape) and self.shape > 0.0):
@@ -175,6 +192,11 @@ def fit_gamma(
 ) -> GammaFit:
     """Fit a fixed-location gamma distribution by maximum likelihood.
 
+    The four value (or lifetime) observation kinds, each with or without a truncation window, are
+    accepted: data with left- or interval-censored rows or windows is fitted by maximum
+    likelihood with a damped Newton method and its result records the coarsening assumption,
+    the counts of its rows and what is claimed about the point (see :func:`veridist.fit`).
+
     ``observations`` are :class:`~veridist.domain.lifetimes.ExactLifetime` and
     :class:`~veridist.domain.lifetimes.RightCensoredLifetime` items with
     strictly positive times; the real-valued observation types raise
@@ -206,12 +228,15 @@ def fit_gamma(
     )
     count = len(values)
     events = sum(type(value) is ExactLifetime for value in values)
+    summary = summarize_observations(values)
 
     def failure(code: GammaFitFailureCode) -> GammaFitFailure:
-        return GammaFitFailure(code, count, events, count - events)
+        return GammaFitFailure(code, count, events, count - events, observation_summary=summary)
 
     if count == 0:
         return failure(GammaFitFailureCode.EMPTY_SAMPLE)
+    if summary.is_new_data:
+        return _fit_new_data(values, summary)
     if events == 0:
         return failure(GammaFitFailureCode.NO_OBSERVED_EVENTS)
     if not positive_support(values):
@@ -286,9 +311,44 @@ def fit_gamma(
             events,
             count - events,
             _evidence=FitEvidence(exact, censored),
+            observation_summary=summary,
         )
     except (ArithmeticError, OverflowError, ValueError):
         return failure(GammaFitFailureCode.OPTIMIZER_EXHAUSTED)
+
+
+def _fit_new_data(values: tuple[LifetimeObservation, ...], summary: ObservationSummary) -> GammaFit:
+    """Fit data with left- or interval-censored rows or truncation windows."""
+
+    from veridist.families._censored_fit import CensoredRefusal, estimate
+
+    count = len(values)
+    events = summary.exact
+    outcome = estimate(FamilyId.GAMMA, values, summary)
+    assumption = CoarseningAssumption.INDEPENDENT_CENSORING_AND_TRUNCATION
+    if isinstance(outcome, CensoredRefusal):
+        return GammaFitFailure(
+            GammaFitFailureCode[outcome.code],
+            count,
+            events,
+            count - events,
+            observation_summary=summary,
+            coarsening_assumption=assumption,
+        )
+    shape, scale = outcome.parameters
+    return GammaFitSuccess(
+        shape,
+        scale,
+        outcome.log_likelihood,
+        count,
+        events,
+        count - events,
+        _evidence=FitEvidence(rows=outcome.rows),
+        observation_summary=summary,
+        coarsening_assumption=assumption,
+        optimum=outcome.optimum,
+        diagnostics=outcome.diagnostics,
+    )
 
 
 __all__ = [

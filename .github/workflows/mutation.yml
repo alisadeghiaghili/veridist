@@ -26,6 +26,7 @@ jobs:
           - statistics
           - statistics-kernels
           - families
+          - families-censored
           - engine
           - scale-fit
           - scale-inference

@@ -1,13 +1,15 @@
-"""The fits refuse the new observation kinds and windows, and the keywords point to them.
+"""What the fits still refuse, and where censored and truncated data is not taken.
 
-Fitting censored and truncated data is not available yet: every fit (``fit``, the per-family
-fits, the exponential reducers) refuses a left- or interval-censored observation, and any kind
-with a truncation window, with the typed ``DATA_KIND_FIT_UNAVAILABLE`` and the reason "not
-supported until fitting for this data kind is available", instead of ignoring the censoring or
-the window.  The ``censoring=`` and ``truncation=`` keywords keep their exception types and
-codes and say, in their message, to declare censoring and truncation with the typed observations
-or the column constructors (CENS-PROV-01).  Goodness of fit and the scale engine do not take
-observation objects at all.
+The fits take left- and interval-censored observations and truncation windows (see
+``test_censored_fits_contract``); what stays refused is pinned here.  The exponential reducers
+(``ExponentialReductionState``, ``reduce_exponential_chunks``) keep refusing them with the typed
+``DATA_KIND_FIT_UNAVAILABLE`` and the reason "not supported until fitting for this data kind is
+available": their state holds the number of events and the total time alone, which is not the
+sufficient statistic of such data.  The ``censoring=`` and ``truncation=`` keywords keep their
+exception types and codes and say, in their message, to declare censoring and truncation with
+the typed observations or the column constructors (CENS-PROV-01).  Analytic weights and a fixed
+Weibull shape with such data are refused with typed codes, and goodness of fit and the scale
+engine do not take observation objects at all (CENS-GOF-01).
 """
 
 from __future__ import annotations
@@ -27,7 +29,6 @@ from veridist import (
     LeftCensoredValue,
     RightCensoredLifetime,
     RightCensoredValue,
-    fit,
     fit_exponential,
     fit_gamma,
     fit_gumbel_right,
@@ -79,29 +80,24 @@ class FitRefusalTests(unittest.TestCase):
         self.assertIs(captured.exception.code, CapabilityCode.DATA_KIND_FIT_UNAVAILABLE)
         self.assertEqual(str(captured.exception), UNAVAILABLE)
 
-    def test_every_fit_refuses_every_new_lifetime_kind_and_window(self) -> None:
-        for family, function in LIFETIME_FITS:
-            for row in refused_lifetimes():
-                data = [ExactLifetime(3.0), ExactLifetime(5.0), row]
-                with self.subTest(family=family, row=row):
-                    self.assert_unavailable(lambda f=function, d=data: f(d))
-                    self.assert_unavailable(lambda f=family, d=data: fit(f, d))
+    def test_a_fixed_weibull_shape_is_refused_for_the_new_data_kinds_only(self) -> None:
+        for row in refused_lifetimes():
+            data = [ExactLifetime(3.0), ExactLifetime(5.0), row]
+            with self.subTest(row=row):
+                with self.assertRaises(CapabilityError) as captured:
+                    fit_weibull(data, fixed_shape=1.5)
+                self.assertIs(captured.exception.code, CapabilityCode.DATA_KIND_FIT_UNAVAILABLE)
+                self.assertIn("fixed_shape", str(captured.exception))
+        plain = fit_weibull([ExactLifetime(3.0), ExactLifetime(5.0)], fixed_shape=1.5)
+        self.assertEqual(plain.shape, 1.5)
 
-    def test_every_fit_refuses_every_new_value_kind_and_window(self) -> None:
-        for family, function in VALUE_FITS:
-            for row in refused_values():
-                data = [ExactValue(3.0), ExactValue(5.0), row]
-                with self.subTest(family=family, row=row):
-                    self.assert_unavailable(lambda f=function, d=data: f(d))
-                    self.assert_unavailable(lambda f=family, d=data: fit(f, d))
-
-    def test_a_refused_row_is_refused_wherever_it_stands_and_with_weights(self) -> None:
-        row = LeftCensoredLifetime(2.0)
-        for data in ([row], [row, ExactLifetime(3.0)], [ExactLifetime(3.0), row]):
-            self.assert_unavailable(lambda d=data: fit_weibull(d))
-        self.assert_unavailable(
-            lambda: fit_weibull([ExactLifetime(3.0), row], frequency_weights=[2, 1])
-        )
+    def test_analytic_weights_are_refused_for_every_data_kind(self) -> None:
+        for row in refused_lifetimes():
+            data = [ExactLifetime(3.0), ExactLifetime(5.0), row]
+            with self.subTest(row=row):
+                with self.assertRaises(CapabilityError) as captured:
+                    fit_weibull(data, analytic_weights=[1.0, 1.0, 1.0])
+                self.assertIs(captured.exception.code, CapabilityCode.ANALYTIC_WEIGHTS_UNSUPPORTED)
 
     def test_the_exponential_reducers_refuse_them_too_even_after_an_overflow(self) -> None:
         for row in refused_lifetimes():

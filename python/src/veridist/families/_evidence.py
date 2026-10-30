@@ -27,21 +27,27 @@ class FitEvidence:
     a fit with a fixed parameter does not describe the fixed parameter, so no
     uncertainty is reported for it.
 
+    A sample with left- or interval-censored rows or truncation windows is kept as ``rows``
+    (the normalized rows of :mod:`veridist.families._censored_rows`: kind, bounds and window)
+    instead of the two tuples, which then stay empty.
+
     The object keeps the values, not the observation objects, and is created by the
     fit functions; it is not part of the public interface.
     """
 
-    __slots__ = ("_cache", "censored", "exact", "fixed")
+    __slots__ = ("_cache", "censored", "exact", "fixed", "rows")
 
     def __init__(
         self,
         exact: tuple[float, ...] = (),
         censored: tuple[float, ...] = (),
         fixed: tuple[str, ...] = (),
+        rows: Any = None,
     ) -> None:
         self.exact = exact
         self.censored = censored
         self.fixed = fixed
+        self.rows = rows
         self._cache: dict[tuple[Any, ...], Any] = {}
 
     def uncertainty(

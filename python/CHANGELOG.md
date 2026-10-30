@@ -46,6 +46,40 @@ Veridist release record.
   observation types or the column constructors. The fits refuse the new
   observation types and any window with the new code
   `DATA_KIND_FIT_UNAVAILABLE`, until fitting for them is available.
+- Maximum-likelihood fits of left- and interval-censored data and of truncated data, in
+  memory, for all six families (`exponential`, `normal`, `gamma`, `weibull_min`,
+  `lognormal`, `gumbel_right`): `fit` and `fit_<family>` take every kind of observation
+  with a truncation window per row (left, right or two-sided), with or without integer
+  frequency weights, and return the family's existing result and failure types. The
+  estimate is a damped Newton maximization on exact sums, in the coordinates `rate`,
+  `(mu / sigma, 1 / sigma)` and `(log shape, log scale)`, with at most 20 iterations from a
+  nine-point start grid, so the same rows give the same estimate whatever their order. The
+  exponential with exact and right-censored rows and left truncation has its closed form,
+  and the Weibull minimum with those rows and left truncation is the root of its
+  one-parameter profile (the number of stationary points it saw is recorded). A flat
+  likelihood, or one with no interior maximum, ends as `OPTIMIZER_EXHAUSTED`,
+  `BOUNDARY_SOLUTION` or `DEGENERATE_SAMPLE`, never as an estimate; a sample in which every
+  row is right-censored is `NO_OBSERVED_EVENTS`.
+- Every in-memory fit result carries `observation_summary` (the number of exact,
+  right-, left- and interval-censored rows and of untruncated, left-, right- and
+  two-sided-truncated rows), `coarsening_assumption` (the independent censoring and
+  truncation assumed by the estimate; `None` for exact and right-censored data without a
+  window, whose results are unchanged), `optimum` (`closed_form`, `global_maximum` where
+  the likelihood is concave in the coordinates of the optimizer, or `stationary_point`
+  where it is not known to be, which then is a certified stationary point and no claimed
+  global maximum, found from the best of the start grid and one further start) and
+  `diagnostics` (passes, iterations, starts). `ObservationSummary`, `OptimumKind` and
+  `FitDiagnostics` are in `veridist.families`. `LognormalFitFailureCode` gains
+  `DEGENERATE_SAMPLE` and `ExponentialFitFailureCode` gains `OPTIMIZER_EXHAUSTED` and
+  `BOUNDARY_SOLUTION`, for the new data kinds only.
+- Uncertainty of those fits through the existing `uncertainty()`: the covariance is the
+  inverse of the observed information (analytic gradients and Hessians of the probability
+  of each row; the gamma shape by central differences, as before), and the standard
+  errors, the Wald intervals, the profile-likelihood intervals and the intervals of the
+  mean, quantile and survival probability are those of the same formulas for that
+  likelihood. `UncertaintyUnavailable` states why where the information cannot be
+  inverted. The exact chi-square interval of the exponential stays available for
+  uncensored data with no window or a left window.
 
 ### Changed
 
@@ -54,6 +88,17 @@ Veridist release record.
   `RightCensoredValue` take 16 bytes more each in memory. The CSV adapter,
   which measures the retained size of its chunks, therefore needs a slightly
   larger `chunk_bytes` for the smallest chunks.
+- The fits no longer refuse left- and interval-censored observations and truncation
+  windows with `DATA_KIND_FIT_UNAVAILABLE`: every cell of the combination table without
+  analytic weights is fitted. The refusal stays for the exponential reducers
+  (`ExponentialReductionState`, `reduce_exponential_chunks`), whose state cannot hold such
+  data, for a fixed Weibull shape (`fixed_shape=`) with such data, and for analytic weights.
+  Goodness of fit, by refit Monte Carlo or `assess_families`, still refuses censored and
+  truncated observations with the `TypeError` of earlier releases, before it fits anything.
+- The exponential result's `censoring_assumption` is `independent_right_censoring` for the data
+  earlier releases accepted and `independent_censoring_and_truncation` for the rest, and its
+  `total_time` is, for a fit by the Newton method, the total of the pseudo-sample (exact times
+  and censoring points, interval midpoints).
 
 ## [2.2.1] - 2026-10-25
 

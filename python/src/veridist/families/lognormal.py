@@ -10,8 +10,15 @@ from math import erfc, exp, fsum, isfinite, log, log1p, pi, sqrt
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
+from veridist.domain.coarsening import CoarseningAssumption
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
 from veridist.families._evidence import FitEvidence
+from veridist.families._fit_facts import (
+    FitDiagnostics,
+    ObservationSummary,
+    OptimumKind,
+    summarize_observations,
+)
 from veridist.families._reliability import (
     admitted_observations,
     bounded_maximize,
@@ -43,6 +50,10 @@ class LognormalFitFailureCode(StrEnum):
     INVALID_SUPPORT = "INVALID_SUPPORT"
     OPTIMIZER_EXHAUSTED = "OPTIMIZER_EXHAUSTED"
     BOUNDARY_SOLUTION = "BOUNDARY_SOLUTION"
+    DEGENERATE_SAMPLE = "DEGENERATE_SAMPLE"
+    # Only for data with left- or interval-censored rows or truncation windows: the exact
+    # minimum and maximum of the pseudo-sample are equal.  Data of exact and right-censored rows
+    # without a window keeps its earlier codes.
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +72,10 @@ class LognormalFitFailure:
     complete: bool = False
     converged: bool = False
     restart_failures: int = 0
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
 
     @property
     def family(self) -> FamilyId:
@@ -92,6 +107,12 @@ class LognormalFitSuccess:
     family: FamilyId = FamilyId.LOGNORMAL
     location: float = 0.0
     _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
+    optimum: OptimumKind = field(default=OptimumKind.UNASSESSED, compare=False, repr=False)
+    diagnostics: FitDiagnostics | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.mu_log) and isfinite(self.sigma_log) and self.sigma_log > 0.0):
@@ -157,7 +178,13 @@ def fit_lognormal(
     censoring: str = "right",
     truncation: object | None = None,
 ) -> LognormalFit:
-    """Fit a Lognormal MLE for admitted v1 exact/right-censored observations."""
+    """Fit a Lognormal MLE for admitted v1 exact/right-censored observations.
+
+    The four value (or lifetime) observation kinds, each with or without a truncation window, are
+    accepted: data with left- or interval-censored rows or windows is fitted by maximum
+    likelihood with a damped Newton method and its result records the coarsening assumption,
+    the counts of its rows and what is claimed about the point (see :func:`veridist.fit`).
+    """
 
     values = admitted_observations(
         observations,
@@ -168,10 +195,15 @@ def fit_lognormal(
     )
     count = len(values)
     events = sum(type(value) is ExactLifetime for value in values)
+    summary = summarize_observations(values)
+
     def failure(code: LognormalFitFailureCode) -> LognormalFitFailure:
-        return LognormalFitFailure(code, count, events, count - events)
+        return LognormalFitFailure(code, count, events, count - events, observation_summary=summary)
+
     if count == 0:
         return failure(LognormalFitFailureCode.EMPTY_SAMPLE)
+    if summary.is_new_data:
+        return _fit_new_data(values, summary)
     if events == 0:
         return failure(LognormalFitFailureCode.NO_OBSERVED_EVENTS)
     if not positive_support(values):
@@ -266,7 +298,50 @@ def fit_lognormal(
         tuple(float(value.time) for value in values if type(value) is not ExactLifetime),
     )
     return LognormalFitSuccess(
-        mu, sigma, likelihood, count, events, count - events, _evidence=evidence
+        mu,
+        sigma,
+        likelihood,
+        count,
+        events,
+        count - events,
+        _evidence=evidence,
+        observation_summary=summary,
+    )
+
+
+def _fit_new_data(
+    values: tuple[LifetimeObservation, ...], summary: ObservationSummary
+) -> LognormalFit:
+    """Fit data with left- or interval-censored rows or truncation windows."""
+
+    from veridist.families._censored_fit import CensoredRefusal, estimate
+
+    count = len(values)
+    events = summary.exact
+    outcome = estimate(FamilyId.LOGNORMAL, values, summary)
+    assumption = CoarseningAssumption.INDEPENDENT_CENSORING_AND_TRUNCATION
+    if isinstance(outcome, CensoredRefusal):
+        return LognormalFitFailure(
+            LognormalFitFailureCode[outcome.code],
+            count,
+            events,
+            count - events,
+            observation_summary=summary,
+            coarsening_assumption=assumption,
+        )
+    mu_log, sigma_log = outcome.parameters
+    return LognormalFitSuccess(
+        mu_log,
+        sigma_log,
+        outcome.log_likelihood,
+        count,
+        events,
+        count - events,
+        _evidence=FitEvidence(rows=outcome.rows),
+        observation_summary=summary,
+        coarsening_assumption=assumption,
+        optimum=outcome.optimum,
+        diagnostics=outcome.diagnostics,
     )
 
 

@@ -8,9 +8,10 @@ one table, :func:`cell_status`, and the entry points that gate their input consu
 
 * ``LOG_LIKELIHOOD``: all sixteen censoring and truncation cells, with no weights or with
   integer frequency weights.
-* ``FIT``: exact and right-censored observations without a window, with no weights or
-  frequency weights (as before censoring and truncation were modelled); every other cell is
-  refused until fitting for that data kind is available.
+* ``FIT``: the same sixteen cells, with no weights or with integer frequency weights: exact
+  and right-censored observations without a window are fitted by the closed forms and bounded
+  searches of the earlier releases, every other cell by maximum likelihood with the Newton
+  method (the exponential and Weibull closed forms apply where they can).
 * Analytic weights are refused by both until they are available.
 """
 
@@ -71,6 +72,10 @@ class CellOperation(StrEnum):
 
 
 FIT_UNAVAILABLE_MESSAGE: Final = "not supported until fitting for this data kind is available"
+FIXED_SHAPE_MESSAGE: Final = (
+    "fixed_shape is not supported for data with left- or interval-censored observations or "
+    "truncation windows"
+)
 ANALYTIC_WEIGHTS_MESSAGE: Final = (
     "analytic weights are not supported yet; they arrive in a later release"
 )
@@ -117,11 +122,6 @@ def cell_status(
         return CellStatus(
             False, CapabilityCode.ANALYTIC_WEIGHTS_UNSUPPORTED, ANALYTIC_WEIGHTS_MESSAGE
         )
-    if operation is CellOperation.FIT and (
-        censoring in (CensoringKind.LEFT, CensoringKind.INTERVAL)
-        or truncation is not TruncationKind.NONE
-    ):
-        return CellStatus(False, CapabilityCode.DATA_KIND_FIT_UNAVAILABLE, FIT_UNAVAILABLE_MESSAGE)
     return _SUPPORTED
 
 
@@ -171,27 +171,21 @@ def fit_unavailable() -> CapabilityError:
 
 
 def require_fit_supported(observations: Iterable[object]) -> None:
-    """Refuse, with the typed code of the matrix, the first observation a fit cannot take.
+    """Check that every observation is one of the eight observation types.
 
-    ``CapabilityError`` for a left- or interval-censored observation or one with a truncation
-    window; ``TypeError`` for an object that is not an observation at all.
+    Every observation cell is fitted now (see :func:`cell_status`), so nothing is refused here
+    but an object that is not an observation at all: ``TypeError``.
     """
 
-    seen: set[tuple[CensoringKind, TruncationKind]] = set()
     for observation in observations:
-        cell = observation_cell(observation)
-        if cell in seen:
-            continue
-        status = cell_status(CellOperation.FIT, cell[0], cell[1], WeightKind.NONE)
-        if not status.supported:
-            raise fit_unavailable()
-        seen.add(cell)
+        observation_cell(observation)
 
 
 __all__ = [
     "ANALYTIC_WEIGHTS_MESSAGE",
     "CENSORING_KINDS",
     "FIT_UNAVAILABLE_MESSAGE",
+    "FIXED_SHAPE_MESSAGE",
     "KEYWORD_MESSAGES",
     "CellOperation",
     "CellStatus",

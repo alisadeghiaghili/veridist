@@ -62,6 +62,14 @@
       "src/veridist/families/uncertainty.py",
       "src/veridist/families/weibull.py"
     ],
+    "families-censored": [
+      "src/veridist/families/_censored_fit.py",
+      "src/veridist/families/_censored_model.py",
+      "src/veridist/families/_censored_rows.py",
+      "src/veridist/families/_censored_terms.py",
+      "src/veridist/families/_fit_facts.py",
+      "src/veridist/families/_newton.py"
+    ],
     "engine": [
       "src/veridist/engine/__init__.py",
       "src/veridist/engine/checkpoint.py",
