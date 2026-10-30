@@ -9,9 +9,18 @@ from math import exp, fsum, isfinite, log
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
+from veridist.domain._combinations import FIXED_SHAPE_MESSAGE
 from veridist.domain._numeric import is_real
+from veridist.domain.coarsening import CoarseningAssumption
 from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation
+from veridist.engine.errors import CapabilityCode, CapabilityError
 from veridist.families._evidence import FitEvidence
+from veridist.families._fit_facts import (
+    FitDiagnostics,
+    ObservationSummary,
+    OptimumKind,
+    summarize_observations,
+)
 from veridist.families._reliability import admitted_observations, expand_bracket, positive_support
 from veridist.families.registry import FamilyId
 
@@ -50,6 +59,10 @@ class WeibullFitFailure:
     complete: bool = False
     converged: bool = False
     restart_failures: int = 0
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
 
     @property
     def family(self) -> FamilyId:
@@ -81,6 +94,12 @@ class WeibullFitSuccess:
     family: FamilyId = FamilyId.WEIBULL_MIN
     location: float = 0.0
     _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
+    optimum: OptimumKind = field(default=OptimumKind.UNASSESSED, compare=False, repr=False)
+    diagnostics: FitDiagnostics | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.shape) and self.shape > 0.0):
@@ -119,7 +138,13 @@ def fit_weibull(
     censoring: str = "right",
     truncation: object | None = None,
 ) -> WeibullFit:
-    """Fit a fixed-location Weibull-min MLE for admitted v1 observations."""
+    """Fit a fixed-location Weibull-min MLE for admitted v1 observations.
+
+    The four value (or lifetime) observation kinds, each with or without a truncation window, are
+    accepted: data with left- or interval-censored rows or windows is fitted by maximum
+    likelihood with a damped Newton method and its result records the coarsening assumption,
+    the counts of its rows and what is claimed about the point (see :func:`veridist.fit`).
+    """
 
     values = admitted_observations(
         observations,
@@ -130,10 +155,17 @@ def fit_weibull(
     )
     count = len(values)
     events = sum(type(value) is ExactLifetime for value in values)
+    summary = summarize_observations(values)
+
     def failure(code: WeibullFitFailureCode) -> WeibullFitFailure:
-        return WeibullFitFailure(code, count, events, count - events)
+        return WeibullFitFailure(code, count, events, count - events, observation_summary=summary)
+
     if count == 0:
         return failure(WeibullFitFailureCode.EMPTY_SAMPLE)
+    if summary.is_new_data:
+        if fixed_shape is not None:
+            raise CapabilityError(CapabilityCode.DATA_KIND_FIT_UNAVAILABLE, FIXED_SHAPE_MESSAGE)
+        return _fit_new_data(values, summary)
     if events == 0:
         return failure(WeibullFitFailureCode.NO_OBSERVED_EVENTS)
     if not positive_support(values):
@@ -211,7 +243,50 @@ def fit_weibull(
         () if fixed_shape is None else ("shape",),
     )
     return WeibullFitSuccess(
-        shape, scale, likelihood, count, events, count - events, _evidence=evidence
+        shape,
+        scale,
+        likelihood,
+        count,
+        events,
+        count - events,
+        _evidence=evidence,
+        observation_summary=summary,
+    )
+
+
+def _fit_new_data(
+    values: tuple[LifetimeObservation, ...], summary: ObservationSummary
+) -> WeibullFit:
+    """Fit data with left- or interval-censored rows or truncation windows."""
+
+    from veridist.families._censored_fit import CensoredRefusal, estimate
+
+    count = len(values)
+    events = summary.exact
+    outcome = estimate(FamilyId.WEIBULL_MIN, values, summary)
+    assumption = CoarseningAssumption.INDEPENDENT_CENSORING_AND_TRUNCATION
+    if isinstance(outcome, CensoredRefusal):
+        return WeibullFitFailure(
+            WeibullFitFailureCode[outcome.code],
+            count,
+            events,
+            count - events,
+            observation_summary=summary,
+            coarsening_assumption=assumption,
+        )
+    shape, scale = outcome.parameters
+    return WeibullFitSuccess(
+        shape,
+        scale,
+        outcome.log_likelihood,
+        count,
+        events,
+        count - events,
+        _evidence=FitEvidence(rows=outcome.rows),
+        observation_summary=summary,
+        coarsening_assumption=assumption,
+        optimum=outcome.optimum,
+        diagnostics=outcome.diagnostics,
     )
 
 

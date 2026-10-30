@@ -3,7 +3,9 @@
 Every censoring kind (exact, right, left, interval) x truncation type (none, left, right,
 two-sided) x weight kind (none, integer frequency, analytic) is either supported by an operation
 or refused with a typed code; nothing falls through.  The expected table below is written out
-independently of the production table and then checked three ways: against
+independently of the production table (every cell is supported except those with analytic
+weights, for the log-likelihood entry points and, since fitting of censored and truncated data
+is available, for the fits too) and then checked three ways: against
 :func:`~veridist.domain._combinations.cell_status`, against the real log-likelihood entry points
 and against the real fits, for a lifetime family and a real-line family.
 """
@@ -63,8 +65,6 @@ def expected(operation: str, censoring: str, truncation: str, weights: str) -> s
 
     if weights == "analytic":
         return "ANALYTIC_WEIGHTS_UNSUPPORTED"
-    if operation == "fit" and (censoring in ("left", "interval") or truncation != "none"):
-        return "DATA_KIND_FIT_UNAVAILABLE"
     return None
 
 
@@ -100,10 +100,9 @@ class TableTests(unittest.TestCase):
                     self.assertEqual(None if status.code is None else status.code.value, code)
                     if code is None:
                         self.assertIsNone(status.message)
-                    elif code == "ANALYTIC_WEIGHTS_UNSUPPORTED":
-                        self.assertEqual(status.message, ANALYTIC_WEIGHTS_MESSAGE)
                     else:
-                        self.assertEqual(status.message, FIT_UNAVAILABLE_MESSAGE)
+                        self.assertEqual(code, "ANALYTIC_WEIGHTS_UNSUPPORTED")
+                        self.assertEqual(status.message, ANALYTIC_WEIGHTS_MESSAGE)
 
     def test_a_cell_is_made_of_the_matrix_enumerations_only(self) -> None:
         for arguments in (
@@ -192,6 +191,10 @@ class FitMatrixTests(unittest.TestCase):
                     if code is None:
                         result = fit(family, observations, **options)
                         self.assertTrue(hasattr(result, "observation_count"))
+                        summary = result.observation_summary
+                        self.assertEqual(summary.total, result.observation_count)
+                        new = censoring in ("left", "interval") or truncation != "none"
+                        self.assertEqual(summary.is_new_data, new)
                     else:
                         with self.assertRaises(CapabilityError) as captured:
                             fit(family, observations, **options)

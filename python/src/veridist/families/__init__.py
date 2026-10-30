@@ -1,5 +1,6 @@
 """Distribution family definitions."""
 
+from veridist.families._fit_facts import FitDiagnostics, ObservationSummary, OptimumKind
 from veridist.families.dispatch import fit
 from veridist.families.exponential import (
     ExponentialFit,
@@ -61,6 +62,7 @@ __all__ = [
     "ExponentialFitFailureCode",
     "ExponentialFitProvenance",
     "ExponentialFitSuccess",
+    "FitDiagnostics",
     "FitFailure",
     "FitSuccess",
     "FitUncertainty",
@@ -80,6 +82,8 @@ __all__ = [
     "NormalFitFailure",
     "NormalFitFailureCode",
     "NormalFitSuccess",
+    "ObservationSummary",
+    "OptimumKind",
     "ParameterInterval",
     "UncertaintyUnavailable",
     "UncertaintyUnavailableReason",

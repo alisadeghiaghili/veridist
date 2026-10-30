@@ -18,8 +18,15 @@ from math import exp, fsum, isfinite, log, pi, sqrt
 from types import MappingProxyType
 from typing import TYPE_CHECKING
 
+from veridist.domain.coarsening import CoarseningAssumption
 from veridist.domain.values import ExactValue, RealObservation
 from veridist.families._evidence import FitEvidence
+from veridist.families._fit_facts import (
+    FitDiagnostics,
+    ObservationSummary,
+    OptimumKind,
+    summarize_observations,
+)
 from veridist.families._reliability import (
     admitted_real_observations,
     is_degenerate_sample,
@@ -66,6 +73,10 @@ class NormalFitFailure:
     complete: bool = False
     converged: bool = False
     restart_failures: int = 0
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
 
     @property
     def family(self) -> FamilyId:
@@ -96,6 +107,12 @@ class NormalFitSuccess:
     restart_failures: int = 0
     complete: bool = True
     _evidence: FitEvidence = field(default_factory=FitEvidence, repr=False, compare=False)
+    observation_summary: ObservationSummary | None = field(default=None, compare=False, repr=False)
+    coarsening_assumption: CoarseningAssumption | None = field(
+        default=None, compare=False, repr=False
+    )
+    optimum: OptimumKind = field(default=OptimumKind.UNASSESSED, compare=False, repr=False)
+    diagnostics: FitDiagnostics | None = field(default=None, compare=False, repr=False)
 
     def __post_init__(self) -> None:
         if not (isfinite(self.mu) and isfinite(self.sigma) and self.sigma > 0.0):
@@ -151,6 +168,11 @@ def fit_normal(
 ) -> NormalFit:
     """Fit a normal distribution by maximum likelihood to exact/right-censored values.
 
+    The four value (or lifetime) observation kinds, each with or without a truncation window, are
+    accepted: data with left- or interval-censored rows or windows is fitted by maximum
+    likelihood with a damped Newton method and its result records the coarsening assumption,
+    the counts of its rows and what is claimed about the point (see :func:`veridist.fit`).
+
     ``observations`` are :class:`~veridist.domain.values.ExactValue` and
     :class:`~veridist.domain.values.RightCensoredValue` items; lifetime
     observations raise ``TypeError``.
@@ -182,12 +204,15 @@ def fit_normal(
     )
     count = len(values)
     events = sum(type(value) is ExactValue for value in values)
+    summary = summarize_observations(values)
 
     def failure(code: NormalFitFailureCode) -> NormalFitFailure:
-        return NormalFitFailure(code, count, events, count - events)
+        return NormalFitFailure(code, count, events, count - events, observation_summary=summary)
 
     if count == 0:
         return failure(NormalFitFailureCode.EMPTY_SAMPLE)
+    if summary.is_new_data:
+        return _fit_new_data(values, summary)
     if events == 0:
         return failure(NormalFitFailureCode.NO_OBSERVED_EVENTS)
     exact = tuple(value.value for value in values if type(value) is ExactValue)
@@ -244,9 +269,44 @@ def fit_normal(
             events,
             count - events,
             _evidence=FitEvidence(exact, censored),
+            observation_summary=summary,
         )
     except (ArithmeticError, OverflowError, ValueError):
         return failure(NormalFitFailureCode.OPTIMIZER_EXHAUSTED)
+
+
+def _fit_new_data(values: tuple[RealObservation, ...], summary: ObservationSummary) -> NormalFit:
+    """Fit data with left- or interval-censored rows or truncation windows (Newton method)."""
+
+    from veridist.families._censored_fit import CensoredRefusal, estimate
+
+    count = len(values)
+    events = summary.exact
+    outcome = estimate(FamilyId.NORMAL, values, summary)
+    assumption = CoarseningAssumption.INDEPENDENT_CENSORING_AND_TRUNCATION
+    if isinstance(outcome, CensoredRefusal):
+        return NormalFitFailure(
+            NormalFitFailureCode[outcome.code],
+            count,
+            events,
+            count - events,
+            observation_summary=summary,
+            coarsening_assumption=assumption,
+        )
+    mu, sigma = outcome.parameters
+    return NormalFitSuccess(
+        mu,
+        sigma,
+        outcome.log_likelihood,
+        count,
+        events,
+        count - events,
+        _evidence=FitEvidence(rows=outcome.rows),
+        observation_summary=summary,
+        coarsening_assumption=assumption,
+        optimum=outcome.optimum,
+        diagnostics=outcome.diagnostics,
+    )
 
 
 __all__ = [

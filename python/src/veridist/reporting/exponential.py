@@ -125,6 +125,8 @@ FAILURE_MESSAGE_CODES: Final[Mapping[ExponentialFitFailureCode, str]] = MappingP
         ExponentialFitFailureCode.NO_OBSERVED_EVENTS: "failure.NO_OBSERVED_EVENTS",
         ExponentialFitFailureCode.UNBOUNDED_LIKELIHOOD: "failure.UNBOUNDED_LIKELIHOOD",
         ExponentialFitFailureCode.NUMERICAL_OVERFLOW: "failure.NUMERICAL_OVERFLOW",
+        ExponentialFitFailureCode.OPTIMIZER_EXHAUSTED: "failure.OPTIMIZER_EXHAUSTED",
+        ExponentialFitFailureCode.BOUNDARY_SOLUTION: "failure.BOUNDARY_SOLUTION",
     }
 )
 _FAILURE_MESSAGES: Final[Mapping[ReportLocale, Mapping[str, str]]] = MappingProxyType(
@@ -140,6 +142,12 @@ _FAILURE_MESSAGES: Final[Mapping[ReportLocale, Mapping[str, str]]] = MappingProx
                     "The likelihood is unbounded; no finite rate estimate exists."
                 ),
                 "failure.NUMERICAL_OVERFLOW": "Numerical overflow prevented a finite estimate.",
+                "failure.OPTIMIZER_EXHAUSTED": (
+                    "The optimizer did not converge; no estimate is reported."
+                ),
+                "failure.BOUNDARY_SOLUTION": (
+                    "The maximum lies on the edge of the search range; no estimate is reported."
+                ),
             }
         ),
         ReportLocale.FA: MappingProxyType(
@@ -151,6 +159,10 @@ _FAILURE_MESSAGES: Final[Mapping[ReportLocale, Mapping[str, str]]] = MappingProx
                     "درست‌نمایی نامتناهی است؛ برآورد نرخ متناهی وجود ندارد."
                 ),
                 "failure.NUMERICAL_OVERFLOW": "سرریز عددی مانع برآورد متناهی شد.",
+                "failure.OPTIMIZER_EXHAUSTED": "بهینه‌ساز همگرا نشد؛ برآوردی گزارش نمی‌شود.",
+                "failure.BOUNDARY_SOLUTION": (
+                    "بیشینه روی مرز بازهٔ جست‌وجو قرار دارد؛ برآوردی گزارش نمی‌شود."
+                ),
             }
         ),
         ReportLocale.DE: MappingProxyType(
@@ -165,6 +177,13 @@ _FAILURE_MESSAGES: Final[Mapping[ReportLocale, Mapping[str, str]]] = MappingProx
                 ),
                 "failure.NUMERICAL_OVERFLOW": (
                     "Numerischer Überlauf verhinderte eine endliche Schätzung."
+                ),
+                "failure.OPTIMIZER_EXHAUSTED": (
+                    "Der Optimierer ist nicht konvergiert; es wird keine Schätzung angegeben."
+                ),
+                "failure.BOUNDARY_SOLUTION": (
+                    "Das Maximum liegt am Rand des Suchbereichs; es wird keine Schätzung "
+                    "angegeben."
                 ),
             }
         ),
@@ -196,6 +215,8 @@ def _validate_result(result: ExponentialFit) -> None:
             result.location,
             result.inference,
             result.censoring_assumption,
+            observation_summary=result.observation_summary,
+            optimum=result.optimum,
         )
         return
     if type(result) is ExponentialFitFailure:
@@ -243,7 +264,11 @@ def _machine_facts(result: ExponentialFit) -> tuple[dict[str, str], str]:
             "total_time": total_time,
             "log_likelihood": "unavailable",
             "inference": "not_provided",
-            "censoring_assumption": "independent_right_censoring",
+            "censoring_assumption": (
+                "independent_right_censoring"
+                if result.coarsening_assumption is None
+                else "independent_censoring_and_truncation"
+            ),
             "failure_code": result.code.value,
         },
         FAILURE_MESSAGE_CODES[result.code],

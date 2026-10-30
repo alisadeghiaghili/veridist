@@ -69,11 +69,17 @@ def fit(
     ``ValueError``.  ``observations`` must be the type pair valid for the family:
 
     * ``EXPONENTIAL``, ``WEIBULL_MIN``, ``LOGNORMAL`` and ``GAMMA`` take
-      :class:`~veridist.domain.lifetimes.ExactLifetime` and
-      :class:`~veridist.domain.lifetimes.RightCensoredLifetime`;
-    * ``NORMAL`` and ``GUMBEL_RIGHT`` take
-      :class:`~veridist.domain.values.ExactValue` and
-      :class:`~veridist.domain.values.RightCensoredValue`.
+      :class:`~veridist.domain.lifetimes.ExactLifetime`,
+      :class:`~veridist.domain.lifetimes.RightCensoredLifetime`,
+      :class:`~veridist.domain.lifetimes.LeftCensoredLifetime` and
+      :class:`~veridist.domain.lifetimes.IntervalCensoredLifetime`;
+    * ``NORMAL`` and ``GUMBEL_RIGHT`` take the four matching value types
+      (:class:`~veridist.domain.values.ExactValue` and so on);
+
+    each of them with or without a truncation window (left, right or two-sided, a window per
+    row).  Exact and right-censored observations without a window are fitted as in earlier
+    releases; any other cell is fitted by maximum likelihood with a damped Newton method (see
+    the result's ``optimum``, ``observation_summary`` and ``coarsening_assumption``).
 
     The other pair raises ``TypeError``.  ``options`` are forwarded to the
     family's own fit function (``fit_weibull`` additionally accepts

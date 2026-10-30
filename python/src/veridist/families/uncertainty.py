@@ -19,6 +19,14 @@ Wald half-widths otherwise) is reported as unbounded: ``0`` (or ``-inf`` for a p
 the whole real line) below, ``inf`` above, and the matching ``*_unbounded`` flag is set.
 ``method="exact"`` is the chi-square interval for the exponential rate on uncensored data.
 
+**Censored and truncated samples.**  A sample with left- or interval-censored rows or
+truncation windows is evaluated by :class:`~veridist.families._censored_model.CensoredModel`
+(analytic gradients and Hessians of the probability terms of each row, the gamma shape by
+central differences), so the covariance, the standard errors, the Wald and profile intervals and
+the derived quantities below are those of the same formulas for that likelihood.  The exact
+chi-square interval stays available only for uncensored exponential data with no window or a
+left window.
+
 **Assumptions.**  Independent right censoring, maximum-likelihood regularity (an interior
 maximum with a positive-definite information matrix) and, for the Wald and delta-method
 intervals, a sample large enough for the likelihood to be roughly quadratic.  Profile
@@ -282,6 +290,19 @@ def _safe_evaluate(model: Model, theta: tuple[float, ...]) -> Evaluation | None:
     return evaluation if isfinite(evaluation.value) else None
 
 
+def _evaluate_at(
+    model: Model, theta_at: Callable[[float], tuple[float, ...]], phi: float
+) -> Evaluation | None:
+    """Evaluate at the vector of the coordinate ``phi``, or ``None`` if it cannot be built
+    (the exponential of a coordinate that overflows) or evaluated."""
+
+    try:
+        theta = theta_at(phi)
+    except (ArithmeticError, ValueError):
+        return None
+    return _safe_evaluate(model, theta)
+
+
 def _maximize_nuisance(
     model: Model,
     theta_at: Callable[[float], tuple[float, ...]],
@@ -301,7 +322,7 @@ def _maximize_nuisance(
 
     log_scale = model.positive[free]
     phi = start
-    current = _safe_evaluate(model, theta_at(phi))
+    current = _evaluate_at(model, theta_at, phi)
     if current is not None:
         for _ in range(_NEWTON_STEPS):
             weight = exp(phi) if log_scale else 1.0
@@ -316,7 +337,7 @@ def _maximize_nuisance(
             step = max(-cap, min(cap, -gradient / curvature))
             accepted = None
             for _ in range(_BACKTRACKS):
-                candidate = _safe_evaluate(model, theta_at(phi + step))
+                candidate = _evaluate_at(model, theta_at, phi + step)
                 floor = current.value - _ACCEPT_SLACK * (1.0 + abs(current.value))
                 if candidate is not None and candidate.value >= floor:
                     accepted = candidate
@@ -328,7 +349,7 @@ def _maximize_nuisance(
             current = accepted
 
     def objective(point: float) -> float:
-        evaluation = _safe_evaluate(model, theta_at(point))
+        evaluation = _evaluate_at(model, theta_at, point)
         return -inf if evaluation is None else evaluation.value
 
     point, _, _ = expand_bracket(
@@ -338,7 +359,7 @@ def _maximize_nuisance(
         hard_lower=start - 100.0 * cap,
         hard_upper=start + 100.0 * cap,
     )
-    return point, _safe_evaluate(model, theta_at(point))
+    return point, _evaluate_at(model, theta_at, point)
 
 
 class _ParameterCurve(_Curve):
@@ -621,9 +642,9 @@ class FitUncertainty:
 
     def _exact_rate_interval(self, level: float) -> tuple[float, float]:
         model = self._model
-        if not isinstance(model, ExponentialModel):
+        if self.family is not FamilyId.EXPONENTIAL:
             raise ValueError('method="exact" is available only for the exponential family')
-        if not model.exact_interval_available:
+        if not isinstance(model, ExponentialModel) or not model.exact_interval_available:
             raise ValueError(
                 'method="exact" needs uncensored data: with right censoring the total time on '
                 "test is not a sum of event times, so the chi-square pivot does not apply; use "
@@ -777,13 +798,18 @@ def compute_uncertainty(
             f"the {names} was fixed by the caller, so the observed information of the fit does "
             "not describe it",
         )
-    if not evidence.exact:
+    if evidence.rows is None and not evidence.exact:
         return UncertaintyUnavailable(
             UncertaintyUnavailableReason.NO_DATA,
             "the result carries no observations (it was not produced by a fit function)",
         )
     try:
-        model = build_model(family, evidence.exact, evidence.censored)
+        if evidence.rows is not None:
+            from veridist.families._censored_model import CensoredModel
+
+            model: Model = CensoredModel(family, evidence.rows)
+        else:
+            model = build_model(family, evidence.exact, evidence.censored)
     except (ArithmeticError, ValueError):
         return UncertaintyUnavailable(
             UncertaintyUnavailableReason.NOT_COMPUTABLE,
