@@ -10,9 +10,29 @@ separate public namespace ``veridist.scale``, which is not exported here.
 __version__ = "2.2.1"
 
 from veridist.adapters.csv_lifetimes import CsvLifetimeLimits, CsvLifetimeSchema
-from veridist.domain.arrays import lifetimes_from_arrays, values_from_arrays
-from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation, RightCensoredLifetime
-from veridist.domain.values import ExactValue, RealObservation, RightCensoredValue
+from veridist.domain.arrays import (
+    lifetimes_from_arrays,
+    lifetimes_from_columns,
+    values_from_arrays,
+    values_from_columns,
+)
+from veridist.domain.coarsening import CoarseningAssumption
+from veridist.domain.lifetimes import (
+    AnyLifetimeObservation,
+    ExactLifetime,
+    IntervalCensoredLifetime,
+    LeftCensoredLifetime,
+    LifetimeObservation,
+    RightCensoredLifetime,
+)
+from veridist.domain.values import (
+    AnyRealObservation,
+    ExactValue,
+    IntervalCensoredValue,
+    LeftCensoredValue,
+    RealObservation,
+    RightCensoredValue,
+)
 from veridist.engine.data_source import DataSourceMetadata, Replayability
 from veridist.engine.errors import CapabilityError, EngineContractError, VeridistError
 from veridist.engine.provenance import PublicSourceId
@@ -42,7 +62,10 @@ from veridist.statistics.log_likelihood import reduce_log_likelihood_chunks
 
 __all__ = [
     "__version__",
+    "AnyLifetimeObservation",
+    "AnyRealObservation",
     "CapabilityError",
+    "CoarseningAssumption",
     "CsvLifetimeLimits",
     "CsvLifetimeSchema",
     "DataSourceMetadata",
@@ -53,7 +76,11 @@ __all__ = [
     "FamilyId",
     "FitFailure",
     "FitSuccess",
+    "IntervalCensoredLifetime",
+    "IntervalCensoredValue",
     "IterableDataSource",
+    "LeftCensoredLifetime",
+    "LeftCensoredValue",
     "LifetimeObservation",
     "PublicSourceId",
     "RealObservation",
@@ -76,6 +103,7 @@ __all__ = [
     "fit_normal",
     "fit_weibull",
     "lifetimes_from_arrays",
+    "lifetimes_from_columns",
     "logpdf",
     "ppf",
     "reduce_lifetime_log_likelihood_chunks",
@@ -84,4 +112,5 @@ __all__ = [
     "sample",
     "sf",
     "values_from_arrays",
+    "values_from_columns",
 ]

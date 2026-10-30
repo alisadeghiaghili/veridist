@@ -175,19 +175,28 @@ class CapabilityCode(StrEnum):
     """Stable capability cells deliberately not admitted by the current API."""
 
     ANALYTIC_WEIGHTS_UNSUPPORTED = "ANALYTIC_WEIGHTS_UNSUPPORTED"
+    DATA_KIND_FIT_UNAVAILABLE = "DATA_KIND_FIT_UNAVAILABLE"
     INTERVAL_CENSORING_UNSUPPORTED = "INTERVAL_CENSORING_UNSUPPORTED"
     LEFT_CENSORING_UNSUPPORTED = "LEFT_CENSORING_UNSUPPORTED"
     TRUNCATION_UNSUPPORTED = "TRUNCATION_UNSUPPORTED"
 
 
 class CapabilityError(VeridistError):
-    """Typed request for a declared but unsupported statistical capability."""
+    """Typed request for a declared but unsupported statistical capability.
 
-    def __init__(self, code: CapabilityCode) -> None:
+    ``str(error)`` is the stable ``code`` alone, or the code followed by a colon and the
+    explanation when one was given; ``message`` is that explanation (``None`` without one).
+    The code always comes first and is the stable part, and neither ever contains a data value.
+    """
+
+    def __init__(self, code: CapabilityCode, message: str | None = None) -> None:
         if type(code) is not CapabilityCode:
             raise TypeError("code must be a CapabilityCode")
-        super().__init__(code.value)
+        if message is not None and type(message) is not str:
+            raise TypeError("message must be a string or None")
+        super().__init__(code.value if message is None else f"{code.value}: {message}")
         self.code = code
+        self.message = message
 
 
 def safe_exception_type(exc: Exception) -> str:

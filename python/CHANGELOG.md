@@ -4,6 +4,57 @@ This changelog covers only the nested `veridist` package. The repository-root
 legacy changelog describes the frozen `distfit_pro` history and is not a
 Veridist release record.
 
+## [Unreleased]
+
+### Added
+
+- Observation types for left- and interval-censored data: `LeftCensoredLifetime`
+  and `IntervalCensoredLifetime` for the positive-support families, and
+  `LeftCensoredValue` and `IntervalCensoredValue` for the real-line families.
+  An interval is `(lower, upper]` with both bounds finite; equal bounds are
+  refused, because an exact observation contributes a density and an interval a
+  probability, and the exact type must be used instead.
+- Truncation windows. Every observation type, the four above and the four of
+  earlier releases, takes the keyword-only attributes `truncation_lower` and
+  `truncation_upper` (`None`, or the matching infinity, for an open side), so a
+  window may be left, right or two-sided and may differ from row to row. An
+  observation outside its window, a window that is empty or reversed, and a
+  truncation point after an exact event are refused at construction and never
+  clipped. Observations without a window keep the equality, hash, `repr` and
+  pickle of earlier releases.
+- `lifetimes_from_columns` and `values_from_columns` build the observations of
+  parallel columns: an explicit status column (0 right-censored, 1 exact,
+  2 left-censored, 3 interval-censored), an `upper` column for interval rows, and
+  optional `truncation_lower` and `truncation_upper` columns. Nulls and NaN are
+  refused, and every error names the first bad row.
+- `reduce_lifetime_log_likelihood_chunks` and `reduce_value_log_likelihood_chunks`
+  accept the new observation types and truncation windows. A censored term is
+  the log-probability of its censoring set and a truncation window is divided
+  out; both are evaluated in the log domain, within an absolute error of about
+  `1e-12` times the larger of 1 and the magnitude of the terms involved.
+  Integer frequency weights can be given as chunks aligned with the observations
+  (`frequency_weights=`) and give the result of the replicated rows bit for bit.
+  The results of data of exact and right-censored observations without a window
+  are unchanged.
+- `CoarseningAssumption` and the `coarsening_assumption` field of the
+  log-likelihood results: for data with left- or interval-censored observations
+  or truncation windows the result records that the terms assume independent
+  censoring and truncation (coarsening at random).
+- `CapabilityError` takes an optional explanation after its code. The
+  `censoring=` and `truncation=` keywords of the fits keep refusing, with the
+  same codes, and now say to declare censoring and truncation with the new
+  observation types or the column constructors. The fits refuse the new
+  observation types and any window with the new code
+  `DATA_KIND_FIT_UNAVAILABLE`, until fitting for them is available.
+
+### Changed
+
+- An observation object now holds its two truncation attributes, so
+  `ExactLifetime`, `RightCensoredLifetime`, `ExactValue` and
+  `RightCensoredValue` take 16 bytes more each in memory. The CSV adapter,
+  which measures the retained size of its chunks, therefore needs a slightly
+  larger `chunk_bytes` for the smallest chunks.
+
 ## [2.2.1] - 2026-10-25
 
 ### Fixed

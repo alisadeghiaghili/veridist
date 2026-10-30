@@ -11,6 +11,7 @@ from hashlib import sha256
 from math import isfinite
 from typing import Final, TypeAlias
 
+from veridist.domain.coarsening import CoarseningAssumption
 from veridist.engine.streaming import StreamSource, iter_stream
 from veridist.families.registry import FAMILY_REGISTRY, FamilyId
 from veridist.statistics.log_density import (
@@ -149,10 +150,12 @@ class LogLikelihoodSuccess:
     parameter_fingerprint: str
     observation_count: int
     total_log_likelihood: float
+    coarsening_assumption: CoarseningAssumption | None = None
 
     def __post_init__(self) -> None:
         if type(self.family) is not FamilyId:
             raise TypeError("family must be a FamilyId")
+        _validate_coarsening(self.coarsening_assumption)
         _validate_fingerprint(self.parameter_fingerprint)
         if (
             type(self.observation_count) is not int
@@ -163,15 +166,21 @@ class LogLikelihoodSuccess:
             raise ValueError("total_log_likelihood must be a finite built-in float")
 
     def to_json(self) -> str:
-        """Serialize stable, locale-neutral success facts without raw observations."""
+        """Serialize stable, locale-neutral success facts without raw observations.
 
+        The ``coarsening_assumption`` key is present only when the result records one (data
+        with left- or interval-censored observations or truncation windows).
+        """
+
+        facts: dict[str, object] = {
+            "family": self.family.value,
+            "observation_count": self.observation_count,
+            "outcome": "success",
+            "total_log_likelihood": self.total_log_likelihood,
+        }
+        _add_coarsening(facts, self.coarsening_assumption)
         return json.dumps(
-            {
-                "family": self.family.value,
-                "observation_count": self.observation_count,
-                "outcome": "success",
-                "total_log_likelihood": self.total_log_likelihood,
-            },
+            facts,
             allow_nan=False,
             separators=(",", ":"),
             sort_keys=True,
@@ -186,10 +195,12 @@ class LogLikelihoodFailure:
     code: LogLikelihoodErrorCode
     processed_count: int
     scalar_error_code: LogDensityErrorCode | None
+    coarsening_assumption: CoarseningAssumption | None = None
 
     def __post_init__(self) -> None:
         if type(self.family) is not FamilyId:
             raise TypeError("family must be a FamilyId")
+        _validate_coarsening(self.coarsening_assumption)
         if type(self.code) is not LogLikelihoodErrorCode:
             raise TypeError("code must be a LogLikelihoodErrorCode")
         if (
@@ -206,16 +217,18 @@ class LogLikelihoodFailure:
     def to_json(self) -> str:
         """Serialize only closed failure facts; count is incomplete on early failure."""
 
+        facts: dict[str, object] = {
+            "code": self.code.value,
+            "family": self.family.value,
+            "outcome": "failure",
+            "processed_count": self.processed_count,
+            "scalar_error_code": (
+                None if self.scalar_error_code is None else self.scalar_error_code.value
+            ),
+        }
+        _add_coarsening(facts, self.coarsening_assumption)
         return json.dumps(
-            {
-                "code": self.code.value,
-                "family": self.family.value,
-                "outcome": "failure",
-                "processed_count": self.processed_count,
-                "scalar_error_code": (
-                    None if self.scalar_error_code is None else self.scalar_error_code.value
-                ),
-            },
+            facts,
             allow_nan=False,
             separators=(",", ":"),
             sort_keys=True,
@@ -240,12 +253,14 @@ class _ExactAccumulator:
     observation_count: int = 0
     total_units: int = 0
 
-    def add(self, log_density: float) -> None:
-        if self.observation_count == MAX_OBSERVATION_COUNT:
+    def add(self, log_density: float, multiplicity: int = 1) -> None:
+        """Add ``multiplicity`` replicates of one term: its exact units times the multiplicity."""
+
+        if self.observation_count > MAX_OBSERVATION_COUNT - multiplicity:
             raise _ObservationLimitExceeded
         numerator, denominator = log_density.as_integer_ratio()
-        self.observation_count += 1
-        self.total_units += numerator * (_UNITS_DENOMINATOR // denominator)
+        self.observation_count += multiplicity
+        self.total_units += multiplicity * numerator * (_UNITS_DENOMINATOR // denominator)
 
 
 def reduce_log_likelihood_chunks(
@@ -330,6 +345,16 @@ def _identity_and_fingerprint(
     identity = tuple(encoded)
     payload = "veridist.log_likelihood.v1\0" + family.value + "\0" + "\0".join(identity)
     return identity, sha256(payload.encode("ascii")).hexdigest()
+
+
+def _validate_coarsening(assumption: object) -> None:
+    if assumption is not None and type(assumption) is not CoarseningAssumption:
+        raise TypeError("coarsening_assumption must be a CoarseningAssumption or None")
+
+
+def _add_coarsening(facts: dict[str, object], assumption: CoarseningAssumption | None) -> None:
+    if assumption is not None:
+        facts["coarsening_assumption"] = assumption.value
 
 
 def _validate_fingerprint(fingerprint: object) -> None:

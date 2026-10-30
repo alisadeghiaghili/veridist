@@ -18,7 +18,10 @@ class PublicCsvApiTests(unittest.TestCase):
     def test_public01_exports_the_documented_user_api(self) -> None:
         expected = {
             "__version__",
+            "AnyLifetimeObservation",
+            "AnyRealObservation",
             "CapabilityError",
+            "CoarseningAssumption",
             "CsvLifetimeLimits",
             "CsvLifetimeSchema",
             "DataSourceMetadata",
@@ -29,7 +32,11 @@ class PublicCsvApiTests(unittest.TestCase):
             "FamilyId",
             "FitFailure",
             "FitSuccess",
+            "IntervalCensoredLifetime",
+            "IntervalCensoredValue",
             "IterableDataSource",
+            "LeftCensoredLifetime",
+            "LeftCensoredValue",
             "LifetimeObservation",
             "PublicSourceId",
             "RealObservation",
@@ -52,6 +59,7 @@ class PublicCsvApiTests(unittest.TestCase):
             "fit_normal",
             "fit_weibull",
             "lifetimes_from_arrays",
+            "lifetimes_from_columns",
             "logpdf",
             "ppf",
             "reduce_lifetime_log_likelihood_chunks",
@@ -60,6 +68,7 @@ class PublicCsvApiTests(unittest.TestCase):
             "sample",
             "sf",
             "values_from_arrays",
+            "values_from_columns",
         }
         self.assertEqual(set(veridist.__all__), expected)
         signature = inspect.signature(veridist.fit_exponential_csv)

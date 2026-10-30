@@ -479,7 +479,23 @@ def log_window(family: object, lower: object, upper: object, /, **parameters: ob
     kernel = _kernel(family, parameters)
     first, second = np.broadcast_arrays(_real_array(lower, "lower"), _real_array(upper, "upper"))
     shape = first.shape
-    low, high = np.ravel(first).copy(), np.ravel(second).copy()
+    result = kernel_log_window(kernel, np.ravel(first).copy(), np.ravel(second).copy())
+    return result.reshape(shape)
+
+
+def build_kernel(family: object, **parameters: object) -> _Kernel:
+    """The kernel of ``family`` at validated ``parameters``, to evaluate many windows at once."""
+
+    return _kernel(family, parameters)
+
+
+def kernel_log_window(kernel: _Kernel, low: Any, high: Any) -> Any:
+    """``log(F(high) - F(low))`` of a built kernel for flat float64 arrays of non-NaN ends.
+
+    The body of :func:`log_window` for callers that build the kernel once; every element is
+    computed on its own, so the result equals the one-element result for any batch.
+    """
+
     if not (low < high).all():
         raise LogProbabilityError(LogProbabilityErrorCode.INVALID_WINDOW)
     result = np.empty(low.shape[0])
@@ -495,13 +511,15 @@ def log_window(family: object, lower: object, upper: object, /, **parameters: ob
     result[only_high] = kernel.log_sf(low[only_high])
     finite = ~(open_low | open_high | empty)
     result[finite] = _finite_window(kernel, low[finite], high[finite])
-    return result.reshape(shape)
+    return result
 
 
 __all__ = [
     "NARROW_SWITCH",
     "QUADRATURE_NODES",
     "QUADRATURE_WEIGHTS",
+    "build_kernel",
+    "kernel_log_window",
     "log1mexp",
     "log_cdf",
     "log_phi",

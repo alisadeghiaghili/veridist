@@ -74,6 +74,16 @@ def _adapter(
     )
 
 
+def _smallest_feasible_chunk_bytes(payload: bytes) -> int:
+    """The smallest chunk budget at which the adapter delivers every record of ``payload``."""
+
+    for budget in range(1, 8192):
+        adapter, _ = _adapter(payload, chunk_bytes=budget)
+        if fit_exponential_source(adapter).execution.outcome.complete:
+            return budget
+    raise AssertionError("no feasible chunk budget below 8192 retained bytes")
+
+
 class CsvLifetimeExecutionContracts(unittest.TestCase):
     """The adapter is family-neutral; only this layer creates scientific fits."""
 
@@ -124,7 +134,12 @@ class CsvLifetimeExecutionContracts(unittest.TestCase):
 
     def test_csv_exec04_mixed_censoring_matches_decimal_oracle_across_chunk_budgets(self) -> None:
         payload = b"time,event_observed\n1,1\n2,0\n3,1\n"
-        for budget in (530, 2048):
+        # The unit is CPython retained object-graph bytes, so the smallest budget that still
+        # holds one observation depends on the interpreter (a `str` is 8 bytes larger before
+        # Python 3.12, and every observation object grows with its slots).  It is therefore
+        # measured on the running interpreter and never written down as a number.
+        floor = _smallest_feasible_chunk_bytes(payload)
+        for budget in (floor, 2048):
             with self.subTest(chunk_bytes=budget):
                 adapter, source = _adapter(payload, chunk_bytes=budget)
                 result = fit_exponential_source(adapter)
@@ -147,6 +162,16 @@ class CsvLifetimeExecutionContracts(unittest.TestCase):
                     observation.buffer.peak_inflight_bytes,
                     budget,
                 )
+
+        with self.subTest(chunk_bytes=floor - 1):
+            adapter, source = _adapter(payload, chunk_bytes=floor - 1)
+            result = fit_exponential_source(adapter)
+
+            self.assertIsNone(result.fit)
+            self.assertIsInstance(result.execution.outcome, FailedOutcome)
+            assert isinstance(result.execution.outcome, FailedOutcome)
+            self.assertEqual(result.execution.outcome.failure.code, FailureCode.CHUNK_TOO_LARGE)
+            self.assertEqual(source.close_count, 1)
 
     def test_csv_exec05_complete_statistical_nonestimates_and_typed_failure_stages(self) -> None:
         cases = (

@@ -3,8 +3,11 @@
 ``lifetimes_from_arrays(time, event)`` and ``values_from_arrays(value, event)``
 turn two equal-length one-dimensional array-likes into the observation tuples the
 fits take, validating the whole input vectorially first so that the error names the
-first bad row instead of failing somewhere inside a Python loop.  numpy is imported
-only when one of them is called.
+first bad row instead of failing somewhere inside a Python loop.
+``lifetimes_from_columns`` and ``values_from_columns`` are the multi-column form: an
+explicit status column says what each row is (exact, right-, left- or interval-censored),
+and optional columns give the upper bound of an interval and the truncation window of each
+row.  numpy is imported only when one of them is called.
 """
 
 from __future__ import annotations
@@ -12,8 +15,25 @@ from __future__ import annotations
 from importlib import import_module
 from typing import Any
 
-from veridist.domain.lifetimes import ExactLifetime, LifetimeObservation, RightCensoredLifetime
-from veridist.domain.values import ExactValue, RealObservation, RightCensoredValue
+from veridist.domain.lifetimes import (
+    AnyLifetimeObservation,
+    ExactLifetime,
+    IntervalCensoredLifetime,
+    LeftCensoredLifetime,
+    LifetimeObservation,
+    RightCensoredLifetime,
+)
+from veridist.domain.values import (
+    AnyRealObservation,
+    ExactValue,
+    IntervalCensoredValue,
+    LeftCensoredValue,
+    RealObservation,
+    RightCensoredValue,
+)
+
+#: The status codes of the column constructors (those of ``survival::Surv``).
+STATUS_RIGHT, STATUS_EXACT, STATUS_LEFT, STATUS_INTERVAL = 0, 1, 2, 3
 
 
 def _numpy() -> Any:
@@ -122,4 +142,209 @@ def values_from_arrays(value: object, event: object, /) -> tuple[RealObservation
     )
 
 
-__all__ = ["lifetimes_from_arrays", "values_from_arrays"]
+def _status_column(data: object, length: int) -> Any:
+    """Return ``data`` as an int8 array of status codes: booleans, or integers 0, 1, 2 or 3."""
+
+    np = _numpy()
+    array = np.asarray(data)
+    if array.size == 0 and array.dtype.kind == "f":
+        array = array.astype(np.int8)  # ``[]`` defaults to float64 but has no value to misread
+    if array.dtype.kind == "b":
+        codes = array.astype(np.int8)
+    elif array.dtype.kind in "iu":
+        bad = (array < STATUS_RIGHT) | (array > STATUS_INTERVAL)
+        if bad.any():
+            raise ValueError(
+                f"status must be boolean or 0, 1, 2 or 3 (first bad row {_first(bad)})"
+            )
+        codes = array.astype(np.int8)
+    else:
+        raise TypeError("status must be a boolean array or an integer array of 0, 1, 2 and 3")
+    if codes.ndim != 1:
+        raise ValueError("status must be one-dimensional")
+    if len(codes) != length:
+        raise ValueError("the columns must have the same length")
+    return codes
+
+
+def _optional_column(data: object, name: str, length: int) -> Any:
+    """Return an optional numeric column as float64 (``None`` stays ``None``), length checked."""
+
+    if data is None:
+        return None
+    column = _numeric_column(data, name)
+    if len(column) != length:
+        raise ValueError("the columns must have the same length")
+    return column
+
+
+def _upper_column(upper: Any, codes: Any) -> Any:
+    """Check ``upper``: finite on interval rows, NaN on every other row."""
+
+    np = _numpy()
+    interval = codes == STATUS_INTERVAL
+    if upper is None:
+        if interval.any():
+            raise ValueError(
+                f"upper is required for interval-censored rows (first bad row {_first(interval)})"
+            )
+        return upper
+    bad = interval & ~np.isfinite(upper)
+    if bad.any():
+        raise ValueError(
+            f"upper must be finite on interval-censored rows (first bad row {_first(bad)})"
+        )
+    bad = ~interval & ~np.isnan(upper)
+    if bad.any():
+        raise ValueError(
+            "upper must be NaN on rows that are not interval-censored "
+            f"(first bad row {_first(bad)})"
+        )
+    return upper
+
+
+def _window_column(column: Any, name: str, *, lower_end: bool, lifetime: bool) -> Any:
+    """Check a truncation column: finite or the open infinity of its side, never NaN."""
+
+    np = _numpy()
+    if column is None:
+        return None
+    open_end = -np.inf if lower_end else np.inf
+    bad = np.isnan(column) | (np.isinf(column) & (column != open_end))
+    if bad.any():
+        infinity = "negative infinity" if lower_end else "positive infinity"
+        raise ValueError(f"{name} must be finite or {infinity} (first bad row {_first(bad)})")
+    if lifetime:
+        bad = np.isfinite(column) & ((column < 0.0) if lower_end else (column <= 0.0))
+        if bad.any():
+            sign = "non-negative" if lower_end else "positive"
+            raise ValueError(f"{name} must be {sign} (first bad row {_first(bad)})")
+    return column
+
+
+def _from_columns(
+    value: object,
+    status: object,
+    upper: object,
+    truncation_lower: object,
+    truncation_upper: object,
+    *,
+    lifetime: bool,
+) -> tuple[Any, ...]:
+    np = _numpy()
+    column = _numeric_column(value, "value")
+    codes = _status_column(status, len(column))
+    ends = _upper_column(_optional_column(upper, "upper", len(column)), codes)
+    lowest = _window_column(
+        _optional_column(truncation_lower, "truncation_lower", len(column)),
+        "truncation_lower",
+        lower_end=True,
+        lifetime=lifetime,
+    )
+    highest = _window_column(
+        _optional_column(truncation_upper, "truncation_upper", len(column)),
+        "truncation_upper",
+        lower_end=False,
+        lifetime=lifetime,
+    )
+    bad = ~np.isfinite(column)
+    if lifetime:
+        bad |= column < 0.0
+    if bad.any():
+        what = "finite and non-negative" if lifetime else "finite"
+        raise ValueError(f"value must be {what} (first bad row {_first(bad)})")
+    simple = (
+        (RightCensoredLifetime, ExactLifetime, LeftCensoredLifetime)
+        if lifetime
+        else (RightCensoredValue, ExactValue, LeftCensoredValue)
+    )
+    interval = IntervalCensoredLifetime if lifetime else IntervalCensoredValue
+    points = column.tolist()
+    flags = codes.tolist()
+    bounds = None if ends is None else ends.tolist()
+    first = None if lowest is None else lowest.tolist()
+    last = None if highest is None else highest.tolist()
+    rows: list[Any] = []
+    for index, point in enumerate(points):
+        window = {
+            "truncation_lower": None if first is None else first[index],
+            "truncation_upper": None if last is None else last[index],
+        }
+        try:
+            if flags[index] == STATUS_INTERVAL:
+                assert bounds is not None
+                rows.append(interval(point, bounds[index], **window))
+            else:
+                rows.append(simple[flags[index]](point, **window))
+        except ValueError as error:
+            raise ValueError(f"{error} (first bad row {index})") from None
+    return tuple(rows)
+
+
+def lifetimes_from_columns(
+    value: object,
+    status: object,
+    /,
+    *,
+    upper: object = None,
+    truncation_lower: object = None,
+    truncation_upper: object = None,
+) -> tuple[AnyLifetimeObservation, ...]:
+    """Build the lifetime observations of parallel columns, one status per row.
+
+    ``status`` is a boolean array or an integer array with the codes of ``survival::Surv``:
+    ``1`` an :class:`~veridist.domain.lifetimes.ExactLifetime` (as ``event=1`` of
+    :func:`lifetimes_from_arrays`), ``0`` a
+    :class:`~veridist.domain.lifetimes.RightCensoredLifetime`, ``2`` a
+    :class:`~veridist.domain.lifetimes.LeftCensoredLifetime` and ``3`` an
+    :class:`~veridist.domain.lifetimes.IntervalCensoredLifetime`; any other value is refused.
+    Row ``i`` uses ``value[i]`` as the observation, the censoring point or the lower bound
+    according to its status.
+
+    ``upper`` is the upper bound of the interval rows: it must be finite and greater than
+    ``value`` on every status-3 row and NaN on every other row (so that the status column, and
+    never a missing value, says what a row means); it may be omitted when no row has status 3.
+    ``truncation_lower`` and ``truncation_upper`` hold one number per row, finite or the open
+    infinity (negative infinity for the lower end and positive infinity for the upper end),
+    which means "not truncated" on that side; for a lifetime a lower end of ``0`` means the
+    same.  Omitted, no row is truncated.  NaN and nulls are refused in every column.
+
+    Every error names the first bad row.  The result equals building the tuple row by row with
+    the observation constructors (``TypeError`` for the wrong kind of data, ``ValueError`` for
+    a bad value, a wrong shape, columns of different length, or a row that its truncation window
+    excludes); the columns may be empty.
+    """
+
+    rows: tuple[AnyLifetimeObservation, ...] = _from_columns(
+        value, status, upper, truncation_lower, truncation_upper, lifetime=True
+    )
+    return rows
+
+
+def values_from_columns(
+    value: object,
+    status: object,
+    /,
+    *,
+    upper: object = None,
+    truncation_lower: object = None,
+    truncation_upper: object = None,
+) -> tuple[AnyRealObservation, ...]:
+    """Build the real-valued observations of parallel columns, one status per row.
+
+    The real-line analogue of :func:`lifetimes_from_columns`, with the types of
+    :mod:`veridist.domain.values`; every value must be finite and may be negative.
+    """
+
+    rows: tuple[AnyRealObservation, ...] = _from_columns(
+        value, status, upper, truncation_lower, truncation_upper, lifetime=False
+    )
+    return rows
+
+
+__all__ = [
+    "lifetimes_from_arrays",
+    "lifetimes_from_columns",
+    "values_from_arrays",
+    "values_from_columns",
+]
