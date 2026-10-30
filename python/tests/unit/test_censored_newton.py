@@ -417,6 +417,21 @@ class SecondStartTests(unittest.TestCase):
         self.assertEqual(found.distinct, 1)
         self.assertAlmostEqual(found.run.theta[0], 0.5, places=14)
 
+    def test_points_within_the_convergence_tolerance_are_one_stationary_point(self) -> None:
+        # The same maximum reached from two starts differs by the last bits of the platform's
+        # arithmetic and by up to the convergence tolerance; DISTINCT is above both of them.
+        self.assertGreater(newton.DISTINCT, newton.TOLERANCE)
+        self.assertGreater(newton.DISTINCT, newton.GAMMA_TOLERANCE)
+        point = (0.731, 3.5)
+        ulps = tuple(math.nextafter(math.nextafter(value, math.inf), math.inf) for value in point)
+        sub_tolerance = tuple(value * (1.0 + 0.5 * newton.GAMMA_TOLERANCE) for value in point)
+        self.assertFalse(newton._apart(point, ulps))
+        self.assertFalse(newton._apart(point, sub_tolerance))
+        self.assertFalse(newton._apart(sub_tolerance, point))
+        # genuinely different points: one coordinate off by more than DISTINCT (relative)
+        self.assertTrue(newton._apart(point, (point[0], point[1] * (1.0 + 3 * newton.DISTINCT))))
+        self.assertTrue(newton._apart(point, (point[0] + 0.5, point[1])))
+
     def test_a_failed_first_run_does_not_hide_a_converged_second_one(self) -> None:
         # The highest grid value is a plateau at rate 25 (no ascent is found from it); the
         # second-best point sits on a bowl at 0.3, where the second run converges.

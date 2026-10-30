@@ -12,6 +12,8 @@ import math
 import unittest
 from unittest import mock
 
+import numpy as np
+
 from veridist import (
     ExactLifetime,
     ExactValue,
@@ -256,6 +258,19 @@ class WeibullProfileTests(unittest.TestCase):
         RightCensoredLifetime(3.5),
     ]
 
+    # Every row has an entry time: no row keeps the sum of ``exp(k w)`` away from the cancellation
+    # that ``1 - exp(k (v - w))`` suffers at a small shape.
+    entered_sample = [
+        ExactLifetime(2.2, truncation_lower=1.0),
+        ExactLifetime(3.1, truncation_lower=1.5),
+        ExactLifetime(4.7, truncation_lower=1.0),
+        ExactLifetime(1.9, truncation_lower=0.5),
+        ExactLifetime(5.9, truncation_lower=2.0),
+        ExactLifetime(2.7, truncation_lower=1.2),
+        RightCensoredLifetime(6.5, truncation_lower=1.0),
+        RightCensoredLifetime(3.5, truncation_lower=0.8),
+    ]
+
     def test_the_constants_of_the_profile(self) -> None:
         self.assertEqual(censored.PROFILE_LOG_SHAPE_LIMIT, 20.0)
         self.assertEqual(censored.PROFILE_GRID_STEP, 0.25)
@@ -339,6 +354,76 @@ class WeibullProfileTests(unittest.TestCase):
         self.assertEqual(found.diagnostics.distinct_stationary_points, 2)
         self.assertAlmostEqual(math.log(found.parameters[0]), 2.0, delta=0.01)
         self.assertEqual(found.parameters[1], 2.0)
+
+    def test_the_score_at_a_small_shape_keeps_its_digits(self) -> None:
+        # For a shape near zero every ``exp(k (v - w))`` is within ``k`` of one, and the score is
+        # the difference of two nearly equal terms (it tends to zero from above).  Against a
+        # 50-digit evaluation of the same formula the score keeps its sign and about six digits
+        # at the lowest grid point; the plain ``1 - exp`` kept none of them.
+        from mpmath import exp as mp_exp
+        from mpmath import mp, mpf
+
+        rows = build_rows(FamilyId.WEIBULL_MIN, self.entered_sample)
+        profile = censored._Profile(rows)
+        exact = [bool(flag) for flag in rows.exact]
+        points = [float(y if flag else lo) for y, lo, flag in zip(rows.yv, rows.lo, exact)]
+        starts = [float(a) if math.isfinite(a) else None for a in rows.wl]
+        events = sum(exact)
+        old = mp.dps
+        mp.dps = 50
+        try:
+            mean = mpf(math.fsum(points) / len(points))
+            logs = [mpf(point) - mean for point in points]
+            entry = [None if a is None else mpf(a) - mean for a in starts]
+            total_exact = sum((w for w, flag in zip(logs, exact) if flag), mpf(0))
+            for kappa in (-20.0, -17.0, -12.0):
+                k = mp_exp(mpf(kappa))
+                s0 = sum(
+                    mp_exp(k * w) - (0 if v is None else mp_exp(k * v))
+                    for w, v in zip(logs, entry)
+                )
+                s1 = sum(
+                    w * mp_exp(k * w) - (0 if v is None else v * mp_exp(k * v))
+                    for w, v in zip(logs, entry)
+                )
+                reference = events + k * total_exact - events * k * s1 / s0
+                self.assertGreater(reference, 0)
+                self.assertAlmostEqual(
+                    profile.score(kappa) / float(reference), 1.0, delta=1e-5, msg=str(kappa)
+                )
+        finally:
+            mp.dps = old
+
+    def test_the_stationary_points_seen_do_not_depend_on_the_last_bit_of_exp(self) -> None:
+        # The count of stationary points is the number of sign changes of the score on the
+        # grid; a score that is positive at the lower end for every platform must not change
+        # sign because ``exp`` and ``expm1`` differ in their last bit (macOS against Windows).
+        class Jittered:
+            def __init__(self, seed: int) -> None:
+                self.random = np.random.default_rng(seed)
+
+            def __getattr__(self, name: str) -> object:
+                return getattr(np, name)
+
+            def _nudge(self, values: object) -> object:
+                array = np.asarray(values, dtype=float)
+                up = self.random.integers(-1, 2, size=array.shape)
+                return np.where(up > 0, np.nextafter(array, np.inf),
+                                np.where(up < 0, np.nextafter(array, -np.inf), array))
+
+            def exp(self, values: object) -> object:
+                return self._nudge(np.exp(values))
+
+            def expm1(self, values: object) -> object:
+                return self._nudge(np.expm1(values))
+
+        rows = build_rows(FamilyId.WEIBULL_MIN, self.entered_sample)
+        for seed in range(20):
+            with self.subTest(seed=seed), mock.patch.object(censored, "np", Jittered(seed)):
+                found = censored._weibull_profile(self.entered_sample, rows)
+            assert isinstance(found, CensoredEstimate)
+            self.assertEqual(found.diagnostics.stationary_points_seen, 1)
+            self.assertEqual(found.diagnostics.distinct_stationary_points, 1)
 
     def test_a_profile_without_a_maximum_is_a_boundary_solution(self) -> None:
         sample = [

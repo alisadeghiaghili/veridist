@@ -263,8 +263,14 @@ class _Profile:
     def _sums(self, k: float) -> tuple[float, float, float]:
         with np.errstate(all="ignore"):
             near = np.exp(k * (self.w - self.top))
-            gap = np.where(self.truncated, np.exp(k * (self.v - self.w)), 0.0)
-            s0 = fsum((near * (1.0 - gap)).tolist())
+            drop = k * (self.v - self.w)
+            gap = np.where(self.truncated, np.exp(drop), 0.0)
+            # ``1 - gap`` through ``expm1``: for a small shape ``gap`` is within ``k`` of one and
+            # the plain difference would keep only a handful of correct digits, enough for the
+            # sign of the score near the lower end of the grid to depend on the last bit of the
+            # platform's ``exp`` (and so on the number of stationary points seen).
+            short = np.where(self.truncated, -np.expm1(drop), 1.0)
+            s0 = fsum((near * short).tolist())
             s1 = fsum((near * (self.w - np.where(self.truncated, self.v * gap, 0.0))).tolist())
         return s0, s1, self.top
 

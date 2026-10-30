@@ -13,6 +13,7 @@ import math
 import unittest
 from itertools import product
 from typing import Any
+from unittest import mock
 
 from tests.reference import censored_support as support
 from tests.reference.censored_fit_goldens import GOLDEN
@@ -80,18 +81,70 @@ def is_new(kind: str, truncation: str) -> bool:
     return kind in ("left", "interval") or truncation != "none"
 
 
+#: The stored results of the earlier release come from one platform's libm and BLAS.  Where the
+#: fit is iterative (a bounded golden-section or Newton search that stops at a relative
+#: tolerance of about 1e-9) the last digits that a stopping rule leaves depend on the platform:
+#: the stored values agree with another platform's to about 2e-8 (relative), and the check against
+#: them allows ``RELEASE_TOLERANCE`` (the accuracy of those searches, 1e-7).  A closed form made
+#: of correctly rounded operations only (sums by ``fsum``, divisions, ``sqrt``) is the same on
+#: every platform and is compared exactly.
+RELEASE_TOLERANCE = 1e-7
+CLOSED_FORM_PARAMETERS = frozenset({"exponential/exact", "exponential/right", "normal/exact"})
+
+
+def earlier_release_observations(key: str, rows: Any) -> list[Any]:
+    family = key.split("/")[0]
+    lifetime = family in LIFETIME_FAMILIES
+    exact_type = ExactLifetime if lifetime else ExactValue
+    right_type = support.TYPES[lifetime]["right"]
+    return [exact_type(v) if k else right_type(v) for k, v in rows]
+
+
 class GoldenTests(unittest.TestCase):
     def test_data_the_earlier_releases_accepted_keeps_its_results_bit_for_bit(self) -> None:
+        """Data of exact and right-censored rows without a window never reaches the new
+        estimator: ``fit`` returns what the family's own earlier code path returns, bit for bit.
+
+        The expected result is computed in this process, by the family's fit with the new
+        estimator made unreachable (so the earlier path is the only one that can produce it), and
+        compared with ``fit`` and with a second call; equal floats are compared with ``==``.
+        """
+
+        def unreachable(*args: Any, **kwargs: Any) -> Any:
+            raise AssertionError("the new estimator was reached")
+
+        for key, (rows, _, _) in GOLDEN.items():
+            family = key.split("/")[0]
+            observations = earlier_release_observations(key, rows)
+            with self.subTest(case=key):
+                with mock.patch("veridist.families._censored_fit.estimate", unreachable):
+                    expected = FITS[family](observations)
+                self.assertTrue(hasattr(expected, "parameters"), expected)
+                for result in (fit(family, observations), FITS[family](observations)):
+                    self.assertEqual(
+                        tuple(result.parameters.values()), tuple(expected.parameters.values())
+                    )
+                    self.assertEqual(result.log_likelihood, expected.log_likelihood)
+                    self.assertEqual(result, expected)
+                    self.assertIs(result.optimum, OptimumKind.UNASSESSED)
+                    self.assertIsNone(result.coarsening_assumption)
+                    self.assertIsNone(result.diagnostics)
+
+    def test_data_the_earlier_releases_accepted_keeps_the_results_they_recorded(self) -> None:
         for key, (rows, parameters, likelihood) in GOLDEN.items():
-            family, tag = key.split("/")
-            lifetime = family in LIFETIME_FAMILIES
-            exact_type = ExactLifetime if lifetime else ExactValue
-            right_type = support.TYPES[lifetime]["right"]
-            observations = [exact_type(v) if k else right_type(v) for k, v in rows]
+            family = key.split("/")[0]
+            observations = earlier_release_observations(key, rows)
             with self.subTest(case=key):
                 result = fit(family, observations)
-                self.assertEqual(tuple(result.parameters.values()), parameters)
-                self.assertEqual(result.log_likelihood, likelihood)
+                found = tuple(result.parameters.values())
+                if key in CLOSED_FORM_PARAMETERS:
+                    self.assertEqual(found, parameters)
+                else:
+                    for value, recorded in zip(found, parameters, strict=True):
+                        self.assertAlmostEqual(value / recorded, 1.0, delta=RELEASE_TOLERANCE)
+                self.assertAlmostEqual(
+                    result.log_likelihood, likelihood, delta=RELEASE_TOLERANCE * abs(likelihood)
+                )
                 self.assertIs(result.optimum, OptimumKind.UNASSESSED)
                 self.assertIsNone(result.coarsening_assumption)
                 self.assertIsNone(result.diagnostics)

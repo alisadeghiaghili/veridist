@@ -123,7 +123,7 @@
     "src/veridist/engine/streaming.py": {"statements": 57, "branches": 22},
     "src/veridist/execution.py": {"statements": 251, "branches": 104},
     "src/veridist/families/__init__.py": {"statements": 11, "branches": 0},
-    "src/veridist/families/_censored_fit.py": {"statements": 196, "branches": 58},
+    "src/veridist/families/_censored_fit.py": {"statements": 198, "branches": 58},
     "src/veridist/families/_censored_model.py": {"statements": 108, "branches": 36},
     "src/veridist/families/_censored_rows.py": {"statements": 138, "branches": 34},
     "src/veridist/families/_censored_terms.py": {"statements": 248, "branches": 46},
