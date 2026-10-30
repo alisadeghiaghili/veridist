@@ -61,7 +61,7 @@ duckdb = [
 ]
 mutation = [
     "mutmut==3.7.0",
-    "pytest>=8.3",
+    "pytest==9.1.1",
 ]
 browser = [
     "playwright==1.62.0",
