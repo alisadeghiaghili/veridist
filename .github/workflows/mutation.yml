@@ -38,6 +38,7 @@ jobs:
       MUTMUT_VERSION: "3.7.0"
       MUTMUT_WHEEL: mutmut-3.7.0-py3-none-any.whl
       MUTMUT_WHEEL_SHA256: 1d2f9a1bfa4a474b2213df6b17223150b492bf4a85af0eda4fb322297337fb32
+      PYTEST_VERSION: "9.1.1"
       SHARD: ${{ matrix.shard }}
 
     steps:
@@ -78,15 +79,16 @@ jobs:
           actual_sha256="$(sha256sum "$wheel_path" | awk '{print $1}')"
           test "$actual_sha256" = "$MUTMUT_WHEEL_SHA256"
 
-      - name: Install the project test dependencies and verified wheel
+      - name: Install the project test dependencies, verified wheel and pinned pytest
         working-directory: python
         shell: bash
         run: |
           set -euo pipefail
           python -m pip install --upgrade pip
           python -m pip install '.[test,docs,arrow,polars,duckdb]'
-          python -m pip install "$RUNNER_TEMP/$MUTMUT_WHEEL"
+          python -m pip install "$RUNNER_TEMP/$MUTMUT_WHEEL" "pytest==$PYTEST_VERSION"
           python -c "import importlib.metadata; assert importlib.metadata.version('mutmut') == '3.7.0'"
+          python -c "import importlib.metadata; assert importlib.metadata.version('pytest') == '9.1.1'"
 
       - name: Prepare a fresh mutation cache
         working-directory: python

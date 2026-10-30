@@ -439,6 +439,24 @@ class ShardWorkflowTests(unittest.TestCase):
             self.assertEqual(setup["with"]["python-version"], "3.13")
         self.assertRegex(self.text, r"actions/download-artifact@[0-9a-f]{40} # v4\.3\.0")
 
+    def test_pytest_is_pinned_together_with_mutmut_in_the_workflow_and_the_extra(self) -> None:
+        env = self.jobs["mutation"]["env"]
+        self.assertEqual(env["PYTEST_VERSION"], "9.1.1")
+        install = next(
+            step
+            for step in self.jobs["mutation"]["steps"]
+            if step["name"].startswith("Install the project test dependencies")
+        )
+        self.assertIn('"$RUNNER_TEMP/$MUTMUT_WHEEL" "pytest==$PYTEST_VERSION"', install["run"])
+        self.assertIn(
+            "importlib.metadata.version('pytest') == '9.1.1'",
+            install["run"],
+        )
+        extra = tomllib.loads((PYTHON_ROOT / "pyproject.toml").read_text(encoding="utf-8"))[
+            "project"
+        ]["optional-dependencies"]["mutation"]
+        self.assertEqual(sorted(extra), ["mutmut==3.7.0", "pytest==9.1.1"])
+
     def test_the_workflow_file_is_a_mutation_input_and_the_merge_tool_too(self) -> None:
         self.assertIn(
             "../.github/workflows/mutation.yml", mutation_evidence.REQUIRED_NON_TEST_FILES
